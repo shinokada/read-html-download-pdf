@@ -1,0 +1,90 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <title>Server Side Rendering</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="Server-side rendering (SSR), is the ability of an application to contribute by displaying the web-page on the server instead of rendering it in the browser.">
+    <meta name="category" content="concepts">
+    <link rel="stylesheet" href="https://raw.githubusercontent.com/shinokada/prism-coy-theme/main/theme_common.css">
+  </head>
+  <body>
+    <section id="server-side-rendering" class="level1">
+      <h1>Server side rendering</h1>
+      <p>Server-side rendering (SSR), is the ability of an application to contribute by displaying the web-page on the server instead of rendering it in the browser. Server-side sends a fully rendered page to the client; the client's JavaScript bundle takes over which then allows the Vue.js app to <a href="https://ssr.vuejs.org/guide/hydration.html">hydrate</a>.</p>
+      <hr>
+      <section id="nodejs-server-required" class="level2">
+        <h2>Node.js server required</h2>
+        <p>A JavaScript environment is required to render your web page.</p>
+        <p>A Node.js server needs to be configured to execute your Vue.js application.</p>
+      </section>
+      <section id="extend-and-control-the-server" class="level2">
+        <h2>Extend and control the server</h2>
+        <p>You can extend the server with serverMiddleware and control routes with middleware.</p>
+        <pre class="language-js{}[server-middleware/logger.js]"><code class="language-js{}[server-middleware/logger.js]">
+export default function (req, res, next) {
+  console.log(req.url)
+  next()
+}</code></pre>
+        <pre class="language-js{}[nuxt.config.js]"><code class="language-js{}[nuxt.config.js]">export default {
+  serverMiddleware: ['~/server-middleware/logger']
+
+}</code></pre>
+      </section>
+      <section id="server-vs-browser-environments" class="level2">
+        <h2>Server vs Browser environments</h2>
+        <p>Because you are in a Node.js environment you have access to Node.js objects such as <code>req</code> and <code>res</code>. You do not have access to the <code>window</code> or <code>document</code> objects as they belong to the browser environment. You can however use <code>window</code> or <code>document</code> by using the <code>beforeMount</code> or <code>mounted</code> hooks.</p>
+        <pre class="language-js"><code class="language-js"><span class="token function">beforeMount</span> <span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  <span class="token dom variable">window</span><span class="token punctuation">.</span><span class="token method function property-access">alert</span><span class="token punctuation">(</span><span class="token string">'hello'</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+<span class="token function">mounted</span> <span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  <span class="token dom variable">window</span><span class="token punctuation">.</span><span class="token method function property-access">alert</span><span class="token punctuation">(</span><span class="token string">'hello'</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span></code></pre>
+      </section>
+      <section id="server-side-rendering-steps-with-nuxt" class="level2">
+        <h2>Server-side rendering steps with Nuxt</h2>
+        <section id="step-1-browser-to-server" class="level3">
+          <h3>Step 1: Browser to Server</h3>
+          <p>When a browser sends the initial request, it will hit the Node.js internal server. Nuxt will generate the HTML and send it back to the browser with results from executed functions, e.g. <code>asyncData</code>, <code>nuxtServerInit</code> or <code>fetch</code>. Hooks functions are executed as well.</p>
+        </section>
+        <section id="step-2-server-to-browser" class="level3">
+          <h3>Step 2: Server to Browser</h3>
+          <p>The browser receives the rendered page from the server with the generated HTML. The content is displayed and the Vue.js hydration kicks in, making it reactive. After this process, the page is interactive.</p>
+        </section>
+        <section id="step-3-browser-to-browser" class="level3">
+          <h3>Step 3: Browser to Browser</h3>
+          <p>Navigating between pages with <a href="./features/nuxt-components#the-nuxtlink-component"><code>&#x3C;NuxtLink></code></a> is done on the client side so you don't hit the server again unless you hard refresh the browser.</p>
+        </section>
+      </section>
+      <section id="caveats" class="level2">
+        <h2>Caveats</h2>
+        <section id="window-or-document-undefined" class="level3">
+          <h3>window or document undefined</h3>
+          <p>This is due to the server-side rendering. If you need to specify that you want to import a resource only on the client-side, you need to use the <code>process.client</code> variable.</p>
+          <p>For example, in your <code>.vue</code> file:</p>
+          <pre class="language-js"><code class="language-js"><span class="token keyword control-flow">if</span> <span class="token punctuation">(</span>process<span class="token punctuation">.</span><span class="token property-access">client</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  <span class="token function">require</span><span class="token punctuation">(</span><span class="token string">'external_library'</span><span class="token punctuation">)</span>
+<span class="token punctuation">}</span></code></pre>
+        </section>
+        <section id="ios-and-phone-numbers" class="level3">
+          <h3>iOS and phone numbers</h3>
+          <p>Some mobile Safari versions will automatically transform phone numbers into links. This will trigger a <code>NodeMismatch</code> warning as the SSR content doesn't match the website content anymore. This can make your app unusable on these Safari versions.</p>
+          <p>If you include telephone numbers in your Nuxt page, you have two options.</p>
+        </section>
+      </section>
+      <section id="use-a-meta-tag-to-stop-the-transformation" class="level2">
+        <h2>Use a meta tag to stop the transformation</h2>
+        <pre class="language-html"><code class="language-html"><span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;</span>meta</span> <span class="token attr-name">name</span><span class="token attr-value"><span class="token punctuation attr-equals">=</span><span class="token punctuation">"</span>format-detection<span class="token punctuation">"</span></span> <span class="token attr-name">content</span><span class="token attr-value"><span class="token punctuation attr-equals">=</span><span class="token punctuation">"</span>telephone=no<span class="token punctuation">"</span></span> <span class="token punctuation">/></span></span></code></pre>
+      </section>
+      <section id="wrap-your-phone-numbers-in-links" class="level2">
+        <h2>Wrap your phone numbers in links</h2>
+        <pre class="language-html"><code class="language-html"><span class="token comment">&#x3C;!-- Example phone number: +7 (982) 536-50-77 --></span>
+
+<span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;</span>template</span><span class="token punctuation">></span></span>
+  <span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;</span>a</span> <span class="token attr-name">href</span><span class="token attr-value"><span class="token punctuation attr-equals">=</span><span class="token punctuation">"</span>tel: +7 (982) 536-50-77<span class="token punctuation">"</span></span><span class="token punctuation">></span></span>+7 (982) 536-50-77<span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;/</span>a</span><span class="token punctuation">></span></span>
+<span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;/</span>template</span><span class="token punctuation">></span></span></code></pre>
+        <p><span style="float: footnote;"><a href="../../../../index.html#toc">Go to TOC</a></span></p>
+      </section>
+    </section>
+  </body>
+</html>

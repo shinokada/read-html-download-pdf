@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <title>nuxt.render(req, res)</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="navigation.title" content="render">
+    <meta name="description" content="You can use Nuxt as a middleware with &#x60;nuxt.render&#x60; for your Node.js server.">
+    <meta name="category" content="internals-glossary">
+    <link rel="stylesheet" href="https://raw.githubusercontent.com/shinokada/prism-coy-theme/main/theme_common.css">
+  </head>
+  <body>
+    <section id="nuxtrenderreq-res" class="level1">
+      <h1>nuxt.render(req, res)</h1>
+      <p>You can use Nuxt as a middleware with <code>nuxt.render</code> for your Node.js server.</p>
+      <hr>
+      <ul>
+        <li>Type: <code>Function</code></li>
+        <li>Arguments:
+          <ul>
+            <li><a href="https://nodejs.org/api/http.html#http_class_http_incomingmessage">Request</a></li>
+            <li><a href="https://nodejs.org/api/http.html#http_class_http_serverresponse">Response</a></li>
+          </ul>
+        </li>
+        <li>Returns: <code>Promise</code></li>
+      </ul>
+      <p>Example with <a href="https://github.com/expressjs/express">Express</a>:</p>
+      <pre class="language-js"><code class="language-js"><span class="token keyword">const</span> <span class="token punctuation">{</span> loadNuxt<span class="token punctuation">,</span> build <span class="token punctuation">}</span> <span class="token operator">=</span> <span class="token function">require</span><span class="token punctuation">(</span><span class="token string">'nuxt'</span><span class="token punctuation">)</span>
+
+<span class="token keyword">const</span> app <span class="token operator">=</span> <span class="token function">require</span><span class="token punctuation">(</span><span class="token string">'express'</span><span class="token punctuation">)</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+<span class="token keyword">const</span> isDev <span class="token operator">=</span> process<span class="token punctuation">.</span><span class="token property-access">env</span><span class="token punctuation">.</span><span class="token constant">NODE_ENV</span> <span class="token operator">!==</span> <span class="token string">'production'</span>
+<span class="token keyword">const</span> port <span class="token operator">=</span> process<span class="token punctuation">.</span><span class="token property-access">env</span><span class="token punctuation">.</span><span class="token constant">PORT</span> <span class="token operator">||</span> <span class="token number">3000</span>
+
+<span class="token keyword">async</span> <span class="token keyword">function</span> <span class="token function">start</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  <span class="token comment">// We get Nuxt instance</span>
+  <span class="token keyword">const</span> nuxt <span class="token operator">=</span> <span class="token keyword control-flow">await</span> <span class="token function">loadNuxt</span><span class="token punctuation">(</span>isDev <span class="token operator">?</span> <span class="token string">'dev'</span> <span class="token operator">:</span> <span class="token string">'start'</span><span class="token punctuation">)</span>
+
+  <span class="token comment">// Render every route with Nuxt</span>
+  app<span class="token punctuation">.</span><span class="token method function property-access">use</span><span class="token punctuation">(</span>nuxt<span class="token punctuation">.</span><span class="token property-access">render</span><span class="token punctuation">)</span>
+
+  <span class="token comment">// Build only in dev mode with hot-reloading</span>
+  <span class="token keyword control-flow">if</span> <span class="token punctuation">(</span>isDev<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token function">build</span><span class="token punctuation">(</span>nuxt<span class="token punctuation">)</span>
+  <span class="token punctuation">}</span>
+  <span class="token comment">// Listen the server</span>
+  app<span class="token punctuation">.</span><span class="token method function property-access">listen</span><span class="token punctuation">(</span>port<span class="token punctuation">,</span> <span class="token string">'0.0.0.0'</span><span class="token punctuation">)</span>
+  <span class="token console class-name">console</span><span class="token punctuation">.</span><span class="token method function property-access">log</span><span class="token punctuation">(</span><span class="token string">'Server listening on `localhost:'</span> <span class="token operator">+</span> port <span class="token operator">+</span> <span class="token string">'`.'</span><span class="token punctuation">)</span>
+<span class="token punctuation">}</span>
+
+<span class="token function">start</span><span class="token punctuation">(</span><span class="token punctuation">)</span></code></pre>
+      <section id="warning" class="level4">
+        <h4>Warning</h4>
+        <p>It's recommended to call <code>nuxt.render</code> at the end of your middlewares since it will handle the rendering of your web application and won't call <code>next()</code></p>
+        <p><span style="float: footnote;"><a href="../../../../index.html#toc">Go to TOC</a></span></p>
+      </section>
+    </section>
+  </body>
+</html>
