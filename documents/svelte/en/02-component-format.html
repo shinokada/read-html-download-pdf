@@ -1,0 +1,271 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <title>Component format</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="../../../themes/packages/prism-coy-theme/theme_common.css">
+  </head>
+  <body>
+    <section id="component-format" class="level1">
+      <h1>Component format</h1>
+      <p>Components are the building blocks of Svelte applications. They are written into <code>.svelte</code> files, using a superset of HTML.</p>
+      <p>All three sections — script, styles and markup — are optional.</p>
+      <pre class="language-sv"><code class="language-sv">&#x3C;script>
+	// logic goes here
+&#x3C;/script>
+
+&#x3C;!-- markup (zero or more items) goes here -->
+
+&#x3C;style>
+	/* styles go here */
+&#x3C;/style></code></pre>
+      <section id="script" class="level2">
+        <h2>&#x3C;script></h2>
+        <p>A <code>&#x3C;script></code> block contains JavaScript that runs when a component instance is created. Variables declared (or imported) at the top level are 'visible' from the component's markup. There are four additional rules:</p>
+        <section id="1-export-creates-a-component-prop" class="level3">
+          <h3>1. <code>export</code> creates a component prop</h3>
+          <p>Svelte uses the <code>export</code> keyword to mark a variable declaration as a <em>property</em> or <em>prop</em>, which means it becomes accessible to consumers of the component (see the section on <a href="03-template-syntax.html">attributes and props</a> for more information).</p>
+          <pre class="language-sv"><code class="language-sv">&#x3C;script>
+	export let foo;
+
+	// Values that are passed in as props
+	// are immediately available
+	console.log({ foo });
+&#x3C;/script></code></pre>
+          <p>You can specify a default initial value for a prop. It will be used if the component's consumer doesn't specify the prop on the component (or if its initial value is <code>undefined</code>) when instantiating the component. Note that whenever a prop is removed by the consumer, its value is set to <code>undefined</code> rather than the initial value.</p>
+          <p>In development mode (see the <a href="05-compile-time.html">compiler options</a>), a warning will be printed if no default initial value is provided and the consumer does not specify a value. To squelch this warning, ensure that a default initial value is specified, even if it is <code>undefined</code>.</p>
+          <pre class="language-sv"><code class="language-sv">&#x3C;script>
+	export let bar = 'optional default initial value';
+	export let baz = undefined;
+&#x3C;/script></code></pre>
+          <p>If you export a <code>const</code>, <code>class</code> or <code>function</code>, it is readonly from outside the component. Functions are valid prop values, however, as shown below.</p>
+          <pre class="language-sv"><code class="language-sv">&#x3C;script>
+	// these are readonly
+	export const thisIs = 'readonly';
+
+	export function greet(name) {
+		alert(`hello ${name}!`);
+	}
+
+	// this is a prop
+	export let format = n => n.toFixed(2);
+&#x3C;/script></code></pre>
+          <p>Readonly props can be accessed as properties on the element, tied to the component using <a href="03-template-syntax.html"><code>bind:this</code> syntax</a>.</p>
+          <p>You can use reserved words as prop names.</p>
+          <pre class="language-sv"><code class="language-sv">&#x3C;script>
+	let className;
+
+	// creates a `class` property, even
+	// though it is a reserved word
+	export { className as class };
+&#x3C;/script></code></pre>
+        </section>
+        <section id="2-assignments-are-reactive" class="level3">
+          <h3>2. Assignments are 'reactive'</h3>
+          <p>To change component state and trigger a re-render, just assign to a locally declared variable.</p>
+          <p>Update expressions (<code>count += 1</code>) and property assignments (<code>obj.x = y</code>) have the same effect.</p>
+          <pre class="language-sv"><code class="language-sv">&#x3C;script>
+	let count = 0;
+
+	function handleClick () {
+		// calling this function will trigger an
+		// update if the markup references `count`
+		count = count + 1;
+	}
+&#x3C;/script></code></pre>
+          <p>Because Svelte's reactivity is based on assignments, using array methods like <code>.push()</code> and <code>.splice()</code> won't automatically trigger updates. A subsequent assignment is required to trigger the update. This and more details can also be found in the <a href="/tutorial/updating-arrays-and-objects">tutorial</a>.</p>
+          <pre class="language-sv"><code class="language-sv">&#x3C;script>
+	let arr = [0, 1];
+
+	function handleClick () {
+		// this method call does not trigger an update
+		arr.push(2);
+		// this assignment will trigger an update
+		// if the markup references `arr`
+		arr = arr
+	}
+&#x3C;/script></code></pre>
+          <p>Svelte's <code>&#x3C;script></code> blocks are run only when the component is created, so assignments within a <code>&#x3C;script></code> block are not automatically run again when a prop updates. If you'd like to track changes to a prop, see the next example in the following section.</p>
+          <pre class="language-sv"><code class="language-sv">&#x3C;script>
+	export let person;
+	// this will only set `name` on component creation
+	// it will not update when `person` does
+	let { name } = person;
+&#x3C;/script></code></pre>
+        </section>
+        <section id="3--marks-a-statement-as-reactive" class="level3">
+          <h3>3. <code>$:</code> marks a statement as reactive</h3>
+          <p>Any top-level statement (i.e. not inside a block or a function) can be made reactive by prefixing it with the <code>$:</code> <a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Statements/label">JS label syntax</a>. Reactive statements run after other script code and before the component markup is rendered, whenever the values that they depend on have changed.</p>
+          <pre class="language-sv"><code class="language-sv">&#x3C;script>
+	export let title;
+	export let person
+
+	// this will update `document.title` whenever
+	// the `title` prop changes
+	$: document.title = title;
+
+	$: {
+		console.log(`multiple statements can be combined`);
+		console.log(`the current title is ${title}`);
+	}
+
+	// this will update `name` when 'person' changes
+	$: ({ name } = person);
+
+	// don't do this. it will run before the previous line
+	let name2 = name;
+&#x3C;/script></code></pre>
+          <p>Only values which directly appear within the <code>$:</code> block will become dependencies of the reactive statement. For example, in the code below <code>total</code> will only update when <code>x</code> changes, but not <code>y</code>.</p>
+          <pre class="language-sv"><code class="language-sv">&#x3C;script>
+	let x = 0;
+	let y = 0;
+	
+	function yPlusAValue(value) {
+		return value + y;
+	}
+	
+	$: total = yPlusAValue(x);
+&#x3C;/script>
+
+Total: {total}
+&#x3C;button on:click={() => x++}>
+	Increment X
+&#x3C;/button>
+
+&#x3C;button on:click={() => y++}>
+	Increment Y
+&#x3C;/button></code></pre>
+          <p>It is important to note that the reactive blocks are ordered via simple static analysis at compile time, and all the compiler looks at are the variables that are assigned to and used within the block itself, not in any functions called by them. This means that <code>yDependent</code> will not be updated when <code>x</code> is updated in the following example:</p>
+          <pre class="language-sv"><code class="language-sv">&#x3C;script>
+	let x = 0;
+	let y = 0;
+	
+	const setY = (value) => {
+		y = value;
+	}
+	
+	$: yDependent = y;
+	$: setY(x);
+&#x3C;/script></code></pre>
+          <p>Moving the line <code>$: yDependent = y</code> below <code>$: setY(x)</code> will cause <code>yDependent</code> to be updated when <code>x</code> is updated.</p>
+          <p>If a statement consists entirely of an assignment to an undeclared variable, Svelte will inject a <code>let</code> declaration on your behalf.</p>
+          <pre class="language-sv"><code class="language-sv">&#x3C;script>
+	export let num;
+
+	// we don't need to declare `squared` and `cubed`
+	// — Svelte does it for us
+	$: squared = num * num;
+	$: cubed = squared * num;
+&#x3C;/script></code></pre>
+        </section>
+        <section id="4-prefix-stores-with--to-access-their-values" class="level3">
+          <h3>4. Prefix stores with <code>$</code> to access their values</h3>
+          <p>A <em>store</em> is an object that allows reactive access to a value via a simple <em>store contract</em>. The <a href="04-run-time.html"><code>svelte/store</code> module</a> contains minimal store implementations which fulfil this contract.</p>
+          <p>Any time you have a reference to a store, you can access its value inside a component by prefixing it with the <code>$</code> character. This causes Svelte to declare the prefixed variable, subscribe to the store at component initialization and unsubscribe when appropriate.</p>
+          <p>Assignments to <code>$</code>-prefixed variables require that the variable be a writable store, and will result in a call to the store's <code>.set</code> method.</p>
+          <p>Note that the store must be declared at the top level of the component — not inside an <code>if</code> block or a function, for example.</p>
+          <p>Local variables (that do not represent store values) must <em>not</em> have a <code>$</code> prefix.</p>
+          <pre class="language-sv"><code class="language-sv">&#x3C;script>
+	import { writable } from 'svelte/store';
+
+	const count = writable(0);
+	console.log($count); // logs 0
+
+	count.set(1);
+	console.log($count); // logs 1
+
+	$count = 2;
+	console.log($count); // logs 2
+&#x3C;/script></code></pre>
+          <section id="store-contract" class="level4">
+            <h4>Store contract</h4>
+            <pre class="language-js"><code class="language-js">store <span class="token operator">=</span> <span class="token punctuation">{</span> <span class="token function-variable function">subscribe</span><span class="token operator">:</span> <span class="token punctuation">(</span><span class="token function-variable function">subscription</span><span class="token operator">:</span> <span class="token punctuation">(</span><span class="token parameter"><span class="token literal-property property">value</span><span class="token operator">:</span> any</span><span class="token punctuation">)</span> <span class="token arrow operator">=></span> <span class="token keyword">void</span><span class="token punctuation">)</span> <span class="token arrow operator">=></span> <span class="token punctuation">(</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token arrow operator">=></span> <span class="token keyword">void</span><span class="token punctuation">)</span><span class="token punctuation">,</span> set<span class="token operator">?</span><span class="token operator">:</span> <span class="token punctuation">(</span><span class="token parameter"><span class="token literal-property property">value</span><span class="token operator">:</span> any</span><span class="token punctuation">)</span> <span class="token arrow operator">=></span> <span class="token keyword">void</span> <span class="token punctuation">}</span></code></pre>
+            <p>You can create your own stores without relying on <a href="04-run-time.html"><code>svelte/store</code></a>, by implementing the <em>store contract</em>:</p>
+            <ol>
+              <li>A store must contain a <code>.subscribe</code> method, which must accept as its argument a subscription function. This subscription function must be immediately and synchronously called with the store's current value upon calling <code>.subscribe</code>. All of a store's active subscription functions must later be synchronously called whenever the store's value changes.</li>
+              <li>The <code>.subscribe</code> method must return an unsubscribe function. Calling an unsubscribe function must stop its subscription, and its corresponding subscription function must not be called again by the store.</li>
+              <li>A store may <em>optionally</em> contain a <code>.set</code> method, which must accept as its argument a new value for the store, and which synchronously calls all of the store's active subscription functions. Such a store is called a <em>writable store</em>.</li>
+            </ol>
+            <p>For interoperability with RxJS Observables, the <code>.subscribe</code> method is also allowed to return an object with an <code>.unsubscribe</code> method, rather than return the unsubscription function directly. Note however that unless <code>.subscribe</code> synchronously calls the subscription (which is not required by the Observable spec), Svelte will see the value of the store as <code>undefined</code> until it does.</p>
+          </section>
+        </section>
+      </section>
+      <section id="script-contextmodule" class="level2">
+        <h2>&#x3C;script context="module"></h2>
+        <p>A <code>&#x3C;script></code> tag with a <code>context="module"</code> attribute runs once when the module first evaluates, rather than for each component instance. Values declared in this block are accessible from a regular <code>&#x3C;script></code> (and the component markup) but not vice versa.</p>
+        <p>You can <code>export</code> bindings from this block, and they will become exports of the compiled module.</p>
+        <p>You cannot <code>export default</code>, since the default export is the component itself.</p>
+        <blockquote>
+          <p>Variables defined in <code>module</code> scripts are not reactive — reassigning them will not trigger a rerender even though the variable itself will update. For values shared between multiple components, consider using a <a href="04-run-time.html">store</a>.</p>
+        </blockquote>
+        <pre class="language-sv"><code class="language-sv">&#x3C;script context="module">
+	let totalComponents = 0;
+
+	// this allows an importer to do e.g.
+	// `import Example, { alertTotal } from './Example.svelte'`
+	export function alertTotal() {
+		alert(totalComponents);
+	}
+&#x3C;/script>
+
+&#x3C;script>
+	totalComponents += 1;
+	console.log(`total number of times this component has been created: ${totalComponents}`);
+&#x3C;/script></code></pre>
+      </section>
+      <section id="style" class="level2">
+        <h2>&#x3C;style></h2>
+        <p>CSS inside a <code>&#x3C;style></code> block will be scoped to that component.</p>
+        <p>This works by adding a class to affected elements, which is based on a hash of the component styles (e.g. <code>svelte-123xyz</code>).</p>
+        <pre class="language-sv"><code class="language-sv">&#x3C;style>
+	p {
+		/* this will only affect &#x3C;p> elements in this component */
+		color: burlywood;
+	}
+&#x3C;/style></code></pre>
+        <p>To apply styles to a selector globally, use the <code>:global(...)</code> modifier.</p>
+        <pre class="language-sv"><code class="language-sv">&#x3C;style>
+	:global(body) {
+		/* this will apply to &#x3C;body> */
+		margin: 0;
+	}
+
+	div :global(strong) {
+		/* this will apply to all &#x3C;strong> elements, in any
+			 component, that are inside &#x3C;div> elements belonging
+			 to this component */
+		color: goldenrod;
+	}
+
+	p:global(.red) {
+		/* this will apply to all &#x3C;p> elements belonging to this 
+			 component with a class of red, even if class="red" does
+			 not initially appear in the markup, and is instead 
+			 added at runtime. This is useful when the class 
+			 of the element is dynamically applied, for instance 
+			 when updating the element's classList property directly. */
+	}
+&#x3C;/style></code></pre>
+        <p>If you want to make @keyframes that are accessible globally, you need to prepend your keyframe names with <code>-global-</code>.</p>
+        <p>The <code>-global-</code> part will be removed when compiled, and the keyframe then be referenced using just <code>my-animation-name</code> elsewhere in your code.</p>
+        <pre class="language-html"><code class="language-html"><span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;</span>style</span><span class="token punctuation">></span></span><span class="token style"><span class="token language-css">
+	<span class="token atrule"><span class="token rule">@keyframes</span> -global-my-animation-name</span> <span class="token punctuation">{</span>...<span class="token punctuation">}</span>
+</span></span><span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;/</span>style</span><span class="token punctuation">></span></span></code></pre>
+        <p>There should only be 1 top-level <code>&#x3C;style></code> tag per component.</p>
+        <p>However, it is possible to have <code>&#x3C;style></code> tag nested inside other elements or logic blocks.</p>
+        <p>In that case, the <code>&#x3C;style></code> tag will be inserted as-is into the DOM, no scoping or processing will be done on the <code>&#x3C;style></code> tag.</p>
+        <pre class="language-html"><code class="language-html"><span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;</span>div</span><span class="token punctuation">></span></span>
+	<span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;</span>style</span><span class="token punctuation">></span></span><span class="token style"><span class="token language-css">
+		<span class="token comment">/* this style tag will be inserted as-is */</span>
+		<span class="token selector">div</span> <span class="token punctuation">{</span>
+			<span class="token comment">/* this will apply to all `&#x3C;div>` elements in the DOM */</span>
+			<span class="token property">color</span><span class="token punctuation">:</span> <span class="token color">red</span><span class="token punctuation">;</span>
+		<span class="token punctuation">}</span>
+	</span></span><span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;/</span>style</span><span class="token punctuation">></span></span>
+<span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;/</span>div</span><span class="token punctuation">></span></span></code></pre>
+        <p><span style="float: footnote;"><a href="./index.html#toc">Go to TOC</a></span></p>
+      </section>
+    </section>
+  </body>
+</html>
