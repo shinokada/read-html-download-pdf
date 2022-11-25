@@ -1,0 +1,127 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <title>SEO</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="https://raw.githubusercontent.com/shinokada/prism-coy-theme/main/theme_common.css">
+  </head>
+  <body>
+    <section id="seo" class="level1">
+      <h1>SEO</h1>
+      <p>The most important aspect of SEO is to create high-quality content that is widely linked to from around the web. However, there are a few technical considerations for building sites that rank well.</p>
+      <section id="out-of-the-box" class="level2">
+        <h2>Out of the box</h2>
+        <section id="ssr" class="level3">
+          <h3>SSR</h3>
+          <p>While search engines have got better in recent years at indexing content that was rendered with client-side JavaScript, server-side rendered content is indexed more frequently and reliably. SvelteKit employs SSR by default, and while you can disable it in <a href="../30-advanced/20-hooks.html#server-hooks-handle"><code>handle</code></a>, you should leave it on unless you have a good reason not to.</p>
+          <blockquote>
+            <p>SvelteKit's rendering is highly configurable and you can implement <a href="https://developers.google.com/search../30-advanced/10-advanced-routing.html/javascript/dynamic-rendering">dynamic rendering</a> if necessary. It's not generally recommended, since SSR has other benefits beyond SEO.</p>
+          </blockquote>
+        </section>
+        <section id="performance" class="level3">
+          <h3>Performance</h3>
+          <p>Signals such as <a href="https://web.dev/vitals/#core-web-vitals">Core Web Vitals</a> impact search engine ranking. Because Svelte and SvelteKit introduce minimal overhead, it's easier to build high performance sites. You can test your site's performance using Google's <a href="https://pagespeed.web.dev/">PageSpeed Insights</a> or <a href="https://developers.google.com/web/tools/lighthouse">Lighthouse</a>.</p>
+        </section>
+        <section id="normalized-urls" class="level3">
+          <h3>Normalized URLs</h3>
+          <p>SvelteKit redirects pathnames with trailing slashes to ones without (or vice versa depending on your <a href="../20-core-concepts/40-page-options.html#trailingslash">configuration</a>), as duplicate URLs are bad for SEO.</p>
+        </section>
+      </section>
+      <section id="manual-setup" class="level2">
+        <h2>Manual setup</h2>
+        <section id="title-and-meta" class="level3">
+          <h3>&#x3C;title> and &#x3C;meta></h3>
+          <p>Every page should have well-written and unique <code>&#x3C;title></code> and <code>&#x3C;meta name="description"></code> elements inside a <a href="https://svelte.dev/docs#template-syntax-svelte-head"><code>&#x3C;svelte:head></code></a>. Guidance on how to write descriptive titles and descriptions, along with other suggestions on making content understandable by search engines, can be found on Google's <a href="https://web.dev/lighthouse-seo/">Lighthouse SEO audits</a> documentation.</p>
+          <blockquote>
+            <p>A common pattern is to return SEO-related <code>data</code> from page <a href="../20-core-concepts/20-load.html"><code>load</code></a> functions, then use it (as <a href="../50-api-reference/30-modules.html#$app-stores"><code>$page.data</code></a>) in a <code>&#x3C;svelte:head></code> in your root <a href="../20-core-concepts/10-routing.html#layout">layout</a>.</p>
+          </blockquote>
+        </section>
+        <section id="structured-data" class="level3">
+          <h3>Structured data</h3>
+          <p><a href="https://developers.google.com/search../30-advanced/10-advanced-routing.html/structured-data/intro-structured-data">Structured data</a> helps search engines understand the content of a page. If you're using structured data alongside <a href="https://github.com/sveltejs/svelte-preprocess"><code>svelte-preprocess</code></a>, you will need to explicitly preserve <code>ld+json</code> data (this <a href="https://github.com/sveltejs/svelte-preprocess/issues/305">may change in future</a>):</p>
+          <pre class="language-js"><code class="language-js"><span class="token comment">/// file: svelte.config.js</span>
+<span class="token comment">// @filename: ambient.d.ts</span>
+declare module <span class="token string">'svelte-preprocess'</span><span class="token punctuation">;</span>
+
+<span class="token comment">// @filename: index.js</span>
+<span class="token comment">// cut---</span>
+<span class="token keyword module">import</span> <span class="token imports">preprocess</span> <span class="token keyword module">from</span> <span class="token string">'svelte-preprocess'</span><span class="token punctuation">;</span>
+
+<span class="token doc-comment comment">/** <span class="token keyword">@type</span> <span class="token class-name"><span class="token punctuation">{</span><span class="token keyword module">import</span><span class="token punctuation">(</span><span class="token string">'@sveltejs/kit'</span><span class="token punctuation">)</span><span class="token punctuation">.</span>Config<span class="token punctuation">}</span></span> */</span>
+<span class="token keyword">const</span> config <span class="token operator">=</span> <span class="token punctuation">{</span>
+	<span class="token literal-property property">preprocess</span><span class="token operator">:</span> <span class="token function">preprocess</span><span class="token punctuation">(</span><span class="token punctuation">{</span>
+		<span class="token literal-property property">preserve</span><span class="token operator">:</span> <span class="token punctuation">[</span><span class="token string">'ld+json'</span><span class="token punctuation">]</span>
+		<span class="token comment">// ...</span>
+	<span class="token punctuation">}</span><span class="token punctuation">)</span>
+<span class="token punctuation">}</span><span class="token punctuation">;</span>
+
+<span class="token keyword module">export</span> <span class="token keyword module">default</span> config<span class="token punctuation">;</span></code></pre>
+        </section>
+        <section id="sitemaps" class="level3">
+          <h3>Sitemaps</h3>
+          <p><a href="https://developers.google.com/search../30-advanced/10-advanced-routing.html/sitemaps/build-sitemap">Sitemaps</a> help search engines prioritize pages within your site, particularly when you have a large amount of content. You can create a sitemap dynamically using an endpoint:</p>
+          <pre class="language-js"><code class="language-js"><span class="token comment">/// file: src/routes/sitemap.xml/+server.js</span>
+<span class="token keyword module">export</span> <span class="token keyword">async</span> <span class="token keyword">function</span> <span class="token constant">GET</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+	<span class="token keyword control-flow">return</span> <span class="token keyword">new</span> <span class="token class-name">Response</span><span class="token punctuation">(</span>
+		<span class="token template-string"><span class="token template-punctuation string">`</span><span class="token string">
+		&#x3C;?xml version="1.0" encoding="UTF-8" ?>
+		&#x3C;urlset
+			xmlns="https://www.sitemaps.org/schemas/sitemap/0.9"
+			xmlns:xhtml="https://www.w3.org/1999/xhtml"
+			xmlns:mobile="https://www.google.com/schemas/sitemap-mobile/1.0"
+			xmlns:news="https://www.google.com/schemas/sitemap-news/0.9"
+			xmlns:image="https://www.google.com/schemas/sitemap-image/1.1"
+			xmlns:video="https://www.google.com/schemas/sitemap-video/1.1"
+		>
+			&#x3C;!-- &#x3C;url> elements go here -->
+		&#x3C;/urlset></span><span class="token template-punctuation string">`</span></span><span class="token punctuation">.</span><span class="token method function property-access">trim</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">,</span>
+		<span class="token punctuation">{</span>
+			<span class="token literal-property property">headers</span><span class="token operator">:</span> <span class="token punctuation">{</span>
+				<span class="token string-property property">'Content-Type'</span><span class="token operator">:</span> <span class="token string">'application/xml'</span>
+			<span class="token punctuation">}</span>
+		<span class="token punctuation">}</span>
+	<span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span></code></pre>
+        </section>
+        <section id="amp" class="level3">
+          <h3>AMP</h3>
+          <p>An unfortunate reality of modern web development is that it is sometimes necessary to create an <a href="https://amp.dev/">Accelerated Mobile Pages (AMP)</a> version of your site. In SvelteKit this can be done by setting the <a href="../50-api-reference/10-configuration.html#inlinestylethreshold"><code>inlineStyleThreshold</code></a> option...</p>
+          <pre class="language-js"><code class="language-js"><span class="token comment">/// file: svelte.config.js</span>
+<span class="token doc-comment comment">/** <span class="token keyword">@type</span> <span class="token class-name"><span class="token punctuation">{</span><span class="token keyword module">import</span><span class="token punctuation">(</span><span class="token string">'@sveltejs/kit'</span><span class="token punctuation">)</span><span class="token punctuation">.</span>Config<span class="token punctuation">}</span></span> */</span>
+<span class="token keyword">const</span> config <span class="token operator">=</span> <span class="token punctuation">{</span>
+	<span class="token literal-property property">kit</span><span class="token operator">:</span> <span class="token punctuation">{</span>
+		<span class="token comment">// since &#x3C;link rel="stylesheet"> isn't</span>
+		<span class="token comment">// allowed, inline all styles</span>
+		<span class="token literal-property property">inlineStyleThreshold</span><span class="token operator">:</span> <span class="token number">Infinity</span>
+	<span class="token punctuation">}</span>
+<span class="token punctuation">}</span><span class="token punctuation">;</span>
+
+<span class="token keyword module">export</span> <span class="token keyword module">default</span> config<span class="token punctuation">;</span></code></pre>
+          <p>...disabling <code>csr</code> in your root <code>+layout.js</code>/<code>+layout.server.js</code>...</p>
+          <pre class="language-js"><code class="language-js"><span class="token comment">/// file: src/routes/+layout.server.js</span>
+<span class="token keyword module">export</span> <span class="token keyword">const</span> csr <span class="token operator">=</span> <span class="token boolean">false</span><span class="token punctuation">;</span></code></pre>
+          <p>...and transforming the HTML using <code>transformPageChunk</code> along with <code>transform</code> imported from <code>@sveltejs/amp</code>:</p>
+          <pre class="language-js"><code class="language-js"><span class="token keyword module">import</span> <span class="token imports"><span class="token operator">*</span> <span class="token keyword module">as</span> amp</span> <span class="token keyword module">from</span> <span class="token string">'@sveltejs/amp'</span><span class="token punctuation">;</span>
+
+<span class="token doc-comment comment">/** <span class="token keyword">@type</span> <span class="token class-name"><span class="token punctuation">{</span><span class="token keyword module">import</span><span class="token punctuation">(</span><span class="token string">'@sveltejs/kit'</span><span class="token punctuation">)</span><span class="token punctuation">.</span>Handle<span class="token punctuation">}</span></span> */</span>
+<span class="token keyword module">export</span> <span class="token keyword">async</span> <span class="token keyword">function</span> <span class="token function">handle</span><span class="token punctuation">(</span><span class="token parameter"><span class="token punctuation">{</span> event<span class="token punctuation">,</span> resolve <span class="token punctuation">}</span></span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+	<span class="token keyword">let</span> buffer <span class="token operator">=</span> <span class="token string">''</span><span class="token punctuation">;</span>
+	<span class="token keyword control-flow">return</span> <span class="token function">resolve</span><span class="token punctuation">(</span>event<span class="token punctuation">,</span> <span class="token punctuation">{</span>
+		<span class="token function-variable function">transformPageChunk</span><span class="token operator">:</span> <span class="token punctuation">(</span><span class="token parameter"><span class="token punctuation">{</span> html<span class="token punctuation">,</span> done <span class="token punctuation">}</span></span><span class="token punctuation">)</span> <span class="token arrow operator">=></span> <span class="token punctuation">{</span>
+			buffer <span class="token operator">+=</span> html<span class="token punctuation">;</span>
+			<span class="token keyword control-flow">if</span> <span class="token punctuation">(</span>done<span class="token punctuation">)</span> <span class="token keyword control-flow">return</span> amp<span class="token punctuation">.</span><span class="token method function property-access">transform</span><span class="token punctuation">(</span>html<span class="token punctuation">)</span><span class="token punctuation">;</span>
+		<span class="token punctuation">}</span>
+	<span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span></code></pre>
+          <blockquote>
+            <p>
+              It's a good idea to use the <code>handle</code> hook to validate the transformed HTML using <code>amphtml-validator</code>, but only if you're prerendering pages since it's very slow.
+              <span style="float: footnote;"><a href="../../index.html#toc">Go to TOC</a></span>
+            </p>
+          </blockquote>
+        </section>
+      </section>
+    </section>
+  </body>
+</html>

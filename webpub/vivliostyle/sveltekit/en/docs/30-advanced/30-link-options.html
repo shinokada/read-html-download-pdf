@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <title>Link options</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="https://raw.githubusercontent.com/shinokada/prism-coy-theme/main/theme_common.css">
+  </head>
+  <body>
+    <section id="link-options" class="level1">
+      <h1>Link options</h1>
+      <p>In SvelteKit, <code>&#x3C;a></code> elements (rather than framework-specific <code>&#x3C;Link></code> components) are used to navigate between the routes of your app. If the user clicks on a link whose <code>href</code> is 'owned' by the app (as opposed to, say, a link to an external site) then SvelteKit will navigate to the new page by importing its code and then calling any <code>load</code> functions it needs to fetch data.</p>
+      <p>You can customise the behaviour of links with <code>data-sveltekit-*</code> attributes. These can be applied to the <code>&#x3C;a></code> itself, or to a parent element.</p>
+      <section id="data-sveltekit-prefetch" class="level2">
+        <h2>data-sveltekit-prefetch</h2>
+        <p>To get a head start on importing the code and fetching the page's data, use the <code>data-sveltekit-prefetch</code> attribute, which will start loading everything as soon as the user hovers over the link (on a desktop) or touches it (on mobile), rather than waiting for the <code>click</code> event to trigger navigation. Typically, this buys us an extra couple of hundred milliseconds, which is the difference between a user interface that feels laggy, and one that feels snappy.</p>
+        <p>To apply this behaviour across the board, add the attribute to a parent element (or even the <code>&#x3C;body></code> in your <code>src/app.html</code>):</p>
+        <pre class="language-html"><code class="language-html">/// file: src/routes/+layout.svelte
+<span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;</span>main</span> <span class="token attr-name">data-sveltekit-prefetch</span><span class="token punctuation">></span></span>
+	<span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;</span>slot</span> <span class="token punctuation">/></span></span>
+<span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;/</span>main</span><span class="token punctuation">></span></span></code></pre>
+        <blockquote>
+          <p>You can also programmatically invoke <code>prefetch</code> from <code>$app/navigation</code>.</p>
+        </blockquote>
+      </section>
+      <section id="data-sveltekit-reload" class="level2">
+        <h2>data-sveltekit-reload</h2>
+        <p>Occasionally, we need to tell SvelteKit not to handle a link, but allow the browser to handle it. Adding a <code>data-sveltekit-reload</code> attribute to a link...</p>
+        <pre class="language-html"><code class="language-html"><span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;</span>a</span> <span class="token attr-name">data-sveltekit-reload</span> <span class="token attr-name">href</span><span class="token attr-value"><span class="token punctuation attr-equals">=</span><span class="token punctuation">"</span>/path<span class="token punctuation">"</span></span><span class="token punctuation">></span></span>Path<span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;/</span>a</span><span class="token punctuation">></span></span></code></pre>
+        <p>...will cause a full-page navigation when the link is clicked.</p>
+        <p>Links with a <code>rel="external"</code> attribute will receive the same treatment. In addition, they will be ignored during <a href="../20-core-concepts/40-page-options.html#prerender">prerendering</a>.</p>
+      </section>
+      <section id="data-sveltekit-noscroll" class="level2">
+        <h2>data-sveltekit-noscroll</h2>
+        <p>When navigating to internal links, SvelteKit mirrors the browser's default navigation behaviour: it will change the scroll position to 0,0 so that the user is at the very top left of the page (unless the link includes a <code>#hash</code>, in which case it will scroll to the element with a matching ID).</p>
+        <p>In certain cases, you may wish to disable this behaviour. Adding a <code>data-sveltekit-noscroll</code> attribute to a link...</p>
+        <pre class="language-html"><code class="language-html"><span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;</span>a</span> <span class="token attr-name">href</span><span class="token attr-value"><span class="token punctuation attr-equals">=</span><span class="token punctuation">"</span>path<span class="token punctuation">"</span></span> <span class="token attr-name">data-sveltekit-noscroll</span><span class="token punctuation">></span></span>Path<span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;/</span>a</span><span class="token punctuation">></span></span></code></pre>
+        <p>...will prevent scrolling after the link is clicked.</p>
+      </section>
+      <section id="disabling-options" class="level2">
+        <h2>Disabling options</h2>
+        <p>To disable any of these options inside an element where they have been enabled, use the <code>"off"</code> value:</p>
+        <pre class="language-html"><code class="language-html"><span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;</span>div</span> <span class="token attr-name">data-sveltekit-prefetch</span><span class="token punctuation">></span></span>
+	<span class="token comment">&#x3C;!-- these links will be prefetched --></span>
+	<span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;</span>a</span> <span class="token attr-name">href</span><span class="token attr-value"><span class="token punctuation attr-equals">=</span><span class="token punctuation">"</span>/a<span class="token punctuation">"</span></span><span class="token punctuation">></span></span>a<span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;/</span>a</span><span class="token punctuation">></span></span>
+	<span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;</span>a</span> <span class="token attr-name">href</span><span class="token attr-value"><span class="token punctuation attr-equals">=</span><span class="token punctuation">"</span>/b<span class="token punctuation">"</span></span><span class="token punctuation">></span></span>b<span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;/</span>a</span><span class="token punctuation">></span></span>
+	<span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;</span>a</span> <span class="token attr-name">href</span><span class="token attr-value"><span class="token punctuation attr-equals">=</span><span class="token punctuation">"</span>/c<span class="token punctuation">"</span></span><span class="token punctuation">></span></span>c<span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;/</span>a</span><span class="token punctuation">></span></span>
+
+	<span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;</span>div</span> <span class="token attr-name">data-sveltekit-prefetch</span><span class="token attr-value"><span class="token punctuation attr-equals">=</span><span class="token punctuation">"</span>off<span class="token punctuation">"</span></span><span class="token punctuation">></span></span>
+		<span class="token comment">&#x3C;!-- these links will NOT be prefetched --></span>
+		<span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;</span>a</span> <span class="token attr-name">href</span><span class="token attr-value"><span class="token punctuation attr-equals">=</span><span class="token punctuation">"</span>/d<span class="token punctuation">"</span></span><span class="token punctuation">></span></span>d<span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;/</span>a</span><span class="token punctuation">></span></span>
+		<span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;</span>a</span> <span class="token attr-name">href</span><span class="token attr-value"><span class="token punctuation attr-equals">=</span><span class="token punctuation">"</span>/e<span class="token punctuation">"</span></span><span class="token punctuation">></span></span>e<span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;/</span>a</span><span class="token punctuation">></span></span>
+		<span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;</span>a</span> <span class="token attr-name">href</span><span class="token attr-value"><span class="token punctuation attr-equals">=</span><span class="token punctuation">"</span>/f<span class="token punctuation">"</span></span><span class="token punctuation">></span></span>f<span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;/</span>a</span><span class="token punctuation">></span></span>
+	<span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;/</span>div</span><span class="token punctuation">></span></span>
+<span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;/</span>div</span><span class="token punctuation">></span></span></code></pre>
+        <p>To apply an attribute to an element conditionally, do this:</p>
+        <pre class="language-html"><code class="language-html"><span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;</span>div</span> <span class="token attr-name">data-sveltekit-reload</span><span class="token attr-value"><span class="token punctuation attr-equals">=</span>{shouldReload</span> <span class="token attr-name">?</span> <span class="token attr-name">''</span> <span class="token attr-name">:</span> <span class="token attr-name">'off'}</span><span class="token punctuation">></span></span></code></pre>
+        <blockquote>
+          <p>
+            This works because in HTML, <code>&#x3C;element attribute></code> is equivalent to <code>&#x3C;element attribute=""></code>
+            <span style="float: footnote;"><a href="../../index.html#toc">Go to TOC</a></span>
+          </p>
+        </blockquote>
+      </section>
+    </section>
+  </body>
+</html>

@@ -1,0 +1,212 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <title>Migrating from Sapper</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="https://raw.githubusercontent.com/shinokada/prism-coy-theme/main/theme_common.css">
+  </head>
+  <body>
+    <section id="migrating-from-sapper" class="level1">
+      <h1>Migrating from Sapper</h1>
+      <p>rank: 1</p>
+      <p>SvelteKit is the successor to Sapper and shares many elements of its design.</p>
+      <p>If you have an existing Sapper app that you plan to migrate to SvelteKit, there are a number of changes you will need to make. You may find it helpful to view <a href="../60-appendix/20-additional-resources.html#examples">some examples</a> while migrating.</p>
+      <section id="packagejson" class="level2">
+        <h2>package.json</h2>
+        <section id="type-module" class="level3">
+          <h3>type: "module"</h3>
+          <p>
+            Add <code>"type": "module"</code> to your <code>package.json</code>. You can do this step separately from the rest as part of an incremental migration if you are using Sapper 0.29.3
+            or newer.
+          </p>
+        </section>
+        <section id="dependencies" class="level3">
+          <h3>dependencies</h3>
+          <p>Remove <code>polka</code> or <code>express</code>, if you're using one of those, and any middleware such as <code>sirv</code> or <code>compression</code>.</p>
+        </section>
+        <section id="devdependencies" class="level3">
+          <h3>devDependencies</h3>
+          <p>Remove <code>sapper</code> from your <code>devDependencies</code> and replace it with <code>@sveltejs/kit</code> and whichever <a href="../20-core-concepts/50-adapters.html">adapter</a> you plan to use (see <a href="/docs/migrating#project-files-configuration">next section</a>).</p>
+        </section>
+        <section id="scripts" class="level3">
+          <h3>scripts</h3>
+          <p>Any scripts that reference <code>sapper</code> should be updated:</p>
+          <ul>
+            <li><code>sapper build</code> should become <code>vite build</code> using the Node <a href="../20-core-concepts/50-adapters.html">adapter</a></li>
+            <li><code>sapper export</code> should become <code>vite build</code> using the static <a href="../20-core-concepts/50-adapters.html">adapter</a></li>
+            <li><code>sapper dev</code> should become <code>vite dev</code></li>
+            <li><code>node __sapper__/build</code> should become <code>node build</code></li>
+          </ul>
+        </section>
+      </section>
+      <section id="project-files" class="level2">
+        <h2>Project files</h2>
+        <p>The bulk of your app, in <code>src/routes</code>, can be left where it is, but several project files will need to be moved or updated.</p>
+        <section id="configuration" class="level3">
+          <h3>Configuration</h3>
+          <p>Your <code>webpack.config.js</code> or <code>rollup.config.js</code> should be replaced with a <code>svelte.config.js</code>, as documented <a href="../50-api-reference/10-configuration.html">here</a>. Svelte preprocessor options should be moved to <code>config.preprocess</code>.</p>
+          <p>You will need to add an <a href="../20-core-concepts/50-adapters.html">adapter</a>. <code>sapper build</code> is roughly equivalent to <a href="https://github.com/sveltejs/kit/tree/master/packages/adapter-node">adapter-node</a> while <code>sapper export</code> is roughly equivalent to <a href="https://github.com/sveltejs/kit/tree/master/packages/adapter-static">adapter-static</a>, though you might prefer to use an adapter designed for the platform you're deploying to.</p>
+          <p>If you were using plugins for filetypes that are not automatically handled by <a href="https://vitejs.dev">Vite</a>, you will need to find Vite equivalents and add them to the <a href="../10-getting-started/30-project-structure.html#project-files-vite-config-js">Vite config</a>.</p>
+        </section>
+        <section id="srcclientjs" class="level3">
+          <h3>src/client.js</h3>
+          <p>This file has no equivalent in SvelteKit. Any custom logic (beyond <code>sapper.start(...)</code>) should be expressed in your <code>+layout.svelte</code> file, inside an <code>onMount</code> callback.</p>
+        </section>
+        <section id="srcserverjs" class="level3">
+          <h3>src/server.js</h3>
+          <p>When using <code>adapter-node</code> the equivalent is a <a href="https://github.com/sveltejs/kit/tree/master/packages/adapter-node#custom-server">custom server</a>. Otherwise, this file has no direct equivalent, since SvelteKit apps can run in serverless environments.</p>
+        </section>
+        <section id="srcservice-workerjs" class="level3">
+          <h3>src/service-worker.js</h3>
+          <p>Most imports from <code>@sapper/service-worker</code> have equivalents in <a href="../50-api-reference/30-modules.html#$service-worker"><code>$service-worker</code></a>:</p>
+          <ul>
+            <li><code>files</code> is unchanged</li>
+            <li><code>routes</code> has been removed</li>
+            <li><code>shell</code> is now <code>build</code></li>
+            <li><code>timestamp</code> is now <code>version</code></li>
+          </ul>
+        </section>
+        <section id="srctemplatehtml" class="level3">
+          <h3>src/template.html</h3>
+          <p>The <code>src/template.html</code> file should be renamed <code>src/app.html</code>.</p>
+          <p>Remove <code>%sapper.base%</code>, <code>%sapper.scripts%</code> and <code>%sapper.styles%</code>. Replace <code>%sapper.head%</code> with <code>%sveltekit.head%</code> and <code>%sapper.html%</code> with <code>%sveltekit.body%</code>. The <code>&#x3C;div id="sapper"></code> is no longer necessary.</p>
+        </section>
+        <section id="srcnode_modules" class="level3">
+          <h3>src/node_modules</h3>
+          <p>A common pattern in Sapper apps is to put your internal library in a directory inside <code>src/node_modules</code>. This doesn't work with Vite, so we use <a href="../50-api-reference/30-modules.html#$lib"><code>src/lib</code></a> instead.</p>
+        </section>
+      </section>
+      <section id="pages-and-layouts" class="level2">
+        <h2>Pages and layouts</h2>
+        <section id="renamed-files" class="level3">
+          <h3>Renamed files</h3>
+          <p>Routes now are made up of the folder name exclusively to remove ambiguity, the folder names leading up to a <code>+page.svelte</code> correspond to the route. See <a href="../20-core-concepts/10-routing.html">the routing docs</a> for an overview. The following shows a old/new comparison:</p>
+          <table>
+            <thead>
+              <tr>
+                <th>Old</th>
+                <th>New</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>routes/about/index.svelte</td>
+                <td>routes/about/+page.svelte</td>
+              </tr>
+              <tr>
+                <td>routes/about.svelte</td>
+                <td>routes/about/+page.svelte</td>
+              </tr>
+            </tbody>
+          </table>
+          <p>Your custom error page component should be renamed from <code>_error.svelte</code> to <code>+error.svelte</code>. Any <code>_layout.svelte</code> files should likewise be renamed <code>+layout.svelte</code>. <a href="../20-core-concepts/10-routing.html#other-files">Any other files are ignored</a>.</p>
+        </section>
+        <section id="imports" class="level3">
+          <h3>Imports</h3>
+          <p>The <code>goto</code>, <code>prefetch</code> and <code>prefetchRoutes</code> imports from <code>@sapper/app</code> should be replaced with identical imports from <a href="../50-api-reference/30-modules.html#$app-navigation"><code>$app/navigation</code></a>.</p>
+          <p>The <code>stores</code> import from <code>@sapper/app</code> should be replaced — see the <a href="/docs/migrating#pages-and-layouts-stores">Stores</a> section below.</p>
+          <p>Any files you previously imported from directories in <code>src/node_modules</code> will need to be replaced with <a href="../50-api-reference/30-modules.html#$lib"><code>$lib</code></a> imports.</p>
+        </section>
+        <section id="preload" class="level3">
+          <h3>Preload</h3>
+          <p>As before, pages and layouts can export a function that allows data to be loaded before rendering takes place.</p>
+          <p>This function has been renamed from <code>preload</code> to <a href="../20-core-concepts/20-load.html"><code>load</code></a>, it now lives in a <code>+page.js</code> (or <code>+layout.js</code>) next to its <code>+page.svelte</code> (or <code>+layout.svelte</code>), and its API has changed. Instead of two arguments — <code>page</code> and <code>session</code> — there is a single <code>event</code> argument.</p>
+          <p>There is no more <code>this</code> object, and consequently no <code>this.fetch</code>, <code>this.error</code> or <code>this.redirect</code>. Instead, you can get <a href="../20-core-concepts/20-load.html#making-fetch-requests"><code>fetch</code></a> from the input methods, and both <a href="../20-core-concepts/20-load.html#errors"><code>error</code></a> and <a href="../20-core-concepts/20-load.html#redirects"><code>redirect</code></a> are now thrown.</p>
+        </section>
+        <section id="stores" class="level3">
+          <h3>Stores</h3>
+          <p>In Sapper, you would get references to provided stores like so:</p>
+          <pre class="language-js"><code class="language-js"><span class="token comment">// @filename: ambient.d.ts</span>
+declare module <span class="token string">'@sapper/app'</span><span class="token punctuation">;</span>
+
+<span class="token comment">// @filename: index.js</span>
+<span class="token comment">// cut---</span>
+<span class="token keyword module">import</span> <span class="token imports"><span class="token punctuation">{</span> stores <span class="token punctuation">}</span></span> <span class="token keyword module">from</span> <span class="token string">'@sapper/app'</span><span class="token punctuation">;</span>
+<span class="token keyword">const</span> <span class="token punctuation">{</span> preloading<span class="token punctuation">,</span> page<span class="token punctuation">,</span> session <span class="token punctuation">}</span> <span class="token operator">=</span> <span class="token function">stores</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span></code></pre>
+          <p>The <code>page</code> store still exists; <code>preloading</code> has been replaced with a <code>navigating</code> store that contains <code>from</code> and <code>to</code> properties. <code>page</code> now has <code>url</code> and <code>params</code> properties, but no <code>path</code> or <code>query</code>.</p>
+          <p>You access them differently in SvelteKit. <code>stores</code> is now <code>getStores</code>, but in most cases it is unnecessary since you can import <code>navigating</code>, and <code>page</code> directly from <a href="../50-api-reference/30-modules.html#$app-stores"><code>$app/stores</code></a>.</p>
+        </section>
+        <section id="routing" class="level3">
+          <h3>Routing</h3>
+          <p>Regex routes are no longer supported. Instead, use <a href="../30-advanced/10-advanced-routing.html-routing#matching">advanced route matching</a>.</p>
+        </section>
+        <section id="segments" class="level3">
+          <h3>Segments</h3>
+          <p>Previously, layout components received a <code>segment</code> prop indicating the child segment. This has been removed; you should use the more flexible <code>$page.url.pathname</code> value to derive the segment you're interested in.</p>
+        </section>
+        <section id="urls" class="level3">
+          <h3>URLs</h3>
+          <p>In Sapper, all relative URLs were resolved against the base URL — usually <code>/</code>, unless the <code>basepath</code> option was used — rather than against the current page.</p>
+          <p>This caused problems and is no longer the case in SvelteKit. Instead, relative URLs are resolved against the current page (or the destination page, for <code>fetch</code> URLs in <code>load</code> functions) instead. In most cases, it's easier to use root-relative (i.e. starts with <code>/</code>) URLs, since their meaning is not context-dependent.</p>
+        </section>
+        <section id="a-attributes" class="level3">
+          <h3>&#x3C;a> attributes</h3>
+          <ul>
+            <li><code>sapper:prefetch</code> is now <code>data-sveltekit-prefetch</code></li>
+            <li><code>sapper:noscroll</code> is now <code>data-sveltekit-noscroll</code></li>
+          </ul>
+        </section>
+      </section>
+      <section id="endpoints" class="level2">
+        <h2>Endpoints</h2>
+        <p>In Sapper, <a href="../20-core-concepts/10-routing.html#server">server routes</a> received the <code>req</code> and <code>res</code> objects exposed by Node's <code>http</code> module (or the augmented versions provided by frameworks like Polka and Express).</p>
+        <p>SvelteKit is designed to be agnostic as to where the app is running — it could be running on a Node server, but could equally be running on a serverless platform or in a Cloudflare Worker. For that reason, you no longer interact directly with <code>req</code> and <code>res</code>. Your endpoints will need to be updated to match the new signature.</p>
+        <p>To support this environment-agnostic behavior, <code>fetch</code> is now available in the global context, so you don't need to import <code>node-fetch</code>, <code>cross-fetch</code>, or similar server-side fetch implementations in order to use it.</p>
+      </section>
+      <section id="integrations" class="level2">
+        <h2>Integrations</h2>
+        <p>See <a href="/faq#integrations">the FAQ</a> for detailed information about integrations.</p>
+        <section id="html-minifier" class="level3">
+          <h3>HTML minifier</h3>
+          <p>Sapper includes <code>html-minifier</code> by default. SvelteKit does not include this, but it can be added as a <a href="../30-advanced/20-hooks.html#server-hooks-handle">hook</a>:</p>
+          <pre class="language-js"><code class="language-js"><span class="token comment">// @filename: ambient.d.ts</span>
+<span class="token comment">/// &#x3C;reference types="@sveltejs/kit" /></span>
+declare module <span class="token string">'html-minifier'</span><span class="token punctuation">;</span>
+
+<span class="token comment">// @filename: index.js</span>
+<span class="token comment">// cut---</span>
+<span class="token keyword module">import</span> <span class="token imports"><span class="token punctuation">{</span> minify <span class="token punctuation">}</span></span> <span class="token keyword module">from</span> <span class="token string">'html-minifier'</span><span class="token punctuation">;</span>
+<span class="token keyword module">import</span> <span class="token imports"><span class="token punctuation">{</span> prerendering <span class="token punctuation">}</span></span> <span class="token keyword module">from</span> <span class="token string">'$app/environment'</span><span class="token punctuation">;</span>
+
+<span class="token keyword">const</span> minification_options <span class="token operator">=</span> <span class="token punctuation">{</span>
+	<span class="token literal-property property">collapseBooleanAttributes</span><span class="token operator">:</span> <span class="token boolean">true</span><span class="token punctuation">,</span>
+	<span class="token literal-property property">collapseWhitespace</span><span class="token operator">:</span> <span class="token boolean">true</span><span class="token punctuation">,</span>
+	<span class="token literal-property property">conservativeCollapse</span><span class="token operator">:</span> <span class="token boolean">true</span><span class="token punctuation">,</span>
+	<span class="token literal-property property">decodeEntities</span><span class="token operator">:</span> <span class="token boolean">true</span><span class="token punctuation">,</span>
+	<span class="token literal-property property">html5</span><span class="token operator">:</span> <span class="token boolean">true</span><span class="token punctuation">,</span>
+	<span class="token literal-property property">ignoreCustomComments</span><span class="token operator">:</span> <span class="token punctuation">[</span><span class="token regex"><span class="token regex-delimiter">/</span><span class="token regex-source language-regex">^#</span><span class="token regex-delimiter">/</span></span><span class="token punctuation">]</span><span class="token punctuation">,</span>
+	<span class="token literal-property property">minifyCSS</span><span class="token operator">:</span> <span class="token boolean">true</span><span class="token punctuation">,</span>
+	<span class="token literal-property property">minifyJS</span><span class="token operator">:</span> <span class="token boolean">false</span><span class="token punctuation">,</span>
+	<span class="token literal-property property">removeAttributeQuotes</span><span class="token operator">:</span> <span class="token boolean">true</span><span class="token punctuation">,</span>
+	<span class="token literal-property property">removeComments</span><span class="token operator">:</span> <span class="token boolean">false</span><span class="token punctuation">,</span> <span class="token comment">// some hydration code needs comments, so leave them in</span>
+	<span class="token literal-property property">removeOptionalTags</span><span class="token operator">:</span> <span class="token boolean">true</span><span class="token punctuation">,</span>
+	<span class="token literal-property property">removeRedundantAttributes</span><span class="token operator">:</span> <span class="token boolean">true</span><span class="token punctuation">,</span>
+	<span class="token literal-property property">removeScriptTypeAttributes</span><span class="token operator">:</span> <span class="token boolean">true</span><span class="token punctuation">,</span>
+	<span class="token literal-property property">removeStyleLinkTypeAttributes</span><span class="token operator">:</span> <span class="token boolean">true</span><span class="token punctuation">,</span>
+	<span class="token literal-property property">sortAttributes</span><span class="token operator">:</span> <span class="token boolean">true</span><span class="token punctuation">,</span>
+	<span class="token literal-property property">sortClassName</span><span class="token operator">:</span> <span class="token boolean">true</span>
+<span class="token punctuation">}</span><span class="token punctuation">;</span>
+
+<span class="token doc-comment comment">/** <span class="token keyword">@type</span> <span class="token class-name"><span class="token punctuation">{</span><span class="token keyword module">import</span><span class="token punctuation">(</span><span class="token string">'@sveltejs/kit'</span><span class="token punctuation">)</span><span class="token punctuation">.</span>Handle<span class="token punctuation">}</span></span> */</span>
+<span class="token keyword module">export</span> <span class="token keyword">async</span> <span class="token keyword">function</span> <span class="token function">handle</span><span class="token punctuation">(</span><span class="token parameter"><span class="token punctuation">{</span> event<span class="token punctuation">,</span> resolve <span class="token punctuation">}</span></span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+	<span class="token keyword">const</span> response <span class="token operator">=</span> <span class="token keyword control-flow">await</span> <span class="token function">resolve</span><span class="token punctuation">(</span>event<span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+	<span class="token keyword control-flow">if</span> <span class="token punctuation">(</span>prerendering <span class="token operator">&#x26;&#x26;</span> response<span class="token punctuation">.</span><span class="token property-access">headers</span><span class="token punctuation">.</span><span class="token method function property-access">get</span><span class="token punctuation">(</span><span class="token string">'content-type'</span><span class="token punctuation">)</span> <span class="token operator">===</span> <span class="token string">'text/html'</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+		<span class="token keyword control-flow">return</span> <span class="token keyword">new</span> <span class="token class-name">Response</span><span class="token punctuation">(</span><span class="token function">minify</span><span class="token punctuation">(</span><span class="token keyword control-flow">await</span> response<span class="token punctuation">.</span><span class="token method function property-access">text</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">,</span> minification_options<span class="token punctuation">)</span><span class="token punctuation">,</span> <span class="token punctuation">{</span>
+			<span class="token literal-property property">status</span><span class="token operator">:</span> response<span class="token punctuation">.</span><span class="token property-access">status</span><span class="token punctuation">,</span>
+			<span class="token literal-property property">headers</span><span class="token operator">:</span> response<span class="token punctuation">.</span><span class="token property-access">headers</span>
+		<span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+	<span class="token punctuation">}</span>
+
+	<span class="token keyword control-flow">return</span> response<span class="token punctuation">;</span>
+<span class="token punctuation">}</span></code></pre>
+          <p>
+            Note that <code>prerendering</code> is <code>false</code> when using <code>vite preview</code> to test the production build of the site, so to verify the results of minifying, you'll need to inspect the built HTML files directly.
+            <span style="float: footnote;"><a href="../../index.html#toc">Go to TOC</a></span>
+          </p>
+        </section>
+      </section>
+    </section>
+  </body>
+</html>

@@ -1,0 +1,183 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <title>Hooks</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="https://raw.githubusercontent.com/shinokada/prism-coy-theme/main/theme_common.css">
+  </head>
+  <body>
+    <section id="hooks" class="level1">
+      <h1>Hooks</h1>
+      <p>'Hooks' are app-wide functions you declare that SvelteKit will call in response to specific events, giving you fine-grained control over the framework's behaviour.</p>
+      <p>There are two hooks files, both optional:</p>
+      <ul>
+        <li><code>src/hooks.server.js</code> — your app's server hooks</li>
+        <li><code>src/hooks.client.js</code> — your app's client hooks</li>
+      </ul>
+      <p>Code in these modules will run when the application starts up, making them useful for initializing database clients and so on.</p>
+      <blockquote>
+        <p>You can configure the location of these files with <a href="../50-api-reference/10-configuration.html#files"><code>config.kit.files.hooks</code></a>.</p>
+      </blockquote>
+      <section id="server-hooks" class="level2">
+        <h2>Server hooks</h2>
+        <p>The following hooks can be added to <code>src/hooks.server.js</code>:</p>
+        <section id="handle" class="level3">
+          <h3>handle</h3>
+          <p>This function runs every time the SvelteKit server receives a <a href="../10-getting-started/40-web-standards.html#fetch-apis-request">request</a> — whether that happens while the app is running, or during <a href="../20-core-concepts/40-page-options.html#prerender">prerendering</a> — and determines the <a href="../10-getting-started/40-web-standards.html#fetch-apis-response">response</a>. It receives an <code>event</code> object representing the request and a function called <code>resolve</code>, which renders the route and generates a <code>Response</code>. This allows you to modify response headers or bodies, or bypass SvelteKit entirely (for implementing routes programmatically, for example).</p>
+          <pre class="language-js"><code class="language-js"><span class="token comment">/// file: src/hooks.server.js</span>
+<span class="token doc-comment comment">/** <span class="token keyword">@type</span> <span class="token class-name"><span class="token punctuation">{</span><span class="token keyword module">import</span><span class="token punctuation">(</span><span class="token string">'@sveltejs/kit'</span><span class="token punctuation">)</span><span class="token punctuation">.</span>Handle<span class="token punctuation">}</span></span> */</span>
+<span class="token keyword module">export</span> <span class="token keyword">async</span> <span class="token keyword">function</span> <span class="token function">handle</span><span class="token punctuation">(</span><span class="token parameter"><span class="token punctuation">{</span> event<span class="token punctuation">,</span> resolve <span class="token punctuation">}</span></span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+	<span class="token keyword control-flow">if</span> <span class="token punctuation">(</span>event<span class="token punctuation">.</span><span class="token property-access">url</span><span class="token punctuation">.</span><span class="token property-access">pathname</span><span class="token punctuation">.</span><span class="token method function property-access">startsWith</span><span class="token punctuation">(</span><span class="token string">'/custom'</span><span class="token punctuation">)</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+		<span class="token keyword control-flow">return</span> <span class="token keyword">new</span> <span class="token class-name">Response</span><span class="token punctuation">(</span><span class="token string">'custom response'</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+	<span class="token punctuation">}</span>
+
+	<span class="token keyword">const</span> response <span class="token operator">=</span> <span class="token keyword control-flow">await</span> <span class="token function">resolve</span><span class="token punctuation">(</span>event<span class="token punctuation">)</span><span class="token punctuation">;</span>
+	<span class="token keyword control-flow">return</span> response<span class="token punctuation">;</span>
+<span class="token punctuation">}</span></code></pre>
+          <blockquote>
+            <p>Requests for static assets — which includes pages that were already prerendered — are <em>not</em> handled by SvelteKit.</p>
+          </blockquote>
+          <p>If unimplemented, defaults to <code>({ event, resolve }) => resolve(event)</code>. To add custom data to the request, which is passed to handlers in <code>+server.js</code> and server-only <code>load</code> functions, populate the <code>event.locals</code> object, as shown below.</p>
+          <pre class="language-js"><code class="language-js"><span class="token comment">/// file: src/hooks.server.js</span>
+<span class="token comment">// @filename: ambient.d.ts</span>
+type <span class="token maybe-class-name">User</span> <span class="token operator">=</span> <span class="token punctuation">{</span>
+	<span class="token literal-property property">name</span><span class="token operator">:</span> string<span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+
+declare namespace <span class="token maybe-class-name">App</span> <span class="token punctuation">{</span>
+	<span class="token keyword">interface</span> <span class="token class-name">Locals</span> <span class="token punctuation">{</span>
+		<span class="token literal-property property">user</span><span class="token operator">:</span> <span class="token maybe-class-name">User</span><span class="token punctuation">;</span>
+	<span class="token punctuation">}</span>
+<span class="token punctuation">}</span>
+
+<span class="token keyword">const</span> <span class="token function-variable function">getUserInformation</span><span class="token operator">:</span> <span class="token punctuation">(</span><span class="token parameter"><span class="token literal-property property">cookie</span><span class="token operator">:</span> string <span class="token operator">|</span> <span class="token keyword">void</span></span><span class="token punctuation">)</span> <span class="token arrow operator">=></span> <span class="token known-class-name class-name">Promise</span><span class="token operator">&#x3C;</span><span class="token maybe-class-name">User</span><span class="token operator">></span><span class="token punctuation">;</span>
+
+<span class="token comment">// @filename: index.js</span>
+<span class="token comment">// cut---</span>
+<span class="token doc-comment comment">/** <span class="token keyword">@type</span> <span class="token class-name"><span class="token punctuation">{</span><span class="token keyword module">import</span><span class="token punctuation">(</span><span class="token string">'@sveltejs/kit'</span><span class="token punctuation">)</span><span class="token punctuation">.</span>Handle<span class="token punctuation">}</span></span> */</span>
+<span class="token keyword module">export</span> <span class="token keyword">async</span> <span class="token keyword">function</span> <span class="token function">handle</span><span class="token punctuation">(</span><span class="token parameter"><span class="token punctuation">{</span> event<span class="token punctuation">,</span> resolve <span class="token punctuation">}</span></span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+	event<span class="token punctuation">.</span><span class="token property-access">locals</span><span class="token punctuation">.</span><span class="token property-access">user</span> <span class="token operator">=</span> <span class="token keyword control-flow">await</span> <span class="token function">getUserInformation</span><span class="token punctuation">(</span>event<span class="token punctuation">.</span><span class="token property-access">cookies</span><span class="token punctuation">.</span><span class="token method function property-access">get</span><span class="token punctuation">(</span><span class="token string">'sessionid'</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+	<span class="token keyword">const</span> response <span class="token operator">=</span> <span class="token keyword control-flow">await</span> <span class="token function">resolve</span><span class="token punctuation">(</span>event<span class="token punctuation">)</span><span class="token punctuation">;</span>
+	response<span class="token punctuation">.</span><span class="token property-access">headers</span><span class="token punctuation">.</span><span class="token method function property-access">set</span><span class="token punctuation">(</span><span class="token string">'x-custom-header'</span><span class="token punctuation">,</span> <span class="token string">'potato'</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+	<span class="token keyword control-flow">return</span> response<span class="token punctuation">;</span>
+<span class="token punctuation">}</span></code></pre>
+          <p>You can add call multiple <code>handle</code> functions with <a href="../50-api-reference/30-modules.html#sveltejs-kit-hooks">the <code>sequence</code> helper function</a>.</p>
+          <p><code>resolve</code> also supports a second, optional parameter that gives you more control over how the response will be rendered. That parameter is an object that can have the following fields:</p>
+          <ul>
+            <li><code>transformPageChunk(opts: { html: string, done: boolean }): MaybePromise&#x3C;string | undefined></code> — applies custom transforms to HTML. If <code>done</code> is true, it's the final chunk. Chunks are not guaranteed to be well-formed HTML (they could include an element's opening tag but not its closing tag, for example) but they will always be split at sensible boundaries such as <code>%sveltekit.head%</code> or layout/page components.</li>
+            <li><code>filterSerializedResponseHeaders(name: string, value: string): boolean</code> — determines which headers should be included in serialized responses when a <code>load</code> function loads a resource with <code>fetch</code>. By default, none will be included.</li>
+            <li><code>preload(input: { type: 'js' | 'css' | 'font' | 'asset', path: string }): boolean</code> — determines what files should be added to the <code>&#x3C;head></code> tag to preload it. The method is called with each file that was found at build time while constructing the code chunks — so if you for example have <code>import './styles.css</code> in your <code>+page.svelte</code>, <code>preload</code> will be called with the resolved path to that CSS file when visiting that page. Note that in dev mode <code>preload</code> is <em>not</em> called, since it depends on analysis that happens at build time. Preloading can improve performance by downloading assets sooner, but it can also hurt if too much is downloaded unnecessarily. By default, <code>js</code> and <code>css</code> files will be preloaded. <code>asset</code> files are not preloaded at all currently, but we may add this later after evaluating feedback.</li>
+          </ul>
+          <pre class="language-js"><code class="language-js"><span class="token comment">/// file: src/hooks.server.js</span>
+<span class="token doc-comment comment">/** <span class="token keyword">@type</span> <span class="token class-name"><span class="token punctuation">{</span><span class="token keyword module">import</span><span class="token punctuation">(</span><span class="token string">'@sveltejs/kit'</span><span class="token punctuation">)</span><span class="token punctuation">.</span>Handle<span class="token punctuation">}</span></span> */</span>
+<span class="token keyword module">export</span> <span class="token keyword">async</span> <span class="token keyword">function</span> <span class="token function">handle</span><span class="token punctuation">(</span><span class="token parameter"><span class="token punctuation">{</span> event<span class="token punctuation">,</span> resolve <span class="token punctuation">}</span></span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+	<span class="token keyword">const</span> response <span class="token operator">=</span> <span class="token keyword control-flow">await</span> <span class="token function">resolve</span><span class="token punctuation">(</span>event<span class="token punctuation">,</span> <span class="token punctuation">{</span>
+		<span class="token function-variable function">transformPageChunk</span><span class="token operator">:</span> <span class="token punctuation">(</span><span class="token parameter"><span class="token punctuation">{</span> html <span class="token punctuation">}</span></span><span class="token punctuation">)</span> <span class="token arrow operator">=></span> html<span class="token punctuation">.</span><span class="token method function property-access">replace</span><span class="token punctuation">(</span><span class="token string">'old'</span><span class="token punctuation">,</span> <span class="token string">'new'</span><span class="token punctuation">)</span><span class="token punctuation">,</span>
+		<span class="token function-variable function">filterSerializedResponseHeaders</span><span class="token operator">:</span> <span class="token punctuation">(</span><span class="token parameter">name</span><span class="token punctuation">)</span> <span class="token arrow operator">=></span> name<span class="token punctuation">.</span><span class="token method function property-access">startsWith</span><span class="token punctuation">(</span><span class="token string">'x-'</span><span class="token punctuation">)</span><span class="token punctuation">,</span>
+		<span class="token function-variable function">preload</span><span class="token operator">:</span> <span class="token punctuation">(</span><span class="token parameter"><span class="token punctuation">{</span> type<span class="token punctuation">,</span> path <span class="token punctuation">}</span></span><span class="token punctuation">)</span> <span class="token arrow operator">=></span> type <span class="token operator">===</span> <span class="token string">'js'</span> <span class="token operator">||</span> path<span class="token punctuation">.</span><span class="token method function property-access">includes</span><span class="token punctuation">(</span><span class="token string">'/important/'</span><span class="token punctuation">)</span>
+	<span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+	<span class="token keyword control-flow">return</span> response<span class="token punctuation">;</span>
+<span class="token punctuation">}</span></code></pre>
+          <p>Note that <code>resolve(...)</code> will never throw an error, it will always return a <code>Promise&#x3C;Response></code> with the appropriate status code. If an error is thrown elsewhere during <code>handle</code>, it is treated as fatal, and SvelteKit will respond with a JSON representation of the error or a fallback error page — which can be customised via <code>src/error.html</code> — depending on the <code>Accept</code> header. You can read more about error handling <a href="/docs/errors">here</a>.</p>
+        </section>
+        <section id="handlefetch" class="level3">
+          <h3>handleFetch</h3>
+          <p>This function allows you to modify (or replace) a <code>fetch</code> request that happens inside a <code>load</code> function that runs on the server (or during pre-rendering).</p>
+          <p>Or your <code>load</code> function might make a request to a public URL like <code>https://api.yourapp.com</code> when the user performs a client-side navigation to the respective page, but during SSR it might make sense to hit the API directly (bypassing whatever proxies and load balancers sit between it and the public internet).</p>
+          <pre class="language-js"><code class="language-js"><span class="token comment">/// file: src/hooks.server.js</span>
+<span class="token doc-comment comment">/** <span class="token keyword">@type</span> <span class="token class-name"><span class="token punctuation">{</span><span class="token keyword module">import</span><span class="token punctuation">(</span><span class="token string">'@sveltejs/kit'</span><span class="token punctuation">)</span><span class="token punctuation">.</span>HandleFetch<span class="token punctuation">}</span></span> */</span>
+<span class="token keyword module">export</span> <span class="token keyword">async</span> <span class="token keyword">function</span> <span class="token function">handleFetch</span><span class="token punctuation">(</span><span class="token parameter"><span class="token punctuation">{</span> request<span class="token punctuation">,</span> fetch <span class="token punctuation">}</span></span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+	<span class="token keyword control-flow">if</span> <span class="token punctuation">(</span>request<span class="token punctuation">.</span><span class="token property-access">url</span><span class="token punctuation">.</span><span class="token method function property-access">startsWith</span><span class="token punctuation">(</span><span class="token string">'https://api.yourapp.com/'</span><span class="token punctuation">)</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+		<span class="token comment">// clone the original request, but change the URL</span>
+		request <span class="token operator">=</span> <span class="token keyword">new</span> <span class="token class-name">Request</span><span class="token punctuation">(</span>
+			request<span class="token punctuation">.</span><span class="token property-access">url</span><span class="token punctuation">.</span><span class="token method function property-access">replace</span><span class="token punctuation">(</span><span class="token string">'https://api.yourapp.com/'</span><span class="token punctuation">,</span> <span class="token string">'http://localhost:9999/'</span><span class="token punctuation">)</span><span class="token punctuation">,</span>
+			request
+		<span class="token punctuation">)</span><span class="token punctuation">;</span>
+	<span class="token punctuation">}</span>
+
+	<span class="token keyword control-flow">return</span> <span class="token function">fetch</span><span class="token punctuation">(</span>request<span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span></code></pre>
+          <p><strong>Credentials</strong></p>
+          <p>For same-origin requests, SvelteKit's <code>fetch</code> implementation will forward <code>cookie</code> and <code>authorization</code> headers unless the <code>credentials</code> option is set to <code>"omit"</code>.</p>
+          <p>For cross-origin requests, <code>cookie</code> will be included if the request URL belongs to a subdomain of the app — for example if your app is on <code>my-domain.com</code>, and your API is on <code>api.my-domain.com</code>, cookies will be included in the request.</p>
+          <p>If your app and your API are on sibling subdomains — <code>www.my-domain.com</code> and <code>api.my-domain.com</code> for example — then a cookie belonging to a common parent domain like <code>my-domain.com</code> will <em>not</em> be included, because SvelteKit has no way to know which domain the cookie belongs to. In these cases you will need to manually include the cookie using <code>handleFetch</code>:</p>
+          <pre class="language-js"><code class="language-js"><span class="token comment">// @errors: 2345</span>
+<span class="token doc-comment comment">/** <span class="token keyword">@type</span> <span class="token class-name"><span class="token punctuation">{</span><span class="token keyword module">import</span><span class="token punctuation">(</span><span class="token string">'@sveltejs/kit'</span><span class="token punctuation">)</span><span class="token punctuation">.</span>HandleFetch<span class="token punctuation">}</span></span> */</span>
+<span class="token keyword module">export</span> <span class="token keyword">async</span> <span class="token keyword">function</span> <span class="token function">handleFetch</span><span class="token punctuation">(</span><span class="token parameter"><span class="token punctuation">{</span> event<span class="token punctuation">,</span> request<span class="token punctuation">,</span> fetch <span class="token punctuation">}</span></span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+	<span class="token keyword control-flow">if</span> <span class="token punctuation">(</span>request<span class="token punctuation">.</span><span class="token property-access">url</span><span class="token punctuation">.</span><span class="token method function property-access">startsWith</span><span class="token punctuation">(</span><span class="token string">'https://api.my-domain.com/'</span><span class="token punctuation">)</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+		request<span class="token punctuation">.</span><span class="token property-access">headers</span><span class="token punctuation">.</span><span class="token method function property-access">set</span><span class="token punctuation">(</span><span class="token string">'cookie'</span><span class="token punctuation">,</span> event<span class="token punctuation">.</span><span class="token property-access">request</span><span class="token punctuation">.</span><span class="token property-access">headers</span><span class="token punctuation">.</span><span class="token method function property-access">get</span><span class="token punctuation">(</span><span class="token string">'cookie'</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+	<span class="token punctuation">}</span>
+
+	<span class="token keyword control-flow">return</span> <span class="token function">fetch</span><span class="token punctuation">(</span>request<span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span></code></pre>
+        </section>
+      </section>
+      <section id="shared-hooks" class="level2">
+        <h2>Shared hooks</h2>
+        <p>The following can be added to <code>src/hooks.server.js</code> <em>and</em> <code>src/hooks.client.js</code>:</p>
+        <section id="handleerror" class="level3">
+          <h3>handleError</h3>
+          <p>If an unexpected error is thrown during loading or rendering, this function will be called with the <code>error</code> and the <code>event</code>. This allows for two things:</p>
+          <ul>
+            <li>you can log the error</li>
+            <li>you can generate a custom representation of the error that is safe to show to users, omitting sensitive details like messages and stack traces. The returned value becomes the value of <code>$page.error</code>. It defaults to <code>{ message: 'Not Found' }</code> in case of a 404 (you can detect them through <code>event.route.id</code> being <code>null</code>) and to <code>{ message: 'Internal Error' }</code> for everything else. To make this type-safe, you can customize the expected shape by declaring an <code>App.Error</code> interface (which must include <code>message: string</code>, to guarantee sensible fallback behavior).</li>
+          </ul>
+          <p>The following code shows an example of typing the error shape as <code>{ message: string; code: string }</code> and returning it accordingly from the <code>handleError</code> functions:</p>
+          <pre class="language-ts"><code class="language-ts"><span class="token comment">/// file: src/app.d.ts</span>
+<span class="token keyword">declare</span> <span class="token keyword">namespace</span> <span class="token maybe-class-name">App</span> <span class="token punctuation">{</span>
+	<span class="token keyword">interface</span> <span class="token class-name"><span class="token known-class-name class-name">Error</span></span> <span class="token punctuation">{</span>
+		message<span class="token operator">:</span> <span class="token builtin">string</span><span class="token punctuation">;</span>
+		code<span class="token operator">:</span> <span class="token builtin">string</span><span class="token punctuation">;</span>
+	<span class="token punctuation">}</span>
+<span class="token punctuation">}</span></code></pre>
+          <pre class="language-js"><code class="language-js"><span class="token comment">/// file: src/hooks.server.js</span>
+<span class="token comment">// @errors: 2322 2571</span>
+<span class="token comment">// @filename: ambient.d.ts</span>
+<span class="token keyword">const</span> <span class="token literal-property property">Sentry</span><span class="token operator">:</span> any<span class="token punctuation">;</span>
+
+<span class="token comment">// @filename: index.js</span>
+<span class="token comment">// cut---</span>
+<span class="token doc-comment comment">/** <span class="token keyword">@type</span> <span class="token class-name"><span class="token punctuation">{</span><span class="token keyword module">import</span><span class="token punctuation">(</span><span class="token string">'@sveltejs/kit'</span><span class="token punctuation">)</span><span class="token punctuation">.</span>HandleServerError<span class="token punctuation">}</span></span> */</span>
+<span class="token keyword module">export</span> <span class="token keyword">function</span> <span class="token function">handleError</span><span class="token punctuation">(</span><span class="token parameter"><span class="token punctuation">{</span> error<span class="token punctuation">,</span> event <span class="token punctuation">}</span></span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+	<span class="token comment">// example integration with https://sentry.io/</span>
+	<span class="token maybe-class-name">Sentry</span><span class="token punctuation">.</span><span class="token method function property-access">captureException</span><span class="token punctuation">(</span>error<span class="token punctuation">,</span> <span class="token punctuation">{</span> event <span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+	<span class="token keyword control-flow">return</span> <span class="token punctuation">{</span>
+		<span class="token literal-property property">message</span><span class="token operator">:</span> <span class="token string">'Whoops!'</span><span class="token punctuation">,</span>
+		<span class="token literal-property property">code</span><span class="token operator">:</span> error<span class="token punctuation">.</span><span class="token property-access">code</span> <span class="token operator">??</span> <span class="token string">'UNKNOWN'</span>
+	<span class="token punctuation">}</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span></code></pre>
+          <pre class="language-js"><code class="language-js"><span class="token comment">/// file: src/hooks.client.js</span>
+<span class="token comment">// @errors: 2322 2571</span>
+<span class="token comment">// @filename: ambient.d.ts</span>
+<span class="token keyword">const</span> <span class="token literal-property property">Sentry</span><span class="token operator">:</span> any<span class="token punctuation">;</span>
+
+<span class="token comment">// @filename: index.js</span>
+<span class="token comment">// cut---</span>
+<span class="token doc-comment comment">/** <span class="token keyword">@type</span> <span class="token class-name"><span class="token punctuation">{</span><span class="token keyword module">import</span><span class="token punctuation">(</span><span class="token string">'@sveltejs/kit'</span><span class="token punctuation">)</span><span class="token punctuation">.</span>HandleClientError<span class="token punctuation">}</span></span> */</span>
+<span class="token keyword module">export</span> <span class="token keyword">function</span> <span class="token function">handleError</span><span class="token punctuation">(</span><span class="token parameter"><span class="token punctuation">{</span> error<span class="token punctuation">,</span> event <span class="token punctuation">}</span></span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+	<span class="token comment">// example integration with https://sentry.io/</span>
+	<span class="token maybe-class-name">Sentry</span><span class="token punctuation">.</span><span class="token method function property-access">captureException</span><span class="token punctuation">(</span>error<span class="token punctuation">,</span> <span class="token punctuation">{</span> event <span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+	<span class="token keyword control-flow">return</span> <span class="token punctuation">{</span>
+		<span class="token literal-property property">message</span><span class="token operator">:</span> <span class="token string">'Whoops!'</span><span class="token punctuation">,</span>
+		<span class="token literal-property property">code</span><span class="token operator">:</span> error<span class="token punctuation">.</span><span class="token property-access">code</span> <span class="token operator">??</span> <span class="token string">'UNKNOWN'</span>
+	<span class="token punctuation">}</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span></code></pre>
+          <blockquote>
+            <p>In <code>src/hooks.client.js</code>, the type of <code>handleError</code> is <code>HandleClientError</code> instead of <code>HandleServerError</code>, and <code>event</code> is a <code>NavigationEvent</code> rather than a <code>RequestEvent</code>.</p>
+          </blockquote>
+          <p>This function is not called for <em>expected</em> errors (those thrown with the <a href="../50-api-reference/30-modules.html#sveltejs-kit-error"><code>error</code></a> function imported from <code>@sveltejs/kit</code>).</p>
+          <p>
+            During development, if an error occurs because of a syntax error in your Svelte code, the passed in error has a <code>frame</code> property appended highlighting the location of the error.
+            <span style="float: footnote;"><a href="../../index.html#toc">Go to TOC</a></span>
+          </p>
+        </section>
+      </section>
+    </section>
+  </body>
+</html>

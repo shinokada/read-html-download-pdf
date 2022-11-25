@@ -1,0 +1,389 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <title>Form actions</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="https://raw.githubusercontent.com/shinokada/prism-coy-theme/main/theme_common.css">
+  </head>
+  <body>
+    <section id="form-actions" class="level1">
+      <h1>Form actions</h1>
+      <p>A <code>+page.server.js</code> file can export <em>actions</em>, which allow you to <code>POST</code> data to the server using the <code>&#x3C;form></code> element.</p>
+      <p>When using <code>&#x3C;form></code>, client-side JavaScript is optional, but you can easily <em>progressively enhance</em> your form interactions with JavaScript to provide the best user experience.</p>
+      <section id="default-actions" class="level2">
+        <h2>Default actions</h2>
+        <p>In the simplest case, a page declares a <code>default</code> action:</p>
+        <pre class="language-js"><code class="language-js"><span class="token comment">/// file: src/routes/login/+page.server.js</span>
+<span class="token doc-comment comment">/** <span class="token keyword">@type</span> <span class="token class-name"><span class="token punctuation">{</span><span class="token keyword module">import</span><span class="token punctuation">(</span><span class="token string">'./$types'</span><span class="token punctuation">)</span><span class="token punctuation">.</span>Actions<span class="token punctuation">}</span></span> */</span>
+<span class="token keyword module">export</span> <span class="token keyword">const</span> actions <span class="token operator">=</span> <span class="token punctuation">{</span>
+	<span class="token function-variable function">default</span><span class="token operator">:</span> <span class="token keyword">async</span> <span class="token punctuation">(</span><span class="token parameter">event</span><span class="token punctuation">)</span> <span class="token arrow operator">=></span> <span class="token punctuation">{</span>
+		<span class="token comment">// TODO log the user in</span>
+	<span class="token punctuation">}</span>
+<span class="token punctuation">}</span><span class="token punctuation">;</span></code></pre>
+        <p>To invoke this action from the <code>/login</code> page, just add a <code>&#x3C;form></code> — no JavaScript needed:</p>
+        <pre class="language-svelte"><code class="language-svelte">/// file: src/routes/login/+page.svelte
+&#x3C;form method="POST">
+	&#x3C;input name="email" type="email">
+	&#x3C;input name="password" type="password">
+	&#x3C;button>Log in&#x3C;/button>
+&#x3C;/form></code></pre>
+        <p>If someone were to click the button, the browser would send the form data via <code>POST</code> request to the server, running the default action.</p>
+        <blockquote>
+          <p>Actions always use <code>POST</code> requests, since <code>GET</code> requests should never have side-effects.</p>
+        </blockquote>
+        <p>We can also invoke the action from other pages (for example if there's a login widget in the nav in the root layout) by adding the <code>action</code> attribute, pointing to the page:</p>
+        <pre class="language-html"><code class="language-html">/// file: src/routes/+layout.svelte
+<span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;</span>form</span> <span class="token attr-name">method</span><span class="token attr-value"><span class="token punctuation attr-equals">=</span><span class="token punctuation">"</span>POST<span class="token punctuation">"</span></span> <span class="token attr-name">action</span><span class="token attr-value"><span class="token punctuation attr-equals">=</span><span class="token punctuation">"</span>/login<span class="token punctuation">"</span></span><span class="token punctuation">></span></span>
+	<span class="token comment">&#x3C;!-- content --></span>
+<span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;/</span>form</span><span class="token punctuation">></span></span></code></pre>
+      </section>
+      <section id="named-actions" class="level2">
+        <h2>Named actions</h2>
+        <p>Instead of one <code>default</code> action, a page can have as many named actions as it needs:</p>
+        <pre class="language-diff"><code class="language-diff">/// file: src/routes/login/+page.server.js
+
+/** @type {import('./$types').Actions} */
+export const actions = {
+<span class="token deleted-sign deleted"><span class="token prefix deleted">-</span><span class="token line">	default: async (event) => {
+</span></span><span class="token inserted-sign inserted"><span class="token prefix inserted">+</span><span class="token line">	login: async (event) => {
+</span></span>		// TODO log the user in
+	},
+<span class="token inserted-sign inserted"><span class="token prefix inserted">+</span><span class="token line">	register: async (event) => {
+</span><span class="token prefix inserted">+</span><span class="token line">		// TODO register the user
+</span><span class="token prefix inserted">+</span><span class="token line">	}
+</span></span>};</code></pre>
+        <p>To invoke a named action, add a query parameter with the name prefixed by a <code>/</code> character:</p>
+        <pre class="language-svelte"><code class="language-svelte">/// file: src/routes/login/+page.svelte
+&#x3C;form method="POST" action="?/register"></code></pre>
+        <pre class="language-svelte"><code class="language-svelte">/// file: src/routes/+layout.svelte
+&#x3C;form method="POST" action="/login?/register"></code></pre>
+        <p>As well as the <code>action</code> attribute, we can use the <code>formaction</code> attribute on a button to <code>POST</code> the same form data to a different action than the parent <code>&#x3C;form></code>:</p>
+        <pre class="language-diff"><code class="language-diff">/// file: src/routes/login/+page.svelte
+<span class="token deleted-sign deleted"><span class="token prefix deleted">-</span><span class="token line">&#x3C;form method="POST">
+</span></span><span class="token inserted-sign inserted"><span class="token prefix inserted">+</span><span class="token line">&#x3C;form method="POST" action="?/login">
+</span></span>	&#x3C;input name="email" type="email">
+	&#x3C;input name="password" type="password">
+	&#x3C;button>Log in&#x3C;/button>
+<span class="token inserted-sign inserted"><span class="token prefix inserted">+</span><span class="token line">	&#x3C;button formaction="?/register">Register&#x3C;/button>
+</span></span><span class="token deleted-arrow deleted"><span class="token prefix deleted">&#x3C;</span><span class="token line">/form></span></span></code></pre>
+        <blockquote>
+          <p>We can't have default actions next to named actions, because if you POST to a named action without a redirect, the query parameter is persisted in the URL, which means the next default POST would go through the named action from before.</p>
+        </blockquote>
+      </section>
+      <section id="anatomy-of-an-action" class="level2">
+        <h2>Anatomy of an action</h2>
+        <p>Each action receives a <code>RequestEvent</code> object, allowing you to read the data with <code>request.formData()</code>. After processing the request (for example, logging the user in by setting a cookie), the action can respond with data that will be available through the <code>form</code> property on the corresponding page and through <code>$page.form</code> app-wide until the next update.</p>
+        <pre class="language-js"><code class="language-js"><span class="token comment">// @errors: 2339 2304</span>
+<span class="token comment">/// file: src/routes/login/+page.server.js</span>
+<span class="token doc-comment comment">/** <span class="token keyword">@type</span> <span class="token class-name"><span class="token punctuation">{</span><span class="token keyword module">import</span><span class="token punctuation">(</span><span class="token string">'./$types'</span><span class="token punctuation">)</span><span class="token punctuation">.</span>PageServerLoad<span class="token punctuation">}</span></span> */</span>
+<span class="token keyword module">export</span> <span class="token keyword">async</span> <span class="token keyword">function</span> <span class="token function">load</span><span class="token punctuation">(</span><span class="token parameter"><span class="token punctuation">{</span> cookies <span class="token punctuation">}</span></span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+	<span class="token keyword">const</span> user <span class="token operator">=</span> <span class="token keyword control-flow">await</span> db<span class="token punctuation">.</span><span class="token method function property-access">getUserFromSession</span><span class="token punctuation">(</span>cookies<span class="token punctuation">.</span><span class="token method function property-access">get</span><span class="token punctuation">(</span><span class="token string">'sessionid'</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+	<span class="token keyword control-flow">return</span> <span class="token punctuation">{</span> user <span class="token punctuation">}</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+
+<span class="token doc-comment comment">/** <span class="token keyword">@type</span> <span class="token class-name"><span class="token punctuation">{</span><span class="token keyword module">import</span><span class="token punctuation">(</span><span class="token string">'./$types'</span><span class="token punctuation">)</span><span class="token punctuation">.</span>Actions<span class="token punctuation">}</span></span> */</span>
+<span class="token keyword module">export</span> <span class="token keyword">const</span> actions <span class="token operator">=</span> <span class="token punctuation">{</span>
+	<span class="token function-variable function">login</span><span class="token operator">:</span> <span class="token keyword">async</span> <span class="token punctuation">(</span><span class="token parameter"><span class="token punctuation">{</span> cookies<span class="token punctuation">,</span> request <span class="token punctuation">}</span></span><span class="token punctuation">)</span> <span class="token arrow operator">=></span> <span class="token punctuation">{</span>
+		<span class="token keyword">const</span> data <span class="token operator">=</span> <span class="token keyword control-flow">await</span> request<span class="token punctuation">.</span><span class="token method function property-access">formData</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+		<span class="token keyword">const</span> email <span class="token operator">=</span> data<span class="token punctuation">.</span><span class="token method function property-access">get</span><span class="token punctuation">(</span><span class="token string">'email'</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+		<span class="token keyword">const</span> password <span class="token operator">=</span> data<span class="token punctuation">.</span><span class="token method function property-access">get</span><span class="token punctuation">(</span><span class="token string">'password'</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+		<span class="token keyword">const</span> user <span class="token operator">=</span> <span class="token keyword control-flow">await</span> db<span class="token punctuation">.</span><span class="token method function property-access">getUser</span><span class="token punctuation">(</span>email<span class="token punctuation">)</span><span class="token punctuation">;</span>
+		cookies<span class="token punctuation">.</span><span class="token method function property-access">set</span><span class="token punctuation">(</span><span class="token string">'sessionid'</span><span class="token punctuation">,</span> <span class="token keyword control-flow">await</span> db<span class="token punctuation">.</span><span class="token method function property-access">createSession</span><span class="token punctuation">(</span>user<span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+		<span class="token keyword control-flow">return</span> <span class="token punctuation">{</span> <span class="token literal-property property">success</span><span class="token operator">:</span> <span class="token boolean">true</span> <span class="token punctuation">}</span><span class="token punctuation">;</span>
+	<span class="token punctuation">}</span><span class="token punctuation">,</span>
+	<span class="token function-variable function">register</span><span class="token operator">:</span> <span class="token keyword">async</span> <span class="token punctuation">(</span><span class="token parameter">event</span><span class="token punctuation">)</span> <span class="token arrow operator">=></span> <span class="token punctuation">{</span>
+		<span class="token comment">// TODO register the user</span>
+	<span class="token punctuation">}</span>
+<span class="token punctuation">}</span><span class="token punctuation">;</span></code></pre>
+        <pre class="language-svelte"><code class="language-svelte">/// file: src/routes/login/+page.svelte
+&#x3C;script>
+	/** @type {import('./$types').PageData} */
+	export let data;
+
+	/** @type {import('./$types').ActionData} */
+	export let form;
+&#x3C;/script>
+
+{#if form?.success}
+	&#x3C;!-- this message is ephemeral; it exists because the page was rendered in
+	       response to a form submission. it will vanish if the user reloads -->
+	&#x3C;p>Successfully logged in! Welcome back, {data.user.name}&#x3C;/p>
+{/if}</code></pre>
+        <section id="validation-errors" class="level3">
+          <h3>Validation errors</h3>
+          <p>If the request couldn't be processed because of invalid data, you can return validation errors — along with the previously submitted form values — back to the user so that they can try again. The <code>invalid</code> function lets you return an HTTP status code (typically 400 or 422, in the case of validation errors) along with the data. The status code is available through <code>$page.status</code> and the data through <code>form</code>:</p>
+          <pre class="language-diff"><code class="language-diff">// @errors: 2339 2304
+/// file: src/routes/login/+page.server.js
+<span class="token inserted-sign inserted"><span class="token prefix inserted">+</span><span class="token line">import { invalid } from '@sveltejs/kit';
+</span></span>
+/** @type {import('./$types').Actions} */
+export const actions = {
+	login: async ({ cookies, request }) => {
+		const data = await request.formData();
+		const email = data.get('email');
+		const password = data.get('password');
+
+<span class="token inserted-sign inserted"><span class="token prefix inserted">+</span><span class="token line">		if (!email) {
+</span><span class="token prefix inserted">+</span><span class="token line">			return invalid(400, { email, missing: true });
+</span><span class="token prefix inserted">+</span><span class="token line">		}
+</span></span>
+		const user = await db.getUser(email);
+
+<span class="token inserted-sign inserted"><span class="token prefix inserted">+</span><span class="token line">		if (!user || user.password !== hash(password)) {
+</span><span class="token prefix inserted">+</span><span class="token line">			return invalid(400, { email, incorrect: true });
+</span><span class="token prefix inserted">+</span><span class="token line">		}
+</span></span>
+		cookies.set('sessionid', await db.createSession(user));
+
+		return { success: true };
+	},
+	register: async (event) => {
+		// TODO register the user
+	}
+};</code></pre>
+          <blockquote>
+            <p>Note that as a precaution, we only return the email back to the page — not the password.</p>
+          </blockquote>
+          <pre class="language-diff"><code class="language-diff">/// file: src/routes/login/+page.svelte
+<span class="token deleted-arrow deleted"><span class="token prefix deleted">&#x3C;</span><span class="token line">form method="POST" action="?/login">
+</span></span><span class="token deleted-sign deleted"><span class="token prefix deleted">-</span><span class="token line">	&#x3C;input name="email" type="email">
+</span></span><span class="token inserted-sign inserted"><span class="token prefix inserted">+</span><span class="token line">	{#if form?.missing}&#x3C;p class="error">The email field is required&#x3C;/p>{/if}
+</span><span class="token prefix inserted">+</span><span class="token line">	{#if form?.incorrect}&#x3C;p class="error">Invalid credentials!&#x3C;/p>{/if}
+</span><span class="token prefix inserted">+</span><span class="token line">	&#x3C;input name="email" type="email" value={form?.email ?? ''}>
+</span></span>
+	&#x3C;input name="password" type="password">
+	&#x3C;button>Log in&#x3C;/button>
+	&#x3C;button formaction="?/register">Register&#x3C;/button>
+<span class="token deleted-arrow deleted"><span class="token prefix deleted">&#x3C;</span><span class="token line">/form></span></span></code></pre>
+          <p>The returned data must be serializable as JSON. Beyond that, the structure is entirely up to you. For example, if you had multiple forms on the page, you could distinguish which <code>&#x3C;form></code> the returned <code>form</code> data referred to with an <code>id</code> property or similar.</p>
+        </section>
+        <section id="redirects" class="level3">
+          <h3>Redirects</h3>
+          <p>Redirects (and errors) work exactly the same as in <a href="../20-core-concepts/20-load.html#redirects"><code>load</code></a>:</p>
+          <pre class="language-diff"><code class="language-diff">// @errors: 2339 2304
+/// file: src/routes/login/+page.server.js
+<span class="token inserted-sign inserted"><span class="token prefix inserted">+</span><span class="token line">import { invalid, redirect } from '@sveltejs/kit';
+</span></span>
+/** @type {import('./$types').Actions} */
+export const actions = {
+<span class="token inserted-sign inserted"><span class="token prefix inserted">+</span><span class="token line">	login: async ({ cookies, request, url }) => {
+</span></span>		const data = await request.formData();
+		const email = data.get('email');
+		const password = data.get('password');
+
+		const user = await db.getUser(email);
+		if (!user) {
+			return invalid(400, { email, missing: true });
+		}
+
+		if (user.password !== hash(password)) {
+			return invalid(400, { email, incorrect: true });
+		}
+
+		cookies.set('sessionid', await db.createSession(user));
+
+<span class="token inserted-sign inserted"><span class="token prefix inserted">+</span><span class="token line">		if (url.searchParams.has('redirectTo')) {
+</span><span class="token prefix inserted">+</span><span class="token line">			throw redirect(303, url.searchParams.get('redirectTo'));
+</span><span class="token prefix inserted">+</span><span class="token line">		}
+</span></span>
+		return { success: true };
+	},
+	register: async (event) => {
+		// TODO register the user
+	}
+};</code></pre>
+        </section>
+      </section>
+      <section id="loading-data" class="level2">
+        <h2>Loading data</h2>
+        <p>After an action runs, the page will be re-rendered (unless a redirect or an unexpected error occurs), with the action's return value available to the page as the <code>form</code> prop. This means that your page's <code>load</code> functions will run after the action completes.</p>
+        <p>Note that <code>handle</code> runs before the action is invoked, and does not re-run before the <code>load</code> functions. This means that if, for example, you use <code>handle</code> to populate <code>event.locals</code> based on a cookie, you must update <code>event.locals</code> when you set or delete the cookie in an action:</p>
+        <pre class="language-js"><code class="language-js"><span class="token comment">/// file: src/hooks.server.js</span>
+<span class="token comment">// @filename: ambient.d.ts</span>
+declare namespace <span class="token maybe-class-name">App</span> <span class="token punctuation">{</span>
+	<span class="token keyword">interface</span> <span class="token class-name">Locals</span> <span class="token punctuation">{</span>
+		<span class="token literal-property property">user</span><span class="token operator">:</span> <span class="token punctuation">{</span>
+			<span class="token literal-property property">name</span><span class="token operator">:</span> string<span class="token punctuation">;</span>
+		<span class="token punctuation">}</span> <span class="token operator">|</span> <span class="token keyword null nil">null</span>
+	<span class="token punctuation">}</span>
+<span class="token punctuation">}</span>
+
+<span class="token comment">// @filename: global.d.ts</span>
+declare global <span class="token punctuation">{</span>
+	<span class="token keyword">function</span> <span class="token function">getUser</span><span class="token punctuation">(</span><span class="token parameter"><span class="token literal-property property">sessionid</span><span class="token operator">:</span> string <span class="token operator">|</span> <span class="token keyword nil">undefined</span></span><span class="token punctuation">)</span><span class="token operator">:</span> <span class="token punctuation">{</span>
+		<span class="token literal-property property">name</span><span class="token operator">:</span> string<span class="token punctuation">;</span>
+	<span class="token punctuation">}</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+
+<span class="token keyword module">export</span> <span class="token exports"><span class="token punctuation">{</span><span class="token punctuation">}</span></span><span class="token punctuation">;</span>
+
+<span class="token comment">// @filename: index.js</span>
+<span class="token comment">// cut---</span>
+<span class="token doc-comment comment">/** <span class="token keyword">@type</span> <span class="token class-name"><span class="token punctuation">{</span><span class="token keyword module">import</span><span class="token punctuation">(</span><span class="token string">'@sveltejs/kit'</span><span class="token punctuation">)</span><span class="token punctuation">.</span>Handle<span class="token punctuation">}</span></span> */</span>
+<span class="token keyword module">export</span> <span class="token keyword">async</span> <span class="token keyword">function</span> <span class="token function">handle</span><span class="token punctuation">(</span><span class="token parameter"><span class="token punctuation">{</span> event<span class="token punctuation">,</span> resolve <span class="token punctuation">}</span></span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+	event<span class="token punctuation">.</span><span class="token property-access">locals</span><span class="token punctuation">.</span><span class="token property-access">user</span> <span class="token operator">=</span> <span class="token keyword control-flow">await</span> <span class="token function">getUser</span><span class="token punctuation">(</span>event<span class="token punctuation">.</span><span class="token property-access">cookies</span><span class="token punctuation">.</span><span class="token method function property-access">get</span><span class="token punctuation">(</span><span class="token string">'sessionid'</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+	<span class="token keyword control-flow">return</span> <span class="token function">resolve</span><span class="token punctuation">(</span>event<span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span></code></pre>
+        <pre class="language-js"><code class="language-js"><span class="token comment">/// file: src/routes/account/+page.server.js</span>
+<span class="token comment">// @filename: ambient.d.ts</span>
+declare namespace <span class="token maybe-class-name">App</span> <span class="token punctuation">{</span>
+	<span class="token keyword">interface</span> <span class="token class-name">Locals</span> <span class="token punctuation">{</span>
+		<span class="token literal-property property">user</span><span class="token operator">:</span> <span class="token punctuation">{</span>
+			<span class="token literal-property property">name</span><span class="token operator">:</span> string<span class="token punctuation">;</span>
+		<span class="token punctuation">}</span> <span class="token operator">|</span> <span class="token keyword null nil">null</span>
+	<span class="token punctuation">}</span>
+<span class="token punctuation">}</span>
+
+<span class="token comment">// @filename: index.js</span>
+<span class="token comment">// cut---</span>
+<span class="token doc-comment comment">/** <span class="token keyword">@type</span> <span class="token class-name"><span class="token punctuation">{</span><span class="token keyword module">import</span><span class="token punctuation">(</span><span class="token string">'./$types'</span><span class="token punctuation">)</span><span class="token punctuation">.</span>PageServerLoad<span class="token punctuation">}</span></span> */</span>
+<span class="token keyword module">export</span> <span class="token keyword">function</span> <span class="token function">load</span><span class="token punctuation">(</span><span class="token parameter">event</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+	<span class="token keyword control-flow">return</span> <span class="token punctuation">{</span>
+		<span class="token literal-property property">user</span><span class="token operator">:</span> event<span class="token punctuation">.</span><span class="token property-access">locals</span><span class="token punctuation">.</span><span class="token property-access">user</span>
+	<span class="token punctuation">}</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+
+<span class="token doc-comment comment">/** <span class="token keyword">@type</span> <span class="token class-name"><span class="token punctuation">{</span><span class="token keyword module">import</span><span class="token punctuation">(</span><span class="token string">'./$types'</span><span class="token punctuation">)</span><span class="token punctuation">.</span>Actions<span class="token punctuation">}</span></span> */</span>
+<span class="token keyword module">export</span> <span class="token keyword">const</span> actions <span class="token operator">=</span> <span class="token punctuation">{</span>
+	<span class="token function-variable function">logout</span><span class="token operator">:</span> <span class="token keyword">async</span> <span class="token punctuation">(</span><span class="token parameter">event</span><span class="token punctuation">)</span> <span class="token arrow operator">=></span> <span class="token punctuation">{</span>
+		event<span class="token punctuation">.</span><span class="token property-access">cookies</span><span class="token punctuation">.</span><span class="token method function property-access">delete</span><span class="token punctuation">(</span><span class="token string">'sessionid'</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+		event<span class="token punctuation">.</span><span class="token property-access">locals</span><span class="token punctuation">.</span><span class="token property-access">user</span> <span class="token operator">=</span> <span class="token keyword null nil">null</span><span class="token punctuation">;</span>
+	<span class="token punctuation">}</span>
+<span class="token punctuation">}</span><span class="token punctuation">;</span></code></pre>
+      </section>
+      <section id="progressive-enhancement" class="level2">
+        <h2>Progressive enhancement</h2>
+        <p>In the preceding sections we built a <code>/login</code> action that <a href="https://kryogenix.org/code/browser/everyonehasjs.html">works without client-side JavaScript</a> — not a <code>fetch</code> in sight. That's great, but when JavaScript <em>is</em> available we can progressively enhance our form interactions to provide a better user experience.</p>
+        <section id="useenhance" class="level3">
+          <h3>use:enhance</h3>
+          <p>The easiest way to progressively enhance a form is to add the <code>use:enhance</code> action:</p>
+          <pre class="language-diff"><code class="language-diff">/// file: src/routes/login/+page.svelte
+<span class="token deleted-arrow deleted"><span class="token prefix deleted">&#x3C;</span><span class="token line">script>
+</span></span><span class="token inserted-sign inserted"><span class="token prefix inserted">+</span><span class="token line">	import { enhance } from '$app/forms';
+</span></span>
+	/** @type {import('./$types').ActionData} */
+	export let form;
+<span class="token deleted-arrow deleted"><span class="token prefix deleted">&#x3C;</span><span class="token line">/script>
+</span></span>
+<span class="token inserted-sign inserted"><span class="token prefix inserted">+</span><span class="token line">&#x3C;form method="POST" use:enhance></span></span></code></pre>
+          <blockquote>
+            <p>Yes, it's a little confusing that the <code>enhance</code> action and <code>&#x3C;form action></code> are both called 'action'. These docs are action-packed. Sorry.</p>
+          </blockquote>
+          <p>Without an argument, <code>use:enhance</code> will emulate the browser-native behaviour, just without the full-page reloads. It will:</p>
+          <ul>
+            <li>update the <code>form</code> property, <code>$page.form</code> and <code>$page.status</code> on a successful or invalid response, but only if the action is on the same page you're submitting from. So for example if your form looks like <code>&#x3C;form action="/somewhere/else" ..></code>, <code>form</code> and <code>$page</code> will <em>not</em> be updated. This is because in the native form submission case you would be redirected to the page the action is on.</li>
+            <li>reset the <code>&#x3C;form></code> element and invalidate all data using <code>invalidateAll</code> on a successful response</li>
+            <li>call <code>goto</code> on a redirect response</li>
+            <li>render the nearest <code>+error</code> boundary if an error occurs</li>
+          </ul>
+          <p>To customise the behaviour, you can provide a function that runs immediately before the form is submitted, and (optionally) returns a callback that runs with the <code>ActionResult</code>. Note that if you return a callback, the default behavior mentioned above is not triggered. To get it back, call <code>update</code>.</p>
+          <pre class="language-svelte"><code class="language-svelte">&#x3C;form
+	method="POST"
+	use:enhance={({ form, data, action, cancel }) => {
+		// `form` is the `&#x3C;form>` element
+		// `data` is its `FormData` object
+		// `action` is the URL to which the form is posted
+		// `cancel()` will prevent the submission
+
+		return async ({ result, update }) => {
+			// `result` is an `ActionResult` object
+			// `update` is a function which triggers the logic that would be triggered if this callback wasn't set
+		};
+	}}
+></code></pre>
+          <p>You can use these functions to show and hide loading UI, and so on.</p>
+        </section>
+        <section id="applyaction" class="level3">
+          <h3>applyAction</h3>
+          <p>If you provide your own callbacks, you may need to reproduce part of the default <code>use:enhance</code> behaviour, such as showing the nearest <code>+error</code> boundary. Most of the time, calling <code>update</code> passed to the callback is enough. If you need more customization you can do so with <code>applyAction</code>:</p>
+          <pre class="language-diff"><code class="language-diff"><span class="token deleted-arrow deleted"><span class="token prefix deleted">&#x3C;</span><span class="token line">script>
+</span></span><span class="token inserted-sign inserted"><span class="token prefix inserted">+</span><span class="token line">	import { enhance, applyAction } from '$app/forms';
+</span></span>
+	/** @type {import('./$types').ActionData} */
+	export let form;
+<span class="token deleted-arrow deleted"><span class="token prefix deleted">&#x3C;</span><span class="token line">/script>
+</span></span>
+<span class="token deleted-arrow deleted"><span class="token prefix deleted">&#x3C;</span><span class="token line">form
+</span></span>	method="POST"
+	use:enhance={({ form, data, action, cancel }) => {
+		// `form` is the `&#x3C;form>` element
+		// `data` is its `FormData` object
+		// `action` is the URL to which the form is posted
+		// `cancel()` will prevent the submission
+
+		return async ({ result }) => {
+			// `result` is an `ActionResult` object
+<span class="token inserted-sign inserted"><span class="token prefix inserted">+</span><span class="token line">			if (result.type === 'error') {
+</span><span class="token prefix inserted">+</span><span class="token line">				await applyAction(result);
+</span><span class="token prefix inserted">+</span><span class="token line">			}
+</span></span>		};
+	}}
+<span class="token inserted-arrow inserted"><span class="token prefix inserted">></span></span></code></pre>
+          <p>The behaviour of <code>applyAction(result)</code> depends on <code>result.type</code>:</p>
+          <ul>
+            <li><code>success</code>, <code>invalid</code> — sets <code>$page.status</code> to <code>result.status</code> and updates <code>form</code> and <code>$page.form</code> to <code>result.data</code> (regardless of where you are submitting from, in contrast to <code>update</code> from <code>enhance</code>)</li>
+            <li><code>redirect</code> — calls <code>goto(result.location)</code></li>
+            <li><code>error</code> — renders the nearest <code>+error</code> boundary with <code>result.error</code></li>
+          </ul>
+        </section>
+        <section id="custom-event-listener" class="level3">
+          <h3>Custom event listener</h3>
+          <p>We can also implement progressive enhancement ourselves, without <code>use:enhance</code>, with a normal event listener on the <code>&#x3C;form></code>:</p>
+          <pre class="language-svelte"><code class="language-svelte">/// file: src/routes/login/+page.svelte
+&#x3C;script>
+	import { invalidateAll, goto } from '$app/navigation';
+	import { applyAction, deserialize } from '$app/forms';
+
+	/** @type {import('./$types').ActionData} */
+	export let form;
+
+	/** @type {any} */
+	let error;
+
+	async function handleSubmit(event) {
+		const data = new FormData(this);
+
+		const response = await fetch(this.action, {
+			method: 'POST',
+			body: data
+		});
+
+		/** @type {import('@sveltejs/kit').ActionResult} */
+		const result = deserialize(await response.text());
+
+		if (result.type === 'success') {
+			// re-run all `load` functions, following the successful update
+			await invalidateAll();
+		}
+
+		applyAction(result);
+	}
+&#x3C;/script>
+
+&#x3C;form method="POST" on:submit|preventDefault={handleSubmit}>
+	&#x3C;!-- content -->
+&#x3C;/form></code></pre>
+          <p>Note that you need to <code>deserialize</code> the response before processing it further using the corresponding method from <code>$app/forms</code>. <code>JSON.parse()</code> isn't enough because form actions - like <code>load</code> functions - also support returning <code>Date</code> or <code>BigInt</code> objects.</p>
+          <p>If you have a <code>+server.js</code> alongside your <code>+page.server.js</code>, <code>fetch</code> requests will be routed there by default. To <code>POST</code> to an action in <code>+page.server.js</code> instead, use the custom <code>x-sveltekit-action</code> header:</p>
+          <pre class="language-diff"><code class="language-diff">const response = await fetch(this.action, {
+	method: 'POST',
+	body: data,
+<span class="token inserted-sign inserted"><span class="token prefix inserted">+</span><span class="token line">	headers: {
+</span><span class="token prefix inserted">+</span><span class="token line">		'x-sveltekit-action': 'true'
+</span><span class="token prefix inserted">+</span><span class="token line">	}
+</span></span>});</code></pre>
+        </section>
+      </section>
+      <section id="alternatives" class="level2">
+        <h2>Alternatives</h2>
+        <p>
+          Form actions are the preferred way to send data to the server, since they can be progressively enhanced, but you can also use <a href="../20-core-concepts/10-routing.html#server"><code>+server.js</code></a> files to expose (for example) a JSON API.
+          <span style="float: footnote;"><a href="../../index.html#toc">Go to TOC</a></span>
+        </p>
+      </section>
+    </section>
+  </body>
+</html>

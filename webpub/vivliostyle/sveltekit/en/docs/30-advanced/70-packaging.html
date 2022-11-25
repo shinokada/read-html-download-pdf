@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <title>Packaging</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="https://raw.githubusercontent.com/shinokada/prism-coy-theme/main/theme_common.css">
+  </head>
+  <body>
+    <section id="packaging" class="level1">
+      <h1>Packaging</h1>
+      <blockquote>
+        <p><code>svelte-package</code> is currently experimental. Non-backward compatible changes may occur in any future release.</p>
+      </blockquote>
+      <p>You can use SvelteKit to build apps as well as component libraries, using the <code>@sveltejs/package</code> package (<code>npm create svelte</code> has an option to set this up for you).</p>
+      <p>When you're creating an app, the contents of <code>src/routes</code> is the public-facing stuff; <a href="../50-api-reference/30-modules.html#$lib"><code>src/lib</code></a> contains your app's internal library.</p>
+      <p>A component library has the exact same structure as a SvelteKit app, except that <code>src/lib</code> is the public-facing bit. <code>src/routes</code> might be a documentation or demo site that accompanies the library, or it might just be a sandbox you use during development.</p>
+      <p>Running the <code>svelte-package</code> command from <code>@sveltejs/package</code> will take the contents of <code>src/lib</code> and generate a <code>package</code> directory (which can be <a href="../50-api-reference/10-configuration.html#package">configured</a>) containing the following:</p>
+      <ul>
+        <li>All the files in <code>src/lib</code>, unless you <a href="../50-api-reference/10-configuration.html#package">configure</a> custom <code>include</code>/<code>exclude</code> options. Svelte components will be preprocessed, TypeScript files will be transpiled to JavaScript.</li>
+        <li>Type definitions (<code>d.ts</code> files) which are generated for Svelte, JavaScript and TypeScript files. You need to install <code>typescript >= 4.0.0</code> for this. Type definitions are placed next to their implementation, hand-written <code>d.ts</code> files are copied over as is. You can <a href="../50-api-reference/10-configuration.html#package">disable generation</a>, but we strongly recommend against it.</li>
+        <li>A <code>package.json</code> copied from the project root with all fields except <code>"scripts"</code>, <code>"publishConfig.directory"</code> and <code>"publishConfig.linkDirectory"</code>. The <code>"dependencies"</code> field is included, which means you should add packages that you only need for your documentation or demo site to <code>"devDependencies"</code>. A <code>"type": "module"</code> and an <code>"exports"</code> field will be added if it's not defined in the original file.</li>
+      </ul>
+      <p>The <code>"exports"</code> field contains the package's entry points. By default, all files in <code>src/lib</code> will be treated as an entry point unless they start with (or live in a directory that starts with) an underscore, but you can <a href="../50-api-reference/10-configuration.html#package">configure</a> this behaviour. If you have a <code>src/lib/index.js</code> or <code>src/lib/index.svelte</code> file, it will be treated as the package root.</p>
+      <p>For example, if you had a <code>src/lib/Foo.svelte</code> component and a <code>src/lib/index.js</code> module that re-exported it, a consumer of your library could do either of the following:</p>
+      <pre class="language-js"><code class="language-js"><span class="token comment">// @filename: ambient.d.ts</span>
+declare module <span class="token string">'your-library'</span><span class="token punctuation">;</span>
+
+<span class="token comment">// @filename: index.js</span>
+<span class="token comment">// cut---</span>
+<span class="token keyword module">import</span> <span class="token imports"><span class="token punctuation">{</span> <span class="token maybe-class-name">Foo</span> <span class="token punctuation">}</span></span> <span class="token keyword module">from</span> <span class="token string">'your-library'</span><span class="token punctuation">;</span></code></pre>
+      <pre class="language-js"><code class="language-js"><span class="token comment">// @filename: ambient.d.ts</span>
+declare module <span class="token string">'your-library/Foo.svelte'</span><span class="token punctuation">;</span>
+
+<span class="token comment">// @filename: index.js</span>
+<span class="token comment">// cut---</span>
+<span class="token keyword module">import</span> <span class="token imports"><span class="token maybe-class-name">Foo</span></span> <span class="token keyword module">from</span> <span class="token string">'your-library/Foo.svelte'</span><span class="token punctuation">;</span></code></pre>
+      <blockquote>
+        <p>You should avoid using <a href="../50-api-reference/30-modules.html">SvelteKit-specific modules</a> like <code>$app</code> in your packages unless you intend for them to only be consumable by other SvelteKit projects. E.g. rather than using <code>import { browser } from '$app/environment'</code> you could use <a href="https://vitejs.dev/guide/env-and-mode.html#env-variables"><code>import.meta.env.SSR</code></a> to make the library available to all Vite-based projects or better yet use <a href="https://nodejs.org/api/packages.html#conditional-exports">Node conditional exports</a> to make it work for all bundlers. You may also wish to pass in things like the current URL or a navigation action as a prop rather than relying directly on <code>$app/stores</code>, <code>$app/navigation</code>, etc. Writing your app in this more generic fashion will also make it easier to setup tools for testing, UI demos and so on.</p>
+      </blockquote>
+      <section id="options" class="level2">
+        <h2>Options</h2>
+        <p><code>svelte-package</code> accepts the following options:</p>
+        <ul>
+          <li><code>-w</code>/<code>--watch</code> — watch files in <code>src/lib</code> for changes and rebuild the package</li>
+        </ul>
+      </section>
+      <section id="publishing" class="level2">
+        <h2>Publishing</h2>
+        <p>To publish the generated package:</p>
+        <pre class="language-sh"><code class="language-sh">npm publish ./package</code></pre>
+        <p>The <code>./package</code> above is referring to the directory name generated, change accordingly if you configure a custom <a href="../50-api-reference/10-configuration.html#package"><code>package.dir</code></a>.</p>
+      </section>
+      <section id="caveats" class="level2">
+        <h2>Caveats</h2>
+        <p>All relative file imports need to be fully specified, adhering to Node's ESM algorithm. This means you cannot import the file <code>src/lib/something/index.js</code> like <code>import { something } from './something</code>, instead you need to import it like this: <code>import { something } from './something/index.js</code>. If you are using TypeScript, you need to import <code>.ts</code> files the same way, but using a <code>.js</code> file ending, <em>not</em> a <code>.ts</code> file ending (this isn't under our control, the TypeScript team has made that decision). Setting <code>"moduleResolution": "NodeNext"</code> in your <code>tsconfig.json</code> or <code>jsconfig.json</code> will help you with this.</p>
+        <p>
+          This is a relatively experimental feature and is not yet fully implemented. All files except Svelte files (preprocessed) and TypeScript files (transpiled to JavaScript) are copied across as-is.
+          <span style="float: footnote;"><a href="../../index.html#toc">Go to TOC</a></span>
+        </p>
+      </section>
+    </section>
+  </body>
+</html>
