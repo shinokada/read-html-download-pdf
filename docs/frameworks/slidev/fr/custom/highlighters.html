@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="utf-8">
+    <title>Configurer Prism</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="https://raw.githubusercontent.com/shinokada/prism-coy-theme/main/theme_common.css">
+  </head>
+  <body>
+    <p>Surligneurs</p>
+    <p>Slidev est livré avec deux surligneurs de syntaxe parmi lesquels vous pouvez choisir :</p>
+    <ul>
+      <li><a href="https://prismjs.com/">Prism</a></li>
+      <li><a href="https://github.com/shikijs/shiki">Shiki</a></li>
+    </ul>
+    <p><strong>Prism</strong> est l'un des surligneurs de syntaxe les plus populaires. La mise en évidence est effectuée en ajoutant des classes de jetons au code et il est coloré à l'aide de CSS. Vous pouvez parcourir leurs <a href="https://github.com/PrismJS/prism-themes">thèmes officiels</a>, ou en créer/personnaliser un vous-même très facilement en utilisant <a href="https://github.com/antfu/prism-theme-vars"><code>prism-theme-vars</code></a>.</p>
+    <p><strong>Shiki</strong>, d'autre part, est un surligneur de syntaxe basé sur la grammaire TextMate. Il génère des jetons colorés, il n'y a donc pas besoin de CSS supplémentaire. Comme il prend en charge la grammaire, les couleurs générées sont très précises, tout comme ce que vous verrez dans VS Code. Shiki est également livré avec <a href="https://github.com/shikijs/shiki/blob/master/docs/themes.md">un tas de thèmes intégrés</a>. L'inconvénient de Shiki est qu'il nécessite également des thèmes TextMate (compatibles avec le thème VS Code) pour faire la mise en évidence, ce qui peut être un peu plus difficile à personnaliser.</p>
+    <p>Les thèmes Slidev prennent généralement en charge Prism et Shiki, mais selon le thème que vous utilisez, il se peut qu'il ne prenne en charge que l'un d'entre eux.</p>
+    <p>Lorsque vous avez le choix, le compromis est essentiellement :</p>
+    <ul>
+      <li><strong>Prism</strong> pour une personnalisation plus facile</li>
+      <li><strong>Shiki</strong> pour une mise en évidence plus précise</li>
+    </ul>
+    <p>Par défaut, Slidev utilise Prism. Vous pouvez le changer en modifiant votre frontmatter :</p>
+    <pre class="language-yaml"><code class="language-yaml"><span class="token punctuation">---</span>
+<span class="token key atrule">highlighter</span><span class="token punctuation">:</span> shiki
+<span class="token punctuation">---</span></code></pre>
+    <section id="configurer-prism" class="level2">
+      <h2>Configurer Prism</h2>
+      <p>Pour configurer votre Prism, vous pouvez simplement importer le thème css ou utiliser <a href="https://github.com/antfu/prism-theme-vars"><code>prism-theme-vars</code></a> pour configurer des thèmes pour les modes clair et sombre. Reportez-vous à sa documentation pour plus de détails.</p>
+    </section>
+    <section id="configurer-shiki" class="level2">
+      <h2>Configurer Shiki</h2>
+      <environment type="node">
+        <p>Créer un fichier <code>./setup/shiki.ts</code> avec le contenu suivant :</p>
+        <pre class="language-ts"><code class="language-ts"><span class="token comment">/* ./setup/shiki.ts */</span>
+<span class="token keyword module">import</span> <span class="token imports"><span class="token punctuation">{</span> defineShikiSetup <span class="token punctuation">}</span></span> <span class="token keyword module">from</span> <span class="token string">'@slidev/types'</span>
+
+<span class="token keyword module">export</span> <span class="token keyword module">default</span> <span class="token function">defineShikiSetup</span><span class="token punctuation">(</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token arrow operator">=></span> <span class="token punctuation">{</span>
+  <span class="token keyword control-flow">return</span> <span class="token punctuation">{</span>
+    theme<span class="token operator">:</span> <span class="token punctuation">{</span>
+      dark<span class="token operator">:</span> <span class="token string">'min-dark'</span><span class="token punctuation">,</span>
+      light<span class="token operator">:</span> <span class="token string">'min-light'</span><span class="token punctuation">,</span>
+    <span class="token punctuation">}</span><span class="token punctuation">,</span>
+  <span class="token punctuation">}</span>
+<span class="token punctuation">}</span><span class="token punctuation">)</span></code></pre>
+        <p>Reportez-vous à la <a href="https://github.com/shikijs/shiki/blob/master/docs/themes.md#all-themes">documentation de Shiki</a> pour les noms de thèmes disponibles.</p>
+        <p>Ou si vous souhaitez utiliser votre propre thème :</p>
+        <pre class="language-ts"><code class="language-ts"><span class="token comment">/* ./setup/shiki.ts */</span>
+
+<span class="token keyword module">import</span> <span class="token imports"><span class="token punctuation">{</span> defineShikiSetup <span class="token punctuation">}</span></span> <span class="token keyword module">from</span> <span class="token string">'@slidev/types'</span>
+
+<span class="token keyword module">export</span> <span class="token keyword module">default</span> <span class="token function">defineShikiSetup</span><span class="token punctuation">(</span><span class="token keyword">async</span><span class="token punctuation">(</span><span class="token punctuation">{</span> loadTheme <span class="token punctuation">}</span><span class="token punctuation">)</span> <span class="token arrow operator">=></span> <span class="token punctuation">{</span>
+  <span class="token keyword control-flow">return</span> <span class="token punctuation">{</span>
+    theme<span class="token operator">:</span> <span class="token punctuation">{</span>
+      dark<span class="token operator">:</span> <span class="token keyword control-flow">await</span> <span class="token function">loadTheme</span><span class="token punctuation">(</span><span class="token string">'path/to/theme.json'</span><span class="token punctuation">)</span><span class="token punctuation">,</span>
+      light<span class="token operator">:</span> <span class="token keyword control-flow">await</span> <span class="token function">loadTheme</span><span class="token punctuation">(</span><span class="token string">'path/to/theme.json'</span><span class="token punctuation">)</span><span class="token punctuation">,</span>
+    <span class="token punctuation">}</span><span class="token punctuation">,</span>
+  <span class="token punctuation">}</span>
+<span class="token punctuation">}</span><span class="token punctuation">)</span></code></pre>
+        <p><span style="float: footnote;"><a href="../index.html#toc">Go to TOC</a></span></p>
+      </environment>
+    </section>
+  </body>
+</html>

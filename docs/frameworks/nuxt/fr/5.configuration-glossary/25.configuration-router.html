@@ -1,0 +1,326 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="utf-8">
+    <title>La propriété router</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="navigation.title" content="router">
+    <meta name="description" content="La propriété router permet de personnaliser le routeur de Nuxt">
+    <meta name="menu" content="router">
+    <meta name="category" content="configuration-glossary">
+    <link rel="stylesheet" href="https://raw.githubusercontent.com/shinokada/prism-coy-theme/main/theme_common.css">
+  </head>
+  <body>
+    <section id="la-propriété-router" class="level1">
+      <h1>La propriété router</h1>
+      <p>La propriété router permet de personnaliser le routeur de Nuxt (<a href="https://v3.router.vuejs.org/fr/">vue-router</a>).</p>
+      <hr>
+      <section id="base" class="level2">
+        <h2>base</h2>
+        <ul>
+          <li>Type: <code>String</code></li>
+          <li>Par défaut: <code>'/'</code></li>
+        </ul>
+        <p>L'URL de base de l'application. Par exemple, si l'intégralité de la SPA se situe sous <code>/app/</code> alors la valeur de <code>base</code> doit être définie sur <code>'/app/'</code>.</p>
+        <p>Ceci peut être utile si l'on a besoin de servir du Nuxt dans un autre contexte, tel qu'une partie d'un plus gros site par exemple. Il sera à vous de juger si vous pensez qu'un reverse proxy pour le front sera nécessaire ou pas.</p>
+        <p>Si on veut une redirection sur le <code>router.base</code>, on peut y parvenir en utilisant un hook, se référer à la documentation sur la <a href="./configuration-glossary/configuration-hooks#redirect-to-routerbase-when-not-on-root">redirection sur router.base lorsque non à la racine</a>.</p>
+        <pre class="language-js{}[nuxt.config.js]"><code class="language-js{}[nuxt.config.js]">export default {
+  router: {
+    base: '/app/'
+  }
+}</code></pre>
+        <section id="info" class="level4">
+          <h4>Info</h4>
+          <p>Lorsque <code>base</code> est défini, Nuxt va aussi ajouter <code>&#x3C;base href="{{ router.base }}"/></code> dans l'entête du document.</p>
+          <blockquote>
+            <p>Cette option est donnée directement à <a href="https://v3.router.vuejs.org/fr/api/#base">base</a> dans <code>vue-router</code>.</p>
+          </blockquote>
+        </section>
+      </section>
+      <section id="routenamesplitter" class="level2">
+        <h2>routeNameSplitter</h2>
+        <ul>
+          <li>Type: <code>String</code></li>
+          <li>Par défaut: <code>'-'</code></li>
+        </ul>
+        <p>On pourrait vouloir changer le séparateur entre le nom des routes que Nuxt utilise. On peut y parvenir grâce à l'option <code>routeNameSplitter</code> dans notre fichier de configuration. Imaginons que nous ayons le fichier page <code>pages/posts/_id.vue</code>. Nuxt va générer le nom de la route de manière programmatique, dans le cas présent: <code>posts-id</code>. Passer le <code>routeNameSplitter</code> à <code>/</code> nous donnerait <code>posts/id</code>.</p>
+        <pre class="language-js{}[nuxt.config.js]"><code class="language-js{}[nuxt.config.js]">export default {
+  router: {
+    routeNameSplitter: '/'
+  }
+}</code></pre>
+      </section>
+      <section id="extendroutes" class="level2">
+        <h2>extendRoutes</h2>
+        <ul>
+          <li>Type: <code>Function</code></li>
+        </ul>
+        <p>On pourrait vouloir personnaliser les routes créées par Nuxt. L'option qui nous permet d'y arriver est <code>extendRoutes</code>.</p>
+        <pre class="language-js{}[nuxt.config.js]"><code class="language-js{}[nuxt.config.js]">export default {
+  router: {
+    extendRoutes(routes, resolve) {
+      routes.push({
+        name: 'custom',
+        path: '*',
+        component: resolve(__dirname, 'pages/404.vue')
+      })
+    }
+  }
+}</code></pre>
+        <p>Si on veut trier nos routes, on peut utiliser la fonction <code>sortRoutes(routes)</code> depuis <code>@nuxt/utils</code>:</p>
+        <pre class="language-js{}[nuxt.config.js]"><code class="language-js{}[nuxt.config.js]">import { sortRoutes } from '@nuxt/utils'
+export default {
+  router: {
+    extendRoutes(routes, resolve) {
+      // on ajoute des routes ici...
+
+      // ensuite on les trie
+      sortRoutes(routes)
+    }
+  }
+}</code></pre>
+        <p>Le schéma de la route doit respecter le schéma de <a href="https://v3.router.vuejs.org/fr/">vue-router</a>.</p>
+        <section id="warning" class="level4">
+          <h4>Warning</h4>
+          <p>Lorsque l'on ajoute des routes qui utilisent des Vues Nommées, il ne faut pas oublier d'ajouter les <code>chunkNames</code> qui correspondent aux <code>composants</code>.</p>
+          <pre class="language-js{}[nuxt.config.js]"><code class="language-js{}[nuxt.config.js]">export default {
+  router: {
+    extendRoutes(routes, resolve) {
+      routes.push({
+        path: '/users/:id',
+        components: {
+          default: resolve(__dirname, 'pages/users'), // ou routes[index].component
+          modal: resolve(__dirname, 'components/modal.vue')
+        },
+        chunkNames: {
+          modal: 'components/modal'
+        }
+      })
+    }
+  }
+}</code></pre>
+        </section>
+      </section>
+      <section id="fallback" class="level2">
+        <h2>fallback</h2>
+        <ul>
+          <li>Type: <code>boolean</code></li>
+          <li>Par défaut: <code>false</code></li>
+        </ul>
+        <p>Gère le comportement du router quand le navigateur ne supporte pas <code>history.pushState</code> alors que ce mode est défini. Lorsque défini à <code>true</code>, le router fallback sur le <code>hash</code> mode.</p>
+        <p>Si on le passe à <code>false</code>, le router va faire un rafraîchissement à chaque navigation de <code>router-link</code> dans IE9. Ceci est essentiel quand l'application est render côté serveur et a besoin de marcher dans IE9 car le <code>hash</code> ne marche pas avec du rendu côté serveur (SSR).</p>
+        <blockquote>
+          <p>Cette option est donnée directement à <a href="https://v3.router.vuejs.org/fr/api/#fallback">fallback</a> dans <code>vue-router</code>.</p>
+        </blockquote>
+      </section>
+      <section id="linkactiveclass" class="level2">
+        <h2>linkActiveClass</h2>
+        <ul>
+          <li>Type: <code>String</code></li>
+          <li>Par défaut: <code>'nuxt-link-active'</code></li>
+        </ul>
+        <p>Permet de personnaliser globalement la classe active par défaut de <a href="./features/nuxt-components#the-nuxtlink-component"><code>&#x3C;nuxt-link></code></a>.</p>
+        <pre class="language-js{}[nuxt.config.js]"><code class="language-js{}[nuxt.config.js]">export default {
+  router: {
+    linkActiveClass: 'active-link'
+  }
+}</code></pre>
+        <blockquote>
+          <p>Cette option est donnée directement à <a href="https://v3.router.vuejs.org/fr/api/#linkactiveclass">linkactiveclass</a> dans <code>vue-router</code>.</p>
+        </blockquote>
+      </section>
+      <section id="linkexactactiveclass" class="level2">
+        <h2>linkExactActiveClass</h2>
+        <ul>
+          <li>Type: <code>String</code></li>
+          <li>Par défaut: <code>'nuxt-link-exact-active'</code></li>
+        </ul>
+        <p>Permet de personnaliser globalement la classe active exacte par défaut de <a href="./features/nuxt-components#the-nuxtlink-component"><code>&#x3C;nuxt-link></code></a>.</p>
+        <pre class="language-js{}[nuxt.config.js]"><code class="language-js{}[nuxt.config.js]">export default {
+  router: {
+    linkExactActiveClass: 'exact-active-link'
+  }
+}</code></pre>
+        <blockquote>
+          <p>Cette option est donnée directement à <a href="https://v3.router.vuejs.org/fr/api/#linkexactactiveclass">linkexactactiveclass</a> dans <code>vue-router</code>.</p>
+        </blockquote>
+      </section>
+      <section id="linkprefetchedclass" class="level2">
+        <h2>linkPrefetchedClass</h2>
+        <ul>
+          <li>Type: <code>String</code></li>
+          <li>Par défaut: <code>false</code></li>
+        </ul>
+        <p>Permet de personnaliser globalement la classe prefetch par défaut de <a href="./features/nuxt-components#the-nuxtlink-component"><code>&#x3C;nuxt-link></code></a> (cette option est désactivée par défaut).</p>
+        <pre class="language-js{}[nuxt.config.js]"><code class="language-js{}[nuxt.config.js]">export default {
+  router: {
+    linkPrefetchedClass: 'nuxt-link-prefetched'
+  }
+}</code></pre>
+      </section>
+      <section id="middleware" class="level2">
+        <h2>middleware</h2>
+        <ul>
+          <li>Type: <code>String</code> ou <code>Array</code>
+            <ul>
+              <li>Items: <code>String</code></li>
+            </ul>
+          </li>
+        </ul>
+        <p>Définit le(s) middleware par défaut pour chaque page de l'application.</p>
+        <pre class="language-js{}[nuxt.config.js]"><code class="language-js{}[nuxt.config.js]">export default {
+  router: {
+    // exécute le middleware/user-agent.js sur chaque page
+    middleware: 'user-agent'
+  }
+}</code></pre>
+        <pre class="language-js{}[middleware/user-agent.js]"><code class="language-js{}[middleware/user-agent.js]">export default function (context) {
+  // ajoute la propriété userAgent au contexte (disponible dans `asyncData` et `fetch`)
+  context.userAgent = process.server
+    ? context.req.headers['user-agent']
+    : navigator.userAgent
+}</code></pre>
+        <p>Pour en apprendre davantage, se référer au <a href="./directory-structure/middleware#router-middleware">guide du middleware</a>.</p>
+      </section>
+      <section id="mode" class="level2">
+        <h2>mode</h2>
+        <ul>
+          <li>Type: <code>String</code></li>
+          <li>Par défaut: <code>'history'</code></li>
+        </ul>
+        <p>Personnalise le mode du routeur, ce n'est pas une option qu'il est recommandé de changer en raison du render côté serveur (SSR).</p>
+        <pre class="language-js{}[nuxt.config.js]"><code class="language-js{}[nuxt.config.js]">export default {
+  router: {
+    mode: 'hash'
+  }
+}</code></pre>
+        <blockquote>
+          <p>Cette option est donnée directement à <a href="https://v3.router.vuejs.org/fr/api/#mode">mode</a> dans <code>vue-router</code>.</p>
+        </blockquote>
+      </section>
+      <section id="parsequery--stringifyquery" class="level2">
+        <h2>parseQuery / stringifyQuery</h2>
+        <ul>
+          <li>Type: <code>Function</code></li>
+        </ul>
+        <p>Fournit des fonctions de query string parse / stringify personnalisées. Écrase les valeurs par défaut.</p>
+        <blockquote>
+          <p>Cette option est donnée directement aux <a href="https://v3.router.vuejs.org/fr/api/#parsequery-stringifyquery">parseQuery / stringifyQuery</a> dans <code>vue-router</code>.</p>
+        </blockquote>
+      </section>
+      <section id="prefetchlinks" class="level2">
+        <h2>prefetchLinks</h2>
+        <blockquote>
+          <p>Ajouté dans Nuxt v2.4.0</p>
+        </blockquote>
+        <ul>
+          <li>Type: <code>Boolean</code></li>
+          <li>Par défaut: <code>true</code></li>
+        </ul>
+        <p>Paramètre le <code>&#x3C;nuxt-link></code> afin qu'il prefetch la page <em>code-splitée</em> lorsqu'elle apparaît dans le viewport. Requiert le support de l'<a href="https://developer.mozilla.org/en-US/docs/Web/API/Intersection_Observer_API">IntersectionObserver</a>, à vérifier sur <a href="https://caniuse.com/#feat=intersectionobserver">CanIUse</a>.</p>
+        <p>Si nécessaire, nous recommandons de polyfill cette fonctionnalité avec un service tel que <a href="https://polyfill.io">Polyfill.io</a>:</p>
+        <pre class="language-js{}[nuxt.config.js]"><code class="language-js{}[nuxt.config.js]">export default {
+  head: {
+    script: [
+      {
+        src:
+          'https://polyfill.io/v3/polyfill.min.js?features=IntersectionObserver',
+        body: true
+      }
+    ]
+  }
+}</code></pre>
+        <p>Pour désactiver le prefecthing sur un lien spécifique, on peut utiliser la prop <code>no-prefetch</code>. Depuis Nuxt v2.10.0, on peut aussi passer la prop <code>prefetch</code> à <code>false</code>:</p>
+        <pre class="language-html"><code class="language-html"><span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;</span>nuxt-link</span> <span class="token attr-name">to</span><span class="token attr-value"><span class="token punctuation attr-equals">=</span><span class="token punctuation">"</span>/about<span class="token punctuation">"</span></span> <span class="token attr-name">no-prefetch</span><span class="token punctuation">></span></span>Page à propos non pré-fetchée<span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;/</span>nuxt-link</span><span class="token punctuation">></span></span>
+<span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;</span>nuxt-link</span> <span class="token attr-name">to</span><span class="token attr-value"><span class="token punctuation attr-equals">=</span><span class="token punctuation">"</span>/about<span class="token punctuation">"</span></span> <span class="token attr-name">:prefetch</span><span class="token attr-value"><span class="token punctuation attr-equals">=</span><span class="token punctuation">"</span>false<span class="token punctuation">"</span></span><span class="token punctuation">></span></span>Page à propos non pré-fetchée<span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;/</span>nuxt-link</span><span class="token punctuation">></span></span></code></pre>
+        <p>Pour désactiver le prefetching sur tous les liens, il faut passer <code>prefetchLinks</code> à <code>false</code>:</p>
+        <pre class="language-js{}[nuxt.config.js]"><code class="language-js{}[nuxt.config.js]">export default {
+  router: {
+    prefetchLinks: false
+  }
+}</code></pre>
+        <p>Depuis Nuxt v2.10.0, si nous avons défini <code>prefetchLinks</code> à <code>false</code> mais souhaitons tout de même prefetch un lien spécifique, on peut utiliser la propriété <code>prefetch</code>:</p>
+        <pre class="language-html"><code class="language-html"><span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;</span>nuxt-link</span> <span class="token attr-name">to</span><span class="token attr-value"><span class="token punctuation attr-equals">=</span><span class="token punctuation">"</span>/about<span class="token punctuation">"</span></span> <span class="token attr-name">prefetch</span><span class="token punctuation">></span></span>APage à propos non pré-fetchée<span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;/</span>nuxt-link</span><span class="token punctuation">></span></span></code></pre>
+      </section>
+      <section id="prefetchpayloads" class="level2">
+        <h2>prefetchPayloads</h2>
+        <blockquote>
+          <p>Ajouté avec la v2.13.0, disponible seulement pour une <a href="./features/deployment-targets#static-hosting">cible statique</a>.</p>
+        </blockquote>
+        <ul>
+          <li>Type: <code>Boolean</code></li>
+          <li>Par défaut: <code>true</code></li>
+        </ul>
+        <p>Lorsqu'on utilise <code>nuxt generate</code> avec <code>target: 'static'</code>, Nuxt va générer un <code>payload.js</code> pour chaque page.</p>
+        <p>Lorsque cette cette option est activée, Nuxt va automatiquement prefetch le payload de la page liée lorsque le <code>&#x3C;nuxt-link></code> est visible dans le viewport, créant une <strong>navigation instantanée</strong>.</p>
+        <section id="info-1" class="level4">
+          <h4>Info</h4>
+          <p>Pour cela, nous avons besoin que l'option <a href="#prefetchlinks">prefetchLinks</a> soit activée.</p>
+          <p>On peut désactiver ce comportement en passant <code>prefetchPaylods</code> à <code>false</code>:</p>
+          <pre class="language-js{}[nuxt.config.js]"><code class="language-js{}[nuxt.config.js]">export default {
+  router: {
+    prefetchPayloads: false
+  }
+}</code></pre>
+        </section>
+      </section>
+      <section id="scrollbehavior" class="level2">
+        <h2>scrollBehavior</h2>
+        <ul>
+          <li>Type: <code>Function</code></li>
+        </ul>
+        <p>L'option <code>scrollBehavior</code> permet de définir un comportement personnalisé pour la position du défilement de la page entre les routes. Cette méthode est appelée à chaque fois qu'une page est render.</p>
+        <p>Pour en apprendre davantage, se référer à la documentation sur le <a href="https://v3.router.vuejs.org/fr/guide/advanced/scroll-behavior.html">vue-router scrollBehavior</a>.</p>
+        <div class="Alert Alert-blue">
+          <p>À partir de la v2.9.0, on peut utiliser un fichier pour écraser le comportement du <code>router scrollBehavior</code>, ce fichier doit être placé dans <code>~/app/router.scrollBehavior.js</code> (note: ce nom de fichier est sensible à la casse si exécuté sur Windows).</p>
+        </div>
+        <p>On peut voir le fichier <code>router.scrollBehavior.js</code> par défaut de Nuxt ici: <a href="https://github.com/nuxt/nuxt.js/blob/dev/packages/vue-app/template/router.scrollBehavior.js">packages/vue-app/template/router.scrollBehavior.js</a>.</p>
+        <p>Un exemple de comment forcer la position du défilement à se retrouver tout en haut pour chaque route:</p>
+        <p><code>app/router.scrollBehavior.js</code></p>
+        <pre class="language-js{}[app/router.scrollBehavior.js]"><code class="language-js{}[app/router.scrollBehavior.js]">export default function (to, from, savedPosition) {
+  return { x: 0, y: 0 }
+}</code></pre>
+      </section>
+      <section id="trailingslash" class="level2">
+        <h2>trailingSlash</h2>
+        <ul>
+          <li>Type: <code>Boolean</code> ou <code>undefined</code></li>
+          <li>Par défaut: <code>undefined</code></li>
+          <li>Disponible depuis: v2.10</li>
+        </ul>
+        <p>Si cette option est passée à <code>true</code>, des slashs traînants seront suffixés pour chaque route. Sinon, ils seront enlevés.</p>
+        <p><strong>Attention</strong>: Cette option doit être changée avec une certaine préparation et une sequence de tests conséquents. Lorsque l'on définit <code>router.trailingSlash</code> a quelque chose d'autre que la valeur par défaut (<code>undefined</code>), la route opposée cessera de fonctionner. Il doit donc y avoir des redirections 301 et vos <em>liens internes</em> doivent s'adapter eux aussi. Si vous passez <code>trailingSlash</code> à <code>true</code>, alors seulement <code>example.com/abc/</code> vont marcher mais pas <code>example.com/abc</code>. Dans le cas d'un <code>false</code>, c'est l'inverse.</p>
+        <section id="example-behavior-avec-routes-enfant" class="level3">
+          <h3>Example behavior (avec routes enfant)</h3>
+          <p>Pour un répertoire avec cette structure:</p>
+          <pre class="language-bash"><code class="language-bash">-<span class="token operator">|</span> pages/
+---<span class="token operator">|</span> index.vue
+---<span class="token operator">|</span> posts.vue
+---<span class="token operator">|</span> posts/
+-----<span class="token operator">|</span> _slug.vue
+-----<span class="token operator">|</span> index.vue</code></pre>
+          <p>Le comportement pour chaque réglage possible de <code>trailingSlash</code>:</p>
+          <pre class="language-bash"><code class="language-bash">Route           Page
+/               ~/pages/index.vue
+/posts          ~/pages/posts.vue <span class="token punctuation">(</span>parent<span class="token punctuation">)</span> + ~/pages/posts.vue <span class="token punctuation">(</span>route enfant<span class="token punctuation">)</span>
+/posts/         ~/pages/posts.vue <span class="token punctuation">(</span>parent<span class="token punctuation">)</span> + ~/pages/posts.vue <span class="token punctuation">(</span>route enfant<span class="token punctuation">)</span>
+/posts/foo      ~/pages/posts.vue <span class="token punctuation">(</span>parent<span class="token punctuation">)</span> + ~/pages/_slug.vue <span class="token punctuation">(</span>route enfant<span class="token punctuation">)</span>
+/posts/foo/     ~/pages/posts.vue <span class="token punctuation">(</span>parent<span class="token punctuation">)</span> + ~/pages/_slug.vue <span class="token punctuation">(</span>route enfant<span class="token punctuation">)</span></code></pre>
+          <pre class="language-bash"><code class="language-bash">Route           Page
+/               ~/pages/index.vue
+/posts          <span class="token number">404</span>
+/posts/         ~/pages/posts.vue <span class="token punctuation">(</span>parent<span class="token punctuation">)</span> + ~/pages/index.vue <span class="token punctuation">(</span>route enfant<span class="token punctuation">)</span>
+/posts/foo      <span class="token number">404</span>
+/posts/foo/     ~/pages/posts.vue <span class="token punctuation">(</span>parent<span class="token punctuation">)</span> + ~/pages/_slug.vue <span class="token punctuation">(</span>route enfant<span class="token punctuation">)</span></code></pre>
+          <pre class="language-bash"><code class="language-bash">Route           Page
+/               ~/pages/index.vue
+/posts          ~/pages/posts.vue
+/posts/         ~/pages/posts.vue <span class="token punctuation">(</span>parent<span class="token punctuation">)</span> + ~/pages/index.vue <span class="token punctuation">(</span>route enfant<span class="token punctuation">)</span>
+/posts/foo      ~/pages/posts.vue <span class="token punctuation">(</span>parent<span class="token punctuation">)</span> + ~/pages/_slug.vue <span class="token punctuation">(</span>route enfant<span class="token punctuation">)</span>
+/posts/foo/     <span class="token number">404</span></code></pre>
+          <p><span style="float: footnote;"><a href="../index.html#toc">Go to TOC</a></span></p>
+        </section>
+      </section>
+    </section>
+  </body>
+</html>

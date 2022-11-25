@@ -1,0 +1,115 @@
+<!doctype html>
+<html lang="he">
+  <head>
+    <meta charset="utf-8">
+    <title>חוקי Hooks</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="https://raw.githubusercontent.com/shinokada/prism-coy-theme/main/theme_common.css">
+  </head>
+  <body>
+    <section id="חוקי-hooks" class="level1">
+      <h1>חוקי Hooks</h1>
+      <p><em>Hooks</em> הם תוספת חדשה ב- React 16.8. הם נותנים לנו להשתמש ב- state ופיצ'רים אחרים של ריאקט מבלי לכתוב מחלקה.</p>
+      <p>JavaScript הם פונקציות Hooks, אבל אתה צריך לנהוג על פי שני חוקים כשאתה משתמש בהם. אנו מספקים <a href="https://www.npmjs.com/package/eslint-plugin-react-hooks">פלאגין linting</a> שאוכף חוקים אלו אוטומטית:</p>
+      <section id="only-call-hooks-at-the-top-level" class="level3">
+        <h3>ניתן לקרוא ל- Hooks רק ברמה העליונה</h3>
+        <p><strong>אל תקרא ל- Hooks בתוך לופים, conditions כמו if או פונקציות מקוננות.</strong> במקום זאת, תמיד השתמש ב- Hooks ברמה העליונה של פונקציית הריאקט שלך, לפני כל returns מוקדמים. על ידי ביצוע כלל זה, אתה מבטיח ש- Hooks נקראים באותו סדר כל פעם שקומפוננטה מתרנדרת. זה מה שמאפשר לריאקט לשמור את ה- state של Hooks בין קריאות מרובות של <code>useState</code> ו- <code>useEffect</code>. (אם אתה סקרן, נסביר זאת לעומק <a href="#explanation">למטה</a>.)</p>
+        <p>###ניתן לקרוא ל- Hooks רק מתוך פונקציות ריאקט{#only-call-hooks-from-react-functions}</p>
+        <p><strong>אל תקרא ל- Hooks מתוך פונקציות JavaScript רגילות.</strong> במקום זאת, אתה יכול:</p>
+        <ul>
+          <li>✅ לקרוא ל- Hooks מתוך קומפוננטות פונקציה של ריאקט.</li>
+          <li>✅ לקרוא ל- Hooks מתוך Hooks מותאמים אישית( נלמד עליהם <a href="./hooks-custom.html">בעמוד הבא</a>).</li>
+        </ul>
+        <p>על ידי ביצוע כלל זה, אתה מבטיח שכל לוגיקה שהיא stateful בתוך קומפוננטה היא ברורה לעין מקוד המקור שלה.</p>
+      </section>
+      <section id="eslint-plugin" class="level2">
+        <h2>פלאגין ESLint</h2>
+        <p>שחררנו פלאגין ESLint שנקרא <a href="https://www.npmjs.com/package/eslint-plugin-react-hooks"><code>eslint-plugin-react-hooks</code></a> האוכף אוטומטית שני חוקים אלה. אתה יכול להוסיף את הפלאגין הזה לפרויקט שלך אם תרצה לנסות אותו:</p>
+        <p>פלאגין זה כלול כברירת מחדל ב-<a href="./create-a-new-react-app.html#create-react-app">Create React App</a>.</p>
+        <pre class="language-bash"><code class="language-bash"><span class="token function">npm</span> <span class="token function">install</span> eslint-plugin-react-hooks --save-dev</code></pre>
+        <pre class="language-js"><code class="language-js"><span class="token comment">// קונפיגורציית ה- ESLint שלך</span>
+<span class="token punctuation">{</span>
+  <span class="token string-property property">"plugins"</span><span class="token operator">:</span> <span class="token punctuation">[</span>
+    <span class="token comment">// ...</span>
+    <span class="token string">"react-hooks"</span>
+  <span class="token punctuation">]</span><span class="token punctuation">,</span>
+  <span class="token string-property property">"rules"</span><span class="token operator">:</span> <span class="token punctuation">{</span>
+    <span class="token comment">// ...</span>
+    <span class="token string-property property">"react-hooks/rules-of-hooks"</span><span class="token operator">:</span> <span class="token string">"error"</span><span class="token punctuation">,</span> <span class="token comment">// בודק חוקי Hooks</span>
+    <span class="token string-property property">"react-hooks/exhaustive-deps"</span><span class="token operator">:</span> <span class="token string">"warn"</span> <span class="token comment">// בודק effect dependencies</span>
+  <span class="token punctuation">}</span>
+<span class="token punctuation">}</span></code></pre>
+        <p><strong>אתה יכול לדלג לעמוד הבא שמסביר איך לכתוב <a href="./hooks-custom.html">Hooks משלך</a> עכשיו.</strong> בעמוד זה, נמשיך בלהסביר את הסיבות שמאחורי חוקים אלה.</p>
+      </section>
+      <section id="explanation" class="level2">
+        <h2>הסבר</h2>
+        <p>כמו <a href="./hooks-state.html#tip-using-multiple-state-variables">שלמדנו מקודם</a>, אנחנו יכולים להשתמש במספר State או Effect Hooks בתוך קומפוננטה יחידה:</p>
+        <pre class="language-js"><code class="language-js"><span class="token keyword">function</span> <span class="token function"><span class="token maybe-class-name">Form</span></span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  <span class="token comment">// 1.	שימוש במשתנה name ב- state</span>
+  <span class="token keyword">const</span> <span class="token punctuation">[</span>name<span class="token punctuation">,</span> setName<span class="token punctuation">]</span> <span class="token operator">=</span> <span class="token function">useState</span><span class="token punctuation">(</span><span class="token string">'Mary'</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+  <span class="token comment">// 2. Use an effect for persisting the form</span>
+  <span class="token function">useEffect</span><span class="token punctuation">(</span><span class="token keyword">function</span> <span class="token function">persistForm</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token dom variable">localStorage</span><span class="token punctuation">.</span><span class="token method function property-access">setItem</span><span class="token punctuation">(</span><span class="token string">'formData'</span><span class="token punctuation">,</span> name<span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+  <span class="token comment">// 3.	שימוש במשתנה surname ב- state</span>
+  <span class="token keyword">const</span> <span class="token punctuation">[</span>surname<span class="token punctuation">,</span> setSurname<span class="token punctuation">]</span> <span class="token operator">=</span> <span class="token function">useState</span><span class="token punctuation">(</span><span class="token string">'Poppins'</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+  <span class="token comment">// 4.	שימוש באפקט על מנת לעדכן את הכותרת</span>
+  <span class="token function">useEffect</span><span class="token punctuation">(</span><span class="token keyword">function</span> <span class="token function">updateTitle</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token dom variable">document</span><span class="token punctuation">.</span><span class="token property-access">title</span> <span class="token operator">=</span> name <span class="token operator">+</span> <span class="token string">' '</span> <span class="token operator">+</span> surname<span class="token punctuation">;</span>
+  <span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+  <span class="token comment">// ...</span>
+<span class="token punctuation">}</span></code></pre>
+        <p>אז איך ריאקט יודע איזה state מתאים לאיזו קריאת <code>useState</code>? התשובה היא <strong>שריאקט מסתמך על סדר קריאת ה- Hooks.</strong> הדוגמה שלנו עובדת בגלל שסדר קריאות ה- Hooks הוא אותו דבר בכל רינדור:</p>
+        <pre class="language-js"><code class="language-js"><span class="token comment">// ---------</span>
+<span class="token comment">// רינדור ראשון</span>
+<span class="token comment">// ---------</span>
+<span class="token function">useState</span><span class="token punctuation">(</span><span class="token string">'Mary'</span><span class="token punctuation">)</span>           <span class="token comment">// 1. איתחול המשתנה name ב- state עם 'Mary'</span>
+<span class="token function">useEffect</span><span class="token punctuation">(</span>persistForm<span class="token punctuation">)</span>     <span class="token comment">// 2. Add an effect for persisting the form</span>
+<span class="token function">useState</span><span class="token punctuation">(</span><span class="token string">'Poppins'</span><span class="token punctuation">)</span>        <span class="token comment">// 3. איתחול המשתנה surname ב- state עם 'Poppins'</span>
+<span class="token function">useEffect</span><span class="token punctuation">(</span>updateTitle<span class="token punctuation">)</span>     <span class="token comment">// 4. הוספת אפקט על מנת לעדכן את הכותרת</span>
+
+<span class="token comment">// ----------</span>
+<span class="token comment">// Second render</span>
+<span class="token comment">// ----------</span>
+<span class="token function">useState</span><span class="token punctuation">(</span><span class="token string">'Mary'</span><span class="token punctuation">)</span>           <span class="token comment">// 1. קריאת המשתנה name ב- state (מתעלמים מהקלט)</span>
+<span class="token function">useEffect</span><span class="token punctuation">(</span>persistForm<span class="token punctuation">)</span>     <span class="token comment">// 2. Replace the effect for persisting the form</span>
+<span class="token function">useState</span><span class="token punctuation">(</span><span class="token string">'Poppins'</span><span class="token punctuation">)</span>        <span class="token comment">// 3. קוראים את המשתנה surname ב- state (מתעלמים מהקלט)</span>
+<span class="token function">useEffect</span><span class="token punctuation">(</span>updateTitle<span class="token punctuation">)</span>     <span class="token comment">// 4. מחליפים את האפקט על מנת לעדכן את הכותרת</span>
+
+<span class="token comment">// ...</span></code></pre>
+        <p>כל עוד הסדר של קריאות Hook הוא שווה בין רינדורים, ריאקט יכול לצרף state מקומי עם כל אחד מהם. אבל מה קורה אם אנחנו שמים קריאת Hook (לדוגמה, האקפט <code>persistForm</code>) בתוך condition?</p>
+        <pre class="language-js"><code class="language-js">  <span class="token comment">// 🔴 אנחנו עוברים על החוק הראשון על ידי שימוש ב- Hook בתוך condition</span>
+  <span class="token keyword control-flow">if</span> <span class="token punctuation">(</span>name <span class="token operator">!==</span> <span class="token string">''</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token function">useEffect</span><span class="token punctuation">(</span><span class="token keyword">function</span> <span class="token function">persistForm</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+      <span class="token dom variable">localStorage</span><span class="token punctuation">.</span><span class="token method function property-access">setItem</span><span class="token punctuation">(</span><span class="token string">'formData'</span><span class="token punctuation">,</span> name<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token punctuation">}</span></code></pre>
+        <p>ה- condition <code>name !== ' '</code> הוא <code>true</code> ברינדור הראשון, אז אנחנו מריצים Hook זה. למרות זאת, יכול להיות שברינדור הבא המשתמש ינקה את הטופס, וכתוצאה מכך ה- condition יהפוך ל- <code>false</code>. עכשיו שאנחנו מדלגים על Hook זה בזמן רינדור, הסדר של קריאות Hook משתנה:</p>
+        <pre class="language-js"><code class="language-js"><span class="token function">useState</span><span class="token punctuation">(</span><span class="token string">'Mary'</span><span class="token punctuation">)</span>           <span class="token comment">// 1. קריאת המשתנה name ב- state (מתעלמים מהקלט)</span>
+<span class="token comment">// useEffect(persistForm)  // 🔴 דילגנו על Hook זה!</span>
+<span class="token function">useState</span><span class="token punctuation">(</span><span class="token string">'Poppins'</span><span class="token punctuation">)</span>        <span class="token comment">// 🔴 2 (אבל היה 3). נכשל בלקרוא את המשתנה surname</span>
+<span class="token function">useEffect</span><span class="token punctuation">(</span>updateTitle<span class="token punctuation">)</span>     <span class="token comment">// 🔴 3 (אבל היה 4). נכשל בלהחליף את האפקט</span></code></pre>
+        <p>ריאקט לא ידע מה להחזיר לקריאה השנייה של ה- Hook <code>useState</code>. ריאקט ציפה שקריאת ה- Hook השנייה בקומפוננטה הזו תהיה תואמת לאפקט <code>persistForm</code>, בדיוק כמו ברינדור הקודם, אבל זה לא דומה יותר. מנקודה זו, כל קריאת Hook אחרי האחת שדילגנו עליה תזוז באחד, דבר שיוביל לבאגים.</p>
+        <p><strong>זאת הסיבה שחייב לקרוא ל- Hooks ברמה העליונה של הקומפוננטות שלנו.</strong> אם אנחנו רוצים להריץ אפקט מותנה, אנחנו יכולים לשים תנאי זה <em>בתוך</em> ה- Hook שלנו:</p>
+        <pre class="language-js"><code class="language-js">  <span class="token function">useEffect</span><span class="token punctuation">(</span><span class="token keyword">function</span> <span class="token function">persistForm</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token comment">// 👍 אנחנו לא עוברים על החוק הראשון יותר</span>
+    <span class="token keyword control-flow">if</span> <span class="token punctuation">(</span>name <span class="token operator">!==</span> <span class="token string">''</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+      <span class="token dom variable">localStorage</span><span class="token punctuation">.</span><span class="token method function property-access">setItem</span><span class="token punctuation">(</span><span class="token string">'formData'</span><span class="token punctuation">,</span> name<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+  <span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">;</span></code></pre>
+        <p><strong>שים לב שאתה לא צריך לדאוג מבעיה זו אם אתה משתמש <a href="https://www.npmjs.com/package/eslint-plugin-react-hooks">בחוק lint</a>.</strong> אבל עכשיו אתה גם יודע <em>למה</em> Hooks עובדים בדרך זו, ואילו בעיות החוק הזה מונע.</p>
+      </section>
+      <section id="next-steps" class="level2">
+        <h2>הצעדים הבאים</h2>
+        <p>
+          סוף כל סוף, אנו מוכנים ללמוד על כתיבת <a href="./hooks-custom.html">Hooks משלנו</a>! Hooks מותאמים אישית נותנים לך לשלב Hooks שמסופקים על ידי ריאקט לתוך האבסטרקציות שלך, ולעשות שימוש חוזר בלוגיקה שהיא stateful בין קומפוננטות שונות.
+          <span style="float: footnote;"><a href="./index.html#toc">Go to TOC</a></span>
+        </p>
+      </section>
+    </section>
+  </body>
+</html>

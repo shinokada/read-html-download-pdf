@@ -1,0 +1,115 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="utf-8">
+    <title>Nuxt モジュールの紹介</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="navigation.title" content="Nuxt Modules">
+    <meta name="description" content="Nuxt 内部の理解を深める">
+    <meta name="category" content="internals-glossary">
+    <link rel="stylesheet" href="https://raw.githubusercontent.com/shinokada/prism-coy-theme/main/theme_common.css">
+  </head>
+  <body>
+    <section id="nuxt-モジュールの紹介" class="level1">
+      <h1>Nuxt モジュールの紹介</h1>
+      <p>Nuxt 内部の理解を深める</p>
+      <hr>
+      <p>Nuxt は完全にモジュール化されたアーキテクチャを備えているため、開発者は柔軟な API を使用して Nuxt Core の任意の部分を拡張できます。</p>
+      <p>独自のモジュール開発に興味がある場合は<a href="./directory-structure/modules">モジュールガイド</a> のドキュメントを参照してください。</p>
+      <p>このセクションは Nuxt 内部に詳しくなるために役立ち、独自のモジュールを作成する際に Nuxt 内部をよりよく理解するためのリファレンスとして使えます。</p>
+      <section id="コア" class="level3">
+        <h3>コア</h3>
+        <p>これらのクラスは Nuxt の心臓部であり、実行時とビルド時の両方に存在する必要があります。</p>
+        <section id="nuxt" class="level4">
+          <h4>Nuxt</h4>
+          <ul>
+            <li><a href="./internals-glossary/internals-nuxt"><code>Nuxt</code> クラス</a></li>
+            <li>ソース: <a href="https://github.com/nuxt/nuxt.js/blob/dev/packages/core/src/nuxt.js">core/nuxt.js</a></li>
+          </ul>
+        </section>
+        <section id="renderer" class="level4">
+          <h4>Renderer</h4>
+          <ul>
+            <li><a href="./internals-glossary/internals-renderer"><code>Renderer</code> クラス</a></li>
+            <li>ソース: <a href="https://github.com/nuxt/nuxt.js/blob/dev/packages/vue-renderer/src/renderer.js">vue-renderer/renderer.js</a></li>
+          </ul>
+        </section>
+        <section id="modulecontainer" class="level4">
+          <h4>ModuleContainer</h4>
+          <ul>
+            <li><a href="./internals-glossary/internals-module-container"><code>ModuleContainer</code> クラス</a></li>
+            <li>ソース: <a href="https://github.com/nuxt/nuxt.js/blob/dev/packages/core/src/module.js">core/module.js</a></li>
+          </ul>
+        </section>
+      </section>
+      <section id="build" class="level3">
+        <h3>Build</h3>
+        <p>これらのクラスは、ビルドモードまたは開発モードでのみ必要です。</p>
+        <section id="builder" class="level4">
+          <h4>Builder</h4>
+          <ul>
+            <li><a href="./internals-glossary/internals-builder"><code>Builder</code> クラス</a></li>
+            <li>ソース: <a href="https://github.com/nuxt/nuxt.js/blob/dev/packages/builder/src/builder.js">builder/builder.js</a></li>
+          </ul>
+        </section>
+        <section id="generator" class="level4">
+          <h4>Generator</h4>
+          <ul>
+            <li><a href="./internals-glossary/internals-generator"><code>Generator</code> クラス</a></li>
+            <li>ソース: <a href="https://github.com/nuxt/nuxt.js/blob/dev/packages/generator/src/generator.js">generator/generator.js</a></li>
+          </ul>
+        </section>
+      </section>
+      <section id="共通" class="level3">
+        <h3>共通</h3>
+        <section id="utils" class="level4">
+          <h4>Utils</h4>
+          <ul>
+            <li>ソース: <a href="https://github.com/nuxt/nuxt.js/blob/dev/packages/utils/src">utils/src</a></li>
+          </ul>
+        </section>
+        <section id="options" class="level4">
+          <h4>Options</h4>
+          <ul>
+            <li>ソース: <a href="https://github.com/nuxt/nuxt.js/blob/dev/packages/config/src/options.js">config/options.js</a></li>
+          </ul>
+        </section>
+      </section>
+      <section id="パッケージング使用方法" class="level2">
+        <h2>パッケージング＆使用方法</h2>
+        <p>Nuxt はデフォルトですべてのクラスをエクスポートします。それらをインポートするには：</p>
+        <pre class="language-js"><code class="language-js"><span class="token keyword module">import</span> <span class="token imports"><span class="token punctuation">{</span> <span class="token maybe-class-name">Nuxt</span><span class="token punctuation">,</span> <span class="token maybe-class-name">Builder</span><span class="token punctuation">,</span> <span class="token maybe-class-name">Utils</span> <span class="token punctuation">}</span></span> <span class="token keyword module">from</span> <span class="token string">'nuxt'</span></code></pre>
+      </section>
+      <section id="共通のパターン" class="level2">
+        <h2>共通のパターン</h2>
+        <p>すべての Nuxt クラスには <code>nuxt</code> インスタンスとオプションへの参照を持ちます。そのため <code>options</code> と <code>nuxt</code> にアクセスするためのクラス間で一貫した API を常に持ちます。</p>
+        <pre class="language-js"><code class="language-js"><span class="token keyword">class</span> <span class="token class-name">SomeClass</span> <span class="token punctuation">{</span>
+  <span class="token function">constructor</span><span class="token punctuation">(</span><span class="token parameter">nuxt</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token keyword">super</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+    <span class="token keyword">this</span><span class="token punctuation">.</span><span class="token property-access">nuxt</span> <span class="token operator">=</span> nuxt
+    <span class="token keyword">this</span><span class="token punctuation">.</span><span class="token property-access">options</span> <span class="token operator">=</span> nuxt<span class="token punctuation">.</span><span class="token property-access">options</span>
+  <span class="token punctuation">}</span>
+
+  <span class="token function">someFunction</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token comment">// `this.nuxt` と `this.options` へアクセスできます</span>
+  <span class="token punctuation">}</span>
+<span class="token punctuation">}</span></code></pre>
+        <p>クラスは <em>プラガブル</em> なのでより多くのフックを登録するには nuxt コンテナにプラグインを登録する必要があります。</p>
+        <pre class="language-js"><code class="language-js"><span class="token keyword">class</span> <span class="token class-name">FooClass</span> <span class="token punctuation">{</span>
+  <span class="token function">constructor</span><span class="token punctuation">(</span><span class="token parameter">nuxt</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token keyword">super</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+    <span class="token keyword">this</span><span class="token punctuation">.</span><span class="token property-access">nuxt</span> <span class="token operator">=</span> nuxt
+    <span class="token keyword">this</span><span class="token punctuation">.</span><span class="token property-access">options</span> <span class="token operator">=</span> nuxt<span class="token punctuation">.</span><span class="token property-access">options</span>
+
+    <span class="token keyword">this</span><span class="token punctuation">.</span><span class="token property-access">nuxt</span><span class="token punctuation">.</span><span class="token method function property-access">callHook</span><span class="token punctuation">(</span><span class="token string">'foo'</span><span class="token punctuation">,</span> <span class="token keyword">this</span><span class="token punctuation">)</span>
+  <span class="token punctuation">}</span>
+<span class="token punctuation">}</span></code></pre>
+        <p>以下のように <code>foo</code> モジュールにフックできます：</p>
+        <pre class="language-js"><code class="language-js">nuxt<span class="token punctuation">.</span><span class="token method function property-access">hook</span><span class="token punctuation">(</span><span class="token string">'foo'</span><span class="token punctuation">,</span> <span class="token parameter">foo</span> <span class="token arrow operator">=></span> <span class="token punctuation">{</span>
+  <span class="token comment">// ...</span>
+<span class="token punctuation">}</span><span class="token punctuation">)</span></code></pre>
+        <p><span style="float: footnote;"><a href="../index.html#toc">Go to TOC</a></span></p>
+      </section>
+    </section>
+  </body>
+</html>

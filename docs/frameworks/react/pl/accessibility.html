@@ -1,0 +1,496 @@
+<!doctype html>
+<html lang="pl">
+  <head>
+    <meta charset="utf-8">
+    <title>Dostępność</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="https://raw.githubusercontent.com/shinokada/prism-coy-theme/main/theme_common.css">
+  </head>
+  <body>
+    <section id="dostępność" class="level1">
+      <h1>Dostępność</h1>
+      <section id="why-accessibility" class="level2">
+        <h2>Czym jest dostępność?</h2>
+        <p>Pojęcie dostępności stron internetowych (określanej również <a href="https://en.wiktionary.org/wiki/a11y"><strong>a11y</strong></a> od ang. <em>accessibility</em>) zostało zaprojektowane i stworzone z myślą o internecie przystępnym dla wszystkich. Wspieranie dostępności jest niezbędne, aby umożliwić technologiom asystującym poprawną interpretację stron.</p>
+        <p>React w pełni wspiera budowanie dostępnych dla wszystkich stron internetowych, często z wykorzystaniem standardowych technik HTML.</p>
+      </section>
+      <section id="standards-and-guidelines" class="level2">
+        <h2>Standard oraz wytyczne</h2>
+        <section id="wcag" class="level3">
+          <h3>WCAG</h3>
+          <p><a href="https://www.w3.org/WAI/intro/wcag">Web Content Accessibility Guidelines</a> dostarcza zbiór wytycznych, jak tworzyć poprawne oraz dostępne dla wszystkich strony internetowe.</p>
+          <p>Poniższe listy kontrolne WCAG zawierają przegląd:</p>
+          <ul>
+            <li><a href="https://www.wuhcag.com/wcag-checklist/">Lista kontrolna WCAG stworzona przez Wuhcag</a></li>
+            <li><a href="https://webaim.org/standards/wcag/checklist">Lista kontrolna WCAG stworzona przez WebAIM</a></li>
+            <li><a href="https://a11yproject.com/checklist.html">Lista kontrolna projektu A11Y</a></li>
+          </ul>
+        </section>
+        <section id="wai-aria" class="level3">
+          <h3>WAI-ARIA</h3>
+          <p>Dokument <a href="https://www.w3.org/WAI/intro/aria">Web Accessibility Initiative - Accessible Rich Internet Applications</a> zawiera listę technik pomagających w budowaniu w pełni dostępnych aplikacji javascriptowych.</p>
+          <p>Warto zaznaczyć, że wszystkie atrybuty HTML <code>aria-*</code> są w pełni wspierane przez JSX. Mimo że większość tagów oraz atrybutów DOM w Reakcie zapisujemy w notacji camelCase, to te związane z dostępnością powinny być zapisywane z wykorzystaniem myślników (znanych również jako kebab-case, lisp-case itp.), ponieważ są one traktowane jak zwykłe atrybuty HTML.</p>
+          <pre class="language-javascript{3,4}"><code class="language-javascript{3,4}">&#x3C;input
+  type="text"
+  aria-label={etykieta}
+  aria-required="true"
+  onChange={obserwatorZdarzenia}
+  value={wartoscPola}
+  name="imie"
+/></code></pre>
+        </section>
+      </section>
+      <section id="semantic-html" class="level2">
+        <h2>Semantyczny HTML</h2>
+        <p>Semantyczny HTML jest podstawą dostępności aplikacji webowych. Wykorzystując różne elementy HTML, które wzmacniają znaczenie informacji na naszych stronach, bardzo często możemy stworzyć w pełni dostępną stronę bez dodatkowego nakładu pracy.</p>
+        <ul>
+          <li><a href="https://developer.mozilla.org/en-US/docs/Web/HTML/Element">Dokumentacja elementów HTML na MDN</a></li>
+        </ul>
+        <p>
+          Czasem łamiemy zasady semantycznego HTML, kiedy dodajemy dodatkowy element <code>div</code> do naszego kodu JSX, aby uruchomić aplikację. Dzieje się tak zwłaszcza kiedy pracujemy z listami (<code>&#x3C;ol></code>, <code>&#x3C;ul></code> czy <code>&#x3C;dl></code>) oraz tabelami <code>&#x3C;table></code>.
+          W takim przypadkach powinniśmy korzystać z <a href="./fragments.html">fragmentów reactowych</a>, które pozwalają na grupowanie elementów.
+        </p>
+        <p>Przykład:</p>
+        <pre class="language-javascript{1,5,8}"><code class="language-javascript{1,5,8}">import React, { Fragment } from 'react';
+
+function ListItem({ item }) {
+  return (
+    &#x3C;Fragment>
+      &#x3C;dt>{item.term}&#x3C;/dt>
+      &#x3C;dd>{item.description}&#x3C;/dd>
+    &#x3C;/Fragment>
+  );
+}
+
+function Glossary(props) {
+  return (
+    &#x3C;dl>
+      {props.items.map(item => (
+        &#x3C;ListItem item={item} key={item.id} />
+      ))}
+    &#x3C;/dl>
+  );
+}</code></pre>
+        <p>Możesz mapować kolekcje elementów do tablicy fragmentów, zupełnie jak w przypadku innych typów elementów:</p>
+        <pre class="language-javascript{6,9}"><code class="language-javascript{6,9}">function Glossary(props) {
+  return (
+    &#x3C;dl>
+      {props.items.map(item => (
+        // Fragmenty zawsze powinny mieć ustawioną wartość `key` podczas mapowania kolekcji
+        &#x3C;Fragment key={item.id}>
+          &#x3C;dt>{item.term}&#x3C;/dt>
+          &#x3C;dd>{item.description}&#x3C;/dd>
+        &#x3C;/Fragment>
+      ))}
+    &#x3C;/dl>
+  );
+}</code></pre>
+        <p>Jeśli nie chcesz przekazywać żadnych dodatkowych właściwości do Fragmentu, wówczas możesz użyć <a href="./fragments.html#short-syntax">skróconej składni</a>. Upewnij się, że wspomniany zapis jest wspierany przez używane przez ciebie środowisko.</p>
+        <pre class="language-javascript{3,6}"><code class="language-javascript{3,6}">function ListItem({ item }) {
+  return (
+    &#x3C;>
+      &#x3C;dt>{item.term}&#x3C;/dt>
+      &#x3C;dd>{item.description}&#x3C;/dd>
+    &#x3C;/>
+  );
+}</code></pre>
+        <p>Więcej informacji znajdziesz w <a href="./fragments.html">dokumentacji fragmentów</a>.</p>
+      </section>
+      <section id="accessible-forms" class="level2">
+        <h2>Dostępne formularze</h2>
+        <section id="labeling" class="level3">
+          <h3>Nadawanie etykiet</h3>
+          <p>Każdy element kontrolujący formularz, taki jak <code>input</code> czy <code>textarea</code>, powinien być etykietowany w przystępny sposób. Etykieta powinna dobrze opisywać pole tekstowe i być widoczna dla czytników ekranowych.</p>
+          <p>Poniższe zasoby opisują, jak robić to poprawnie:</p>
+          <ul>
+            <li><a href="https://www.w3.org/WAI/tutorials/forms/labels/">W3C - etykietowanie elementów</a></li>
+            <li><a href="https://webaim.org/techniques/forms/controls">WebAim - etykietowanie elementów</a></li>
+            <li><a href="https://www.paciellogroup.com/blog/2017/04/what-is-an-accessible-name/">Grupa Paciello wyjaśnia przystępność nazw</a></li>
+          </ul>
+          <p>Chociaż tych standardowych praktyk HTML-owych można używać bezpośrednio w Reakcie, zauważ, że atrybut <code>for</code> jest w składni JSX zapisywany jako <code>htmlFor</code>:</p>
+          <pre class="language-javascript{1}"><code class="language-javascript{1}">&#x3C;label htmlFor="imiePoleTekstowe">Imię:&#x3C;/label>
+&#x3C;input id="imiePoleTekstowe" type="text" name="imie"/></code></pre>
+        </section>
+        <section id="notifying-the-user-of-errors" class="level3">
+          <h3>Powiadamianie użytkownika o błędach</h3>
+          <p>W sytuacji zgłoszenia błędu, komunikaty muszą być zrozumiałe dla wszystkich użytkowników. Poniższe linki pokazują, jak wyświetlić błędy w sposób zrozumiały dla czytników ekranowych.</p>
+          <ul>
+            <li><a href="https://www.w3.org/WAI/tutorials/forms/notifications/">W3C - notyfikowanie użytkowników</a></li>
+            <li><a href="https://webaim.org/techniques/formvalidation/">WebAIM - walidacja formularzy</a></li>
+          </ul>
+        </section>
+      </section>
+      <section id="focus-control" class="level2">
+        <h2>Kontrola fokusa</h2>
+        <p>Upewnij się, że twoją aplikację internetową można w pełni obsługiwać za pomocą samej klawiatury:</p>
+        <ul>
+          <li><a href="https://webaim.org/techniques/keyboard/">WebAIM - dostępność z wykorzystaniem klawiatury</a></li>
+        </ul>
+        <section id="keyboard-focus-and-focus-outline" class="level3">
+          <h3>Fokus klawiaturowy a kontur</h3>
+          <p>Fokus klawiaturowy odnosi się do bieżącego elementu w DOM, który został wybrany poprzez zdarzenia wywołane przez klawiaturę. Zazwyczaj oznaczany jest za pomocą konturu, podobnego do tego na obrazku poniżej:</p>
+          <img src="./docs/keyboard-focus.png" alt="Niebieski kontur fokusa wokół wybranego linku.">
+          <p>Jeśli decydujesz się na usunięcie konturu, np. ustawiając właściwość CSS <code>outline: 0</code>, nie zapomnij zastąpić go inną implementacją konturu.</p>
+        </section>
+        <section id="mechanisms-to-skip-to-desired-content" class="level3">
+          <h3>Przejście do treści</h3>
+          <p>Zapewnij mechanizm umożliwiający użytkownikom pominięcie sekcji nawigacji na stronie, ponieważ ułatwia on i przyspiesza nawigowanie z wykorzystaniem klawiatury.</p>
+          <p>Łącza typu "Przejdź do treści" lub "Pomiń nawigację" to specjalne, ukryte linki nawigacyjne, które stają się widoczne tylko wtedy, gdy użytkownicy klawiatury wchodzą w interakcję ze stroną. Są bardzo łatwe w implementacji z wykorzystaniem wewnętrznych kotwic oraz odrobiny stylowania:</p>
+          <ul>
+            <li><a href="https://webaim.org/techniques/skipnav/">WebAIM - łącza pomijające nawigację</a></li>
+          </ul>
+          <p>Używaj również elementów i punktów orientacyjnych, takich jak <code>&#x3C;main></code> i <code>&#x3C;aside></code>, aby rozgraniczyć sekcje strony. Dzięki nim technologie wspierające pozwalają użytkownikowi na szybkie przemieszczanie się między sekcjami.</p>
+          <p>Przeczytaj więcej o wykorzystaniu tych elementów w celu zwiększenia dostępności:</p>
+          <ul>
+            <li><a href="https://www.scottohara.me/blog/2018/03/03/landmarks.html">Dostępne punkty orientacyjne</a></li>
+          </ul>
+        </section>
+        <section id="programmatically-managing-focus" class="level3">
+          <h3>Programowe zarządzanie fokusem</h3>
+          <p>Nasze aplikacje Reactowe nieustannie modyfikują HTML DOM w czasie działania, co chwilami prowadzi do utraty konturu aktywnego elementu lub ustawienia go na nieoczekiwany element. Aby to naprawić, musimy ręcznie ustawić fokus we właściwym miejscu. Przykładowo, jeśli użytkownik zamknie okno modalne, fokus mógłby zostać przeniesiony na przycisk, który to okno otworzył.</p>
+          <p>Dokumentacja MDN opisuje dokładniej, w jaki sposób możemy tworzyć <a href="https://developer.mozilla.org/en-US/docs/Web/Accessibility/Keyboard-navigable_JavaScript_widgets">widżety javascriptowe z obsługą klawiatury</a>.</p>
+          <p>W Reakcie, aby ustawić fokus, możemy posłużyć się mechanizmem <a href="./refs-and-the-dom.html">referencji do elementu DOM</a>.</p>
+          <p>Aby móc skorzystać z tego mechanizmu, w kodzie JSX wybranego komponentu tworzymy referencję <code>ref</code> do elementu :</p>
+          <pre class="language-javascript{4-5,8-9,13}"><code class="language-javascript{4-5,8-9,13}">class CustomTextInput extends React.Component {
+  constructor(props) {
+    super(props);
+    // Stwórz referencję do elementu DOM
+    this.textInput= React.createRef();
+  }
+  render() {
+  // Użyj funkcji zwrotnej `ref`, aby zapisać referencję do pola tekstowego
+  // we właściwości instancji komponentu (na przykład this.textInput).
+    return (
+      &#x3C;input
+        type="text"
+        ref={this.textInput}
+      />
+    );
+  }
+}</code></pre>
+          <p>Wówczas, w razie potrzeby, możemy przenieść fokus na inny element naszego komponentu:</p>
+          <pre class="language-javascript"><code class="language-javascript"><span class="token function">focus</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  <span class="token comment">// Jawne przeniesienie fokusa na pole tekstowe przy użyciu natywnego interfejsu DOM</span>
+  <span class="token comment">// Uwaga: korzystamy z "current", aby uzyskać dostęp do węzła DOM</span>
+  <span class="token keyword">this</span><span class="token punctuation">.</span><span class="token property-access">textInput</span><span class="token punctuation">.</span><span class="token property-access">current</span><span class="token punctuation">.</span><span class="token method function property-access">focus</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span></code></pre>
+          <p>Czasami komponent nadrzędny musi ustawić fokus na element komponentu podrzędnego. Możemy to zrobić poprzez <a href="./refs-and-the-dom.html#exposing-dom-refs-to-parent-components">przesłanie referencji "w górę" do komponentu nadrzędnego</a> za pomocą specjalnej właściwości nadanej komponentowi podrzędnemu.</p>
+          <pre class="language-javascript{4,12,16}"><code class="language-javascript{4,12,16}">function CustomTextInput(props) {
+  return (
+    &#x3C;div>
+      &#x3C;input ref={props.inputRef} />
+    &#x3C;/div>
+  );
+}
+
+class Parent extends React.Component {
+  constructor(props) {
+    super(props);
+    this.inputElement = React.createRef();
+  }
+  render() {
+    return (
+      &#x3C;CustomTextInput inputRef={this.inputElement} />
+    );
+  }
+}
+
+// Teraz możesz ręcznie ustawiać fokus, kiedy to potrzebne.
+this.inputElement.current.focus();</code></pre>
+          <p>Kiedy używasz <a href="./higher-order-components.html">HOC-a</a> do rozszerzenia komponentów, zaleca się <a href="./forwarding-refs.html">przekazanie referencji</a> do opakowanego komponentu przy użyciu funkcji <code>forwardRef</code>, która wbudowana jest w Reacta. Jeśli wybrany HOC z którejś zewnętrznej biblioteki nie implementuje takiego przekierowania, można użyć powyższego wzorca jako wyjście awaryjne.</p>
+          <p>
+            Doskonałym przykładem zarządzania fokusem jest biblioteka <a href="https://github.com/davidtheclark/react-aria-modal">react-aria-modal</a>. Jest to stosunkowo rzadki przykład w pełni dostępnego okna modalnego. Nie tylko ustawia początkowy fokus
+            na przycisku zamykającym okno (uniemożliwiając tym samym użytkownikowi klawiatury przypadkowe aktywowanie akcji akceptującej) i zatrzymuje fokus klawiaturowy wewnątrz okna, lecz dodatkowo po zamknięciu przywraca fokus z powrotem na element, który zainicjował otwarcie okna.
+          </p>
+          <blockquote>
+            <p>Uwaga:</p>
+            <p>
+              Chociaż jest to bardzo ważna technika zapewniająca dostępność, należy stosować jej z umiarem. Użyj jej, aby skorygować naturalną "drogę" fokusa w aplikacji, ale nie próbuj przewidzieć, jak
+              użytkownicy będą chcieli korzystać z aplikacji i nie wymuszaj własnej "drogi".
+            </p>
+          </blockquote>
+        </section>
+      </section>
+      <section id="mouse-and-pointer-events" class="level2">
+        <h2>Zdarzenia myszy i wskaźnika</h2>
+        <p>Upewnij się, że wszystkie funkcje dostępne dla korzystających z myszy lub wskaźnika są również osiągalne za pomocą samej klawiatury. Poleganie na samych urządzeniach wskazujących prowadzi często do sytuacji, w których użytkownicy klawiatury nie mogą w ogóle korzystać z aplikacji.</p>
+        <p>Aby to zilustrować, spójrzmy na przykład zepsutej dostępności spowodowanej obsługą wyłącznie zdarzenia kliknięcia. Dotyczy to sytuacji, w której użytkownik może zamknąć otwarty "dymek" poprzez kliknięcie gdzieś poza nim.</p>
+        <img src="./docs/outerclick-with-mouse.gif" alt="Przycisk pokazujący dymek z listą, ukrywany poprzez kliknięcie poza dymkiem. Obsługiwany i skutecznie zamknięty za pomocą myszy.">
+        <p>Zazwyczaj jest to implementowane poprzez nasłuchiwanie zdarzenia <code>click</code> w obiekcie <code>window</code>, które zamyka dymek:</p>
+        <pre class="language-javascript{12-14,26-30}"><code class="language-javascript{12-14,26-30}">class OuterClickExample extends React.Component {
+  constructor(props) {
+    super(props);
+
+    this.state = { isOpen: false };
+    this.toggleContainer = React.createRef();
+
+    this.onClickHandler = this.onClickHandler.bind(this);
+    this.onClickOutsideHandler = this.onClickOutsideHandler.bind(this);
+  }
+
+  componentDidMount() {
+    window.addEventListener('click', this.onClickOutsideHandler);
+  }
+
+  componentWillUnmount() {
+    window.removeEventListener('click', this.onClickOutsideHandler);
+  }
+
+  onClickHandler() {
+    this.setState(currentState => ({
+      isOpen: !currentState.isOpen
+    }));
+  }
+
+  onClickOutsideHandler(event) {
+    if (this.state.isOpen &#x26;&#x26; !this.toggleContainer.current.contains(event.target)) {
+      this.setState({ isOpen: false });
+    }
+  }
+
+  render() {
+    return (
+      &#x3C;div ref={this.toggleContainer}>
+        &#x3C;button onClick={this.onClickHandler}>Wybierz opcję&#x3C;/button>
+        {this.state.isOpen &#x26;&#x26; (
+          &#x3C;ul>
+            &#x3C;li>Opcja 1&#x3C;/li>
+            &#x3C;li>Opcja 2&#x3C;/li>
+            &#x3C;li>Opcja 3&#x3C;/li>
+          &#x3C;/ul>
+        )}
+      &#x3C;/div>
+    );
+  }
+}</code></pre>
+        <p>Powyższy przykład działa poprawnie dla użytkowników korzystających ze wskaźników, takich jak np. mysz. Jednakże, obsługiwanie za pomocą samej klawiatury prowadzi do problemu przy przechodzeniu do następnego elementu listy za pomocą tabulatora. Dzieje się tak, ponieważ obiekt <code>window</code> nigdy nie otrzymuje zdarzenia<code> click</code>. Może to doprowadzić do uniemożliwienia użytkownikom korzystania z aplikacji.</p>
+        <img src="./docs/outerclick-with-keyboard.gif" alt="Przycisk pokazujący dymek z listą, ukrywany poprzez kliknięcie poza dymkiem. Obsługiwany za pomocą klawiatury, co skutkuje nie zamknięciem dymku po utracie fokusa, powodując trwałe przysłonięcie innych elementów interfejsu.">
+        <p>Ta sama funkcjonalność może zostać uzyskana poprzez użycie odpowiednich procedur obsługi zdarzeń, takich jak <code>onBlur</code> i<code> onFocus</code>:</p>
+        <pre class="language-javascript{19-29,31-34,37-38,40-41}"><code class="language-javascript{19-29,31-34,37-38,40-41}">class BlurExample extends React.Component {
+  constructor(props) {
+    super(props);
+
+    this.state = { isOpen: false };
+    this.timeOutId = null;
+
+    this.onClickHandler = this.onClickHandler.bind(this);
+    this.onBlurHandler = this.onBlurHandler.bind(this);
+    this.onFocusHandler = this.onFocusHandler.bind(this);
+  }
+
+  onClickHandler() {
+    this.setState(currentState => ({
+      isOpen: !currentState.isOpen
+    }));
+  }
+
+  // Zamykamy dymek w następnym cyklu za pomocą funkcji setTimeout.
+  // Jest to konieczne, ponieważ musimy najpierw sprawdzić,
+  // czy inny potomek elementu otrzymał fokus, jako że
+  // zdarzenie onBlur wywołuje się przed ustawieniem fokusa
+  // na innym elemencie.
+  onBlurHandler() {
+    this.timeOutId = setTimeout(() => {
+      this.setState({
+        isOpen: false
+      });
+    });
+  }
+
+  // Jeśli potomek otrzyma fokus, nie zamykaj dymku.
+  onFocusHandler() {
+    clearTimeout(this.timeOutId);
+  }
+
+  render() {
+    // React wspiera nas w przesyłaniu fokusa
+    // do rodzica.
+    return (
+      &#x3C;div onBlur={this.onBlurHandler}
+           onFocus={this.onFocusHandler}>
+        &#x3C;button onClick={this.onClickHandler}
+                aria-haspopup="true"
+                aria-expanded={this.state.isOpen}>
+          Wybierz opcję
+        &#x3C;/button>
+        {this.state.isOpen &#x26;&#x26; (
+          &#x3C;ul>
+            &#x3C;li>Opcja 1&#x3C;/li>
+            &#x3C;li>Opcja 2&#x3C;/li>
+            &#x3C;li>Opcja 3&#x3C;/li>
+          &#x3C;/ul>
+        )}
+      &#x3C;/div>
+    );
+  }
+}</code></pre>
+        <p>Ten kod udostępnia funkcje użytkownikom zarówno urządzeń wskaźnikowych, jak i klawiatury. Zwróć także uwagę na właściwości <code>aria- *</code> dodane w celu obsłużenia czytników ekranu. Dla uproszczenia kodu nie zostały zaimplementowane zdarzenia klawiaturowe pozwalające na interakcję z dymkiem za pomocą klawiszy strzałek.</p>
+        <img src="./docs/blur-popover-close.gif" alt="Lista poprawnie zamykająca się zarówno dla użytkowników myszy, jak i klawiatury.">
+        <p>
+          Jest to tylko jeden przykład z wielu przypadków, w których poleganie jedynie na zdarzeniach wskaźnika i myszy możemy uniemożliwić poruszanie się po aplikacji użytkownikom korzystającym z samej klawiatury.
+          Każdorazowe testowanie aplikacji za pomocą klawiatury pozwala na sprawne wyszukiwanie problemów, którym można zaradzić poprzez dodanie obsługi zdarzeń klawiaturowych.
+        </p>
+      </section>
+      <section id="more-complex-widgets" class="level2">
+        <h2>Bardziej złożone widżety</h2>
+        <p>
+          Bardziej złożone scenariusze niekoniecznie muszą być mniej dostępne dla użytkowników. Dostępność najłatwiej osiągnąć poprzez trzymanie się jak najbliżej wzorców znanych z natywnego HTML-a.
+          Nawet najbardziej złożony widżet może być przyjazny dla użytkownika.
+        </p>
+        <p>
+          Wymagamy tutaj znajomości standardu ARIA, m.in. <a href="https://www.w3.org/TR/wai-aria/#roles">ról</a> oraz <a href="https://www.w3.org/TR/wai-aria/#states_and_properties">stanów i właściwości</a>.
+          Są to "skrzynki narzędziowe" wypełnione atrybutami HTML, które są w pełni obsługiwane przez JSX i umożliwiają nam tworzenie w pełni dostępnych, wysoce funkcjonalnych komponentów reactowych.
+        </p>
+        <p>Każdy typ widżetu ma określone wzorce i zarówno użytkownicy, jak i przeglądarki oczekują, że będzie działał w określony sposób.</p>
+        <ul>
+          <li><a href="https://www.w3.org/TR/wai-aria-practices/#aria_ex">Dobre praktyki WAI-ARIA - Wzorce projektowe i widżety</a></li>
+          <li><a href="https://heydonworks.com/article/practical-aria-examples/">Heydon Pickering - ARIA w praktyce</a></li>
+          <li><a href="https://inclusive-components.design/">Inclusive Components</a></li>
+        </ul>
+      </section>
+      <section id="other-points-for-consideration" class="level2">
+        <h2>Inne punkty do rozważenia</h2>
+        <section id="setting-the-language" class="level3">
+          <h3>Ustawianie języka</h3>
+          <p>Jawnie wskaż ludzki język tekstów zamieszczonych na stronie, ponieważ oprogramowanie czytnika ekranu używa go do wyboru prawidłowych ustawień głosu:</p>
+          <ul>
+            <li><a href="https://webaim.org/techniques/screenreader/#language">WebAIM - Język dokumentu</a></li>
+          </ul>
+        </section>
+        <section id="setting-the-document-title" class="level3">
+          <h3>Ustawienie tytułu dokumentu</h3>
+          <p>Ustaw znacznik <code>&#x3C;title></code> dokumentu tak, by poprawnie opisywał zawartość strony. Ułatwia to użytkownikowi zrozumienie bieżącego kontekstu strony.</p>
+          <ul>
+            <li><a href="https://www.w3.org/TR/UNDERSTANDING-WCAG20/navigation-mechanisms-title.html">WCAG - Dlaczego tytuł dokumentu jest wymagany</a></li>
+          </ul>
+          <p>W Reakcie tytuł dokumentu możemy ustawić za pomocą <a href="https://github.com/gaearon/react-document-title">reactowego komponentu tytułu dokumentu</a>.</p>
+        </section>
+        <section id="color-contrast" class="level3">
+          <h3>Kontrast kolorów</h3>
+          <p>Upewnij się, że wszystkie teksty na twojej stronie mają wystarczający kontrast kolorów, aby pozostały maksymalnie czytelne dla użytkowników o słabym wzroku:</p>
+          <ul>
+            <li><a href="https://www.w3.org/TR/UNDERSTANDING-WCAG20/visual-audio-contrast-contrast.html">WCAG - Dlaczego wymagane jest zachowanie kontrastu kolorów</a></li>
+            <li><a href="https://www.smashingmagazine.com/2014/10/color-contrast-tips-and-tools-for-accessibility/">Wszystko o kontraście kolorów i dlaczego warto się nad nim zastanowić</a></li>
+            <li><a href="https://a11yproject.com/posts/what-is-color-contrast/">A11yProject - Czym jest kontrast kolorów</a></li>
+          </ul>
+          <p>Ręczne obliczanie odpowiednich kombinacji kolorów dla wszystkich przypadków na swojej stronie internetowej może być nudne. Zamiast tego możesz użyć <a href="https://colorable.jxnblk.com/">Colorable do przeliczenia całej palety kolorów dla zachowania dobrej dostępności aplikacji</a>.</p>
+          <p>Jeśli chcesz rozszerzyć możliwości testowania kontrastu, możesz użyć następujących narzędzi:</p>
+          <ul>
+            <li><a href="https://webaim.org/resources/contrastchecker/">WebAIM - Sprawdzanie kontrastu kolorów</a></li>
+            <li><a href="https://www.paciellogroup.com/resources/contrastanalyser/">The Paciello Group - Analizator kontrastu kolorów</a></li>
+          </ul>
+        </section>
+      </section>
+      <section id="development-and-testing-tools" class="level2">
+        <h2>Narzędzia do tworzenia oraz testowania</h2>
+        <p>Istnieje wiele narzędzi, których możemy użyć, aby pomóc sobie przy tworzeniu przystępnych aplikacji internetowych.</p>
+        <section id="the-keyboard" class="level3">
+          <h3>Klawiatura</h3>
+          <p>
+            Zdecydowanie najłatwiejszą i jedną z najważniejszych kontroli jest sprawdzenie, czy poruszanie się po całej stronie jest możliwe z wykorzystaniem wyłącznie klawiatury.
+            Instrukcja sprawdzenia aplikacji:
+          </p>
+          <ol>
+            <li>Odłącz mysz od komputera.</li>
+            <li>Używaj wyłącznie klawiszy <code>Tab</code> oraz <code>Shift + Tab</code> do przeglądania strony.</li>
+            <li>Używaj klawisza <code>Enter</code> do aktywowania elementów.</li>
+            <li>W razie potrzeby używaj klawiszy strzałek do interakcji z niektórymi elementami, takimi jak menu i listy rozwijane.</li>
+          </ol>
+        </section>
+        <section id="development-assistance" class="level3">
+          <h3>Pomoc przy tworzeniu</h3>
+          <p>Część testów dostępności możemy wykonać bezpośrednio w naszym kodzie JSX. Często kontrole dostępności dla ról, stanów i właściwości ARIA są wbudowane w środowisko IDE obsługujące JSX. Dodatkowo, mamy do dyspozycji również inne narzędzia:</p>
+          <section id="eslint-plugin-jsx-a11y" class="level4">
+            <h4>eslint-plugin-jsx-a11y</h4>
+            <p>
+              Wtyczka [eslint-plugin-jsx-a11y] (<a href="https://github.com/evcohen/eslint-plugin-jsx-a11y">https://github.com/evcohen/eslint-plugin-jsx-a11y</a>) dla narzędzia ESLint informuje o problemach z dostępnością w twoim kodzie JSX. Wiele środowisk IDE umożliwia integrację ostrzeżeń o zgłaszanych
+              problemach z dostępnością bezpośrednio z narzędziami do analizy kodu i oknami edytorów.
+            </p>
+            <p><a href="https://github.com/facebookincubator/create-react-app">Create React App</a> ma tę wtyczkę domyślnie zainstalowaną z aktywnymi niektórymi regułami. Jeśli chcesz włączyć dodatkowe reguły dotyczące dostępności, możesz utworzyć plik <code>.eslintrc</code> w katalogu głównym swojego projektu z następującą zawartością:</p>
+            <pre class="language-json"><code class="language-json"><span class="token punctuation">{</span>
+  <span class="token property">"extends"</span><span class="token operator">:</span> <span class="token punctuation">[</span><span class="token string">"react-app"</span><span class="token punctuation">,</span> <span class="token string">"plugin:jsx-a11y/recommended"</span><span class="token punctuation">]</span><span class="token punctuation">,</span>
+  <span class="token property">"plugins"</span><span class="token operator">:</span> <span class="token punctuation">[</span><span class="token string">"jsx-a11y"</span><span class="token punctuation">]</span>
+<span class="token punctuation">}</span></code></pre>
+          </section>
+        </section>
+        <section id="testing-accessibility-in-the-browser" class="level3">
+          <h3>Testowanie dostępności w przeglądarce</h3>
+          <p>Istnieje wiele narzędzi, które umożliwiają przeprowadzanie kontroli dostępności na stronach internetowych bezpośrednio w przeglądarce. Używaj ich w połączeniu z innymi narzędziami wymienionymi tutaj, aby jak najlepiej przygotować swój kod HTML.</p>
+          <section id="axe-axe-core-and-react-axe" class="level4">
+            <h4>aXe, aXe-core oraz react-axe</h4>
+            <p>Deque Systems oferuje <a href="https://github.com/dequelabs/axe-core">aXe-core</a> do automatycznych i kompleksowych testów dostępności aplikacji. Moduł ten obejmuje integracje z Selenium.</p>
+            <p><a href="https://www.deque.com/products/axe/">The Accessibility Engine</a> (lub inaczej aXe) jest rozszerzeniem przeglądarkowego inspektora dostępności, zbudowanym na bazie <code>aXe-core</code>.</p>
+            <p>Możesz również użyć modułu <a href="https://github.com/dequelabs/axe-core-npm/tree/develop/packages/react">@axe-core/react</a>, aby zgłosić luki dotyczące dostępności bezpośrednio do konsoli, podczas rozwoju aplikacji i debugowania.</p>
+          </section>
+          <section id="webaim-wave" class="level4">
+            <h4>WebAIM WAVE</h4>
+            <p><a href="https://wave.webaim.org/extension/">Web Accessibility Evaluation Tool</a> jest kolejną wtyczką pomagającą w testowaniu dostępności.</p>
+          </section>
+          <section id="accessibility-inspectors-and-the-accessibility-tree" class="level4">
+            <h4>Inspektory dostępności i Accessibility Tree</h4>
+            <p><a href="https://www.paciellogroup.com/blog/2015/01/the-browser-accessibility-tree/">The Accessibility Tree</a> jest podzbiorem drzewa DOM. Zawiera wszystkie dostępne dla technologii wspomagających obiekty, odpowiadające każdemu elementowi modelu DOM.</p>
+            <p>W niektórych przeglądarkach możemy łatwo wyświetlić informacje o dostępności dla każdego elementu w drzewie DOM:</p>
+            <ul>
+              <li><a href="https://developer.mozilla.org/en-US/docs/Tools/Accessibility_inspector">Korzystanie z Inspektora dostępności w Firefoksie</a></li>
+              <li><a href="https://developers.google.com/web/tools/chrome-devtools/accessibility/reference#pane">Korzystanie z Inspektora dostępności w Chromie</a></li>
+              <li><a href="https://developer.apple.com/library/content/documentation/Accessibility/Conceptual/AccessibilityMacOSX/OSXAXTestingApps.html">Korzystanie z Inspektora dostępności w OS X Safari</a></li>
+            </ul>
+          </section>
+        </section>
+        <section id="screen-readers" class="level3">
+          <h3>Czytniki ekranowe</h3>
+          <p>
+            Testowanie za pomocą czytnika ekranu powinno stanowić część testów dostępności.
+            Należy pamiętać, że kombinacje przeglądarka/czytnik ekranu mają bardzo duże znaczenie. Zaleca się testowanie aplikacji w przeglądarce rekomendowanej do wybranego czytnika ekranu.
+          </p>
+        </section>
+        <section id="commonly-used-screen-readers" class="level3">
+          <h3>Często używane czytniki ekranu</h3>
+          <section id="nvda-in-firefox" class="level4">
+            <h4>NVDA w Firefoxie</h4>
+            <p><a href="https://www.nvaccess.org/">NonVisual Desktop Access</a> (lub NVDA) to czytnik ekranu systemu Windows o otwartym kodzie źródłowym, który jest szeroko stosowany.</p>
+            <p>Zapoznaj się z następującymi poradnikami opisującymi, jak najlepiej wykorzystać NVDA:</p>
+            <ul>
+              <li><a href="https://webaim.org/articles/nvda/">WebAIM - Korzystanie z NVDA do oceny dostępności strony</a></li>
+              <li><a href="https://dequeuniversity.com/screenreaders/nvda-keyboard-shortcuts">Deque - NVDA: Skróty klawiszowe</a></li>
+            </ul>
+          </section>
+          <section id="voiceover-in-safari" class="level4">
+            <h4>VoiceOver w Safari</h4>
+            <p>VoiceOver to zintegrowany czytnik ekranu na urządzeniach Apple.</p>
+            <p>Zapoznaj się z następującymi przewodnikami dotyczącymi aktywacji i korzystania z VoiceOver:</p>
+            <ul>
+              <li><a href="https://webaim.org/articles/voiceover/">WebAIM - Korzystanie z VoiceOver do oceny dostępności stron internetowych</a></li>
+              <li><a href="https://dequeuniversity.com/screenreaders/voiceover-keyboard-shortcuts">Deque - VoiceOver dla OS X: Skróty klawiszowe</a></li>
+              <li><a href="https://dequeuniversity.com/screenreaders/voiceover-ios-shortcuts">Deque - VoiceOver dla iOS: Skróty</a></li>
+            </ul>
+          </section>
+          <section id="jaws-in-internet-explorer" class="level4">
+            <h4>JAWS w Internet Explorer</h4>
+            <p><a href="https://www.freedomscientific.com/Products/software/JAWS/">Job Access With Speech</a> (lub JAWS) jest popularnym czytnikiem ekranu w systemie Windows.</p>
+            <p>Zapoznaj się z następującymi poradnikami, jak najlepiej korzystać z JAWS:</p>
+            <ul>
+              <li><a href="https://webaim.org/articles/jaws/">WebAIM - Korzystanie z JAWS do oceny dostępności stron internetowych</a></li>
+              <li><a href="https://dequeuniversity.com/screenreaders/jaws-keyboard-shortcuts">Deque - JAWS: Skróty klawiszowe</a></li>
+            </ul>
+          </section>
+        </section>
+        <section id="other-screen-readers" class="level3">
+          <h3>Inne czytniki ekranowe</h3>
+          <section id="chromevox-in-google-chrome" class="level4">
+            <h4>ChromeVox w Google Chrome</h4>
+            <p>[ChromeVox] (<a href="https://www.chromevox.com/">https://www.chromevox.com/</a>) jest zintegrowanym czytnikiem ekranu na Chromebookach i jest dostępny [jako rozszerzenie] (<a href="https://chrome.google.com/webstore/detail/chromevox/kgejglhpjiefppelpmljglcjbhoiplfn?hl=pl">https://chrome.google.com/webstore/detail/chromevox/kgejglhpjiefppelpmljglcjbhoiplfn?hl=pl</a>) dla Google Chrome.</p>
+            <p>Zapoznaj się z następującymi poradnikami opisującymi, jak najlepiej korzystać z ChromeVox:</p>
+            <ul>
+              <li><a href="https://support.google.com/chromebook/answer/7031755?hl=pl">System operacyjny Chrome - Pomoc: Korzystanie z wbudowanego czytnika ekranu</a></li>
+              <li>
+                <a href="https://www.chromevox.com/keyboard_shortcuts.html">ChromeVox - klasyczne skróty klawiszowe</a>
+                <span style="float: footnote;"><a href="./index.html#toc">Go to TOC</a></span>
+              </li>
+            </ul>
+          </section>
+        </section>
+      </section>
+    </section>
+  </body>
+</html>

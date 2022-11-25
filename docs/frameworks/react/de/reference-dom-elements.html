@@ -1,0 +1,164 @@
+<!doctype html>
+<html lang="de">
+  <head>
+    <meta charset="utf-8">
+    <title>DOM Elemente</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="https://raw.githubusercontent.com/shinokada/prism-coy-theme/main/theme_common.css">
+  </head>
+  <body>
+    <section id="dom-elemente" class="level1">
+      <h1>DOM Elemente</h1>
+      <p>React implementiert ein browserunabhängiges DOM-System für Performance und browser-übergreifende Kompatibilität. Wir haben die Gelegenheit genutzt, um ein paar Ecken und Kanten in der DOM-Implementation der Browser zu bereinigen.</p>
+      <p>In React sollen alle DOM Eigenschaften und Attribute (einschließlich Event-Handler) in camelCase geschrieben sein. Das HTML-Attribut <code>tabindex</code> entspricht zum Beispiel dem Attribut <code>tabIndex</code> in React. Ausnahmen sind die <code>aria-*</code> und <code>data-*</code> Attribute, welche kleingeschrieben werden sollen. Beispielsweise kannst du in React weiterhin <code>aria-label</code> für das HTML-Attribut <code>aria-label</code> verwenden.</p>
+      <section id="differences-in-attributes" class="level2">
+        <h2>Unterschiede bei Attributen</h2>
+        <p>Es gibt eine Reihe von Attributen, die in React anders funktionieren als in HTML:</p>
+        <section id="checked" class="level3">
+          <h3>checked</h3>
+          <p>Das <code>checked</code> Attribut wird von <code>&#x3C;input></code> Komponenten des Typs <code>checkbox</code> oder <code>radio</code> unterstützt. Du kannst es benutzen, um festzulegen, ob die Komponente angekreuzt ist oder nicht. Das ist nützlich, um kontrollierte Komponenten zu erstellen. <code>defaultChecked</code> ist das unkontrollierte Äquivalent, welches festlegt, ob die Komponente angekreuzt ist, wenn sie erstmals gemounted wird.</p>
+        </section>
+        <section id="classname" class="level3">
+          <h3>className</h3>
+          <p>Benutze das <code>className</code> Attribut, um eine CSS-Klasse anzugeben. Das trifft auf alle regulären DOM- und SVG-Elemente wie zum Beispiel <code>&#x3C;div></code> oder <code>&#x3C;a></code> zu.</p>
+          <p>Benutze stattdessen das <code>class</code> Attribut, wenn du React mit Web-Komponenten benutzt (was ungewöhnlich ist).</p>
+        </section>
+        <section id="dangerouslysetinnerhtml" class="level3">
+          <h3>dangerouslySetInnerHTML</h3>
+          <p><code>dangerouslySetInnerHTML</code> ist der Ersatz von React für die Benutzung von <code>innerHTML</code> im Browser-DOM. Im Allgemeinen ist es riskant, HTML aus dem Programmcode heraus zu manipulieren, da es einfach ist, unbeabsichtigt Benutzer einem <a href="https://en.wikipedia.org/wiki/Cross-site_scripting">cross-site scripting (XSS)</a> Angriff auszusetzen. Deshalb ist es zwar möglich, HTML direkt aus React heraus zu manipulieren, man muss dafür aber <code>dangerouslySetInnerHTML</code> schreiben und ein Objekt mit <code>__html</code> als Schlüssel mitgeben, um sich daran zu erinnern, dass es gefährlich ist. Zum Beispiel:</p>
+          <pre class="language-js"><code class="language-js"><span class="token keyword">function</span> <span class="token function">createMarkup</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  <span class="token keyword control-flow">return</span> <span class="token punctuation">{</span><span class="token literal-property property">__html</span><span class="token operator">:</span> <span class="token string">'Erstens &#x26;middot; Zweitens'</span><span class="token punctuation">}</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+
+<span class="token keyword">function</span> <span class="token function"><span class="token maybe-class-name">MyComponent</span></span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  <span class="token keyword control-flow">return</span> <span class="token operator">&#x3C;</span>div dangerouslySetInnerHTML<span class="token operator">=</span><span class="token punctuation">{</span><span class="token function">createMarkup</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">}</span> <span class="token operator">/</span><span class="token operator">></span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span></code></pre>
+        </section>
+        <section id="htmlfor" class="level3">
+          <h3>htmlFor</h3>
+          <p>Da <code>for</code> ein für JavaScript reserviertes Wort ist, verwenden React-Elemente stattdessen <code>htmlFor</code>.</p>
+        </section>
+        <section id="onchange" class="level3">
+          <h3>onChange</h3>
+          <p>Das <code>onChange</code> Event verhält sich, wie es zu erwarten ist: wann immer sich das Feld eines Formulars ändert, wird dieser Event ausgelöst. Wir verwenden absichtlich nicht das bereits existierende Verhalten des Browsers, da <code>onChange</code> keine passende Bezeichnung für dessen Verhalten ist. React verlässt sich auf dieses Event, um Eingaben des Users in Echtzeit zu bearbeiten.</p>
+        </section>
+        <section id="selected" class="level3">
+          <h3>selected</h3>
+          <p>Setze den Wert des <code>value</code>-Attributs deines <code>&#x3C;select></code>-Elements, wenn du eine <code>&#x3C;option></code> als ausgewählt markieren willst. Eine ausführliche Bschreibung findest du unter <a href="./forms.html#the-select-tag">"Das Select-Tag"</a>.</p>
+        </section>
+        <section id="style" class="level3">
+          <h3>style</h3>
+          <blockquote>
+            <p>Hinweis</p>
+            <p>Einige Beispiele in der Dokumentation verwenden <code>style</code> der Einfachheit halber. <strong>Allerdings wird es nicht empfohlen, das <code>style</code> Attribut als das primäre Mittel für das Styling einzusetzen.</strong> In den meisten Fällen sollte <a href="#classname"><code>className</code></a> benutzt werden, um Klassen in einem externen CSS-Stylesheet zu referenzieren. <code>style</code> wird in React-Anwendungen hauptsächlich dazu eingesetzt, um dynamisch berechnete Styles während des Renderings hinzuzufügen. Siehe auch <a href="./faq-styling.html">FAQ: Styling und CSS</a>.</p>
+          </blockquote>
+          <p>Das <code>style </code>Attribut akzeptiert ein JavaScript-Objekt mit in camelCase geschriebenen Attributen, anstelle von einem CSS String. Dies ist konsistent mit dem DOM <code>style</code> Attribut. Es ist effizienter und verhindert XSS Sicherheitslücken. Zum Beispiel:</p>
+          <pre class="language-js"><code class="language-js"><span class="token keyword">const</span> divStyle <span class="token operator">=</span> <span class="token punctuation">{</span>
+  <span class="token literal-property property">color</span><span class="token operator">:</span> <span class="token string">'blue'</span><span class="token punctuation">,</span>
+  <span class="token literal-property property">backgroundImage</span><span class="token operator">:</span> <span class="token string">'url('</span> <span class="token operator">+</span> imgUrl <span class="token operator">+</span> <span class="token string">')'</span><span class="token punctuation">,</span>
+<span class="token punctuation">}</span><span class="token punctuation">;</span>
+
+<span class="token keyword">function</span> <span class="token function"><span class="token maybe-class-name">HelloWorldComponent</span></span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  <span class="token keyword control-flow">return</span> <span class="token operator">&#x3C;</span>div style<span class="token operator">=</span><span class="token punctuation">{</span>divStyle<span class="token punctuation">}</span><span class="token operator">></span><span class="token maybe-class-name">Hallo</span> <span class="token maybe-class-name">Welt</span><span class="token operator">!</span><span class="token operator">&#x3C;</span><span class="token operator">/</span>div<span class="token operator">></span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span></code></pre>
+          <p>Beachte, dass die Styles nicht automatisch einen Präfix erhalten. Um ältere Browser zu unterstüzen, musst du die passenden Style-Eigenschaften zur Verfügung stellen:</p>
+          <pre class="language-js"><code class="language-js"><span class="token keyword">const</span> divStyle <span class="token operator">=</span> <span class="token punctuation">{</span>
+  <span class="token literal-property property">WebkitTransition</span><span class="token operator">:</span> <span class="token string">'all'</span><span class="token punctuation">,</span> <span class="token comment">// beachte den Großbuchstaben 'W' hier</span>
+  <span class="token literal-property property">msTransition</span><span class="token operator">:</span> <span class="token string">'all'</span> <span class="token comment">// 'ms' ist der einzige browserspezifische Prefix mit einem Kleinbuchstaben</span>
+<span class="token punctuation">}</span><span class="token punctuation">;</span>
+
+<span class="token keyword">function</span> <span class="token function"><span class="token maybe-class-name">ComponentWithTransition</span></span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  <span class="token keyword control-flow">return</span> <span class="token operator">&#x3C;</span>div style<span class="token operator">=</span><span class="token punctuation">{</span>divStyle<span class="token punctuation">}</span><span class="token operator">></span><span class="token maybe-class-name">Dies</span> sollte browserübergreifend funktionieren<span class="token operator">&#x3C;</span><span class="token operator">/</span>div<span class="token operator">></span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span></code></pre>
+          <p>Style-Keys sind in camelCase geschrieben, um beim Zugriff auf die Eigenschaften eines DOM Knotens von JS aus (z.B. <code>node.style.backgroundImage</code>) konsistent zu sein. Browserspezifische Prefixes <a href="https://www.andismith.com/blogs/2012/02/modernizr-prefixed/">abgesehen von <code>ms</code></a> sollten mit einem Großbuchstaben beginnen. Darum beginnt <code>WebkitTransition</code> mit einem großen "W".</p>
+          <p>React fügt automatisch einen "px" Suffix zu bestimmten numerischen inline Style-Eigenschaften hinzu. Wenn du andere Einheiten als "px" verwenden willst, kannst du den Wert als String mit der gewünschten Einheit angeben. Zum Beispiel:</p>
+          <pre class="language-js"><code class="language-js"><span class="token comment">// Resultierender Style: '10px'</span>
+<span class="token operator">&#x3C;</span>div style<span class="token operator">=</span><span class="token punctuation">{</span><span class="token punctuation">{</span> <span class="token literal-property property">height</span><span class="token operator">:</span> <span class="token number">10</span> <span class="token punctuation">}</span><span class="token punctuation">}</span><span class="token operator">></span>
+  <span class="token maybe-class-name">Hallo</span> <span class="token maybe-class-name">Welt</span><span class="token operator">!</span>
+<span class="token operator">&#x3C;</span><span class="token operator">/</span>div<span class="token operator">></span>
+
+<span class="token comment">// Resultierender Style: '10%'</span>
+<span class="token operator">&#x3C;</span>div style<span class="token operator">=</span><span class="token punctuation">{</span><span class="token punctuation">{</span> <span class="token literal-property property">height</span><span class="token operator">:</span> <span class="token string">'10%'</span> <span class="token punctuation">}</span><span class="token punctuation">}</span><span class="token operator">></span>
+  <span class="token maybe-class-name">Hallo</span> <span class="token maybe-class-name">Welt</span><span class="token operator">!</span>
+<span class="token operator">&#x3C;</span><span class="token operator">/</span>div<span class="token operator">></span></code></pre>
+          <p>Allerdings werden nicht alle Style-Eigenschaften zu Pixel-Strings konvertiert. Einigen Eigenschaften (z.B. <code>zoom</code>, <code>order</code> oder <code>flex</code>) wird keine Einheit zugewiesen. Die komplette Liste von Eigenschaften ohne Einheit kann <a href="https://github.com/facebook/react/blob/4131af3e4bf52f3a003537ec95a1655147c81270/src/renderers/dom/shared/CSSProperty.js#L15-L59">hier</a> gefunden werden.</p>
+        </section>
+        <section id="suppresscontenteditablewarning" class="level3">
+          <h3>suppressContentEditableWarning</h3>
+          <p>Im Normalfall gibt es eine Warnung, wenn ein Element mit Kindern ebenfalls als <code>contentEditable</code> gekennzeichnet ist, da dies nicht funktionieren kann. Dieses Attribut unterdrückt diese Warnung. Verwende es nicht, außer du entwickelst eine Bibliothek wie <a href="https://facebook.github.io/draft-js/">Draft.js</a>, die <code>contentEditable</code> manuell verwaltet.</p>
+        </section>
+        <section id="suppresshydrationwarning" class="level3">
+          <h3>suppressHydrationWarning</h3>
+          <p>Wenn du serverseitiges Rendering für React benutzt, gibt es im Normalfall eine Warnung, wenn der Server und der Client unterschiedliche Inhalte rendern. Allerdings ist es in seltenen Fällen sehr schwierig oder gar unmöglich eine exakte Übereinstimmung zu garantieren. Beispielsweise Timestamps können zwischen Server und Client voneinander abweichen.</p>
+          <p>Wenn du <code>suppressHydrationWarning</code> auf <code>true</code> setzt, wird React dich nicht mehr über nicht übereinstimmende Attribute und Inhalte des Elementes warnen. Dies funktioniert allerdings nur eine Stufe tief und soll lediglich in ganz bestimmten Fällen wenn es wirklich notwendig ist genutzt werden. Du kannst mehr über dieses Feature in der <a href="./react-dom-client.html#hydrateroot"><code>ReactDOM.hydrateRoot()</code> Dokumentation</a> erfahren.</p>
+        </section>
+        <section id="value" class="level3">
+          <h3>value</h3>
+          <p>Das <code>value</code> Attribut wird von <code>&#x3C;input></code> und <code>&#x3C;textarea></code> Komponenten unterstützt. Du kannst es benutzen, um den Wert einer Komponente zu setzen. Dies ist nützlich, um kontrollierte Komponenten zu erstellen. <code>defaultValue</code> ist das unkontrollierte Äquivalent, welches den Wert der Komponente setzt, wenn sie erstmals gemountet wird.</p>
+        </section>
+      </section>
+      <section id="all-supported-html-attributes" class="level2">
+        <h2>Alle unterstützen HTML Attribute</h2>
+        <p>Ab React 16 werden alle standardmäßigen oder <a href="/blog/2017/09/08/dom-attributes-in-react-16.html">oder benutzerdefinierten</a> DOM-Attribute vollständig unterstützt.</p>
+        <p>React hat dem DOM schon immer eine auf JavaScript ausgerichtete API zur Verfügung gestellt. Da React-Komponenten oft eigene und dem DOM zugehörige Props brauchen, verwendet React, wie die DOM-APIs, die <code>camelCase</code> Konvention:</p>
+        <pre class="language-js"><code class="language-js"><span class="token operator">&#x3C;</span>div tabIndex<span class="token operator">=</span><span class="token string">"-1"</span> <span class="token operator">/</span><span class="token operator">></span>      <span class="token comment">// Genau wie node.tabIndex DOM-API</span>
+<span class="token operator">&#x3C;</span>div className<span class="token operator">=</span><span class="token string">"Button"</span> <span class="token operator">/</span><span class="token operator">></span> <span class="token comment">// Genau wie node.className DOM-API</span>
+<span class="token operator">&#x3C;</span>input readOnly<span class="token operator">=</span><span class="token punctuation">{</span><span class="token boolean">true</span><span class="token punctuation">}</span> <span class="token operator">/</span><span class="token operator">></span>  <span class="token comment">// Genau wie node.readOnly DOM-API</span></code></pre>
+        <p>Diese Props funktionieren ähnlich wie die entsprechenden HTML-Attribute mit Ausnahme von den untenstehenden Sonderfällen.</p>
+        <p>Einige der von React unterstützten DOM-Attribute sind unter anderem:</p>
+        <pre class="language-text"><code class="language-text">accept acceptCharset accessKey action allowFullScreen alt async autoComplete
+autoFocus autoPlay capture cellPadding cellSpacing challenge charSet checked
+cite classID className colSpan cols content contentEditable contextMenu controls
+controlsList coords crossOrigin data dateTime default defer dir disabled
+download draggable encType form formAction formEncType formMethod formNoValidate
+formTarget frameBorder headers height hidden high href hrefLang htmlFor
+httpEquiv icon id inputMode integrity is keyParams keyType kind label lang list
+loop low manifest marginHeight marginWidth max maxLength media mediaGroup method
+min minLength multiple muted name noValidate nonce open optimum pattern
+placeholder poster preload profile radioGroup readOnly rel required reversed
+role rowSpan rows sandbox scope scoped scrolling seamless selected shape size
+sizes span spellCheck src srcDoc srcLang srcSet start step style summary
+tabIndex target title type useMap value width wmode wrap</code></pre>
+        <p>Ebenso werden alle SVG-Attribute von React vollständig unterstützt:</p>
+        <pre class="language-text"><code class="language-text">accentHeight accumulate additive alignmentBaseline allowReorder alphabetic
+amplitude arabicForm ascent attributeName attributeType autoReverse azimuth
+baseFrequency baseProfile baselineShift bbox begin bias by calcMode capHeight
+clip clipPath clipPathUnits clipRule colorInterpolation
+colorInterpolationFilters colorProfile colorRendering contentScriptType
+contentStyleType cursor cx cy d decelerate descent diffuseConstant direction
+display divisor dominantBaseline dur dx dy edgeMode elevation enableBackground
+end exponent externalResourcesRequired fill fillOpacity fillRule filter
+filterRes filterUnits floodColor floodOpacity focusable fontFamily fontSize
+fontSizeAdjust fontStretch fontStyle fontVariant fontWeight format from fx fy
+g1 g2 glyphName glyphOrientationHorizontal glyphOrientationVertical glyphRef
+gradientTransform gradientUnits hanging horizAdvX horizOriginX ideographic
+imageRendering in in2 intercept k k1 k2 k3 k4 kernelMatrix kernelUnitLength
+kerning keyPoints keySplines keyTimes lengthAdjust letterSpacing lightingColor
+limitingConeAngle local markerEnd markerHeight markerMid markerStart
+markerUnits markerWidth mask maskContentUnits maskUnits mathematical mode
+numOctaves offset opacity operator order orient orientation origin overflow
+overlinePosition overlineThickness paintOrder panose1 pathLength
+patternContentUnits patternTransform patternUnits pointerEvents points
+pointsAtX pointsAtY pointsAtZ preserveAlpha preserveAspectRatio primitiveUnits
+r radius refX refY renderingIntent repeatCount repeatDur requiredExtensions
+requiredFeatures restart result rotate rx ry scale seed shapeRendering slope
+spacing specularConstant specularExponent speed spreadMethod startOffset
+stdDeviation stemh stemv stitchTiles stopColor stopOpacity
+strikethroughPosition strikethroughThickness string stroke strokeDasharray
+strokeDashoffset strokeLinecap strokeLinejoin strokeMiterlimit strokeOpacity
+strokeWidth surfaceScale systemLanguage tableValues targetX targetY textAnchor
+textDecoration textLength textRendering to transform u1 u2 underlinePosition
+underlineThickness unicode unicodeBidi unicodeRange unitsPerEm vAlphabetic
+vHanging vIdeographic vMathematical values vectorEffect version vertAdvY
+vertOriginX vertOriginY viewBox viewTarget visibility widths wordSpacing
+writingMode x x1 x2 xChannelSelector xHeight xlinkActuate xlinkArcrole
+xlinkHref xlinkRole xlinkShow xlinkTitle xlinkType xmlns xmlnsXlink xmlBase
+xmlLang xmlSpace y y1 y2 yChannelSelector z zoomAndPan</code></pre>
+        <p>
+          Du kannst auch benutzerdefinierte Attribute verwenden, sofern diese kleingeschrieben werden.
+          <span style="float: footnote;"><a href="./index.html#toc">Go to TOC</a></span>
+        </p>
+      </section>
+    </section>
+  </body>
+</html>

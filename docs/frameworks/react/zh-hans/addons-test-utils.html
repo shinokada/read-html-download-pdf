@@ -1,0 +1,276 @@
+<!doctype html>
+<html lang="zh-hans">
+  <head>
+    <meta charset="utf-8">
+    <title>Test Utilities</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="https://raw.githubusercontent.com/shinokada/prism-coy-theme/main/theme_common.css">
+  </head>
+  <body>
+    <section id="test-utilities" class="level1">
+      <h1>Test Utilities</h1>
+      <p><strong>如何引入</strong></p>
+      <pre class="language-javascript"><code class="language-javascript"><span class="token keyword module">import</span> <span class="token imports"><span class="token maybe-class-name">ReactTestUtils</span></span> <span class="token keyword module">from</span> <span class="token string">'react-dom/test-utils'</span><span class="token punctuation">;</span> <span class="token comment">// ES6</span>
+<span class="token keyword">var</span> <span class="token maybe-class-name">ReactTestUtils</span> <span class="token operator">=</span> <span class="token function">require</span><span class="token punctuation">(</span><span class="token string">'react-dom/test-utils'</span><span class="token punctuation">)</span><span class="token punctuation">;</span> <span class="token comment">// ES5 使用 npm 的方式</span></code></pre>
+      <section id="overview" class="level2">
+        <h2>概览</h2>
+        <p><code>ReactTestUtils</code> 可搭配你所选的测试框架，轻松实现 React 组件测试。在 Facebook 内部，我们使用 <a href="https://facebook.github.io/jest/">Jest</a> 来轻松实现 JavaScript 测试。你可以从 Jest 官网的 <a href="https://jestjs.io/docs/tutorial-react">React 教程</a>中了解如何开始使用它。</p>
+        <blockquote>
+          <p>注意：</p>
+          <p>我们推荐使用 <a href="https://testing-library.com/react">React Testing Library</a>，它使得针对组件编写测试用例就像终端用户在使用它一样方便。</p>
+          <p>当使用的 React 版本 &#x3C;= 16 时，可以使用 <a href="https://airbnb.io/enzyme/">Enzyme</a> 的测试工具，通过它能够轻松对 React 组件的输出进行断言、操控和遍历。</p>
+        </blockquote>
+        <ul>
+          <li><a href="#act"><code>act()</code></a></li>
+          <li><a href="#mockcomponent"><code>mockComponent()</code></a></li>
+          <li><a href="#iselement"><code>isElement()</code></a></li>
+          <li><a href="#iselementoftype"><code>isElementOfType()</code></a></li>
+          <li><a href="#isdomcomponent"><code>isDOMComponent()</code></a></li>
+          <li><a href="#iscompositecomponent"><code>isCompositeComponent()</code></a></li>
+          <li><a href="#iscompositecomponentwithtype"><code>isCompositeComponentWithType()</code></a></li>
+          <li><a href="#findallinrenderedtree"><code>findAllInRenderedTree()</code></a></li>
+          <li><a href="#scryrendereddomcomponentswithclass"><code>scryRenderedDOMComponentsWithClass()</code></a></li>
+          <li><a href="#findrendereddomcomponentwithclass"><code>findRenderedDOMComponentWithClass()</code></a></li>
+          <li><a href="#scryrendereddomcomponentswithtag"><code>scryRenderedDOMComponentsWithTag()</code></a></li>
+          <li><a href="#findrendereddomcomponentwithtag"><code>findRenderedDOMComponentWithTag()</code></a></li>
+          <li><a href="#scryrenderedcomponentswithtype"><code>scryRenderedComponentsWithType()</code></a></li>
+          <li><a href="#findrenderedcomponentwithtype"><code>findRenderedComponentWithType()</code></a></li>
+          <li><a href="#renderintodocument"><code>renderIntoDocument()</code></a></li>
+          <li><a href="#simulate"><code>Simulate</code></a></li>
+        </ul>
+      </section>
+      <section id="reference" class="level2">
+        <h2>参考</h2>
+        <section id="act-act" class="level3">
+          <h3><code>act()</code> {#act}</h3>
+          <p>为断言准备一个组件，包裹要渲染的代码并在调用 <code>act()</code> 时执行更新。这会使得测试更接近 React 在浏览器中的工作方式。</p>
+          <blockquote>
+            <p>注意</p>
+            <p>如果你使用了 <code>react-test-renderer</code>，它也提供了与 <code>act</code> 行为相同的函数。</p>
+          </blockquote>
+          <p>例如，假设我们有个 <code>Counter</code> 组件:</p>
+          <pre class="language-js"><code class="language-js"><span class="token keyword">class</span> <span class="token class-name">Counter</span> <span class="token keyword">extends</span> <span class="token class-name">React<span class="token punctuation">.</span>Component</span> <span class="token punctuation">{</span>
+  <span class="token function">constructor</span><span class="token punctuation">(</span><span class="token parameter">props</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token keyword">super</span><span class="token punctuation">(</span>props<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token keyword">this</span><span class="token punctuation">.</span><span class="token property-access">state</span> <span class="token operator">=</span> <span class="token punctuation">{</span><span class="token literal-property property">count</span><span class="token operator">:</span> <span class="token number">0</span><span class="token punctuation">}</span><span class="token punctuation">;</span>
+    <span class="token keyword">this</span><span class="token punctuation">.</span><span class="token property-access">handleClick</span> <span class="token operator">=</span> <span class="token keyword">this</span><span class="token punctuation">.</span><span class="token method function property-access">handleClick</span><span class="token punctuation">.</span><span class="token method function property-access">bind</span><span class="token punctuation">(</span><span class="token keyword">this</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token punctuation">}</span>
+  <span class="token function">componentDidMount</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token dom variable">document</span><span class="token punctuation">.</span><span class="token property-access">title</span> <span class="token operator">=</span> <span class="token template-string"><span class="token template-punctuation string">`</span><span class="token string">You clicked </span><span class="token interpolation"><span class="token interpolation-punctuation punctuation">${</span><span class="token keyword">this</span><span class="token punctuation">.</span><span class="token property-access">state</span><span class="token punctuation">.</span><span class="token property-access">count</span><span class="token interpolation-punctuation punctuation">}</span></span><span class="token string"> times</span><span class="token template-punctuation string">`</span></span><span class="token punctuation">;</span>
+  <span class="token punctuation">}</span>
+  <span class="token function">componentDidUpdate</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token dom variable">document</span><span class="token punctuation">.</span><span class="token property-access">title</span> <span class="token operator">=</span> <span class="token template-string"><span class="token template-punctuation string">`</span><span class="token string">You clicked </span><span class="token interpolation"><span class="token interpolation-punctuation punctuation">${</span><span class="token keyword">this</span><span class="token punctuation">.</span><span class="token property-access">state</span><span class="token punctuation">.</span><span class="token property-access">count</span><span class="token interpolation-punctuation punctuation">}</span></span><span class="token string"> times</span><span class="token template-punctuation string">`</span></span><span class="token punctuation">;</span>
+  <span class="token punctuation">}</span>
+  <span class="token function">handleClick</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token keyword">this</span><span class="token punctuation">.</span><span class="token method function property-access">setState</span><span class="token punctuation">(</span><span class="token parameter">state</span> <span class="token arrow operator">=></span> <span class="token punctuation">(</span><span class="token punctuation">{</span>
+      <span class="token literal-property property">count</span><span class="token operator">:</span> state<span class="token punctuation">.</span><span class="token property-access">count</span> <span class="token operator">+</span> <span class="token number">1</span><span class="token punctuation">,</span>
+    <span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token punctuation">}</span>
+  <span class="token function">render</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token keyword control-flow">return</span> <span class="token punctuation">(</span>
+      <span class="token operator">&#x3C;</span>div<span class="token operator">></span>
+        <span class="token operator">&#x3C;</span>p<span class="token operator">></span><span class="token maybe-class-name">You</span> clicked <span class="token punctuation">{</span><span class="token keyword">this</span><span class="token punctuation">.</span><span class="token property-access">state</span><span class="token punctuation">.</span><span class="token property-access">count</span><span class="token punctuation">}</span> times<span class="token operator">&#x3C;</span><span class="token operator">/</span>p<span class="token operator">></span>
+        <span class="token operator">&#x3C;</span>button onClick<span class="token operator">=</span><span class="token punctuation">{</span><span class="token keyword">this</span><span class="token punctuation">.</span><span class="token property-access">handleClick</span><span class="token punctuation">}</span><span class="token operator">></span>
+          <span class="token maybe-class-name">Click</span> me
+        <span class="token operator">&#x3C;</span><span class="token operator">/</span>button<span class="token operator">></span>
+      <span class="token operator">&#x3C;</span><span class="token operator">/</span>div<span class="token operator">></span>
+    <span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token punctuation">}</span>
+<span class="token punctuation">}</span></code></pre>
+          <p>以下是其测试代码：</p>
+          <pre class="language-js{3,20-22,29-31}"><code class="language-js{3,20-22,29-31}">import React from 'react';
+import ReactDOM from 'react-dom/client';
+import { act } from 'react-dom/test-utils';
+import Counter from './Counter';
+
+let container;
+
+beforeEach(() => {
+  container = document.createElement('div');
+  document.body.appendChild(container);
+});
+
+afterEach(() => {
+  document.body.removeChild(container);
+  container = null;
+});
+
+it('can render and update a counter', () => {
+  // 首先测试 render 和 componentDidMount
+  act(() => {
+    ReactDOM.createRoot(container).render(&#x3C;Counter />);
+  });
+  const button = container.querySelector('button');
+  const label = container.querySelector('p');
+  expect(label.textContent).toBe('You clicked 0 times');
+  expect(document.title).toBe('You clicked 0 times');
+
+  // 再测试 render 和 componentDidUpdate
+  act(() => {
+    button.dispatchEvent(new MouseEvent('click', {bubbles: true}));
+  });
+  expect(label.textContent).toBe('You clicked 1 times');
+  expect(document.title).toBe('You clicked 1 times');
+});</code></pre>
+          <p>千万不要忘记，只有将 DOM 容器添加到 <code>document</code> 时，触发 DOM 事件才生效。你可以使用类似于 <a href="https://testing-library.com/react">React Testing Library</a> 等库来减少样板代码（boilerplate code）。</p>
+          <ul>
+            <li><a href="./testing-recipes.html"><code>recipes</code></a> 文档包含了关于 <code>act()</code> 函数的示例、用法及更多详细信息。</li>
+          </ul>
+          <hr>
+        </section>
+        <section id="mockcomponent-mockcomponent" class="level3">
+          <h3><code>mockComponent()</code> {#mockcomponent}</h3>
+          <pre class="language-javascript"><code class="language-javascript"><span class="token function">mockComponent</span><span class="token punctuation">(</span>
+  componentClass<span class="token punctuation">,</span>
+  <span class="token punctuation">[</span>mockTagName<span class="token punctuation">]</span>
+<span class="token punctuation">)</span></code></pre>
+          <p>将模拟组件模块传入这个方法后，React 内部会使用有效的方法填充该模块，使其成为虚拟的 React 组件。与通常的渲染不同，组件将变成一个简单的 <code>&#x3C;div></code> (如果提供了 <code>mockTagName</code> 则是其他标签)，包含任何提供的子级。</p>
+          <blockquote>
+            <p>注意：</p>
+            <p><code>mockComponent()</code> 是一个过时的 API，我们推荐使用 <a href="https://jestjs.io/docs/tutorial-react-native#mock-native-modules-using-jestmock"><code>jest.mock()</code></a> 来代替。</p>
+          </blockquote>
+          <hr>
+        </section>
+        <section id="iselement-iselement" class="level3">
+          <h3><code>isElement()</code> {#iselement}</h3>
+          <pre class="language-javascript"><code class="language-javascript"><span class="token function">isElement</span><span class="token punctuation">(</span>element<span class="token punctuation">)</span></code></pre>
+          <p>当 <code>element</code> 是任何一种 React 元素时，返回 <code>true</code>。</p>
+          <hr>
+        </section>
+        <section id="iselementoftype-iselementoftype" class="level3">
+          <h3><code>isElementOfType()</code> {#iselementoftype}</h3>
+          <pre class="language-javascript"><code class="language-javascript"><span class="token function">isElementOfType</span><span class="token punctuation">(</span>
+  element<span class="token punctuation">,</span>
+  componentClass
+<span class="token punctuation">)</span></code></pre>
+          <p>当 <code>element</code> 是一种 React 元素，并且它的类型是参数 <code>componentClass</code> 的类型时，返回 <code>true</code>。</p>
+          <hr>
+        </section>
+        <section id="isdomcomponent-isdomcomponent" class="level3">
+          <h3><code>isDOMComponent()</code> {#isdomcomponent}</h3>
+          <pre class="language-javascript"><code class="language-javascript"><span class="token function">isDOMComponent</span><span class="token punctuation">(</span>instance<span class="token punctuation">)</span></code></pre>
+          <p>当 <code>instance</code> 是一个 DOM 组件（比如 <code>&#x3C;div></code> 或 <code>&#x3C;span></code>）时，返回 <code>true</code>。</p>
+          <hr>
+        </section>
+        <section id="iscompositecomponent-iscompositecomponent" class="level3">
+          <h3><code>isCompositeComponent()</code> {#iscompositecomponent}</h3>
+          <pre class="language-javascript"><code class="language-javascript"><span class="token function">isCompositeComponent</span><span class="token punctuation">(</span>instance<span class="token punctuation">)</span></code></pre>
+          <p>当 <code>instance</code> 是一个用户自定义的组件，比如一个类或者一个函数时，返回 <code>true</code>。</p>
+          <hr>
+        </section>
+        <section id="iscompositecomponentwithtype-iscompositecomponentwithtype" class="level3">
+          <h3><code>isCompositeComponentWithType()</code> {#iscompositecomponentwithtype}</h3>
+          <pre class="language-javascript"><code class="language-javascript"><span class="token function">isCompositeComponentWithType</span><span class="token punctuation">(</span>
+  instance<span class="token punctuation">,</span>
+  componentClass
+<span class="token punctuation">)</span></code></pre>
+          <p>当 <code>instance</code> 是一个组件，并且它的类型是参数 <code>componentClass</code> 的类型时，返回 <code>true</code>。</p>
+          <hr>
+        </section>
+        <section id="findallinrenderedtree-findallinrenderedtree" class="level3">
+          <h3><code>findAllInRenderedTree()</code> {#findallinrenderedtree}</h3>
+          <pre class="language-javascript"><code class="language-javascript"><span class="token function">findAllInRenderedTree</span><span class="token punctuation">(</span>
+  tree<span class="token punctuation">,</span>
+  test
+<span class="token punctuation">)</span></code></pre>
+          <p>遍历所有在参数 <code>tree</code> 中的组件，记录所有 <code>test(component)</code> 为 <code>true</code> 的组件。单独调用此方法不是很有用，但是它常常被作为底层 API 被其他测试方法使用。</p>
+          <hr>
+        </section>
+        <section id="scryrendereddomcomponentswithclass-scryrendereddomcomponentswithclass" class="level3">
+          <h3><code>scryRenderedDOMComponentsWithClass()</code> {#scryrendereddomcomponentswithclass}</h3>
+          <pre class="language-javascript"><code class="language-javascript"><span class="token function">scryRenderedDOMComponentsWithClass</span><span class="token punctuation">(</span>
+  tree<span class="token punctuation">,</span>
+  className
+<span class="token punctuation">)</span></code></pre>
+          <p>查找渲染树中组件的所有 DOM 元素，这些组件是 css 类名与参数 <code>className</code> 匹配的 DOM 组件。</p>
+          <hr>
+        </section>
+        <section id="findrendereddomcomponentwithclass-findrendereddomcomponentwithclass" class="level3">
+          <h3><code>findRenderedDOMComponentWithClass()</code> {#findrendereddomcomponentwithclass}</h3>
+          <pre class="language-javascript"><code class="language-javascript"><span class="token function">findRenderedDOMComponentWithClass</span><span class="token punctuation">(</span>
+  tree<span class="token punctuation">,</span>
+  className
+<span class="token punctuation">)</span></code></pre>
+          <p>用法与 <a href="#scryrendereddomcomponentswithclass"><code>scryRenderedDOMComponentsWithClass()</code></a> 保持一致，但期望仅返回一个结果。不符合预期的情况下会抛出异常。</p>
+          <hr>
+        </section>
+        <section id="scryrendereddomcomponentswithtag-scryrendereddomcomponentswithtag" class="level3">
+          <h3><code>scryRenderedDOMComponentsWithTag()</code> {#scryrendereddomcomponentswithtag}</h3>
+          <pre class="language-javascript"><code class="language-javascript"><span class="token function">scryRenderedDOMComponentsWithTag</span><span class="token punctuation">(</span>
+  tree<span class="token punctuation">,</span>
+  tagName
+<span class="token punctuation">)</span></code></pre>
+          <p>查找渲染树中组件的所有的 DOM 元素，这些组件是标记名与参数 <code>tagName</code> 匹配的 DOM 组件。</p>
+          <hr>
+        </section>
+        <section id="findrendereddomcomponentwithtag-findrendereddomcomponentwithtag" class="level3">
+          <h3><code>findRenderedDOMComponentWithTag()</code> {#findrendereddomcomponentwithtag}</h3>
+          <pre class="language-javascript"><code class="language-javascript"><span class="token function">findRenderedDOMComponentWithTag</span><span class="token punctuation">(</span>
+  tree<span class="token punctuation">,</span>
+  tagName
+<span class="token punctuation">)</span></code></pre>
+          <p>用法与 <a href="#scryrendereddomcomponentswithtag"><code>scryRenderedDOMComponentsWithTag()</code></a> 保持一致，但期望仅返回一个结果。不符合预期的情况下会抛出异常。</p>
+          <hr>
+        </section>
+        <section id="scryrenderedcomponentswithtype-scryrenderedcomponentswithtype" class="level3">
+          <h3><code>scryRenderedComponentsWithType()</code> {#scryrenderedcomponentswithtype}</h3>
+          <pre class="language-javascript"><code class="language-javascript"><span class="token function">scryRenderedComponentsWithType</span><span class="token punctuation">(</span>
+  tree<span class="token punctuation">,</span>
+  componentClass
+<span class="token punctuation">)</span></code></pre>
+          <p>查找组件类型等于 <code>componentClass</code> 组件的所有实例。</p>
+          <hr>
+        </section>
+        <section id="findrenderedcomponentwithtype-findrenderedcomponentwithtype" class="level3">
+          <h3><code>findRenderedComponentWithType()</code> {#findrenderedcomponentwithtype}</h3>
+          <pre class="language-javascript"><code class="language-javascript"><span class="token function">findRenderedComponentWithType</span><span class="token punctuation">(</span>
+  tree<span class="token punctuation">,</span>
+  componentClass
+<span class="token punctuation">)</span></code></pre>
+          <p>用法与 <a href="#scryrenderedcomponentswithtype"><code>scryRenderedComponentsWithType()</code></a> 保持一致，但期望仅返回一个结果。不符合预期的情况下会抛出异常。</p>
+          <hr>
+        </section>
+        <section id="renderintodocument-renderintodocument" class="level3">
+          <h3><code>renderIntoDocument()</code> {#renderintodocument}</h3>
+          <pre class="language-javascript"><code class="language-javascript"><span class="token function">renderIntoDocument</span><span class="token punctuation">(</span>element<span class="token punctuation">)</span></code></pre>
+          <p>渲染 React 元素到 document 中的某个单独的 DOM 节点上。<strong>这个函数需要一个 DOM 对象。</strong> 它实际相当于：</p>
+          <pre class="language-js"><code class="language-js"><span class="token keyword">const</span> domContainer <span class="token operator">=</span> <span class="token dom variable">document</span><span class="token punctuation">.</span><span class="token method function property-access">createElement</span><span class="token punctuation">(</span><span class="token string">'div'</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token maybe-class-name">ReactDOM</span><span class="token punctuation">.</span><span class="token method function property-access">createRoot</span><span class="token punctuation">(</span>domContainer<span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token method function property-access">render</span><span class="token punctuation">(</span>element<span class="token punctuation">)</span><span class="token punctuation">;</span></code></pre>
+          <blockquote>
+            <p>注意：</p>
+            <p>你需要在引入 <code>React</code> <strong>之前</strong>确保 <code>window</code> 存在，<code>window.document</code> 和 <code>window.document.createElement</code> 能在全局环境中获取到。不然 React 会认为它没有权限去操作 DOM，以及像 <code>setState</code> 这样的方法将不可用。</p>
+          </blockquote>
+          <hr>
+        </section>
+      </section>
+      <section id="other-utilities" class="level2">
+        <h2>其他工具方法</h2>
+        <section id="simulate-simulate" class="level3">
+          <h3><code>Simulate</code> {#simulate}</h3>
+          <pre class="language-javascript"><code class="language-javascript"><span class="token maybe-class-name">Simulate</span><span class="token punctuation">.</span><span class="token punctuation">{</span>eventName<span class="token punctuation">}</span><span class="token punctuation">(</span>
+  element<span class="token punctuation">,</span>
+  <span class="token punctuation">[</span>eventData<span class="token punctuation">]</span>
+<span class="token punctuation">)</span></code></pre>
+          <p>使用可选的 <code>eventData</code> 事件数据来模拟在 DOM 节点上触发事件。</p>
+          <p><a href="./events.html#supported-events">React 所支持的所有事件</a> 在 <code>Simulate</code> 中都有对应的方法。</p>
+          <p><strong>点击元素</strong></p>
+          <pre class="language-javascript"><code class="language-javascript"><span class="token comment">// &#x3C;button ref={(node) => this.button = node}>...&#x3C;/button></span>
+<span class="token keyword">const</span> node <span class="token operator">=</span> <span class="token keyword">this</span><span class="token punctuation">.</span><span class="token property-access">button</span><span class="token punctuation">;</span>
+<span class="token maybe-class-name">ReactTestUtils</span><span class="token punctuation">.</span><span class="token property-access"><span class="token maybe-class-name">Simulate</span></span><span class="token punctuation">.</span><span class="token method function property-access">click</span><span class="token punctuation">(</span>node<span class="token punctuation">)</span><span class="token punctuation">;</span></code></pre>
+          <p><strong>修改一个 input 输入框的值，然后按回车键。</strong></p>
+          <pre class="language-javascript"><code class="language-javascript"><span class="token comment">// &#x3C;input ref={(node) => this.textInput = node} /></span>
+<span class="token keyword">const</span> node <span class="token operator">=</span> <span class="token keyword">this</span><span class="token punctuation">.</span><span class="token property-access">textInput</span><span class="token punctuation">;</span>
+node<span class="token punctuation">.</span><span class="token property-access">value</span> <span class="token operator">=</span> <span class="token string">'giraffe'</span><span class="token punctuation">;</span>
+<span class="token maybe-class-name">ReactTestUtils</span><span class="token punctuation">.</span><span class="token property-access"><span class="token maybe-class-name">Simulate</span></span><span class="token punctuation">.</span><span class="token method function property-access">change</span><span class="token punctuation">(</span>node<span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token maybe-class-name">ReactTestUtils</span><span class="token punctuation">.</span><span class="token property-access"><span class="token maybe-class-name">Simulate</span></span><span class="token punctuation">.</span><span class="token method function property-access">keyDown</span><span class="token punctuation">(</span>node<span class="token punctuation">,</span> <span class="token punctuation">{</span><span class="token literal-property property">key</span><span class="token operator">:</span> <span class="token string">"Enter"</span><span class="token punctuation">,</span> <span class="token literal-property property">keyCode</span><span class="token operator">:</span> <span class="token number">13</span><span class="token punctuation">,</span> <span class="token literal-property property">which</span><span class="token operator">:</span> <span class="token number">13</span><span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">;</span></code></pre>
+          <blockquote>
+            <p>注意：</p>
+            <p>你必须提供一切需要在组件中用到的事件属性（比如：keyCode、which 等等），因为 React 没有为你创建这些属性。</p>
+          </blockquote>
+          <hr>
+          <p><span style="float: footnote;"><a href="./index.html#toc">Go to TOC</a></span></p>
+        </section>
+      </section>
+    </section>
+  </body>
+</html>

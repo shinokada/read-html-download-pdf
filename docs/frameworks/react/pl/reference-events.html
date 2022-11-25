@@ -1,0 +1,327 @@
+<!doctype html>
+<html lang="pl">
+  <head>
+    <meta charset="utf-8">
+    <title>SyntheticEvent</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="https://raw.githubusercontent.com/shinokada/prism-coy-theme/main/theme_common.css">
+  </head>
+  <body>
+    <section id="syntheticevent" class="level1">
+      <h1>SyntheticEvent</h1>
+      <p>Poniższa dokumentacja dotyczy <code>SyntheticEvent</code> (pol. <em>zdarzenie syntetyczne</em>) - klasy opakowującej zdarzenia, będącej częścią systemu obsługi zdarzeń Reacta. Samej <a href="./handling-events.html">obsłudze zdarzeń w Reakcie</a> poświęciliśmy osobny rozdział.</p>
+      <section id="overview" class="level2">
+        <h2>Informacje ogólne</h2>
+        <p>Napisane przez ciebie procedury obsługi zdarzeń będą otrzymywać jako argument instancję <code>SyntheticEvent</code> - klasy opakowującej natywne zdarzenie, niezależnej od przeglądarki. Posiada ona taki sam interfejs jak natywne zdarzenia, wliczając w to metody <code>stopPropagation()</code> oraz <code>preventDefault()</code>, gwarantuje jednak identyczne działanie na wszystkich przeglądarkach.</p>
+        <p>Jeśli w którymś momencie zechcesz skorzystać z opakowanego, natywnego zdarzenia, możesz odwołać się do niego poprzez właściwość <code>nativeEvent</code>. Syntetyczne zdarzenia różnią się od natywnych zdarzeń przeglądarki i można ich stosować wymiennie. Na przykład, w zdarzeniu <code>onMouseLeave</code> wartość <code>event.nativeEvent</code> będzie wskazywać na zdarzenie <code>mouseout</code>. Specyfikacja mapowania nie jest dostępna publicznie i może ulec zmianie w dowolnym momencie. Każdy obiekt klasy <code>SyntheticEvent</code> posiada następujące właściwości:</p>
+        <pre class="language-javascript"><code class="language-javascript">boolean bubbles
+boolean cancelable
+<span class="token maybe-class-name">DOMEventTarget</span> currentTarget
+boolean defaultPrevented
+number eventPhase
+boolean isTrusted
+<span class="token maybe-class-name">DOMEvent</span> nativeEvent
+<span class="token keyword">void</span> <span class="token function">preventDefault</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+boolean <span class="token function">isDefaultPrevented</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+<span class="token keyword">void</span> <span class="token function">stopPropagation</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+boolean <span class="token function">isPropagationStopped</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+<span class="token keyword">void</span> <span class="token function">persist</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+<span class="token maybe-class-name">DOMEventTarget</span> target
+number timeStamp
+string type</code></pre>
+        <blockquote>
+          <p>Uwaga:</p>
+          <p>Od wersji 17, wywołanie metody <code>e.persist()</code> nie robi nic, ponieważ <code>SyntheticEvent</code> nie jest już współdzielony w <a href="./legacy-event-pooling.html">puli</a>.</p>
+        </blockquote>
+        <blockquote>
+          <p>Uwaga:</p>
+          <p>Od wersji v0.14 wzwyż, zwracanie wartości <code>false</code> przez procedurę obsługi nie zatrzymuje propagacji zdarzenia. Zamiast tego należy ręcznie wywoływać odpowiednią metodę: <code>e.stopPropagation()</code> lub <code>e.preventDefault()</code>.</p>
+        </blockquote>
+      </section>
+      <section id="supported-events" class="level2">
+        <h2>Obsługiwane zdarzenia</h2>
+        <p>React normalizuje zdarzenia, tak by ich właściwości były jednakowe w różnych przeglądarkach.</p>
+        <p>Przedstawione na liście poniżej procedury obsługi zdarzeń są wywoływane przez zdarzenie w fazie bąbelkowania (ang. <em>bubbling phase</em>). Aby zarejestrować procedurę obsługi w fazie przechwytywania (ang. <em>capturing phase</em>), dodaj na końcu nazwy <code>Capture</code>, np. zamiast <code>onClick</code> użyj <code>onClickCapture</code>.</p>
+        <ul>
+          <li><a href="#clipboard-events">Obsługa schowka</a></li>
+          <li><a href="#composition-events">Obsługa kompozycji</a></li>
+          <li><a href="#keyboard-events">Obsługa klawiatury</a></li>
+          <li><a href="#focus-events">Obsługa skupiania</a></li>
+          <li><a href="#form-events">Obsługa formularzy</a></li>
+          <li><a href="#generic-events">Obsługa zdarzeń generycznych</a></li>
+          <li><a href="#mouse-events">Obsługa myszy</a></li>
+          <li><a href="#pointer-events">Obsługa wskaźnika</a></li>
+          <li><a href="#selection-events">Obsługa zaznaczania</a></li>
+          <li><a href="#touch-events">Obsługa dotyku</a></li>
+          <li><a href="#ui-events">Obsługa interfejsu użytkownika</a></li>
+          <li><a href="#wheel-events">Obsługa pokrętła myszy</a></li>
+          <li><a href="#media-events">Obsługa mediów</a></li>
+          <li><a href="#image-events">Obsługa obrazów</a></li>
+          <li><a href="#animation-events">Obsługa animacji</a></li>
+          <li><a href="#transition-events">Obsługa tranzycji</a></li>
+          <li><a href="#other-events">Inne zdarzenia</a></li>
+        </ul>
+        <hr>
+      </section>
+      <section id="reference" class="level2">
+        <h2>Dokumentacja</h2>
+        <section id="clipboard-events" class="level3">
+          <h3>Obsługa schowka</h3>
+          <p>Nazwy zdarzeń:</p>
+          <pre class="language-text"><code class="language-text">onCopy onCut onPaste</code></pre>
+          <p>Właściwości:</p>
+          <pre class="language-javascript"><code class="language-javascript"><span class="token maybe-class-name">DOMDataTransfer</span> clipboardData</code></pre>
+          <hr>
+        </section>
+        <section id="composition-events" class="level3">
+          <h3>Obsługa kompozycji</h3>
+          <p>Nazwy zdarzeń:</p>
+          <pre class="language-text"><code class="language-text">onCompositionEnd onCompositionStart onCompositionUpdate</code></pre>
+          <p>Właściwości:</p>
+          <pre class="language-javascript"><code class="language-javascript">string data
+</code></pre>
+          <hr>
+        </section>
+        <section id="keyboard-events" class="level3">
+          <h3>Obsługa klawiatury</h3>
+          <p>Nazwy zdarzeń:</p>
+          <pre class="language-text"><code class="language-text">onKeyDown onKeyPress onKeyUp</code></pre>
+          <p>Właściwości:</p>
+          <pre class="language-javascript"><code class="language-javascript">boolean altKey
+number charCode
+boolean ctrlKey
+boolean <span class="token function">getModifierState</span><span class="token punctuation">(</span>key<span class="token punctuation">)</span>
+string key
+number keyCode
+string locale
+number <span class="token dom variable">location</span>
+boolean metaKey
+boolean repeat
+boolean shiftKey
+number which</code></pre>
+          <p>Właściwość <code>key</code> przyjmuje dowolną z wartości wymienionych w <a href="https://www.w3.org/TR/uievents-key/#named-key-attribute-values">specyfikacji Zdarzeń DOM 3. Poziomu</a>.</p>
+          <hr>
+        </section>
+        <section id="focus-events" class="level3">
+          <h3>Obsługa skupiania</h3>
+          <p>Nazwy zdarzeń:</p>
+          <pre class="language-text"><code class="language-text">onFocus onBlur</code></pre>
+          <p>Powyższe zdarzenia działają na wszystkich elementach w React DOM, nie tylko na kontrolkach formularza.</p>
+          <p>Właściwości:</p>
+          <pre class="language-js"><code class="language-js"><span class="token maybe-class-name">DOMEventTarget</span> relatedTarget</code></pre>
+          <section id="onfocus" class="level4">
+            <h4>onFocus</h4>
+            <p>Zdarzenie <code>onFocus</code> jest wywoływane, gdy element (lub któryś z zagnieżdżonych elementów) otrzymuje fokus. Przykładowo, zostanie ono wywołane, gdy użytkownik kliknie na polu tekstowym.</p>
+            <pre class="language-javascript"><code class="language-javascript"><span class="token keyword">function</span> <span class="token function"><span class="token maybe-class-name">Example</span></span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  <span class="token keyword control-flow">return</span> <span class="token punctuation">(</span>
+    <span class="token operator">&#x3C;</span>input
+      onFocus<span class="token operator">=</span><span class="token punctuation">{</span><span class="token punctuation">(</span><span class="token parameter">e</span><span class="token punctuation">)</span> <span class="token arrow operator">=></span> <span class="token punctuation">{</span>
+        <span class="token console class-name">console</span><span class="token punctuation">.</span><span class="token method function property-access">log</span><span class="token punctuation">(</span><span class="token string">'Fokus jest na polu tekstowym'</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+      <span class="token punctuation">}</span><span class="token punctuation">}</span>
+      placeholder<span class="token operator">=</span><span class="token string">"onFocus zostanie wywołane po kliknięciu na tym polu."</span>
+    <span class="token operator">/</span><span class="token operator">></span>
+  <span class="token punctuation">)</span>
+<span class="token punctuation">}</span></code></pre>
+          </section>
+          <section id="onblur" class="level4">
+            <h4>onBlur</h4>
+            <p>Zdarzenie <code>onBlur</code> jest wywołane, gdy element (lub któryś z zagnieżdżonych elementów) stracił fokus. Przykładowo, zostanie ono wywołane, gdy użytkownik kliknie gdzieś poza polem tekstowym.</p>
+            <pre class="language-javascript"><code class="language-javascript"><span class="token keyword">function</span> <span class="token function"><span class="token maybe-class-name">Example</span></span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  <span class="token keyword control-flow">return</span> <span class="token punctuation">(</span>
+    <span class="token operator">&#x3C;</span>input
+      onBlur<span class="token operator">=</span><span class="token punctuation">{</span><span class="token punctuation">(</span><span class="token parameter">e</span><span class="token punctuation">)</span> <span class="token arrow operator">=></span> <span class="token punctuation">{</span>
+        <span class="token console class-name">console</span><span class="token punctuation">.</span><span class="token method function property-access">log</span><span class="token punctuation">(</span><span class="token string">'Wywołano, bo pole straciło fokus'</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+      <span class="token punctuation">}</span><span class="token punctuation">}</span>
+      placeholder<span class="token operator">=</span><span class="token string">"onBlur zostanie wywołane, gdy klikniesz na tym polu, a następnie klikniesz poza nim."</span>
+    <span class="token operator">/</span><span class="token operator">></span>
+  <span class="token punctuation">)</span>
+<span class="token punctuation">}</span></code></pre>
+          </section>
+          <section id="detecting-focus-entering-and-leaving" class="level4">
+            <h4>Wykrywanie fokusa i jego utraty</h4>
+            <p>Aby rozróżnić, czy zdarzenia dotyczące fokusa pochodzą <em>spoza</em> rodzica, możesz sprawdzić wartości pól <code>currentTarget</code> i <code>relatedTarget</code>. Poniżej znajdziesz kod, który pokazuje, jak wykryć fokus na elemencie potomnym, jak na samym elemencie, a jak wykryć taki, który dotyczy całego poddrzewa elementów.</p>
+            <pre class="language-javascript"><code class="language-javascript"><span class="token keyword">function</span> <span class="token function"><span class="token maybe-class-name">Example</span></span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  <span class="token keyword control-flow">return</span> <span class="token punctuation">(</span>
+    <span class="token operator">&#x3C;</span>div
+      tabIndex<span class="token operator">=</span><span class="token punctuation">{</span><span class="token number">1</span><span class="token punctuation">}</span>
+      onFocus<span class="token operator">=</span><span class="token punctuation">{</span><span class="token punctuation">(</span><span class="token parameter">e</span><span class="token punctuation">)</span> <span class="token arrow operator">=></span> <span class="token punctuation">{</span>
+        <span class="token keyword control-flow">if</span> <span class="token punctuation">(</span>e<span class="token punctuation">.</span><span class="token property-access">currentTarget</span> <span class="token operator">===</span> e<span class="token punctuation">.</span><span class="token property-access">target</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+          <span class="token console class-name">console</span><span class="token punctuation">.</span><span class="token method function property-access">log</span><span class="token punctuation">(</span><span class="token string">'fokus na sobie'</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token punctuation">}</span> <span class="token keyword control-flow">else</span> <span class="token punctuation">{</span>
+          <span class="token console class-name">console</span><span class="token punctuation">.</span><span class="token method function property-access">log</span><span class="token punctuation">(</span><span class="token string">'fokus na elemencie potomnym'</span><span class="token punctuation">,</span> e<span class="token punctuation">.</span><span class="token property-access">target</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token punctuation">}</span>
+        <span class="token keyword control-flow">if</span> <span class="token punctuation">(</span><span class="token operator">!</span>e<span class="token punctuation">.</span><span class="token property-access">currentTarget</span><span class="token punctuation">.</span><span class="token method function property-access">contains</span><span class="token punctuation">(</span>e<span class="token punctuation">.</span><span class="token property-access">relatedTarget</span><span class="token punctuation">)</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+          <span class="token comment">// Not triggered when swapping focus between children</span>
+          <span class="token console class-name">console</span><span class="token punctuation">.</span><span class="token method function property-access">log</span><span class="token punctuation">(</span><span class="token string">'focus aktywny poza poddrzewem'</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token punctuation">}</span>
+      <span class="token punctuation">}</span><span class="token punctuation">}</span>
+      onBlur<span class="token operator">=</span><span class="token punctuation">{</span><span class="token punctuation">(</span><span class="token parameter">e</span><span class="token punctuation">)</span> <span class="token arrow operator">=></span> <span class="token punctuation">{</span>
+        <span class="token keyword control-flow">if</span> <span class="token punctuation">(</span>e<span class="token punctuation">.</span><span class="token property-access">currentTarget</span> <span class="token operator">===</span> e<span class="token punctuation">.</span><span class="token property-access">target</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+          <span class="token console class-name">console</span><span class="token punctuation">.</span><span class="token method function property-access">log</span><span class="token punctuation">(</span><span class="token string">'fokus utracony na sobie'</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token punctuation">}</span> <span class="token keyword control-flow">else</span> <span class="token punctuation">{</span>
+          <span class="token console class-name">console</span><span class="token punctuation">.</span><span class="token method function property-access">log</span><span class="token punctuation">(</span><span class="token string">'fokus utracony na elemencie potomnym'</span><span class="token punctuation">,</span> e<span class="token punctuation">.</span><span class="token property-access">target</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token punctuation">}</span>
+        <span class="token keyword control-flow">if</span> <span class="token punctuation">(</span><span class="token operator">!</span>e<span class="token punctuation">.</span><span class="token property-access">currentTarget</span><span class="token punctuation">.</span><span class="token method function property-access">contains</span><span class="token punctuation">(</span>e<span class="token punctuation">.</span><span class="token property-access">relatedTarget</span><span class="token punctuation">)</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+          <span class="token comment">// Not triggered when swapping focus between children</span>
+          <span class="token console class-name">console</span><span class="token punctuation">.</span><span class="token method function property-access">log</span><span class="token punctuation">(</span><span class="token string">'fokus poza poddrzewem'</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token punctuation">}</span>
+      <span class="token punctuation">}</span><span class="token punctuation">}</span>
+    <span class="token operator">></span>
+      <span class="token operator">&#x3C;</span>input id<span class="token operator">=</span><span class="token string">"1"</span> <span class="token operator">/</span><span class="token operator">></span>
+      <span class="token operator">&#x3C;</span>input id<span class="token operator">=</span><span class="token string">"2"</span> <span class="token operator">/</span><span class="token operator">></span>
+    <span class="token operator">&#x3C;</span><span class="token operator">/</span>div<span class="token operator">></span>
+  <span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span></code></pre>
+            <hr>
+          </section>
+        </section>
+        <section id="form-events" class="level3">
+          <h3>Obsługa formularzy</h3>
+          <p>Nazwy zdarzeń:</p>
+          <pre class="language-text"><code class="language-text">onChange onInput onInvalid onReset onSubmit </code></pre>
+          <p>Więcej informacji odnośnie zdarzenia <code>onChange</code> opisaliśmy w rozdziale pt. <a href="./forms.html">"Formularze"</a>.</p>
+          <hr>
+        </section>
+        <section id="generic-events" class="level3">
+          <h3>Obsługa zdarzeń generycznych</h3>
+          <p>Nazwy zdarzeń:</p>
+          <pre class="language-text"><code class="language-text">onError onLoad</code></pre>
+          <hr>
+        </section>
+        <section id="mouse-events" class="level3">
+          <h3>Obsługa myszy</h3>
+          <p>Nazwy zdarzeń:</p>
+          <pre class="language-text"><code class="language-text">onClick onContextMenu onDoubleClick onDrag onDragEnd onDragEnter onDragExit
+onDragLeave onDragOver onDragStart onDrop onMouseDown onMouseEnter onMouseLeave
+onMouseMove onMouseOut onMouseOver onMouseUp</code></pre>
+          <p>Zdarzenia <code>onMouseEnter</code> oraz <code>onMouseLeave</code>, zamiast zwykłego bąbelkowania, propagowane są z elementu opuszczanego do elementu wskazywanego, a ponadto nie mają fazy przechwytywania (ang. <em>capture phase</em>).</p>
+          <p>Właściwości:</p>
+          <pre class="language-javascript"><code class="language-javascript">boolean altKey
+number button
+number buttons
+number clientX
+number clientY
+boolean ctrlKey
+boolean <span class="token function">getModifierState</span><span class="token punctuation">(</span>key<span class="token punctuation">)</span>
+boolean metaKey
+number pageX
+number pageY
+<span class="token maybe-class-name">DOMEventTarget</span> relatedTarget
+number screenX
+number screenY
+boolean shiftKey</code></pre>
+          <hr>
+        </section>
+        <section id="pointer-events" class="level3">
+          <h3>Obsługa wskaźnika</h3>
+          <p>Nazwy zdarzeń:</p>
+          <pre class="language-text"><code class="language-text">onPointerDown onPointerMove onPointerUp onPointerCancel onGotPointerCapture
+onLostPointerCapture onPointerEnter onPointerLeave onPointerOver onPointerOut</code></pre>
+          <p>Zdarzenia <code>onPointerEnter</code> oraz <code>onPointerLeave</code>, zamiast zwykłego bąbelkowania, propagowane są z elementu opuszczanego do elementu wskazywanego, a ponadto nie mają fazy przechwytywania (ang. <em>capture phase</em>).</p>
+          <p>Właściwości:</p>
+          <p>Zgodnie ze <a href="https://www.w3.org/TR/pointerevents/">specyfikacją W3</a>, zdarzenia wskaźnika rozszerzają <a href="#mouse-events">zdarzenia obsługi myszy</a> o następujące właściwości:</p>
+          <pre class="language-javascript"><code class="language-javascript">number pointerId
+number width
+number height
+number pressure
+number tangentialPressure
+number tiltX
+number tiltY
+number twist
+string pointerType
+boolean isPrimary</code></pre>
+          <p>Informacja o kompatybilności z przeglądarkami:</p>
+          <p>Zdarzenia wskaźnika nie są jeszcze obsługiwane przez wszystkie przeglądarki (w chwili pisania tego artykułu wspierają je: Chrome, Firefox, Edge i Internet Explorer). React celowo nie dostarcza łatki (ang. <em>polyfill</em>) dla pozostałych przeglądarek, ponieważ łatka zgodna ze standardem znacząco zwiększyłaby rozmiar paczki <code>react-dom</code>.</p>
+          <p>Jeśli twoja aplikacja wymaga obsługi wskaźników, zalecamy dołączenie odpowiedniej paczki zewnętrznej.</p>
+          <hr>
+        </section>
+        <section id="selection-events" class="level3">
+          <h3>Obsługa zaznaczania</h3>
+          <p>Nazwy zdarzeń:</p>
+          <pre class="language-text"><code class="language-text">onSelect</code></pre>
+          <hr>
+        </section>
+        <section id="touch-events" class="level3">
+          <h3>Obsługa dotyku</h3>
+          <p>Nazwy zdarzeń:</p>
+          <pre class="language-text"><code class="language-text">onTouchCancel onTouchEnd onTouchMove onTouchStart</code></pre>
+          <p>Właściwości:</p>
+          <pre class="language-javascript"><code class="language-javascript">boolean altKey
+<span class="token maybe-class-name">DOMTouchList</span> changedTouches
+boolean ctrlKey
+boolean <span class="token function">getModifierState</span><span class="token punctuation">(</span>key<span class="token punctuation">)</span>
+boolean metaKey
+boolean shiftKey
+<span class="token maybe-class-name">DOMTouchList</span> targetTouches
+<span class="token maybe-class-name">DOMTouchList</span> touches</code></pre>
+          <hr>
+        </section>
+        <section id="ui-events" class="level3">
+          <h3>Obsługa interfejsu użytkownika</h3>
+          <p>Nazwy zdarzeń:</p>
+          <pre class="language-text"><code class="language-text">onScroll</code></pre>
+          <blockquote>
+            <p>Uwaga:</p>
+            <p>Podcząwszy od Reacta 17, zdarzenie <code>onScroll</code> <strong>nie jest propagowane w górę</strong>. Odpowiada to zachowaniu przeglądarki i pozwala uniknąć niejasności, gdy to zagnieżdżony element z suwakiem generował zdarzenia na odległych rodzicach.</p>
+          </blockquote>
+          <p>Właściwości:</p>
+          <pre class="language-javascript"><code class="language-javascript">number detail
+<span class="token maybe-class-name">DOMAbstractView</span> view</code></pre>
+          <hr>
+        </section>
+        <section id="wheel-events" class="level3">
+          <h3>Obsługa pokrętła myszy</h3>
+          <p>Nazwy zdarzeń:</p>
+          <pre class="language-text"><code class="language-text">onWheel</code></pre>
+          <p>Właściwości:</p>
+          <pre class="language-javascript"><code class="language-javascript">number deltaMode
+number deltaX
+number deltaY
+number deltaZ</code></pre>
+          <hr>
+        </section>
+        <section id="media-events" class="level3">
+          <h3>Obsługa mediów</h3>
+          <p>Nazwy zdarzeń:</p>
+          <pre class="language-text"><code class="language-text">onAbort onCanPlay onCanPlayThrough onDurationChange onEmptied onEncrypted
+onEnded onError onLoadedData onLoadedMetadata onLoadStart onPause onPlay
+onPlaying onProgress onRateChange onSeeked onSeeking onStalled onSuspend
+onTimeUpdate onVolumeChange onWaiting</code></pre>
+          <hr>
+        </section>
+        <section id="image-events" class="level3">
+          <h3>Obsługa obrazów</h3>
+          <p>Nazwy zdarzeń:</p>
+          <pre class="language-text"><code class="language-text">onLoad onError</code></pre>
+          <hr>
+        </section>
+        <section id="animation-events" class="level3">
+          <h3>Obsługa animacji</h3>
+          <p>Nazwy zdarzeń:</p>
+          <pre class="language-text"><code class="language-text">onAnimationStart onAnimationEnd onAnimationIteration</code></pre>
+          <p>Właściwości:</p>
+          <pre class="language-javascript"><code class="language-javascript">string animationName
+string pseudoElement
+float elapsedTime</code></pre>
+          <hr>
+        </section>
+        <section id="transition-events" class="level3">
+          <h3>Obsługa tranzycji</h3>
+          <p>Nazwy zdarzeń:</p>
+          <pre class="language-text"><code class="language-text">onTransitionEnd</code></pre>
+          <p>Właściwości:</p>
+          <pre class="language-javascript"><code class="language-javascript">string propertyName
+string pseudoElement
+float elapsedTime</code></pre>
+          <hr>
+        </section>
+        <section id="other-events" class="level3">
+          <h3>Inne zdarzenia</h3>
+          <p>Nazwy zdarzeń:</p>
+          <pre class="language-text"><code class="language-text">onToggle</code></pre>
+          <p><span style="float: footnote;"><a href="./index.html#toc">Go to TOC</a></span></p>
+        </section>
+      </section>
+    </section>
+  </body>
+</html>

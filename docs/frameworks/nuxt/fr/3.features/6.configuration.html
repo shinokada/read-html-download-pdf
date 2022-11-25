@@ -1,0 +1,248 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="utf-8">
+    <title>Configuration</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="Par défaut, Nuxt est configuré pour couvrir la plupart des cas d&#x27;usage. Cette configuration par défaut peut être écrasée par un fichier nuxt.config.js.">
+    <meta name="category" content="features">
+    <meta name="csb_link_host_port" content="https://codesandbox.io/embed/github/nuxt-academy/guides-examples/tree/master/03_features/07_configuration_host_port?fontsize=14&#x26;hidenavigation=1&#x26;theme=dark">
+    <meta name="csb_link_pre-processors" content="https://codesandbox.io/embed/github/nuxt-academy/guides-examples/tree/master/03_features/07_configuration_pre-processors?fontsize=14&#x26;hidenavigation=1&#x26;theme=dark">
+    <link rel="stylesheet" href="https://raw.githubusercontent.com/shinokada/prism-coy-theme/main/theme_common.css">
+  </head>
+  <body>
+    <section id="configuration" class="level1">
+      <h1>Configuration</h1>
+      <p>Par défaut, Nuxt est configuré pour couvrir la plupart des cas d'usage. Cette configuration par défaut peut être écrasée par un fichier nuxt.config.js.</p>
+      <hr>
+      <section id="la-propriété-css" class="level2">
+        <h2>La propriété <code>css</code></h2>
+        <p>Nuxt nous permet de définir globalement les fichiers/modules/librairies CSS que nous voulons (ceux qui seront inclus dans chaque page).</p>
+        <section id="info" class="level4">
+          <h4>Info</h4>
+          <p>Dans le cas où nous souhaitons utiliser du <code>SASS</code>, il faut vérifier que nous avons bien installé les paquets <code>node-sass</code> et <code>sass-loader</code>.</p>
+          <p>Dans notre fichier <code>nuxt.config.js</code>, il faut ajouter les ressources CSS:</p>
+          <pre class="language-js{}[nuxt.config.js]"><code class="language-js{}[nuxt.config.js]">export default {
+  css: [
+    // charge un module Node.js directement (ici c'est un fichier SASS)
+    'bulma',
+    // fichier CSS dans notre projet
+    '~/assets/css/main.css',
+    // fichier SCSS dans notre projet
+    '~/assets/css/main.scss'
+  ]
+}</code></pre>
+        </section>
+        <section id="info-1" class="level4">
+          <h4>Info</h4>
+          <p>Nuxt va automatiquement deviner le type de fichier par son extension et utiliser le loader du pré-processeur adéquat pour webpack. Nous aurons cependant besoin d'installer le loader requis si nous avons besoin de l'utiliser.</p>
+        </section>
+        <section id="extensions-de-style" class="level3">
+          <h3>Extensions de Style</h3>
+          <p>Nous pouvons omettre l'extension de nos fichiers CSS/SCSS/Postcss/Less/Stylus/... listés dans notre tableau <code>css</code>.</p>
+          <pre class="language-js{}[nuxt.config.js]"><code class="language-js{}[nuxt.config.js]">export default {
+  css: ['~/assets/css/main', '~/assets/css/animations']
+}</code></pre>
+          <section id="info-2" class="level4">
+            <h4>Info</h4>
+            <p>Si nous avons deux fichiers du même nom, par ex <code>main.scss</code> et <code>main.css</code> et si nous ne spécifions par l'extension dans notre tableau <code>css</code> par ex <code>css: ['~/assets/css/main']</code> alors seulement un fichier sera chargé en fonction de l'ordre défini par <code>styleExtensions</code>. Dans ce cas, le fichier <code>css</code> sera chargé et le <code>scss</code> sera ignoré parce que l'extension <code>css</code> arrive en premier dans le tableau <code>styleExtension</code>.</p>
+            <p>Ordre par défaut: <code>['css', 'pcss', 'postcss', 'styl', 'stylus', 'scss', 'sass', 'less']</code></p>
+          </section>
+        </section>
+      </section>
+      <section id="pré-processeurs" class="level2">
+        <h2>Pré-processeurs</h2>
+        <p>Grâce au <a href="http://vue-loader.vuejs.org/en/configurations/pre-processors.html">loader Vue</a>, nous pouvons utiliser n'importe quel type de pré-processeur pour notre <code>&#x3C;template></code> ou <code>&#x3C;style></code>, il faut utiliser l'attribut <code>lang</code> pour cela.</p>
+        <p>Voici l'exemple d'un fichier <code>pages/index.vue</code> utilisant du <a href="https://github.com/pugjs/pug">pug</a> et du <a href="http://sass-lang.com/">SASS</a>:</p>
+        <pre class="language-html"><code class="language-html"><span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;</span>template</span> <span class="token attr-name">lang</span><span class="token attr-value"><span class="token punctuation attr-equals">=</span><span class="token punctuation">"</span>pug<span class="token punctuation">"</span></span><span class="token punctuation">></span></span>
+  h1.red Salut {{ name }} !
+<span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;/</span>template</span><span class="token punctuation">></span></span>
+
+<span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;</span>style</span> <span class="token attr-name">lang</span><span class="token attr-value"><span class="token punctuation attr-equals">=</span><span class="token punctuation">"</span>scss<span class="token punctuation">"</span></span><span class="token punctuation">></span></span><span class="token style"><span class="token language-css">
+  <span class="token selector"><span class="token class">.red</span></span> <span class="token punctuation">{</span>
+    <span class="token property">color</span><span class="token punctuation">:</span> <span class="token color">red</span><span class="token punctuation">;</span>
+  <span class="token punctuation">}</span>
+</span></span><span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;/</span>style</span><span class="token punctuation">></span></span></code></pre>
+        <p>Pour utiliser ces pré-processeurs, nous avons besoin d'installer leurs loaders Webpack:</p>
+        <pre class="language-bash"><code class="language-bash"><span class="token function">yarn</span> <span class="token function">add</span> --dev pug pug-plain-loader
+<span class="token function">yarn</span> <span class="token function">add</span> --dev sass sass-loader@10</code></pre>
+        <pre class="language-bash"><code class="language-bash"><span class="token function">npm</span> <span class="token function">install</span> --save-dev pug pug-plain-loader
+<span class="token function">npm</span> <span class="token function">install</span> --save-dev sass sass-loader@10</code></pre>
+      </section>
+      <section id="jsx" class="level2">
+        <h2>JSX</h2>
+        <p>Nuxt utilise <a href="https://github.com/nuxt/nuxt.js/tree/dev/packages/babel-preset-app">@nuxt/babel-preset-app</a>, qui est basé sur l'officiel <a href="https://github.com/vuejs/vue-cli/tree/dev/packages/%40vue/babel-preset-app">@vue/babel-preset-app</a> pour une configuration de Babel par défaut, afin que nous puissions utiliser du JSX dans nos composants.</p>
+        <p>Nous pouvons aussi utiliser du JSX dans la méthode <code>render</code> des composants:</p>
+        <pre class="language-js"><code class="language-js"><span class="token keyword module">export</span> <span class="token keyword module">default</span> <span class="token punctuation">{</span>
+  <span class="token function">data</span> <span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token keyword control-flow">return</span> <span class="token punctuation">{</span> <span class="token literal-property property">name</span><span class="token operator">:</span> <span class="token string">'Le monde'</span> <span class="token punctuation">}</span>
+  <span class="token punctuation">}</span><span class="token punctuation">,</span>
+  <span class="token function">render</span> <span class="token punctuation">(</span><span class="token parameter">h</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token keyword control-flow">return</span> <span class="token operator">&#x3C;</span>h1 <span class="token keyword">class</span><span class="token operator">=</span><span class="token string">"red"</span><span class="token operator">></span><span class="token punctuation">{</span><span class="token keyword">this</span><span class="token punctuation">.</span><span class="token property-access">name</span><span class="token punctuation">}</span><span class="token operator">&#x3C;</span><span class="token operator">/</span>h1<span class="token operator">></span>
+  <span class="token punctuation">}</span>
+<span class="token punctuation">}</span></code></pre>
+        <p>Abréger <code>createElement</code> par <code>h</code> est une convention commune que nous pouvons voir dans l'écosystème Vue mais c'est en fait optionnel pour du JSX car ce dernier <a href="https://github.com/vuejs/babel-plugin-transform-vue-jsx#h-auto-injection">injecte automatiquement</a> <code>const h = this.$createElement</code> dans n'importe quelle méthode et getter (pas les fonctions ni les fonctions fléchées) à condition qu'ils soient définis dans la syntaxe ES2015. Si c'est le cas, nous pouvons omettre le paramètre <code>h</code> dans le cas où nous utilisons du JSX.</p>
+        <p>Nous pouvons en apprendre davantage sur le fonction du JSX dans cette <a href="https://vuejs.org/v2/guide/render-function.html#JSX">section</a> de la documentation de Vue.</p>
+      </section>
+      <section id="ignorer-des-fichiers" class="level2">
+        <h2>Ignorer des fichiers</h2>
+        <section id="nuxtignore" class="level3">
+          <h3>.nuxtignore</h3>
+          <p>Nous pouvons utiliser un fichier <code>.nuxtignore</code> pour dire à Nuxt d'ignorer des <code>layout</code>, <code>page</code>, <code>store</code> et/ou <code>middleware</code> à la racine de notre projet (<code>rootDir</code>) durant la phase de build. Le fichier <code>.nuxtignore</code> est sujet aux mêmes spécifications qu'un <code>.gitignore</code> ou un <code>.eslintignore</code>, dans le sens où chaque ligne est un schéma (glob pattern) indiquant quels fichiers devraient être ignorés.</p>
+          <pre class="language-md"><code class="language-md"><span class="token title important"><span class="token punctuation">#</span> ignore le layout foo.vue</span>
+
+layouts/foo.vue
+
+<span class="token title important"><span class="token punctuation">#</span> ignore les fichiers layout dont le nom finit par -ignore.vue</span>
+
+layouts/*-ignore.vue
+
+<span class="token title important"><span class="token punctuation">#</span> ignore la page bar.vue</span>
+
+pages/bar.vue
+
+<span class="token title important"><span class="token punctuation">#</span> ignore les pages à l'intérieur du répertoire ignore</span>
+
+pages/ignore/*.vue
+
+<span class="token title important"><span class="token punctuation">#</span> ignore le store baz.js</span>
+
+store/baz.js
+
+<span class="token title important"><span class="token punctuation">#</span> ignore les fichiers du store qui correspondent avec _.test._</span>
+
+store/ignore/<span class="token italic"><span class="token punctuation">_</span><span class="token content">.test.</span><span class="token punctuation">_</span></span>
+
+<span class="token title important"><span class="token punctuation">#</span> ignore les fichiers middleware à l'intérieur du répertoire foo sauf foo/bar.js</span>
+
+middleware/foo/*.js !middleware/foo/bar.js</code></pre>
+        </section>
+        <section id="la-propriété-ignoreprefix" class="level3">
+          <h3>La propriété ignorePrefix</h3>
+          <p>N'importe quel fichier dans <code>pages/</code>, <code>layout/</code>, <code>middleware/</code> ou <code>store/</code> sera ignoré durant le build si son nom de fichier commence par le préfixe spécifié par <code>ignorePrefix</code>.</p>
+          <p>Par défaut, tous les fichiers qui commencent par un <code>-</code> seront ignorés, tels que <code>store/-foo.js</code> et <code>pages/-bar.vue</code>. Cela permet de laisser cohabiter des tests, des utilitaires et des composants avec les appelants sans pour autant les convertir en des routes, des stores etc.</p>
+        </section>
+        <section id="la-propriété-ignore" class="level3">
+          <h3>La propriété <code>ignore</code></h3>
+          <p>Plus configurable que <code>ignorePrefix</code>: tous les fichiers qui correspondent au schéma (glob pattern) seront ignorés durant le build.</p>
+          <pre class="language-js"><code class="language-js"><span class="token keyword module">export</span> <span class="token keyword module">default</span> <span class="token punctuation">{</span>
+  <span class="token literal-property property">ignore</span><span class="token operator">:</span> <span class="token string">'pages/bar.vue'</span>
+<span class="token punctuation">}</span></code></pre>
+        </section>
+        <section id="ignoreoptions" class="level3">
+          <h3>ignoreOptions</h3>
+          <p>Derrière <code>.nuxtignore</code> se cache <code>node-ignore</code>, ainsi <code>ignoreOptions</code> peut être configuré avec les mêmes options que <code>node-ignore</code>.</p>
+          <pre class="language-js{}[nuxt.config.js]"><code class="language-js{}[nuxt.config.js]">export default {
+  ignoreOptions: {
+    ignorecase: false
+  }
+}</code></pre>
+        </section>
+      </section>
+      <section id="personnaliser-la-configuration-webpack" class="level2">
+        <h2>Personnaliser la configuration Webpack</h2>
+        <p>Nous pouvons personnaliser la configuration webpack de Nuxt via l'option <code>extend</code> dans notre fichier <code>nuxt.config.js</code>, cette option est une méthode qui accepte deux arguments. Le premier argument est l'objet <code>config</code> de webpack exporté depuis la configuration webpack de Nuxt. Le second paramètre est un objet <code>context</code> contenant les propriétés booléennes suivantes: <code>{ isDev, isClient, isServer, loaders }</code>.</p>
+        <pre class="language-js"><code class="language-js"><span class="token keyword module">export</span> <span class="token keyword module">default</span> <span class="token punctuation">{</span>
+  <span class="token literal-property property">build</span><span class="token operator">:</span> <span class="token punctuation">{</span>
+    <span class="token function">extend</span><span class="token punctuation">(</span><span class="token parameter">config<span class="token punctuation">,</span> <span class="token punctuation">{</span> isDev<span class="token punctuation">,</span> isClient <span class="token punctuation">}</span></span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+      <span class="token comment">// ...</span>
+      config<span class="token punctuation">.</span><span class="token property-access">module</span><span class="token punctuation">.</span><span class="token property-access">rules</span><span class="token punctuation">.</span><span class="token method function property-access">push</span><span class="token punctuation">(</span><span class="token punctuation">{</span>
+        <span class="token literal-property property">test</span><span class="token operator">:</span> <span class="token regex"><span class="token regex-delimiter">/</span><span class="token regex-source language-regex">\.(ttf|eot|svg|woff(2)?)(\?[a-z0-9=&#x26;.]+)?$</span><span class="token regex-delimiter">/</span></span><span class="token punctuation">,</span>
+        <span class="token literal-property property">loader</span><span class="token operator">:</span> <span class="token string">'file-loader'</span>
+      <span class="token punctuation">}</span><span class="token punctuation">)</span>
+      <span class="token keyword control-flow">if</span> <span class="token punctuation">(</span>isDev<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token comment">// asse Webpack en mode développement si `isDev` est vrai.</span>
+        config<span class="token punctuation">.</span><span class="token property-access">mode</span> <span class="token operator">=</span> <span class="token string">'development'</span>
+      <span class="token punctuation">}</span>
+    <span class="token punctuation">}</span>
+  <span class="token punctuation">}</span>
+<span class="token punctuation">}</span></code></pre>
+        <p>La méthode <code>extend</code> est appelée deux fois, une fois pour le bundle du client et une fois pour celui du serveur.</p>
+        <section id="personnaliser-la-configuration-des-fragments" class="level3">
+          <h3>Personnaliser la configuration des fragments</h3>
+          <p>Nous souhaiterions peut-être customiser un peu la <a href="./configuration-glossary/configuration-build#optimization">configuration d'optimisation</a>, en évitant de ré-écrire l'objet par défaut.</p>
+          <pre class="language-js"><code class="language-js"><span class="token keyword module">export</span> <span class="token keyword module">default</span> <span class="token punctuation">{</span>
+  <span class="token literal-property property">build</span><span class="token operator">:</span> <span class="token punctuation">{</span>
+    <span class="token function">extend</span><span class="token punctuation">(</span><span class="token parameter">config<span class="token punctuation">,</span> <span class="token punctuation">{</span> isClient <span class="token punctuation">}</span></span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+      <span class="token keyword control-flow">if</span> <span class="token punctuation">(</span>isClient<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        config<span class="token punctuation">.</span><span class="token property-access">optimization</span><span class="token punctuation">.</span><span class="token property-access">splitChunks</span><span class="token punctuation">.</span><span class="token property-access">maxSize</span> <span class="token operator">=</span> <span class="token number">200000</span>
+      <span class="token punctuation">}</span>
+    <span class="token punctuation">}</span>
+  <span class="token punctuation">}</span>
+<span class="token punctuation">}</span></code></pre>
+        </section>
+        <section id="exécuter-eslint-à-chaque-build-de-webpack-dans-un-environnement-de-développement" class="level3">
+          <h3>Exécuter ESLint à chaque build de webpack dans un environnement de développement</h3>
+          <p>Pour être au courant d'erreurs de style de code, nous pourrions avoir envie d'exécuter <a href="https://github.com/webpack-contrib/eslint-loader">ESLint</a> à chaque build dans un environnement de développement.</p>
+          <pre class="language-js"><code class="language-js"><span class="token keyword module">export</span> <span class="token keyword module">default</span> <span class="token punctuation">{</span>
+  <span class="token literal-property property">build</span><span class="token operator">:</span> <span class="token punctuation">{</span>
+    <span class="token function">extend</span><span class="token punctuation">(</span><span class="token parameter">config<span class="token punctuation">,</span> <span class="token punctuation">{</span> isDev<span class="token punctuation">,</span> isClient <span class="token punctuation">}</span></span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+      <span class="token keyword control-flow">if</span> <span class="token punctuation">(</span>isDev <span class="token operator">&#x26;&#x26;</span> isClient<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        config<span class="token punctuation">.</span><span class="token property-access">module</span><span class="token punctuation">.</span><span class="token property-access">rules</span><span class="token punctuation">.</span><span class="token method function property-access">push</span><span class="token punctuation">(</span><span class="token punctuation">{</span>
+          <span class="token literal-property property">enforce</span><span class="token operator">:</span> <span class="token string">'pre'</span><span class="token punctuation">,</span>
+          <span class="token literal-property property">test</span><span class="token operator">:</span> <span class="token regex"><span class="token regex-delimiter">/</span><span class="token regex-source language-regex">\.(js|vue)$</span><span class="token regex-delimiter">/</span></span><span class="token punctuation">,</span>
+          <span class="token literal-property property">loader</span><span class="token operator">:</span> <span class="token string">'eslint-loader'</span><span class="token punctuation">,</span>
+          <span class="token literal-property property">exclude</span><span class="token operator">:</span> <span class="token regex"><span class="token regex-delimiter">/</span><span class="token regex-source language-regex">(node_modules)</span><span class="token regex-delimiter">/</span></span>
+        <span class="token punctuation">}</span><span class="token punctuation">)</span>
+      <span class="token punctuation">}</span>
+    <span class="token punctuation">}</span>
+  <span class="token punctuation">}</span>
+<span class="token punctuation">}</span></code></pre>
+        </section>
+      </section>
+      <section id="éditer-lhôte-et-le-port" class="level2">
+        <h2>Éditer l'hôte et le port</h2>
+        <p>Par défaut, l'environnement de développement du hôte de Nuxt est <code>localhost</code>, qui n'est accessible qu'au sein de la machine hôte. Afin d'admirer notre application sur un autre appareil nous aurons besoin de modifier l'hôte.</p>
+        <p>Le hôte <code>'0.0.0.0'</code> a pour but de dire à Nuxt de résoudre une adresse hôte, afin de lui permettre d'être accessible à d'autres appareils en <em>dehors</em> de la machine hôte (ex: LAN). Si le hôte est défini sur la chaîne de caractère <code>'0'</code> (pas <code>0</code>, qui lui est falsy) ou bien <code>'0.0.0.0'</code>, notre adresse IP locale sera assignée à notre application Nuxt.</p>
+        <pre class="language-js"><code class="language-js"><span class="token keyword module">export</span> <span class="token keyword module">default</span> <span class="token punctuation">{</span>
+  <span class="token literal-property property">server</span><span class="token operator">:</span> <span class="token punctuation">{</span>
+    <span class="token literal-property property">host</span><span class="token operator">:</span> <span class="token string">'0'</span> <span class="token comment">// par défaut: localhost</span>
+  <span class="token punctuation">}</span>
+<span class="token punctuation">}</span></code></pre>
+        <p>Nous pouvons aussi changer le port par défaut.</p>
+        <pre class="language-js"><code class="language-js"><span class="token keyword module">export</span> <span class="token keyword module">default</span> <span class="token punctuation">{</span>
+  <span class="token literal-property property">server</span><span class="token operator">:</span> <span class="token punctuation">{</span>
+    <span class="token literal-property property">port</span><span class="token operator">:</span> <span class="token number">8000</span> <span class="token comment">// par défaut: 3000</span>
+  <span class="token punctuation">}</span>
+<span class="token punctuation">}</span></code></pre>
+        <section id="info-3" class="level4">
+          <h4>Info</h4>
+          <p>Si le hôte est défini sur la chaîne de caractère <code>'0'</code> (pas <code>0</code>, qui lui est falsy), un port aléatoire sera assigné à notre application Nuxt.</p>
+          <p>Même si nous pouvons modifier cela dans le fichier <code>nuxt.config.js</code>, ce n'est pas conseillé car cela peut causer des soucis lors de l'hébergement de notre site. Il sera plutôt conseillé de modifier l'hôte et le port directement dans notre commande <code>dev</code>.</p>
+          <pre class="language-bash"><code class="language-bash"><span class="token assign-left variable">HOST</span><span class="token operator">=</span><span class="token number">0</span> <span class="token assign-left variable">PORT</span><span class="token operator">=</span><span class="token number">8000</span> <span class="token function">npm</span> run dev</code></pre>
+          <p>ou créer un script dans notre <code>package.json</code></p>
+          <pre class="language-json"><code class="language-json"><span class="token property">"scripts"</span><span class="token operator">:</span> <span class="token punctuation">{</span>
+  <span class="token property">"dev:host"</span><span class="token operator">:</span> <span class="token string">"nuxt --hostname '0' --port 8000"</span>
+<span class="token punctuation">}</span></code></pre>
+        </section>
+      </section>
+      <section id="configuration-asynchrone" class="level2">
+        <h2>Configuration Asynchrone</h2>
+        <p>Même s'il est conseillé d'utiliser la configuration normale <code>export default {}</code>, nous pouvons utiliser une configuration asynchrone en exportant une fonction asynchrone qui retourne l'objet de configuration.</p>
+        <pre class="language-js"><code class="language-js"><span class="token keyword module">import</span> <span class="token imports">axios</span> <span class="token keyword module">from</span> <span class="token string">'axios'</span>
+
+<span class="token keyword module">export</span> <span class="token keyword module">default</span> <span class="token keyword">async</span> <span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token arrow operator">=></span> <span class="token punctuation">{</span>
+  <span class="token keyword">const</span> data <span class="token operator">=</span> <span class="token keyword control-flow">await</span> axios<span class="token punctuation">.</span><span class="token method function property-access">get</span><span class="token punctuation">(</span><span class="token string">'https://api.nuxtjs.dev/posts'</span><span class="token punctuation">)</span>
+  <span class="token keyword control-flow">return</span> <span class="token punctuation">{</span>
+    <span class="token literal-property property">head</span><span class="token operator">:</span> <span class="token punctuation">{</span>
+      <span class="token literal-property property">title</span><span class="token operator">:</span> data<span class="token punctuation">.</span><span class="token property-access">title</span>
+      <span class="token comment">//... le reste de la configuration</span>
+    <span class="token punctuation">}</span>
+  <span class="token punctuation">}</span>
+<span class="token punctuation">}</span></code></pre>
+        <section id="info-4" class="level4">
+          <h4>Info</h4>
+          <p>Le module <code>@nuxtjs/axios</code> ne peut pas être utilisé dans le fichier <code>nuxt.config.js</code>. Nous aurons besoin d'importer axios et de le configurer à nouveau.</p>
+        </section>
+      </section>
+      <section id="configuration-avancée" class="level2">
+        <h2>Configuration avancée</h2>
+        <section id="next" class="level4">
+          <h4>Next</h4>
+          <p>Le fichier <code>nuxt.config.js</code> a bien plus d'option de customisation et de configuration ! Se référer aux clés présentes dans le <a href="./configuration-glossary/configuration-build">glossaire de configuration</a>.</p>
+          <p><span style="float: footnote;"><a href="../index.html#toc">Go to TOC</a></span></p>
+        </section>
+      </section>
+    </section>
+  </body>
+</html>

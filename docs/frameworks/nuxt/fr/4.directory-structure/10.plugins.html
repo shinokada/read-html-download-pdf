@@ -1,0 +1,197 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="utf-8">
+    <title>plugins</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="navigation.title" content="plugins">
+    <meta name="description" content="Le répertoire &#x60;plugins&#x60; contient les plugins JavaScript que l&#x27;on souhaite exécuter avant l&#x27;instanciation de l&#x27;application principale Vue.js.">
+    <meta name="category" content="directory-structure">
+    <meta name="csb_link_plugins_client" content="https://codesandbox.io/embed/github/nuxt-academy/guides-examples/tree/master/04_directory_structure/12_plugins_client?fontsize=14&#x26;hidenavigation=1&#x26;theme=dark">
+    <meta name="csb_link_plugins_external" content="https://codesandbox.io/embed/github/nuxt-academy/guides-examples/tree/master/04_directory_structure/12_plugins_external?fontsize=14&#x26;hidenavigation=1&#x26;theme=dark">
+    <meta name="csb_link_plugins_custom" content="https://codesandbox.io/embed/github/nuxt-academy/guides-examples/tree/master/04_directory_structure/12_plugins_custom_plugin?fontsize=14&#x26;hidenavigation=1&#x26;theme=dark">
+    <meta name="csb_link_plugins_vue" content="https://codesandbox.io/embed/github/nuxt-academy/guides-examples/tree/master/04_directory_structure/12_plugins_vue?fontsize=14&#x26;hidenavigation=1&#x26;theme=dark">
+    <link rel="stylesheet" href="https://raw.githubusercontent.com/shinokada/prism-coy-theme/main/theme_common.css">
+  </head>
+  <body>
+    <section id="plugins" class="level1">
+      <h1>plugins</h1>
+      <p>Le répertoire <code>plugins</code> contient les plugins JavaScript que l'on souhaite exécuter avant l'instanciation de l'application principale Vue.js.</p>
+      <hr>
+      <p>
+        <img src="../docs/plugins.svg">
+      </p>
+      <p>Le répertoire <code>plugins</code> contient les plugins JavaScript que l'on souhaite exécuter avant l'instanciation de l'application principale Vue.js. C'est ici que l'on peut ajouter des plugins Vue.js et injecter des fonctions/constantes. À chaque fois que l'on a besoin d'utiliser <code>Vue.use()</code>, on peut créer un fichier dans <code>plugins/</code> et ajouter son chemin à la propriété <code>plugins</code> dans le fichier <code>nuxt.config.js</code>.</p>
+      <section id="packages-externes" class="level2">
+        <h2>Packages externes</h2>
+        <p>On pourrait avoir envie d'utiliser des packages/modules externes dans notre application (ex: <a href="https://axios.nuxtjs.org/">axios</a>) pour faire des requêtes HTTP côté client et serveur.</p>
+        <p>Premièrement, l'installer via npm ou Yarn.</p>
+        <pre class="language-bash"><code class="language-bash"><span class="token function">yarn</span> <span class="token function">add</span> @nuxtjs/axios</code></pre>
+        <pre class="language-bash"><code class="language-bash"><span class="token function">npm</span> <span class="token function">install</span> @nuxtjs/axios</code></pre>
+        <p>On peut par exemple configurer les intercepteurs d'axios pour réagir à de possibles erreurs lorsque l'on fait des appels à notre API et ce, à travers toute notre application. Dans l'exemple suivant, on redirige l'utilisateur sur une page d'erreur personnalisée appelée <code>sorry</code> lorsque l'on obtient un code d'erreur 500 de la part de notre API.</p>
+        <pre class="language-js{}[plugins/axios.js]"><code class="language-js{}[plugins/axios.js]">export default function ({ $axios, redirect }) {
+  $axios.onError(error => {
+    if (error.response.status === 500) {
+      redirect('/sorry')
+    }
+  })
+}</code></pre>
+        <p>Il faut par la suite ajouter le module et les plugins fraîchement créés dans la configuration du projet.</p>
+        <pre class="language-js{}[nuxt.config.js]"><code class="language-js{}[nuxt.config.js]">module.exports = {
+  modules: ['@nuxtjs/axios'],
+  plugins: ['~/plugins/axios.js']
+}</code></pre>
+        <p>Ensuite, on pourra l'utiliser directement dans nos composants page:</p>
+        <pre class="language-js{}[pages/index.vue]"><code class="language-js{}[pages/index.vue]">&#x3C;template>
+  &#x3C;h1>{{ post.title }}&#x3C;/h1>
+&#x3C;/template>
+
+&#x3C;script>
+export default {
+	async asyncData ({ $axios, params }) {
+	    const  post  = await $axios.$get(`https://api.nuxtjs.dev/posts/${params.id}`)
+	    return { post }
+	  }
+}
+&#x3C;/script></code></pre>
+        <section id="info" class="level4">
+          <h4>Info</h4>
+          <p>Si une erreur <em>Cannot use import statement outside a module</em> apparaît, ajoutez votre package dans l'option <code>build</code> > <code>transpile</code> du ficher <code>nuxt.config.js</code> pour rendre votre plugin disponible au loader webpack.</p>
+          <pre class="language-js{}[nuxt.config.js]"><code class="language-js{}[nuxt.config.js]">build: {
+  // Etendez votre configuration webpack ici
+  transpile: ['npm-package-name'],
+},</code></pre>
+        </section>
+      </section>
+      <section id="plugins-vue" class="level2">
+        <h2>Plugins Vue</h2>
+        <p>Si on veut utiliser des plugins Vue.js, comme par exemple <a href="https://akryum.github.io/v-tooltip">v-tooltip</a> pour afficher des tooltips dans notre application, nous avons besoin de configurer le plugin avant de lancer l'application.</p>
+        <p>Commençons par l'installer</p>
+        <pre class="language-bash"><code class="language-bash"><span class="token function">yarn</span> <span class="token function">add</span> v-tooltip</code></pre>
+        <pre class="language-bash"><code class="language-bash"><span class="token function">npm</span> <span class="token function">install</span> v-tooltip</code></pre>
+        <p>Ensuite, créons le fichier <code>plugins/vue-tooltip.js</code></p>
+        <pre class="language-js{}[plugins/vue-tooltip.js]"><code class="language-js{}[plugins/vue-tooltip.js]">import Vue from 'vue'
+import VTooltip from 'v-tooltip'
+
+Vue.use(VTooltip)</code></pre>
+      </section>
+      <section id="la-propriété-plugins" class="level2">
+        <h2>La propriété plugins</h2>
+        <p>Ensuite nous pouvons ajouter le chemin du fichier à l'intérieur de la propriété <code>plugins</code> du fichier <code>nuxt.config.js</code>. La propriété <code>plugins</code> permet d'ajouter facilement des plugins Vue.js à notre application principale. Tous les chemins définis dans la propriété <code>plugins</code> seront importés avant d'initialiser l'application principale.</p>
+        <pre class="language-js{}[nuxt.config.js]"><code class="language-js{}[nuxt.config.js]">export default {
+  plugins: ['~/plugins/vue-tooltip.js']
+}</code></pre>
+        <section id="plugins-es6" class="level3">
+          <h3>Plugins ES6</h3>
+          <p>Si le plugin est situé dans les <code>node_modules</code> et qu'il exporte un module en ES6, nous aurons besoin de l'ajouter à l'option de build <code>transpile</code>:</p>
+          <pre class="language-js{}[nuxt.config.js]"><code class="language-js{}[nuxt.config.js]">module.exports = {
+  build: {
+    transpile: ['vue-tooltip']
+  }
+}</code></pre>
+          <p>Pour davantage d'informations sur les options, veuillez vous référer à la <a href="./configuration-glossary/configuration-build#transpile">configuration du build</a>.</p>
+        </section>
+      </section>
+      <section id="côté-client-ou-serveur-seulement" class="level2">
+        <h2>Côté client ou serveur seulement</h2>
+        <p>Certains plugins ne devraient fonctionner que dans le navigateur car ils n'auront pas de support SSR (Server Side Rendering).</p>
+        <section id="convention-pour-le-nommage-des-plugins" class="level3">
+          <h3>Convention pour le nommage des plugins</h3>
+          <p>Si un plugin est voué à être exécuté seulement du côté client ou seulement du côté serveur, on peut appliquer une extension <code>.client.js</code> ou <code>.server.js</code> à l'extension du fichier du plugin. Le fichier sera automatiquement inclus du côté client ou serveur seulement (respectivement).</p>
+          <pre class="language-js{}[nuxt.config.js]"><code class="language-js{}[nuxt.config.js]">export default {
+  plugins: [
+    '~/plugins/foo.client.js', // seulement du côté client
+    '~/plugins/bar.server.js', // seulement du côté serveur
+    '~/plugins/baz.js' // sur le serveur et sur le client
+  ]
+}</code></pre>
+        </section>
+        <section id="syntaxe-objet" class="level3">
+          <h3>Syntaxe objet</h3>
+          <p>On peut aussi utiliser la syntaxe objet avec la propriété mode (<code>'client'</code>  ou <code>'server'</code>) dans <code>plugins</code>.</p>
+          <pre class="language-js{}[nuxt.config.js]"><code class="language-js{}[nuxt.config.js]">export default {
+  plugins: [
+    { src: '~/plugins/both-sides.js' }, // sur le serveur et sur le client
+    { src: '~/plugins/client-only.js', mode: 'client' }, // seulement du côté client
+    { src: '~/plugins/server-only.js', mode: 'server' } // seulement du côté serveur
+  ]
+}</code></pre>
+        </section>
+      </section>
+      <section id="injection-dans-le-root-et-le-context" class="level2">
+        <h2>Injection dans le <code>$root</code> et le <code>context</code></h2>
+        <p>Parfois, on souhaiterait rendre des fonctions ou des variables accessibles dans l'intégralité de notre application. On peut injecter ces variables dans notre instance Vue (côté client), dans le <code>context</code> (côté serveur) et même dans le store Vuex. La convention pour le préfixe des fonctions que l'on a injecté est <code>$</code>.</p>
+        <p>Nuxt nous fournit une méthode <code>inject(cle, valeur)</code> pour faire cela facilement. Le second paramètre donné à <code>inject</code> est la fonction que l'on souhaite exporter. Le <code>$</code> sera automatiquement préfixé à notre clé.</p>
+        <section id="info-1" class="level4">
+          <h4>Info</h4>
+          <p>Il est important de savoir que dans tout <a href="https://vuejs.org/v2/guide/instance.html#Lifecycle-Diagram">lifecycle</a> d'une instance Vue, seulement les hooks <code>beforeCreate</code> et <code>created</code> seront appellés du côté client et serveur. Les hooks restants seront appellés seulement du côté client.</p>
+          <pre class="language-js{}[plugins/hello.js]"><code class="language-js{}[plugins/hello.js]">export default ({ app }, inject) => {
+  // Ceci injecte $hello(msg) dans Vue, dans le context et le store.
+  inject('hello', msg => console.log(`Hello ${msg}!`))
+}</code></pre>
+          <pre class="language-js{}[nuxt.config.js]"><code class="language-js{}[nuxt.config.js]">export default {
+  plugins: ['~/plugins/hello.js']
+}</code></pre>
+          <p>Maintenant le service <code>$hello</code> est accessible depuis le <code>context</code> et <code>this</code> dans les pages, les composants, les plugins, et les actions du store.</p>
+          <pre class="language-js{}[example-component.vue]"><code class="language-js{}[example-component.vue]">export default {
+  mounted() {
+    this.$hello('mounted')
+    // Va console.log 'Hello mounted!'
+  },
+  asyncData({ app, $hello }) {
+    $hello('asyncData')
+    // Si la version de Nuxt &#x3C;= 2.12, il faut utiliser 👇
+    app.$hello('asyncData')
+  }
+}</code></pre>
+          <pre class="language-js{}[store/index.js]"><code class="language-js{}[store/index.js]">export const state = () => ({
+  someValue: ''
+})
+
+export const actions = {
+  setSomeValueToWhatever({ commit }) {
+    this.$hello('store action')
+    const newValue = 'whatever'
+    commit('changeSomeValue', newValue)
+  }
+}</code></pre>
+        </section>
+        <section id="warning" class="level4">
+          <h4>Warning</h4>
+          <p>Il faut bien faire attention à ne pas utiliser <code>Vue.use()</code>, <code>Vue.component()</code> ou quoi que ce soit d'autre lié à Vue à l'<strong>intérieur</strong> de cette fonction dédiée à l'injection de Nuxt. Sinon, cela causerait des fuites de mémoire côté serveur.</p>
+        </section>
+      </section>
+      <section id="la-propriété-extendplugins" class="level2">
+        <h2>La propriété extendPlugins</h2>
+        <p>On pourrait avoir envie de personnaliser les plugins ou changer l'ordre des plugins créé par Nuxt. Cette fonction accepte un tableau d'objets <a href="./configuration-glossary/configuration-plugins">plugins</a> et retourne la même chose, réarrangé.</p>
+        <p>Un exemple de changement de l'ordre des plugins:</p>
+        <pre class="language-js{}[nuxt.config.js]"><code class="language-js{}[nuxt.config.js]">export default {
+  extendPlugins(plugins) {
+    const pluginIndex = plugins.findIndex(
+      ({ src }) => src === '~/plugins/shouldBeFirst.js'
+    )
+    const shouldBeFirstPlugin = plugins[pluginIndex]
+
+    plugins.splice(pluginIndex, 1)
+    plugins.unshift(shouldBeFirstPlugin)
+
+    return plugins
+  }
+}</code></pre>
+        <section id="mixins-globaux" class="level3">
+          <h3>Mixins globaux</h3>
+          <p>Des mixins globaux peuvent être facilement ajoutés aux plugins de Nuxt mais peuvent causer des soucis et des fuites de mémoire s'ils sont mal gérés. À chaque fois que l'on ajoute un mixin global à l'application, if faut bien faire attention à lui passer un flag pour éviter de l'enregistrer plusieurs fois:</p>
+          <pre class="language-js{}[plugins/my-mixin-plugin.js]"><code class="language-js{}[plugins/my-mixin-plugin.js]">import Vue from "vue"
+
+// Assurez-vous de choisir un nom unique pour le drapeau
+// il n'y aura donc pas de conflit avec aucun autre mixin.
+if (!Vue.__my_mixin__) {
+	Vue.__my__mixin__ = true
+  Vue.mixin({ ... }) // On peut ensuite configurer le mixin
+}</code></pre>
+          <p><span style="float: footnote;"><a href="../index.html#toc">Go to TOC</a></span></p>
+        </section>
+      </section>
+    </section>
+  </body>
+</html>

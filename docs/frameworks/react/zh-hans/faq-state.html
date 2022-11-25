@@ -1,0 +1,102 @@
+<!doctype html>
+<html lang="zh-hans">
+  <head>
+    <meta charset="utf-8">
+    <title>组件状态</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="https://raw.githubusercontent.com/shinokada/prism-coy-theme/main/theme_common.css">
+  </head>
+  <body>
+    <section id="组件状态" class="level1">
+      <h1>组件状态</h1>
+      <section id="what-does-setstate-do" class="level3">
+        <h3><code>setState</code> 实际做了什么？</h3>
+        <p><code>setState()</code> 会对一个组件的 <code>state</code> 对象安排一次更新。当 state 改变了，该组件就会重新渲染。</p>
+      </section>
+      <section id="what-is-the-difference-between-state-and-props" class="level3">
+        <h3><code>state</code> 和 <code>props</code> 之间的区别是什么？</h3>
+        <p><a href="./components-and-props.html"><code>props</code></a>（“properties” 的缩写）和 <a href="./state-and-lifecycle.html"><code>state</code></a> 都是普通的 JavaScript 对象。它们都是用来保存信息的，这些信息可以控制组件的渲染输出，而它们的一个重要的不同点就是：<code>props</code> 是传递<em>给</em>组件的（类似于函数的形参），而 <code>state</code> 是在组件<em>内</em>被组件自己管理的（类似于在一个函数内声明的变量）。</p>
+        <p>下面是一些不错的资源，可以用来进一步了解使用 <code>props</code> 或 <code>state</code> 的最佳时机：</p>
+        <ul>
+          <li><a href="https://github.com/uberVU/react-guide/blob/master/props-vs-state.md">Props vs State</a></li>
+          <li><a href="https://lucybain.com/blog/2016/react-state-vs-pros/">ReactJS: Props vs. State</a></li>
+        </ul>
+      </section>
+      <section id="why-is-setstate-giving-me-the-wrong-value" class="level3">
+        <h3>为什么 <code>setState</code> 给了我一个错误的值？</h3>
+        <p>在 React 中，<code>this.props</code> 和 <code>this.state</code> 都代表着<em>已经被渲染了的</em>值，即当前屏幕上显示的值。</p>
+        <p>调用 <code>setState</code> 其实是异步的 —— 不要指望在调用 <code>setState</code> 之后，<code>this.state</code> 会立即映射为新的值。如果你需要基于当前的 state 来计算出新的值，那你应该传递一个函数，而不是一个对象（详情见下文）。</p>
+        <p>代码<em>不会</em>像预期那样运行的示例：</p>
+        <pre class="language-jsx"><code class="language-jsx"><span class="token function">incrementCount</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  <span class="token comment">// 注意：这样 *不会* 像预期的那样工作。</span>
+  <span class="token keyword">this</span><span class="token punctuation">.</span><span class="token method function property-access">setState</span><span class="token punctuation">(</span><span class="token punctuation">{</span><span class="token literal-property property">count</span><span class="token operator">:</span> <span class="token keyword">this</span><span class="token punctuation">.</span><span class="token property-access">state</span><span class="token punctuation">.</span><span class="token property-access">count</span> <span class="token operator">+</span> <span class="token number">1</span><span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+
+<span class="token function">handleSomething</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  <span class="token comment">// 假设 `this.state.count` 从 0 开始。</span>
+  <span class="token keyword">this</span><span class="token punctuation">.</span><span class="token method function property-access">incrementCount</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token keyword">this</span><span class="token punctuation">.</span><span class="token method function property-access">incrementCount</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token keyword">this</span><span class="token punctuation">.</span><span class="token method function property-access">incrementCount</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token comment">// 当 React 重新渲染该组件时，`this.state.count` 会变为 1，而不是你期望的 3。</span>
+
+  <span class="token comment">// 这是因为上面的 `incrementCount()` 函数是从 `this.state.count` 中读取数据的，</span>
+  <span class="token comment">// 但是 React 不会更新 `this.state.count`，直到该组件被重新渲染。</span>
+  <span class="token comment">// 所以最终 `incrementCount()` 每次读取 `this.state.count` 的值都是 0，并将它设为 1。</span>
+
+  <span class="token comment">// 问题的修复参见下面的说明。</span>
+<span class="token punctuation">}</span></code></pre>
+        <p>参见下面的说明来修复这个问题。</p>
+      </section>
+      <section id="how-do-i-update-state-with-values-that-depend-on-the-current-state" class="level3">
+        <h3>我应该如何更新那些依赖于当前的 state 的 state 呢？</h3>
+        <p>给 <code>setState</code> 传递一个函数，而不是一个对象，就可以确保每次的调用都是使用最新版的 state（见下面的说明）。</p>
+      </section>
+      <section id="what-is-the-difference-between-passing-an-object-or-a-function-in-setstate" class="level3">
+        <h3>给 <code>setState</code> 传递一个对象与传递一个函数的区别是什么？</h3>
+        <p>传递一个函数可以让你在函数内访问到当前的 state 的值。因为 <code>setState</code> 的调用是分批的，所以你可以链式地进行更新，并确保它们是一个建立在另一个之上的，这样才不会发生冲突：</p>
+        <pre class="language-jsx"><code class="language-jsx"><span class="token function">incrementCount</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  <span class="token keyword">this</span><span class="token punctuation">.</span><span class="token method function property-access">setState</span><span class="token punctuation">(</span><span class="token punctuation">(</span><span class="token parameter">state</span><span class="token punctuation">)</span> <span class="token arrow operator">=></span> <span class="token punctuation">{</span>
+    <span class="token comment">// 重要：在更新的时候读取 `state`，而不是 `this.state`。</span>
+    <span class="token keyword control-flow">return</span> <span class="token punctuation">{</span><span class="token literal-property property">count</span><span class="token operator">:</span> state<span class="token punctuation">.</span><span class="token property-access">count</span> <span class="token operator">+</span> <span class="token number">1</span><span class="token punctuation">}</span>
+  <span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+
+<span class="token function">handleSomething</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  <span class="token comment">// 假设 `this.state.count` 从 0 开始。</span>
+  <span class="token keyword">this</span><span class="token punctuation">.</span><span class="token method function property-access">incrementCount</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token keyword">this</span><span class="token punctuation">.</span><span class="token method function property-access">incrementCount</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token keyword">this</span><span class="token punctuation">.</span><span class="token method function property-access">incrementCount</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+  <span class="token comment">// 如果你现在在这里读取 `this.state.count`，它还是会为 0。</span>
+  <span class="token comment">// 但是，当 React 重新渲染该组件时，它会变为 3。</span>
+<span class="token punctuation">}</span></code></pre>
+        <p><a href="./react-component.html#setstate">学习更多有关 setState 的内容</a></p>
+      </section>
+      <section id="when-is-setstate-asynchronous" class="level3">
+        <h3><code>setState</code> 什么时候是异步的？</h3>
+        <p>目前，在事件处理函数内部的 <code>setState</code> 是异步的。</p>
+        <p>例如，如果 <code>Parent</code> 和 <code>Child</code> 在同一个 click 事件中都调用了 <code>setState</code> ，这样就可以确保 <code>Child</code> 不会被重新渲染两次。取而代之的是，React 会将该 state “冲洗” 到浏览器事件结束的时候，再统一地进行更新。这种机制可以在大型应用中得到很好的性能提升。</p>
+        <p>这只是一个实现的细节，所以请不要直接依赖于这种机制。在以后的版本当中，React 会在更多的情况下静默地使用 state 的批更新机制。</p>
+      </section>
+      <section id="why-doesnt-react-update-thisstate-synchronously" class="level3">
+        <h3>为什么 React 不同步地更新 <code>this.state</code>？</h3>
+        <p>如前面章节解释的那样，在开始重新渲染之前，React 会有意地进行“等待”，直到所有在组件的事件处理函数内调用的 <code>setState()</code> 完成之后。这样可以通过避免不必要的重新渲染来提升性能。</p>
+        <p>但是，你可能还是会想，为什么 React 不能立即更新 <code>this.state</code>，而不对组件进行重新渲染呢。</p>
+        <p>主要有两个原因：</p>
+        <ul>
+          <li>这样会破坏掉 <code>props</code> 和 <code>state</code> 之间的一致性，造成一些难以 debug 的问题。</li>
+          <li>这样会让一些我们正在实现的新功能变得无法实现。</li>
+        </ul>
+        <p>这个 <a href="https://github.com/facebook/react/issues/11527#issuecomment-360199710">GitHub 评论</a> 深入了该特殊示例。</p>
+      </section>
+      <section id="should-i-use-a-state-management-library-like-redux-or-mobx" class="level3">
+        <h3>我应该使用一个像 Redux 或 MobX 那样的 state 管理库吗？</h3>
+        <p><a href="https://redux.js.org/faq/general#when-should-i-use-redux">或许需要。</a></p>
+        <p>
+          在添加额外的库之前，最好先了解清楚 React 能干什么。你也可以只使用 React 来构建出一个比较复杂的应用。
+          <span style="float: footnote;"><a href="./index.html#toc">Go to TOC</a></span>
+        </p>
+      </section>
+    </section>
+  </body>
+</html>

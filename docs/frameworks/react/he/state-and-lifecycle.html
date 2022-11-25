@@ -1,0 +1,349 @@
+<!doctype html>
+<html lang="he">
+  <head>
+    <meta charset="utf-8">
+    <title>State ומחזור חיים</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="https://raw.githubusercontent.com/shinokada/prism-coy-theme/main/theme_common.css">
+  </head>
+  <body>
+    <section id="state-ומחזור-חיים" class="level1">
+      <h1>State ומחזור חיים</h1>
+      <p>דף זה מציג את הקונספט של state ומחזור חיים בקומפוננטת React. תוכלו למצוא את <a href="./react-component.html">פירוט ה-API של קומפוננטה כאן</a>.</p>
+      <p>הביטו על דוגמת השעון המתקתק מ<a href="./rendering-elements.html#updating-the-rendered-element">אחד מהחלקים הקודמים</a>. ב<a href="./rendering-elements.html#rendering-an-element-into-the-dom">רינדור אלמנטים</a>, למדנו רק דרך אחת לעדכון ממשק המשתמש. אנו קוראים ל-<code>ReactDOM.render()</code> כדי לשנות את הפלט שירונדר:</p>
+      <pre class="language-js{10}"><code class="language-js{10}">const root = ReactDOM.createRoot(document.getElementById('root'));
+  
+function tick() {
+  const element = (
+    &#x3C;div>
+      &#x3C;h1>Hello, world!&#x3C;/h1>
+      &#x3C;h2>It is {new Date().toLocaleTimeString()}.&#x3C;/h2>
+    &#x3C;/div>
+  );
+  root.render(element);
+}
+
+setInterval(tick, 1000);</code></pre>
+      <p><a href="https://codepen.io/gaearon/pen/gwoJZk?editors=0010"><strong>נסו זאת ב-CodePen</strong></a></p>
+      <p>בפרק זה נלמד כיצד להפוך את קומפוננטת ה-<code>Clock</code> (שעון) לכזאת שבאמת מאפשרת שימוש חוזר ומכומסת (מאפשרת אנקפסולציה). היא תקבע טיימר משלה ותעדכן את עצמה בכל שנייה.</p>
+      <p>אנחנו יכולים להתחיל על ידי כימוס של תצוגת השעון:</p>
+      <pre class="language-js{5-8,13}"><code class="language-js{5-8,13}">const root = ReactDOM.createRoot(document.getElementById('root'));
+
+function Clock(props) {
+  return (
+    &#x3C;div>
+      &#x3C;h1>Hello, world!&#x3C;/h1>
+      &#x3C;h2>It is {props.date.toLocaleTimeString()}.&#x3C;/h2>
+    &#x3C;/div>
+  );
+}
+
+function tick() {
+  root.render(&#x3C;Clock date={new Date()} />);
+}
+
+setInterval(tick, 1000);</code></pre>
+      <p><a href="https://codepen.io/gaearon/pen/dpdoYR?editors=0010"><strong>נסו זאת ב-CodePen</strong></a></p>
+      <p>עם זאת, אנו מפספסים דרישה חיונית: העובדה ש-<code>Clock</code> מייצר טיימר ומעדכן את ממשק המשתמש בכל שנייה צריכה להיות חלק מהמימוש של <code>Clock</code>.</p>
+      <p>באופן אידיאלי, אנחנו רוצים לכתוב את זה פעם אחת וש-<code>Clock</code> יעדכן את עצמו:</p>
+      <pre class="language-js{2}"><code class="language-js{2}">root.render(&#x3C;Clock />);</code></pre>
+      <p>כדי לממש את זה, עלינו להוסיף "state" לקומפוננטת ה-<code>Clock</code>.</p>
+      <p>State זהה ל-props, אבל הוא פרטי ונשלט במלואו על ידי הקומפוננטה.</p>
+      <section id="converting-a-function-to-a-class" class="level2">
+        <h2>המרת פונקציה למחלקה</h2>
+        <p>אתם יכולים להמיר קומפוננטת פונקציה כמו <code>Clock</code> למחלקה בחמישה צעדים:</p>
+        <ol>
+          <li>
+            <p>צרו <a href="https://developer.mozilla.org/en/docs/Web/JavaScript/Reference/Classes">מחלקת ES6</a>, עם שם זהה, שמרחיבה את <code>React.Component</code>.</p>
+          </li>
+          <li>
+            <p>הוסיפו לה מתודה אחת ריקה בשם <code>render()</code>.</p>
+          </li>
+          <li>
+            <p>העבירו את גוף הפונקציה לתוך מתודת <code>render()</code>.</p>
+          </li>
+          <li>
+            <p>החליפו את <code>props</code> עם <code>this.props</code> בגוף ה-<code>render()</code>.</p>
+          </li>
+          <li>
+            <p>מחקו את הצהרת הפונקציה הריקה שנותרה.</p>
+          </li>
+        </ol>
+        <pre class="language-js"><code class="language-js"><span class="token keyword">class</span> <span class="token class-name">Clock</span> <span class="token keyword">extends</span> <span class="token class-name">React<span class="token punctuation">.</span>Component</span> <span class="token punctuation">{</span>
+  <span class="token function">render</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token keyword control-flow">return</span> <span class="token punctuation">(</span>
+      <span class="token operator">&#x3C;</span>div<span class="token operator">></span>
+        <span class="token operator">&#x3C;</span>h1<span class="token operator">></span><span class="token maybe-class-name">Hello</span><span class="token punctuation">,</span> world<span class="token operator">!</span><span class="token operator">&#x3C;</span><span class="token operator">/</span>h1<span class="token operator">></span>
+        <span class="token operator">&#x3C;</span>h2<span class="token operator">></span><span class="token maybe-class-name">It</span> is <span class="token punctuation">{</span><span class="token keyword">this</span><span class="token punctuation">.</span><span class="token property-access">props</span><span class="token punctuation">.</span><span class="token property-access">date</span><span class="token punctuation">.</span><span class="token method function property-access">toLocaleTimeString</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">}</span><span class="token punctuation">.</span><span class="token operator">&#x3C;</span><span class="token operator">/</span>h2<span class="token operator">></span>
+      <span class="token operator">&#x3C;</span><span class="token operator">/</span>div<span class="token operator">></span>
+    <span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token punctuation">}</span>
+<span class="token punctuation">}</span></code></pre>
+        <p><a href="https://codepen.io/gaearon/pen/zKRGpo?editors=0010"><strong>נסו זאת ב-CodePen</strong></a></p>
+        <p><code>Clock</code> מוגדר כעת כמחלקה במקום כפונקציה.</p>
+        <p>מתודת <code>render</code> תקרא בכל פעם שמתרחש עדכון, אך כל עוד אנו מרנדרים את <code>&#x3C;Clock /></code> אל אותה צומת DOM, נעשה שימוש רק במופע אחד של המחלקה <code>Clock</code>. זה מאפשר לנו לעשות שימוש בתכונות נוספות כגון state מקומי ומתודות מחזור חיים.</p>
+      </section>
+      <section id="adding-local-state-to-a-class" class="level2">
+        <h2>הוספת State מקומי למחלקה</h2>
+        <p>נעביר את ה-<code>date</code> מ-props ל-state בשלושה שלבים:</p>
+        <ol>
+          <li>החליפו את <code>this.props.date</code> עם <code>this.state.date</code> במתודת ה-<code>render()</code>:</li>
+        </ol>
+        <pre class="language-js{6}"><code class="language-js{6}">class Clock extends React.Component {
+  render() {
+    return (
+      &#x3C;div>
+        &#x3C;h1>Hello, world!&#x3C;/h1>
+        &#x3C;h2>It is {this.state.date.toLocaleTimeString()}.&#x3C;/h2>
+      &#x3C;/div>
+    );
+  }
+}</code></pre>
+        <ol start="2">
+          <li>הוסיפו <a href="https://developer.mozilla.org/en/docs/Web/JavaScript/Reference/Classes#Constructor">בנאי מחלקה</a> שמבצע השמה ל-<code>this.state</code> ההתחלתי:</li>
+        </ol>
+        <pre class="language-js{4}"><code class="language-js{4}">class Clock extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = {date: new Date()};
+  }
+
+  render() {
+    return (
+      &#x3C;div>
+        &#x3C;h1>Hello, world!&#x3C;/h1>
+        &#x3C;h2>It is {this.state.date.toLocaleTimeString()}.&#x3C;/h2>
+      &#x3C;/div>
+    );
+  }
+}</code></pre>
+        <p>שימו לב כיצד אנו מעבירים את <code>props</code> לבנאי הבסיסי:</p>
+        <pre class="language-js{2}"><code class="language-js{2}">  constructor(props) {
+    super(props);
+    this.state = {date: new Date()};
+  }</code></pre>
+        <p>קומפוננטות מחלקה צריכות תמיד לקרוא לבנאי הבסיס עם <code>props</code>.</p>
+        <ol start="3">
+          <li>הסירו את ה-prop <code>date</code> מאלמנט ה-<code>&#x3C;Clock /></code>:</li>
+        </ol>
+        <pre class="language-js{2}"><code class="language-js{2}">root.render(&#x3C;Clock />);</code></pre>
+        <p>לאחר מכן נוסיף את קוד הטיימר בחזרה לקומפוננטה עצמה.</p>
+        <p>התוצאה נראית כך:</p>
+        <pre class="language-js{2-5,11,18}"><code class="language-js{2-5,11,18}">class Clock extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = {date: new Date()};
+  }
+
+  render() {
+    return (
+      &#x3C;div>
+        &#x3C;h1>Hello, world!&#x3C;/h1>
+        &#x3C;h2>It is {this.state.date.toLocaleTimeString()}.&#x3C;/h2>
+      &#x3C;/div>
+    );
+  }
+}
+
+const root = ReactDOM.createRoot(document.getElementById('root'));
+root.render(&#x3C;Clock />);</code></pre>
+        <p><a href="https://codepen.io/gaearon/pen/KgQpJd?editors=0010"><strong>נסו זאת ב-CodePen</strong></a></p>
+        <p>בשלב הבא, נדאג ש-<code>Clock</code> יגדיר טיימר משלו ויעדכן את עצמו בכל שנייה.</p>
+      </section>
+      <section id="adding-lifecycle-methods-to-a-class" class="level2">
+        <h2>הוספת מתודות מחזור חיים למחלקה</h2>
+        <p>באפליקציות עם קומפוננטות רבות, חשוב מאוד לשחרר משאבים שנלקחו על ידי הקומפוננטות כאשר הן מושמדות.</p>
+        <p>אנחנו רוצים <a href="https://developer.mozilla.org/en-US/docs/Web/API/WindowTimers/setInterval">להגדיר טיימר</a> בכל פעם ש-<code>Clock</code> מרונדר לתוך ה-DOM בפעם הראשונה. זה נקרא "mounting" ב-React.</p>
+        <p>אנחנו גם רוצים <a href="https://developer.mozilla.org/en-US/docs/Web/API/WindowTimers/clearInterval">לנקות את אותו טיימר</a> בכל פעם שה-DOM שמיוצר על ידי ה-<code>Clock</code> מוסר. זה נקרא "unmounting" ב-React.</p>
+        <p>אנו יכולים להכריז על מתודות מיוחדות במחלקת הקומפוננטה כדי להריץ קוד כלשהו כאשר קומפוננטה עושה mount ו-unmount:</p>
+        <pre class="language-js{7-9,11-13}"><code class="language-js{7-9,11-13}">class Clock extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = {date: new Date()};
+  }
+
+  componentDidMount() {
+
+  }
+
+  componentWillUnmount() {
+
+  }
+
+  render() {
+    return (
+      &#x3C;div>
+        &#x3C;h1>Hello, world!&#x3C;/h1>
+        &#x3C;h2>It is {this.state.date.toLocaleTimeString()}.&#x3C;/h2>
+      &#x3C;/div>
+    );
+  }
+}</code></pre>
+        <p>מתודות אלו נקראות "מתודות מחזור חיים".</p>
+        <p>מתודת <code>componentDidMount()</code> רצה לאחר שפלט הקומפוננטה רונדר ל-DOM. זה מקום טוב להגדיר טיימר:</p>
+        <pre class="language-js{2-5}"><code class="language-js{2-5}">  componentDidMount() {
+    this.timerID = setInterval(
+      () => this.tick(),
+      1000
+    );
+  }</code></pre>
+        <p>שימו לב איך אנו שומרים על מזהה הטיימר על ה-<code>this.timerID</code>.</p>
+        <p>בעוד ש-<code>this.props</code> מוגדר על-ידי React עצמה ול-<code>this.state</code> יש משמעות מיוחדת, אתם רשאים להוסיף שדות נוספים באופן ידני למחלקה אם עליכם לאחסן דבר כלשהו שאינו חלק מזרם הנתונים (כמו מזהה הטיימר).</p>
+        <p>אנו נחסל את הטיימר במתודת מחזור החיים <code>componentWillUnmount()</code>:</p>
+        <pre class="language-js{2}"><code class="language-js{2}">  componentWillUnmount() {
+    clearInterval(this.timerID);
+  }</code></pre>
+        <p>לבסוף, נממש מתודה הנקראת <code>tick()</code> שתקרא על ידי הקומפוננטה <code>Clock</code> בכל שנייה.</p>
+        <p>היא תשתמש ב-<code>this.setState()</code> כדי לתזמן עדכונים ל-state המקומי של הקומפוננטה:</p>
+        <pre class="language-js{18-22}"><code class="language-js{18-22}">class Clock extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = {date: new Date()};
+  }
+
+  componentDidMount() {
+    this.timerID = setInterval(
+      () => this.tick(),
+      1000
+    );
+  }
+
+  componentWillUnmount() {
+    clearInterval(this.timerID);
+  }
+
+  tick() {
+    this.setState({
+      date: new Date()
+    });
+  }
+
+  render() {
+    return (
+      &#x3C;div>
+        &#x3C;h1>Hello, world!&#x3C;/h1>
+        &#x3C;h2>It is {this.state.date.toLocaleTimeString()}.&#x3C;/h2>
+      &#x3C;/div>
+    );
+  }
+}
+
+const root = ReactDOM.createRoot(document.getElementById('root'));
+root.render(&#x3C;Clock />);</code></pre>
+        <p><a href="https://codepen.io/gaearon/pen/amqdNA?editors=0010"><strong>נסו זאת ב-CodePen</strong></a></p>
+        <p>כעת השעון מתקתק בכל שניה.</p>
+        <p>בואו נסכם בזריזות את מה שקורה ואת הסדר שבו מתודות נקראות:</p>
+        <ol>
+          <li>
+            <p>כאשר <code>&#x3C;Clock /></code> מועבר ל-<code>ReactDOM.render()</code>, React קוראת לבנאי של הרכיב <code>Clock</code>. מכיוון ש-<code>Clock</code> צריך להציג את השעה הנוכחית, הוא מאתחל את <code>this.state</code> עם אובייקט שכולל את הזמן הנוכחי. בהמשך נעדכן את ה-state הזה.</p>
+          </li>
+          <li>
+            <p>אז React קוראת למתודת <code>render()</code> של קומפוננטת ה-<code>Clock</code>. באופן זה React לומדת מה צריך להיות מוצג על המסך. אז React מעדכנת את ה-DOM כדי שיהיה תואם לפלט שרונדר על ידי <code>Clock</code>.</p>
+          </li>
+          <li>
+            <p>כאשר הפלט של <code>Clock</code> מוכנס ל-DOM, React קוראת למתודת מחזור החיים <code>componentDidMount()</code>. בתוכה, קומפוננטת <code>Clock</code> מבקשת מהדפדפן להגדיר טיימר כדי לקרוא למתודת <code>tick()</code> של הקומפוננטה פעם בשנייה.</p>
+          </li>
+          <li>
+            <p>בכל שנייה הדפדפן קורא למתודה <code>tick()</code>. בתוכה, קומפוננטת <code>Clock</code> מתזמנת את עדכון ממשק המשתמש על ידי קריאה ל-<code>setState()</code> עם אובייקט המכיל את הזמן הנוכחי. הודות לקריאה ל-<code>setState()</code>, React יודעת שה-state השתנה, וקוראת למתודת <code>render()</code> שוב כדי ללמוד מה צריך להיות על המסך. הפעם, <code>this.state.date</code> במתודת <code>render()</code> יהיה שונה, ולכן הפלט המרונדר יכלול את הזמן המעודכן. React מעדכנת את ה-DOM בהתאם.</p>
+          </li>
+          <li>
+            <p>אם הקומפוננטה <code>Clock</code> מוסרת מה-DOM, React קוראת למתודת מחזור החיים <code>componentWillUnmount()</code> כך שהטיימר יופסק.</p>
+          </li>
+        </ol>
+      </section>
+      <section id="using-state-correctly" class="level2">
+        <h2>שימוש נכון ב-State</h2>
+        <p>ישנם שלושה דברים שעליכם לדעת לגבי <code>setState()</code>.</p>
+        <section id="do-not-modify-state-directly" class="level3">
+          <h3>אל תשנו את State ישירות</h3>
+          <p>למשל, זה לא ירנדר מחדש קומפוננטה:</p>
+          <pre class="language-js"><code class="language-js"><span class="token comment">// טעות</span>
+<span class="token keyword">this</span><span class="token punctuation">.</span><span class="token property-access">state</span><span class="token punctuation">.</span><span class="token property-access">comment</span> <span class="token operator">=</span> <span class="token string">'Hello'</span><span class="token punctuation">;</span></code></pre>
+          <p>במקום, השתמשו ב-<code>setState()</code>:</p>
+          <pre class="language-js"><code class="language-js"><span class="token comment">// נכון</span>
+<span class="token keyword">this</span><span class="token punctuation">.</span><span class="token method function property-access">setState</span><span class="token punctuation">(</span><span class="token punctuation">{</span><span class="token literal-property property">comment</span><span class="token operator">:</span> <span class="token string">'Hello'</span><span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">;</span></code></pre>
+          <p>המקום היחידי שבו אתם כן יכולים לבצע השמה ל-<code>this.state</code> הוא הבנאי.</p>
+        </section>
+        <section id="state-updates-may-be-asynchronous" class="level3">
+          <h3>עדכוני State יכולים להיות אסינכרוניים</h3>
+          <p>React עשויה לקבץ מספר קריאות ל-<code>setState()</code> לתוך עדכון יחיד על מנת לשפר ביצועים.</p>
+          <p>מכיוון ש-<code>this.props</code> ו-<code>this.state</code> עשויים להתעדכן באופן אסינכרוני, עליכם לא להסתמך על הערכים שלהם לצורך חישוב ה-state הבא.</p>
+          <p>למשל, קוד זה עלול להכשל בעדכון המונה:</p>
+          <pre class="language-js"><code class="language-js"><span class="token comment">// טעות</span>
+<span class="token keyword">this</span><span class="token punctuation">.</span><span class="token method function property-access">setState</span><span class="token punctuation">(</span><span class="token punctuation">{</span>
+  <span class="token literal-property property">counter</span><span class="token operator">:</span> <span class="token keyword">this</span><span class="token punctuation">.</span><span class="token property-access">state</span><span class="token punctuation">.</span><span class="token property-access">counter</span> <span class="token operator">+</span> <span class="token keyword">this</span><span class="token punctuation">.</span><span class="token property-access">props</span><span class="token punctuation">.</span><span class="token property-access">increment</span><span class="token punctuation">,</span>
+<span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">;</span></code></pre>
+          <p>כדי לתקן זאת, השתמש בסוג השני של <code>setState()</code> שמקבל פונקציה במקום אובייקט. פונקציה זו תקבל את ה-state הקודם כארגומנט הראשון, ואת ה-props בעת החלת העדכון כארגומנט השני:</p>
+          <pre class="language-js"><code class="language-js"><span class="token comment">// נכון</span>
+<span class="token keyword">this</span><span class="token punctuation">.</span><span class="token method function property-access">setState</span><span class="token punctuation">(</span><span class="token punctuation">(</span><span class="token parameter">state<span class="token punctuation">,</span> props</span><span class="token punctuation">)</span> <span class="token arrow operator">=></span> <span class="token punctuation">(</span><span class="token punctuation">{</span>
+  <span class="token literal-property property">counter</span><span class="token operator">:</span> state<span class="token punctuation">.</span><span class="token property-access">counter</span> <span class="token operator">+</span> props<span class="token punctuation">.</span><span class="token property-access">increment</span>
+<span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span></code></pre>
+          <p>אנו משתמשים ב<a href="https://developer.mozilla.org/en/docs/Web/JavaScript/Reference/Functions/Arrow_functions">פונקציית חץ</a> למעלה, אבל זה עובד גם עם פונקציות רגילות:</p>
+          <pre class="language-js"><code class="language-js"><span class="token comment">// נכון</span>
+<span class="token keyword">this</span><span class="token punctuation">.</span><span class="token method function property-access">setState</span><span class="token punctuation">(</span><span class="token keyword">function</span><span class="token punctuation">(</span><span class="token parameter">state<span class="token punctuation">,</span> props</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  <span class="token keyword control-flow">return</span> <span class="token punctuation">{</span>
+    <span class="token literal-property property">counter</span><span class="token operator">:</span> state<span class="token punctuation">.</span><span class="token property-access">counter</span> <span class="token operator">+</span> props<span class="token punctuation">.</span><span class="token property-access">increment</span>
+  <span class="token punctuation">}</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">;</span></code></pre>
+        </section>
+        <section id="state-updates-are-merged" class="level3">
+          <h3>עדכוני State ממוזגים</h3>
+          <p>כאשר אתם קוראים ל-<code>setState()</code>, React ממזגת את האובייקט שאתם מספקים ל-state הנוכחי.</p>
+          <p>למשל, ה-state שלכם עלול להכיל מספר משתנים בלתי תלויים:</p>
+          <pre class="language-js{4,5}"><code class="language-js{4,5}">  constructor(props) {
+    super(props);
+    this.state = {
+      posts: [],
+      comments: []
+    };
+  }</code></pre>
+          <p>לאחר מכן תוכלו לעדכן אותם באופן בלתי תלוי באמצעות קריאות <code>setState()</code> נפרדות:</p>
+          <pre class="language-js{4,10}"><code class="language-js{4,10}">  componentDidMount() {
+    fetchPosts().then(response => {
+      this.setState({
+        posts: response.posts
+      });
+    });
+
+    fetchComments().then(response => {
+      this.setState({
+        comments: response.comments
+      });
+    });
+  }</code></pre>
+          <p>המיזוג הוא רדוד, ולכן <code>this.setState({comments})</code> משאיר את <code>this.state.posts</code> ללא שינוי, אך מחליף לחלוטין את <code>this.state.comments</code>.</p>
+        </section>
+      </section>
+      <section id="the-data-flows-down" class="level2">
+        <h2>הנתונים זורמים למטה</h2>
+        <p>לא קומפוננטות הורים ולא קומפוננטות ילדים יכולות לדעת אם קומפוננטה מסוימת בעלת state או ללא state, ולא צריך לשנות להן אם היא מוגדרת כפונקציה או כמחלקה.</p>
+        <p>זו הסיבה ש-state נקרא לעתים קרובות מקומי או מוכמס. הוא אינו נגיש לאף קומפוננטה אחרת פרט לזו שהוא בבעלותה ומגדירה אותו.</p>
+        <p>קומפוננטה יכולה לבחור להעביר את ה-state שלה למטה בתור props לקומפוננטות הילדים שלה:</p>
+        <pre class="language-js"><code class="language-js"><span class="token operator">&#x3C;</span><span class="token maybe-class-name">FormattedDate</span> date<span class="token operator">=</span><span class="token punctuation">{</span><span class="token keyword">this</span><span class="token punctuation">.</span><span class="token property-access">state</span><span class="token punctuation">.</span><span class="token property-access">date</span><span class="token punctuation">}</span> <span class="token operator">/</span><span class="token operator">></span></code></pre>
+        <p>הקומפוננטה <code>FormattedDate</code> תקבל את ה-<code>date</code> ב-props שלה ולא תדע אם הוא בא מה-state של <code>Clock</code>, מה-props של <code>Clock</code> או שהוקלד ידנית:</p>
+        <pre class="language-js"><code class="language-js"><span class="token keyword">function</span> <span class="token function"><span class="token maybe-class-name">FormattedDate</span></span><span class="token punctuation">(</span><span class="token parameter">props</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  <span class="token keyword control-flow">return</span> <span class="token operator">&#x3C;</span>h2<span class="token operator">></span><span class="token maybe-class-name">It</span> is <span class="token punctuation">{</span>props<span class="token punctuation">.</span><span class="token property-access">date</span><span class="token punctuation">.</span><span class="token method function property-access">toLocaleTimeString</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">}</span><span class="token punctuation">.</span><span class="token operator">&#x3C;</span><span class="token operator">/</span>h2<span class="token operator">></span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span></code></pre>
+        <p><a href="https://codepen.io/gaearon/pen/zKRqNB?editors=0010"><strong>נסו זאת ב-CodePen</strong></a></p>
+        <p>זה נקרא בדרך כלל זרימת הנתונים "מלמעלה למטה" או "חד כיווניות". כל state הוא תמיד בבעלות קומפוננטה מסוימת, וכל נתון או ממשק משתמש הנגזר מה-state הזה יוכלו להשפיע רק על קומפוננטות שנמצאות "מתחתיהם" בעץ.</p>
+        <p>אם אתם מדמיינים עץ קומפוננטות כמפל של props, כל state של קומפוננטה היא כמו מקור מים נוסף שמצטרף אליו בנקודה שרירותית אבל גם זורם כלפי מטה.</p>
+        <p>כדי להראות שכל הקומפוננטות מבודדות באמת, אנו יכולים ליצור קומפוננטת <code>App</code> המרנדרת שלושה <code>&#x3C;Clock></code>-ים:</p>
+        <pre class="language-js{4-6}"><code class="language-js{4-6}">function App() {
+  return (
+    &#x3C;div>
+      &#x3C;Clock />
+      &#x3C;Clock />
+      &#x3C;Clock />
+    &#x3C;/div>
+  );
+}</code></pre>
+        <p><a href="https://codepen.io/gaearon/pen/vXdGmd?editors=0010"><strong>נסו זאת ב-CodePen</strong></a></p>
+        <p>כל <code>Clock</code> מקים טיימר משלו ומתעדכן באופן עצמאי.</p>
+        <p>
+          באפליקציות React, ההחלטה אם רכיב הוא בעל state או חסר state נחשבת לפריט מימוש של הקומפוננטה שעשוי להשתנות לאורך זמן. אתם יכולים להשתמש בקומפוננטות חסרות state בתוך קומפוננטות בעלות state, ולהיפך.
+          <span style="float: footnote;"><a href="./index.html#toc">Go to TOC</a></span>
+        </p>
+      </section>
+    </section>
+  </body>
+</html>

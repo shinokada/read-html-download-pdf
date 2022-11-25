@@ -1,0 +1,560 @@
+<!doctype html>
+<html lang="zh-hans">
+  <head>
+    <meta charset="utf-8">
+    <title>测试技巧</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="https://raw.githubusercontent.com/shinokada/prism-coy-theme/main/theme_common.css">
+  </head>
+  <body>
+    <section id="测试技巧" class="level1">
+      <h1>测试技巧</h1>
+      <p>React 组件的常见测试模式。</p>
+      <blockquote>
+        <p>注意：</p>
+        <p>此章节假设你正在使用 <a href="https://jestjs.io/">Jest</a> 作为测试运行器。如果你使用不同的测试运行器，你可能需要调整 API，但整体的解决方案是相同的。在<a href="./testing-environments.html">测试环境</a>章节阅读更多关于设置测试环境的细节。</p>
+      </blockquote>
+      <p>在本章中，我们将主要使用函数组件。然而，这些测试策略并不依赖于实现细节，它对于 class 组件也同样有效。</p>
+      <ul>
+        <li><a href="#setup--teardown">创建/清理</a></li>
+        <li><a href="#act"><code>act()</code></a></li>
+        <li><a href="#rendering">渲染</a></li>
+        <li><a href="#data-fetching">数据获取</a></li>
+        <li><a href="#mocking-modules">mock 模块</a></li>
+        <li><a href="#events">事件</a></li>
+        <li><a href="#timers">计时器</a></li>
+        <li><a href="#snapshot-testing">快照测试</a></li>
+        <li><a href="#multiple-renderers">多渲染器</a></li>
+        <li><a href="#something-missing">缺少什么?</a></li>
+      </ul>
+      <section id="setup--teardown" class="level3">
+        <h3>创建/清理</h3>
+        <p>对于每个测试，我们通常希望将 React 树渲染给附加到 <code>document</code>的 DOM 元素。这点很重要，以便它可以接收 DOM 事件。当测试结束时，我们需要“清理”并从 <code>document</code> 中卸载树。</p>
+        <p>常见的方法是使用一对 <code>beforeEach</code> 和 <code>afterEach</code> 块，以便它们一直运行，并隔离测试本身造成的影响：</p>
+        <pre class="language-jsx"><code class="language-jsx"><span class="token keyword module">import</span> <span class="token imports"><span class="token punctuation">{</span> unmountComponentAtNode <span class="token punctuation">}</span></span> <span class="token keyword module">from</span> <span class="token string">"react-dom"</span><span class="token punctuation">;</span>
+
+<span class="token keyword">let</span> container <span class="token operator">=</span> <span class="token keyword null nil">null</span><span class="token punctuation">;</span>
+<span class="token function">beforeEach</span><span class="token punctuation">(</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token arrow operator">=></span> <span class="token punctuation">{</span>
+  <span class="token comment">// 创建一个 DOM 元素作为渲染目标</span>
+  container <span class="token operator">=</span> <span class="token dom variable">document</span><span class="token punctuation">.</span><span class="token method function property-access">createElement</span><span class="token punctuation">(</span><span class="token string">"div"</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token dom variable">document</span><span class="token punctuation">.</span><span class="token property-access">body</span><span class="token punctuation">.</span><span class="token method function property-access">appendChild</span><span class="token punctuation">(</span>container<span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+<span class="token function">afterEach</span><span class="token punctuation">(</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token arrow operator">=></span> <span class="token punctuation">{</span>
+  <span class="token comment">// 退出时进行清理</span>
+  <span class="token function">unmountComponentAtNode</span><span class="token punctuation">(</span>container<span class="token punctuation">)</span><span class="token punctuation">;</span>
+  container<span class="token punctuation">.</span><span class="token method function property-access">remove</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  container <span class="token operator">=</span> <span class="token keyword null nil">null</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">;</span></code></pre>
+        <p>你可以使用不同的测试模式，但请注意，<em>即使测试失败</em>，也需要执行清理。否则，测试可能会导致“泄漏”，并且一个测试可能会影响另一个测试的行为。这使得其难以调试。</p>
+      </section>
+      <section id="act-act" class="level3">
+        <h3><code>act()</code> {#act}</h3>
+        <p>在编写 UI 测试时，可以将渲染、用户事件或数据获取等任务视为与用户界面交互的“单元”。<code>react-dom/test-utils</code> 提供了一个名为 <a href="./test-utils.html#act"><code>act()</code></a> 的 helper，它确保在进行任何断言之前，与这些“单元”相关的所有更新都已处理并应用于 DOM：</p>
+        <pre class="language-js"><code class="language-js"><span class="token function">act</span><span class="token punctuation">(</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token arrow operator">=></span> <span class="token punctuation">{</span>
+  <span class="token comment">// 渲染组件</span>
+<span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token comment">// 进行断言</span></code></pre>
+        <p>这有助于使测试运行更接近真实用户在使用应用程序时的体验。这些示例的其余部分使用 <code>act()</code> 来作出这些保证。</p>
+        <p>你可能会发现直接使用 <code>act()</code> 有点过于冗长。为了避免一些样板代码，你可以使用 <a href="https://testing-library.com/react">React 测试库</a>，这些 helper 是使用 <code>act()</code> 函数进行封装的。</p>
+        <blockquote>
+          <p>注意：</p>
+          <p><code>act</code> 名称来自 <a href="http://wiki.c2.com/?ArrangeActAssert">Arrange-Act-Assert</a> 模式。</p>
+        </blockquote>
+      </section>
+      <section id="rendering" class="level3">
+        <h3>渲染</h3>
+        <p>通常，你可能希望测试组件对于给定的 prop 渲染是否正确。此时应考虑实现基于 prop 渲染消息的简单组件：</p>
+        <pre class="language-jsx"><code class="language-jsx"><span class="token comment">// hello.js</span>
+
+<span class="token keyword module">import</span> <span class="token imports"><span class="token maybe-class-name">React</span></span> <span class="token keyword module">from</span> <span class="token string">"react"</span><span class="token punctuation">;</span>
+
+<span class="token keyword module">export</span> <span class="token keyword module">default</span> <span class="token keyword">function</span> <span class="token function"><span class="token maybe-class-name">Hello</span></span><span class="token punctuation">(</span><span class="token parameter">props</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  <span class="token keyword control-flow">if</span> <span class="token punctuation">(</span>props<span class="token punctuation">.</span><span class="token property-access">name</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token keyword control-flow">return</span> <span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;</span>h1</span><span class="token punctuation">></span></span><span class="token plain-text">你好，</span><span class="token punctuation">{</span>props<span class="token punctuation">.</span><span class="token property-access">name</span><span class="token punctuation">}</span><span class="token plain-text">！</span><span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;/</span>h1</span><span class="token punctuation">></span></span><span class="token punctuation">;</span>
+  <span class="token punctuation">}</span> <span class="token keyword control-flow">else</span> <span class="token punctuation">{</span>
+    <span class="token keyword control-flow">return</span> <span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;</span>span</span><span class="token punctuation">></span></span><span class="token plain-text">嘿，陌生人</span><span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;/</span>span</span><span class="token punctuation">></span></span><span class="token punctuation">;</span>
+  <span class="token punctuation">}</span>
+<span class="token punctuation">}</span></code></pre>
+        <p>我们可以为这个组件编写测试：</p>
+        <pre class="language-jsx{24-27}"><code class="language-jsx{24-27}">// hello.test.js
+
+import React from "react";
+import { render, unmountComponentAtNode } from "react-dom";
+import { act } from "react-dom/test-utils";
+
+import Hello from "./hello";
+
+let container = null;
+beforeEach(() => {
+  // 创建一个 DOM 元素作为渲染目标
+  container = document.createElement("div");
+  document.body.appendChild(container);
+});
+
+afterEach(() => {
+  // 退出时进行清理
+  unmountComponentAtNode(container);
+  container.remove();
+  container = null;
+});
+
+it("渲染有或无名称", () => {
+  act(() => {
+    render(&#x3C;Hello />, container);
+  });
+  expect(container.textContent).toBe("嘿，陌生人");
+
+  act(() => {
+    render(&#x3C;Hello name="Jenny" />, container);
+  });
+  expect(container.textContent).toBe("你好，Jenny！");
+
+  act(() => {
+    render(&#x3C;Hello name="Margaret" />, container);
+  });
+  expect(container.textContent).toBe("你好，Margaret！");
+});</code></pre>
+      </section>
+      <section id="data-fetching" class="level3">
+        <h3>数据获取</h3>
+        <p>你可以使用假数据来 mock 请求，而不是在所有测试中调用真正的 API。使用“假”数据 mock 数据获取可以防止由于后端不可用而导致的测试不稳定，并使它们运行得更快。注意：你可能仍然希望使用一个<a href="./testing-environments.html#end-to-end-tests-aka-e2e-tests">“端到端”</a>的框架来运行测试子集，该框架可显示整个应用程序是否一起工作。</p>
+        <pre class="language-jsx"><code class="language-jsx"><span class="token comment">// user.js</span>
+
+<span class="token keyword module">import</span> <span class="token imports"><span class="token maybe-class-name">React</span><span class="token punctuation">,</span> <span class="token punctuation">{</span> useState<span class="token punctuation">,</span> useEffect <span class="token punctuation">}</span></span> <span class="token keyword module">from</span> <span class="token string">"react"</span><span class="token punctuation">;</span>
+
+<span class="token keyword module">export</span> <span class="token keyword module">default</span> <span class="token keyword">function</span> <span class="token function"><span class="token maybe-class-name">User</span></span><span class="token punctuation">(</span><span class="token parameter">props</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  <span class="token keyword">const</span> <span class="token punctuation">[</span>user<span class="token punctuation">,</span> setUser<span class="token punctuation">]</span> <span class="token operator">=</span> <span class="token function">useState</span><span class="token punctuation">(</span><span class="token keyword null nil">null</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+  <span class="token keyword">async</span> <span class="token keyword">function</span> <span class="token function">fetchUserData</span><span class="token punctuation">(</span><span class="token parameter">id</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token keyword">const</span> response <span class="token operator">=</span> <span class="token keyword control-flow">await</span> <span class="token function">fetch</span><span class="token punctuation">(</span><span class="token string">"/"</span> <span class="token operator">+</span> id<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token function">setUser</span><span class="token punctuation">(</span><span class="token keyword control-flow">await</span> response<span class="token punctuation">.</span><span class="token method function property-access">json</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token punctuation">}</span>
+
+  <span class="token function">useEffect</span><span class="token punctuation">(</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token arrow operator">=></span> <span class="token punctuation">{</span>
+    <span class="token function">fetchUserData</span><span class="token punctuation">(</span>props<span class="token punctuation">.</span><span class="token property-access">id</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token punctuation">}</span><span class="token punctuation">,</span> <span class="token punctuation">[</span>props<span class="token punctuation">.</span><span class="token property-access">id</span><span class="token punctuation">]</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+  <span class="token keyword control-flow">if</span> <span class="token punctuation">(</span><span class="token operator">!</span>user<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token keyword control-flow">return</span> <span class="token string">"加载中..."</span><span class="token punctuation">;</span>
+  <span class="token punctuation">}</span>
+
+  <span class="token keyword control-flow">return</span> <span class="token punctuation">(</span>
+    <span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;</span>details</span><span class="token punctuation">></span></span><span class="token plain-text">
+      </span><span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;</span>summary</span><span class="token punctuation">></span></span><span class="token punctuation">{</span>user<span class="token punctuation">.</span><span class="token property-access">name</span><span class="token punctuation">}</span><span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;/</span>summary</span><span class="token punctuation">></span></span><span class="token plain-text">
+      </span><span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;</span>strong</span><span class="token punctuation">></span></span><span class="token punctuation">{</span>user<span class="token punctuation">.</span><span class="token property-access">age</span><span class="token punctuation">}</span><span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;/</span>strong</span><span class="token punctuation">></span></span><span class="token plain-text"> 岁
+      </span><span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;</span>br</span> <span class="token punctuation">/></span></span><span class="token plain-text">
+      住在 </span><span class="token punctuation">{</span>user<span class="token punctuation">.</span><span class="token property-access">address</span><span class="token punctuation">}</span><span class="token plain-text">
+    </span><span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;/</span>details</span><span class="token punctuation">></span></span>
+  <span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span></code></pre>
+        <p>我们可以为它编写测试：</p>
+        <pre class="language-jsx{23-33,44-45}"><code class="language-jsx{23-33,44-45}">// user.test.js
+
+import React from "react";
+import { render, unmountComponentAtNode } from "react-dom";
+import { act } from "react-dom/test-utils";
+import User from "./user";
+
+let container = null;
+beforeEach(() => {
+  // 创建一个 DOM 元素作为渲染目标
+  container = document.createElement("div");
+  document.body.appendChild(container);
+});
+
+afterEach(() => {
+  // 退出时进行清理
+  unmountComponentAtNode(container);
+  container.remove();
+  container = null;
+});
+
+it("渲染用户数据", async () => {
+  const fakeUser = {
+    name: "Joni Baez",
+    age: "32",
+    address: "123, Charming Avenue"
+  };
+
+  jest.spyOn(global, "fetch").mockImplementation(() =>
+    Promise.resolve({
+      json: () => Promise.resolve(fakeUser)
+    })
+  );
+
+  // 使用异步的 act 应用执行成功的 promise
+  await act(async () => {
+    render(&#x3C;User id="123" />, container);
+  });
+
+  expect(container.querySelector("summary").textContent).toBe(fakeUser.name);
+  expect(container.querySelector("strong").textContent).toBe(fakeUser.age);
+  expect(container.textContent).toContain(fakeUser.address);
+
+  // 清理 mock 以确保测试完全隔离
+  global.fetch.mockRestore();
+});</code></pre>
+      </section>
+      <section id="mocking-modules" class="level3">
+        <h3>mock 模块</h3>
+        <p>有些模块可能在测试环境中不能很好地工作，或者对测试本身不是很重要。使用虚拟数据来 mock 这些模块可以使你为代码编写测试变得更容易。</p>
+        <p>考虑一个嵌入第三方 <code>GoogleMap</code> 组件的 <code>Contact</code> 组件：</p>
+        <pre class="language-jsx"><code class="language-jsx"><span class="token comment">// map.js</span>
+
+<span class="token keyword module">import</span> <span class="token imports"><span class="token maybe-class-name">React</span></span> <span class="token keyword module">from</span> <span class="token string">"react"</span><span class="token punctuation">;</span>
+
+<span class="token keyword module">import</span> <span class="token imports"><span class="token punctuation">{</span> <span class="token maybe-class-name">LoadScript</span><span class="token punctuation">,</span> <span class="token maybe-class-name">GoogleMap</span> <span class="token punctuation">}</span></span> <span class="token keyword module">from</span> <span class="token string">"react-google-maps"</span><span class="token punctuation">;</span>
+<span class="token keyword module">export</span> <span class="token keyword module">default</span> <span class="token keyword">function</span> <span class="token known-class-name class-name">Map</span><span class="token punctuation">(</span><span class="token parameter">props</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  <span class="token keyword control-flow">return</span> <span class="token punctuation">(</span>
+    <span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;</span><span class="token class-name">LoadScript</span></span> <span class="token attr-name">id</span><span class="token attr-value"><span class="token punctuation attr-equals">=</span><span class="token punctuation">"</span>script-loader<span class="token punctuation">"</span></span> <span class="token attr-name">googleMapsApiKey</span><span class="token attr-value"><span class="token punctuation attr-equals">=</span><span class="token punctuation">"</span>YOUR_API_KEY<span class="token punctuation">"</span></span><span class="token punctuation">></span></span><span class="token plain-text">
+      </span><span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;</span><span class="token class-name">GoogleMap</span></span> <span class="token attr-name">id</span><span class="token attr-value"><span class="token punctuation attr-equals">=</span><span class="token punctuation">"</span>example-map<span class="token punctuation">"</span></span> <span class="token attr-name">center</span><span class="token script language-javascript"><span class="token script-punctuation punctuation">=</span><span class="token punctuation">{</span>props<span class="token punctuation">.</span><span class="token property-access">center</span><span class="token punctuation">}</span></span> <span class="token punctuation">/></span></span><span class="token plain-text">
+    </span><span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;/</span><span class="token class-name">LoadScript</span></span><span class="token punctuation">></span></span>
+  <span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+
+<span class="token comment">// contact.js</span>
+
+<span class="token keyword module">import</span> <span class="token imports"><span class="token maybe-class-name">React</span></span> <span class="token keyword module">from</span> <span class="token string">"react"</span><span class="token punctuation">;</span>
+<span class="token keyword module">import</span> <span class="token known-class-name class-name">Map</span> <span class="token keyword module">from</span> <span class="token string">"./map"</span><span class="token punctuation">;</span>
+
+<span class="token keyword module">export</span> <span class="token keyword module">default</span> <span class="token keyword">function</span> <span class="token function"><span class="token maybe-class-name">Contact</span></span><span class="token punctuation">(</span><span class="token parameter">props</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  <span class="token keyword control-flow">return</span> <span class="token punctuation">(</span>
+    <span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;</span>div</span><span class="token punctuation">></span></span><span class="token plain-text">
+      </span><span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;</span>address</span><span class="token punctuation">></span></span><span class="token plain-text">
+        联系 </span><span class="token punctuation">{</span>props<span class="token punctuation">.</span><span class="token property-access">name</span><span class="token punctuation">}</span><span class="token plain-text">，通过</span><span class="token punctuation">{</span><span class="token string">" "</span><span class="token punctuation">}</span><span class="token plain-text">
+        </span><span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;</span>a</span> <span class="token attr-name">data-testid</span><span class="token attr-value"><span class="token punctuation attr-equals">=</span><span class="token punctuation">"</span>email<span class="token punctuation">"</span></span> <span class="token attr-name">href</span><span class="token script language-javascript"><span class="token script-punctuation punctuation">=</span><span class="token punctuation">{</span><span class="token string">"mailto:"</span> <span class="token operator">+</span> props<span class="token punctuation">.</span><span class="token property-access">email</span><span class="token punctuation">}</span></span><span class="token punctuation">></span></span><span class="token plain-text">
+          email
+        </span><span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;/</span>a</span><span class="token punctuation">></span></span><span class="token plain-text">
+        或者他们的 </span><span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;</span>a</span> <span class="token attr-name">data-testid</span><span class="token attr-value"><span class="token punctuation attr-equals">=</span><span class="token punctuation">"</span>site<span class="token punctuation">"</span></span> <span class="token attr-name">href</span><span class="token script language-javascript"><span class="token script-punctuation punctuation">=</span><span class="token punctuation">{</span>props<span class="token punctuation">.</span><span class="token property-access">site</span><span class="token punctuation">}</span></span><span class="token punctuation">></span></span><span class="token plain-text">
+          网站
+        </span><span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;/</span>a</span><span class="token punctuation">></span></span><span class="token plain-text">。
+      </span><span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;/</span>address</span><span class="token punctuation">></span></span><span class="token plain-text">
+      </span><span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;</span><span class="token class-name">Map</span></span> <span class="token attr-name">center</span><span class="token script language-javascript"><span class="token script-punctuation punctuation">=</span><span class="token punctuation">{</span>props<span class="token punctuation">.</span><span class="token property-access">center</span><span class="token punctuation">}</span></span> <span class="token punctuation">/></span></span><span class="token plain-text">
+    </span><span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;/</span>div</span><span class="token punctuation">></span></span>
+  <span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span></code></pre>
+        <p>如果不想在测试中加载这个组件，我们可以将依赖 mock 到一个虚拟组件，然后运行我们的测试：</p>
+        <pre class="language-jsx{10-18}"><code class="language-jsx{10-18}">// contact.test.js
+
+import React from "react";
+import { render, unmountComponentAtNode } from "react-dom";
+import { act } from "react-dom/test-utils";
+
+import Contact from "./contact";
+import MockedMap from "./map";
+
+jest.mock("./map", () => {
+  return function DummyMap(props) {
+    return (
+      &#x3C;div data-testid="map">
+        {props.center.lat}:{props.center.long}
+      &#x3C;/div>
+    );
+  };
+});
+
+let container = null;
+beforeEach(() => {
+  // 创建一个 DOM 元素作为渲染目标
+  container = document.createElement("div");
+  document.body.appendChild(container);
+});
+
+afterEach(() => {
+  // 退出时进行清理
+  unmountComponentAtNode(container);
+  container.remove();
+  container = null;
+});
+
+it("应渲染联系信息", () => {
+  const center = { lat: 0, long: 0 };
+  act(() => {
+    render(
+      &#x3C;Contact
+        name="Joni Baez"
+        email="test@example.com"
+        site="http://test.com"
+        center={center}
+      />,
+      container
+    );
+  });
+
+  expect(
+    container.querySelector("[data-testid='email']").getAttribute("href")
+  ).toEqual("mailto:test@example.com");
+
+  expect(
+    container.querySelector('[data-testid="site"]').getAttribute("href")
+  ).toEqual("http://test.com");
+
+  expect(container.querySelector('[data-testid="map"]').textContent).toEqual(
+    "0:0"
+  );
+});</code></pre>
+      </section>
+      <section id="events" class="level3">
+        <h3>Events</h3>
+        <p>我们建议在 DOM 元素上触发真正的 DOM 事件，然后对结果进行断言。考虑一个 <code>Toggle</code> 组件：</p>
+        <pre class="language-jsx"><code class="language-jsx"><span class="token comment">// toggle.js</span>
+
+<span class="token keyword module">import</span> <span class="token imports"><span class="token maybe-class-name">React</span><span class="token punctuation">,</span> <span class="token punctuation">{</span> useState <span class="token punctuation">}</span></span> <span class="token keyword module">from</span> <span class="token string">"react"</span><span class="token punctuation">;</span>
+
+<span class="token keyword module">export</span> <span class="token keyword module">default</span> <span class="token keyword">function</span> <span class="token function"><span class="token maybe-class-name">Toggle</span></span><span class="token punctuation">(</span><span class="token parameter">props</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  <span class="token keyword">const</span> <span class="token punctuation">[</span>state<span class="token punctuation">,</span> setState<span class="token punctuation">]</span> <span class="token operator">=</span> <span class="token function">useState</span><span class="token punctuation">(</span><span class="token boolean">false</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token keyword control-flow">return</span> <span class="token punctuation">(</span>
+    <span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;</span>button</span>
+      <span class="token attr-name">onClick</span><span class="token script language-javascript"><span class="token script-punctuation punctuation">=</span><span class="token punctuation">{</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token arrow operator">=></span> <span class="token punctuation">{</span>
+        <span class="token function">setState</span><span class="token punctuation">(</span><span class="token parameter">previousState</span> <span class="token arrow operator">=></span> <span class="token operator">!</span>previousState<span class="token punctuation">)</span><span class="token punctuation">;</span>
+        props<span class="token punctuation">.</span><span class="token method function property-access">onChange</span><span class="token punctuation">(</span><span class="token operator">!</span>state<span class="token punctuation">)</span><span class="token punctuation">;</span>
+      <span class="token punctuation">}</span><span class="token punctuation">}</span></span>
+      <span class="token attr-name">data-testid</span><span class="token attr-value"><span class="token punctuation attr-equals">=</span><span class="token punctuation">"</span>toggle<span class="token punctuation">"</span></span>
+    <span class="token punctuation">></span></span><span class="token plain-text">
+      </span><span class="token punctuation">{</span>state <span class="token operator">===</span> <span class="token boolean">true</span> <span class="token operator">?</span> <span class="token string">"Turn off"</span> <span class="token operator">:</span> <span class="token string">"Turn on"</span><span class="token punctuation">}</span><span class="token plain-text">
+    </span><span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;/</span>button</span><span class="token punctuation">></span></span>
+  <span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span></code></pre>
+        <p>我们可以为它编写测试：</p>
+        <pre class="language-jsx{13-14,35,43}"><code class="language-jsx{13-14,35,43}">// toggle.test.js
+
+import React from "react";
+import { render, unmountComponentAtNode } from "react-dom";
+import { act } from "react-dom/test-utils";
+
+import Toggle from "./toggle";
+
+let container = null;
+beforeEach(() => {
+  // 创建一个 DOM 元素作为渲染目标
+  container = document.createElement("div");
+  document.body.appendChild(container);
+});
+
+afterEach(() => {
+  // 退出时进行清理
+  unmountComponentAtNode(container);
+  container.remove();
+  container = null;
+});
+
+it("点击时更新值", () => {
+  const onChange = jest.fn();
+  act(() => {
+    render(&#x3C;Toggle onChange={onChange} />, container);
+  });
+
+  // 获取按钮元素，并触发点击事件
+  const button = document.querySelector("[data-testid=toggle]");
+  expect(button.innerHTML).toBe("Turn on");
+
+  act(() => {
+    button.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+  });
+
+  expect(onChange).toHaveBeenCalledTimes(1);
+  expect(button.innerHTML).toBe("Turn off");
+
+  act(() => {
+    for (let i = 0; i &#x3C; 5; i++) {
+      button.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    }
+  });
+
+  expect(onChange).toHaveBeenCalledTimes(6);
+  expect(button.innerHTML).toBe("Turn on");
+});</code></pre>
+        <p><a href="https://developer.mozilla.org/en-US/docs/Web/API/MouseEvent">MDN</a>描述了不同的 DOM 事件及其属性。注意，你需要在创建的每个事件中传递 <code>{ bubbles: true }</code> 才能到达 React 监听器，因为 React 会自动将事件委托给 root。</p>
+        <blockquote>
+          <p>注意：</p>
+          <p>React 测试库为触发事件提供了一个<a href="https://testing-library.com/docs/dom-testing-library/api-events">更简洁 helper</a>。</p>
+        </blockquote>
+      </section>
+      <section id="timers" class="level3">
+        <h3>计时器</h3>
+        <p>你的代码可能会使用基于计时器的函数（如 <code>setTimeout</code>）来安排将来更多的工作。在这个例子中，多项选择面板等待选择并前进，如果在 5 秒内没有做出选择，则超时：</p>
+        <pre class="language-jsx"><code class="language-jsx"><span class="token comment">// card.js</span>
+
+<span class="token keyword module">import</span> <span class="token imports"><span class="token maybe-class-name">React</span><span class="token punctuation">,</span> <span class="token punctuation">{</span> useEffect <span class="token punctuation">}</span></span> <span class="token keyword module">from</span> <span class="token string">"react"</span><span class="token punctuation">;</span>
+
+<span class="token keyword module">export</span> <span class="token keyword module">default</span> <span class="token keyword">function</span> <span class="token function"><span class="token maybe-class-name">Card</span></span><span class="token punctuation">(</span><span class="token parameter">props</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  <span class="token function">useEffect</span><span class="token punctuation">(</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token arrow operator">=></span> <span class="token punctuation">{</span>
+    <span class="token keyword">const</span> timeoutID <span class="token operator">=</span> <span class="token function">setTimeout</span><span class="token punctuation">(</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token arrow operator">=></span> <span class="token punctuation">{</span>
+      props<span class="token punctuation">.</span><span class="token method function property-access">onSelect</span><span class="token punctuation">(</span><span class="token keyword null nil">null</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span><span class="token punctuation">,</span> <span class="token number">5000</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token keyword control-flow">return</span> <span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token arrow operator">=></span> <span class="token punctuation">{</span>
+      <span class="token function">clearTimeout</span><span class="token punctuation">(</span>timeoutID<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span><span class="token punctuation">;</span>
+  <span class="token punctuation">}</span><span class="token punctuation">,</span> <span class="token punctuation">[</span>props<span class="token punctuation">.</span><span class="token property-access">onSelect</span><span class="token punctuation">]</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+  <span class="token keyword control-flow">return</span> <span class="token punctuation">[</span><span class="token number">1</span><span class="token punctuation">,</span> <span class="token number">2</span><span class="token punctuation">,</span> <span class="token number">3</span><span class="token punctuation">,</span> <span class="token number">4</span><span class="token punctuation">]</span><span class="token punctuation">.</span><span class="token method function property-access">map</span><span class="token punctuation">(</span><span class="token parameter">choice</span> <span class="token arrow operator">=></span> <span class="token punctuation">(</span>
+    <span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;</span>button</span>
+      <span class="token attr-name">key</span><span class="token script language-javascript"><span class="token script-punctuation punctuation">=</span><span class="token punctuation">{</span>choice<span class="token punctuation">}</span></span>
+      <span class="token attr-name">data-testid</span><span class="token script language-javascript"><span class="token script-punctuation punctuation">=</span><span class="token punctuation">{</span>choice<span class="token punctuation">}</span></span>
+      <span class="token attr-name">onClick</span><span class="token script language-javascript"><span class="token script-punctuation punctuation">=</span><span class="token punctuation">{</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token arrow operator">=></span> props<span class="token punctuation">.</span><span class="token method function property-access">onSelect</span><span class="token punctuation">(</span>choice<span class="token punctuation">)</span><span class="token punctuation">}</span></span>
+    <span class="token punctuation">></span></span><span class="token plain-text">
+      </span><span class="token punctuation">{</span>choice<span class="token punctuation">}</span><span class="token plain-text">
+    </span><span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;/</span>button</span><span class="token punctuation">></span></span>
+  <span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span></code></pre>
+        <p>我们可以利用 <a href="https://jestjs.io/docs/en/timer-mocks">Jest 的计时器 mock</a> 为这个组件编写测试，并测试它可能处于的不同状态。</p>
+        <pre class="language-jsx{7,31,37,49,59}"><code class="language-jsx{7,31,37,49,59}">// card.test.js
+
+import React from "react";
+import { render, unmountComponentAtNode } from "react-dom";
+import { act } from "react-dom/test-utils";
+
+import Card from "./card";
+
+let container = null;
+beforeEach(() => {
+  // 创建一个 DOM 元素作为渲染目标
+  container = document.createElement("div");
+  document.body.appendChild(container);
+  jest.useFakeTimers();
+});
+
+afterEach(() => {
+  // 退出时进行清理
+  unmountComponentAtNode(container);
+  container.remove();
+  container = null;
+  jest.useRealTimers();
+});
+
+it("超时后应选择 null", () => {
+  const onSelect = jest.fn();
+  act(() => {
+    render(&#x3C;Card onSelect={onSelect} />, container);
+  });
+
+  // 提前 100 毫秒执行
+  act(() => {
+    jest.advanceTimersByTime(100);
+  });
+  expect(onSelect).not.toHaveBeenCalled();
+
+  // 然后提前 5 秒执行
+  act(() => {
+    jest.advanceTimersByTime(5000);
+  });
+  expect(onSelect).toHaveBeenCalledWith(null);
+});
+
+it("移除时应进行清理", () => {
+  const onSelect = jest.fn();
+  act(() => {
+    render(&#x3C;Card onSelect={onSelect} />, container);
+  });
+
+  act(() => {
+    jest.advanceTimersByTime(100);
+  });
+  expect(onSelect).not.toHaveBeenCalled();
+
+  // 卸载应用程序
+  act(() => {
+    render(null, container);
+  });
+
+  act(() => {
+    jest.advanceTimersByTime(5000);
+  });
+  expect(onSelect).not.toHaveBeenCalled();
+});
+
+it("应接受选择", () => {
+  const onSelect = jest.fn();
+  act(() => {
+    render(&#x3C;Card onSelect={onSelect} />, container);
+  });
+
+  act(() => {
+    container
+      .querySelector("[data-testid='2']")
+      .dispatchEvent(new MouseEvent("click", { bubbles: true }));
+  });
+
+  expect(onSelect).toHaveBeenCalledWith(2);
+});</code></pre>
+        <p>你只能在某些测试中使用假计时器。在上面，我们通过调用 <code>jest.useFakeTimers()</code> 来启用它们。它们提供的主要优势是，你的测试实际上不需要等待 5 秒来执行，而且你也不需要为了测试而使组件代码更加复杂。</p>
+      </section>
+      <section id="snapshot-testing" class="level3">
+        <h3>快照测试</h3>
+        <p>像 Jest 这样的框架还允许你使用 <a href="https://jestjs.io/docs/en/snapshot-testing"><code>toMatchSnapshot</code> / <code>toMatchInlineSnapshot</code></a> 保存数据的“快照”。有了这些，我们可以“保存”渲染的组件输出，并确保对它的更新作为对快照的更新显式提交。</p>
+        <p>在这个示例中，我们渲染一个组件并使用 <a href="https://www.npmjs.com/package/pretty"><code>pretty</code></a> 包对渲染的 HTML 进行格式化，然后将其保存为内联快照：</p>
+        <pre class="language-jsx{29-31}"><code class="language-jsx{29-31}">// hello.test.js, again
+
+import React from "react";
+import { render, unmountComponentAtNode } from "react-dom";
+import { act } from "react-dom/test-utils";
+import pretty from "pretty";
+
+import Hello from "./hello";
+
+let container = null;
+beforeEach(() => {
+  // 创建一个 DOM 元素作为渲染目标
+  container = document.createElement("div");
+  document.body.appendChild(container);
+});
+
+afterEach(() => {
+  // 退出时进行清理
+  unmountComponentAtNode(container);
+  container.remove();
+  container = null;
+});
+
+it("应渲染问候语", () => {
+  act(() => {
+    render(&#x3C;Hello />, container);
+  });
+
+  expect(
+    pretty(container.innerHTML)
+  ).toMatchInlineSnapshot(); /* ... 由 jest 自动填充 ... */
+
+  act(() => {
+    render(&#x3C;Hello name="Jenny" />, container);
+  });
+
+  expect(
+    pretty(container.innerHTML)
+  ).toMatchInlineSnapshot(); /* ... 由 jest 自动填充 ... */
+
+  act(() => {
+    render(&#x3C;Hello name="Margaret" />, container);
+  });
+
+  expect(
+    pretty(container.innerHTML)
+  ).toMatchInlineSnapshot(); /* ... 由 jest 自动填充 ... */
+});</code></pre>
+        <p>通常，进行具体的断言比使用快照更好。这类测试包括实现细节，因此很容易中断，并且团队可能对快照中断不敏感。选择性地 <a href="#mocking-modules">mock 一些子组件</a>可以帮助减小快照的大小，并使它们在代码评审中保持可读性。</p>
+      </section>
+      <section id="multiple-renderers" class="level3">
+        <h3>多渲染器</h3>
+        <p>在极少数情况下，你可能正在使用多个渲染器的组件上运行测试。例如，你可能正在使用 <code>react-test-renderer</code> 组件上运行快照测试，该组件内部使用 <code>react-dom</code> 的 <code>render</code> 来渲染子组件的一些内容。在这个场景中，你可以使用与它们的渲染器相对应的 <code>act()</code> 来包装更新。</p>
+        <pre class="language-jsx"><code class="language-jsx"><span class="token keyword module">import</span> <span class="token imports"><span class="token punctuation">{</span> act <span class="token keyword module">as</span> domAct <span class="token punctuation">}</span></span> <span class="token keyword module">from</span> <span class="token string">"react-dom/test-utils"</span><span class="token punctuation">;</span>
+<span class="token keyword module">import</span> <span class="token imports"><span class="token punctuation">{</span> act <span class="token keyword module">as</span> testAct<span class="token punctuation">,</span> create <span class="token punctuation">}</span></span> <span class="token keyword module">from</span> <span class="token string">"react-test-renderer"</span><span class="token punctuation">;</span>
+<span class="token comment">// ...</span>
+<span class="token keyword">let</span> root<span class="token punctuation">;</span>
+<span class="token function">domAct</span><span class="token punctuation">(</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token arrow operator">=></span> <span class="token punctuation">{</span>
+  <span class="token function">testAct</span><span class="token punctuation">(</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token arrow operator">=></span> <span class="token punctuation">{</span>
+    root <span class="token operator">=</span> <span class="token function">create</span><span class="token punctuation">(</span><span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;</span><span class="token class-name">App</span></span> <span class="token punctuation">/></span></span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token function">expect</span><span class="token punctuation">(</span>root<span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token method function property-access">toMatchSnapshot</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span></code></pre>
+      </section>
+      <section id="something-missing" class="level3">
+        <h3>缺少什么？</h3>
+        <p>
+          如果有一些常见场景没有覆盖，请在文档网站的 <a href="https://github.com/reactjs/reactjs.org/issues">issue 跟踪器</a>上告诉我们。
+          <span style="float: footnote;"><a href="./index.html#toc">Go to TOC</a></span>
+        </p>
+      </section>
+    </section>
+  </body>
+</html>

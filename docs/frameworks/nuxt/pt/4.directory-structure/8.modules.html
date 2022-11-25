@@ -1,0 +1,329 @@
+<!doctype html>
+<html lang="pt">
+  <head>
+    <meta charset="utf-8">
+    <title>O diretório modules</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="navigation.title" content="módulos">
+    <meta name="description" content="O Nuxt fornece um sistema de módulo de alta ordem que torna possível estender o núcleo. Os módulos são funções que são chamados sequencialmente sempre o Nuxt estiver iniciando.">
+    <meta name="category" content="directory-structure">
+    <meta name="csb_link" content="https://codesandbox.io/embed/github/nuxt-academy/guides-examples/tree/master/04_directory_structure/10_modules?fontsize=14&#x26;hidenavigation=1&#x26;theme=dark">
+    <link rel="stylesheet" href="https://raw.githubusercontent.com/shinokada/prism-coy-theme/main/theme_common.css">
+  </head>
+  <body>
+    <section id="o-diretório-modules" class="level1">
+      <h1>O diretório modules</h1>
+      <p>O Nuxt fornece um sistema de módulo de alta ordem que torna possível estender o núcleo. Os módulos são funções que são chamados sequencialmente sempre o Nuxt estiver iniciando.</p>
+      <hr>
+      <section id="explorando-os-módulos-do-nuxt" class="level2">
+        <h2>Explorando os módulos do Nuxt</h2>
+        <p>Descubra nossa <a href="https://modules.nuxtjs.org">lista de módulos</a> para super carregar o seu projeto Nuxt, criado pela equipa do Nuxt e pela comunidade.</p>
+        <ul>
+          <li>165+ Módulos</li>
+          <li>105+ Mantenedores</li>
+        </ul>
+        <section id="next" class="level4">
+          <h4>Next</h4>
+          <p>Consulte o <a href="https://modules.nuxtjs.org">modules.nuxtjs.org</a></p>
+          <p>
+            <img src="../docs/modules.svg">
+          </p>
+          <p>Enquanto estiver desenvolvendo aplicações para produção com Nuxt você pode achar que o núcleo de funcionalidade do framework não é suficiente. O Nuxt pode ser estendido com opções de configuração e plugins, mas manter essas personalizações através de vários projetos é tedioso, repetitivo e consume tempo. Por outro lado, atender a cada necessidade do projeto fora da caixa tornaria o Nuxt muito complexo e difícil de usar.</p>
+          <p>Esta é uma das razões do porquê o Nuxt fornecer um sistema de módulo de alta ordem que torna possível estender o núcleo. Os módulos são funções que são chamados sequencialmente sempre o Nuxt estiver iniciando. O framework espera cada módulo terminar antes de continuar. Desta maneira, os módulos podem personalizar quase qualquer aspeto da sua aplicação. Graças o desenho modular do Nuxt (baseado no <a href="https://github.com/webpack/tapable">Tapable</a> do webpack), os módulos podem facilmente registar gatilhos para certos pontos de entrada como a inicialização do construtor. Os módulos podem também sobrescrever modelos, configurar os carregadores do webpack, adicionar bibliotecas CSS, e realizar muitas outras tarefas úteis.</p>
+          <p>O melhor de tudo, os módulos do Nuxt podem ser incorporados dentro dos pacotes npm. Isto torna possível re-usar através dos projetos e partilhar com a comunidade, ajudando a criar um ecossistema de recursos adicionáveis de alta qualidade.</p>
+        </section>
+      </section>
+      <section id="a-propriedade-modules" class="level2">
+        <h2>A propriedade modules</h2>
+        <p>Os módulos são extensões do Nuxt que podem estender a funcionalidade do núcleo do framework e adicionar integrações sem fim. Uma vez você ter instalado os módulos você pode então adicionar eles ao seu ficheiro <code>nuxt.config.js</code> dentro da propriedade <code>modules</code>.</p>
+        <pre class="language-js{}[nuxt.config.js]"><code class="language-js{}[nuxt.config.js]">export default {
+  modules: [
+    // Usando o nome do pacote
+    '@nuxtjs/axios',
+
+    // Relativo ao diretório fonte do seu projeto (srcDir)
+    '~/modules/awesome.js',
+
+    // Fornecendo opções
+    ['@nuxtjs/google-analytics', { ua: 'X1234567' }],
+
+    // Definição em linha
+    function () {}
+  ]
+}</code></pre>
+        <section id="info" class="level4">
+          <h4>Info</h4>
+          <p>Desenvolvedores de módulo geralmente fornecem passos adicionais necessários e detalhes para utilização.</p>
+          <p>O Nuxt tenta resolver cada item dentro do array de módulos usando o caminho exigido pelo node (dentro do <code>node_modules</code>) e depois resolverá a partir do <code>srcDir</code> se o apelido <code>@</code> for usado.</p>
+        </section>
+        <section id="warning" class="level4">
+          <h4>Warning</h4>
+          <p>Os módulos são executados sequencialmente, então a ordem é importante.</p>
+          <p>Os módulos devem exportar uma função para destacar a construção/tempo de execução e opcionalmente retorna uma promessa até que o trabalho deles esteja terminado. Repare que eles são importados em tempo de execução então eles devem já estar transpilados se estiverem usando as funcionalidades modernas do ES6.</p>
+        </section>
+      </section>
+      <section id="escreva-o-seu-próprio-módulo" class="level2">
+        <h2>Escreva o seu próprio módulo</h2>
+        <p>Os módulos são funções. Eles podem ser empacotados como módulos npm ou diretamente incluídos dentro do código-fonte do seu projeto.</p>
+        <pre class="language-js{}[nuxt.config.js]"><code class="language-js{}[nuxt.config.js]">export default {
+  exampleMsg: 'hello',
+  modules: [
+    // Uso símples
+    '~/modules/example',
+    // Passando as opções diretamente
+    ['~/modules/example', { token: '123' }]
+  ]
+}</code></pre>
+        <pre class="language-js{}[modules/example.js]"><code class="language-js{}[modules/example.js]">export default function ExampleModule(moduleOptions) {
+  console.log(moduleOptions.token) // '123'
+  console.log(this.options.exampleMsg) // 'hello'
+
+  this.nuxt.hook('ready', async nuxt => {
+    console.log('Nuxt is ready')
+  })
+}
+
+// Obrigatório se estiver publicando o módulo como pacote npm
+module.exports.meta = require('./package.json')</code></pre>
+      </section>
+      <section id="1-moduleoptions" class="level2">
+        <h2>1) ModuleOptions</h2>
+        <p><code>moduleOptions</code>: este é o objeto passado usando o array <code>modules</code> pelo usuário. Podemos usar ele para personalizar seu comportamento,</p>
+        <section id="opções-de-alto-nível" class="level3">
+          <h3>Opções de alto nível</h3>
+          <p>Algumas vezes é muito mais conveniente podermos usar opções de alto nível enquanto estivermos registando módulos dentro do <code>nuxt.config.js</code>. Isto permite-nos combinar várias fontes de opções.</p>
+          <pre class="language-js{}[nuxt.config.js]"><code class="language-js{}[nuxt.config.js]">export default {
+  modules: [['@nuxtjs/axios', { anotherOption: true }]],
+
+  // o módulo axios está ciente disto ao usar `this.options.axios`
+  axios: {
+    option1,
+    option2
+  }
+}</code></pre>
+        </section>
+      </section>
+      <section id="2-thisoptions" class="level2">
+        <h2>2) this.options</h2>
+        <p><code>this.options</code>: Você pode acessar diretamente as opções do Nuxt usando esta referência. Este é o conteúdo do <code>nuxt.config.js</code> do usuário com todas opções padrão atribuídas a ela. Ela pode ser usada para opções partilhadas entre os módulos.</p>
+        <pre class="language-js{}[module.js]"><code class="language-js{}[module.js]">export default function (moduleOptions) {
+  // `options` conterá option1, option2 e anotherOption
+  const options = Object.assign({}, this.options.axios, moduleOptions)
+
+  // ...
+}</code></pre>
+        <section id="adicionar-uma-biblioteca-css" class="level3">
+          <h3>Adicionar uma biblioteca CSS</h3>
+          <p>Se o seu módulo fornecerá uma biblioteca CSS, certifique-se de realizar uma verificação para saber se o usuário já incluiu a biblioteca para evitar, e adicionar uma opção para desativar a biblioteca CSS dentro do módulo.</p>
+          <pre class="language-js{}[module.js]"><code class="language-js{}[module.js]">export default function (moduleOptions) {
+  if (moduleOptions.fontAwesome !== false) {
+    // Adicione o font-awesome
+    this.options.css.push('font-awesome/css/font-awesome.css')
+  }
+}</code></pre>
+        </section>
+        <section id="emitir-os-recursos" class="level3">
+          <h3>Emitir os recursos</h3>
+          <p>Nós podemos registar os plugins do webpack para emitir os recursos durante a construção.</p>
+          <pre class="language-js{}[module.js]"><code class="language-js{}[module.js]">export default function (moduleOptions) {
+  const info = 'Built by awesome module - 1.3 alpha on ' + Date.now()
+
+  this.options.build.plugins.push({
+    apply(compiler) {
+      compiler.plugin('emit', (compilation, cb) => {
+        // Isto gerará o `.nuxt/dist/info.txt' com os conteúdos da variável info.
+        // A fonte (source) pode ser uma memória temporária também.
+        compilation.assets['info.txt'] = {
+          source: () => info,
+          size: () => info.length
+        }
+
+        cb()
+      })
+    }
+  })
+}</code></pre>
+        </section>
+      </section>
+      <section id="3-thisnuxt" class="level2">
+        <h2>3) this.nuxt</h2>
+        <p><code>this.nuxt</code>: Isto é uma referência a instância atual do Nuxt. Nós podemos registar gatilhos em certos eventos do ciclo de vida.</p>
+        <ul>
+          <li><strong>Ready</strong> : O Nuxt está pronto para trabalhar (ModuleContainer e Renderer prontos).</li>
+        </ul>
+        <pre class="language-js"><code class="language-js">nuxt<span class="token punctuation">.</span><span class="token method function property-access">hook</span><span class="token punctuation">(</span><span class="token string">'ready'</span><span class="token punctuation">,</span> <span class="token keyword">async</span> <span class="token parameter">nuxt</span> <span class="token arrow operator">=></span> <span class="token punctuation">{</span>
+  <span class="token comment">// O seu código personalizado vai aqui</span>
+<span class="token punctuation">}</span><span class="token punctuation">)</span></code></pre>
+        <ul>
+          <li><strong>Error</strong>: Um erro não manipulado quando estiver chamando os gatilhos.</li>
+        </ul>
+        <pre class="language-js"><code class="language-js">nuxt<span class="token punctuation">.</span><span class="token method function property-access">hook</span><span class="token punctuation">(</span><span class="token string">'error'</span><span class="token punctuation">,</span> <span class="token keyword">async</span> <span class="token parameter">error</span> <span class="token arrow operator">=></span> <span class="token punctuation">{</span>
+  <span class="token comment">// O seu código personalizado vai aqui</span>
+<span class="token punctuation">}</span><span class="token punctuation">)</span></code></pre>
+        <ul>
+          <li><strong>Close</strong>: A instância do Nuxt está fechando graciosamente.</li>
+        </ul>
+        <pre class="language-js"><code class="language-js">nuxt<span class="token punctuation">.</span><span class="token method function property-access">hook</span><span class="token punctuation">(</span><span class="token string">'close'</span><span class="token punctuation">,</span> <span class="token keyword">async</span> <span class="token parameter">nuxt</span> <span class="token arrow operator">=></span> <span class="token punctuation">{</span>
+  <span class="token comment">// O seu código personalizado vai aqui</span>
+<span class="token punctuation">}</span><span class="token punctuation">)</span></code></pre>
+        <ul>
+          <li><strong>Listen</strong>: O servidor interno do Nuxt começa ouvindo. (Usando o <code>nuxt start</code> ou <code>nuxt dev</code>)</li>
+        </ul>
+        <pre class="language-js"><code class="language-js">nuxt<span class="token punctuation">.</span><span class="token method function property-access">hook</span><span class="token punctuation">(</span><span class="token string">'listen'</span><span class="token punctuation">,</span> <span class="token keyword">async</span> <span class="token punctuation">(</span><span class="token parameter">server<span class="token punctuation">,</span> <span class="token punctuation">{</span> host<span class="token punctuation">,</span> port <span class="token punctuation">}</span></span><span class="token punctuation">)</span> <span class="token arrow operator">=></span> <span class="token punctuation">{</span>
+  <span class="token comment">// O seu código personalizado vai aqui</span>
+<span class="token punctuation">}</span><span class="token punctuation">)</span></code></pre>
+        <p><code>this</code>: O contexto dos módulos. Todos os módulos são chamados dentro contexto da instância ModuleContainer.</p>
+        <p>Consulte a documentação da classe <a href="./internals-glossary/internals-module-container">ModuleContainer</a> para conhecer os métodos disponíveis.</p>
+        <section id="executar-tarefas-em-gatilhos-específicos" class="level3">
+          <h3>Executar tarefas em gatilhos específicos</h3>
+          <p>O seu módulo pode precisar fazer coisas apenas sobre condições específicas e não somente durante a inicialização do Nuxt. Nós podemos usar os poderosos gatilhos do Nuxt para realizar tarefas em eventos específicos (baseado no <a href="https://github.com/nuxt-contrib/hookable">Hookable</a>). O Nuxt esperará pela sua função para saber se ela retorna uma promessa ou está definida como <code>async</code>.</p>
+          <p>Here are some basic examples:</p>
+          <pre class="language-js{}[modules/myModule.js]"><code class="language-js{}[modules/myModule.js]">export default function myModule() {
+  this.nuxt.hook('modules:done', moduleContainer => {
+    // Isto será chamado quando todos os módulos terminarem o carregamento
+  })
+
+  this.nuxt.hook('render:before', renderer => {
+    // Chamado depois do renderizador ser criado
+  })
+
+  this.nuxt.hook('build:compile', async ({ name, compiler }) => {
+    // Chamado antes do compilador (padrão: webpack) começar
+  })
+
+  this.nuxt.hook('generate:before', async generator => {
+    // Isto será chamado antes do Nuxt gerar suas páginas
+  })
+}</code></pre>
+        </section>
+        <section id="fornecer-plugins" class="level3">
+          <h3>Fornecer plugins</h3>
+          <p>É comum que módulos forneçam um ou mais plugins quando adicionados. Por exemplo o módulo <a href="https://bootstrap-vue.js.org/">bootstrap-vue</a> precisaria registar a si mesmo dentro do Vue. Em tais situações nós podemos usar o auxiliar <code>this.addPlugin</code>.</p>
+          <pre class="language-js{}[plugin.js]"><code class="language-js{}[plugin.js]">import Vue from 'vue'
+import BootstrapVue from 'bootstrap-vue/dist/bootstrap-vue.esm'
+
+Vue.use(BootstrapVue)</code></pre>
+          <pre class="language-js{}[module.js]"><code class="language-js{}[module.js]">import path from 'path'
+
+export default function nuxtBootstrapVue(moduleOptions) {
+  // Registe o modelo `plugin.js`
+  this.addPlugin(path.resolve(__dirname, 'plugin.js'))
+}</code></pre>
+          <p><strong>Observe que</strong>: Quaisquer plugins injetados pelos módulos são adicionados no <strong>princípio</strong> da lista lista de plugins. Suas opções são:</p>
+          <ul>
+            <li>Manualmente adicionar o plugin para o final da lista de plugins (<code>this.nuxt.options.plugins.push(...)</code>)</li>
+            <li>Inverter a ordem dos módulos se ele depender de um outro</li>
+          </ul>
+        </section>
+        <section id="os-plugins-do-modelo" class="level3">
+          <h3>Os plugins do modelo</h3>
+          <p>Os modelos registados e plugins podem influenciar o <a href="https://lodash.com/docs/4.17.4#template">os modelos do lodash</a> para condicionalmente mudar a saída dos plugins registados.</p>
+          <pre class="language-js{}[plugin.js]"><code class="language-js{}[plugin.js]">// Define o Google Analytics UA
+ga('create', '&#x3C;%= options.ua %>', 'auto')
+
+&#x3C;% if (options.debug) { %>
+// Apenas código do desenvolvedor
+&#x3C;% } %></code></pre>
+          <pre class="language-js{}[module.js]"><code class="language-js{}[module.js]">import path from 'path'
+
+export default function nuxtGoogleAnalytics(moduleOptions) {
+  // Registar o modelo `plugin.js`
+  this.addPlugin({
+    src: path.resolve(__dirname, 'plugin.js'),
+    options: {
+      // O Nuxt substituirá `options.ua` com `123` quando estiver copiando o plugin para o projeto
+      ua: 123,
+
+      // partes condicionais com `dev` será desfeito do código do plugin nas construções de produção
+      debug: this.options.dev
+    }
+  })
+}</code></pre>
+        </section>
+        <section id="registar-carregadores-personalizados-do-webpack" class="level3">
+          <h3>Registar carregadores personalizados do webpack</h3>
+          <p>Nós podemos fazer o mesmo com o <code>build.extend</code> dentro do <code>nuxt.config.js</code> usando <code>this.extendBuild</code>.</p>
+          <pre class="language-js{}[module.js]"><code class="language-js{}[module.js]">export default function (moduleOptions) {
+    this.extendBuild((config, { isClient, isServer }) => {
+      // Carregador do `.foo`
+      config.module.rules.push({
+        test: /\.foo$/,
+        use: [...]
+      })
+
+      // Personalizar carregadores existentes
+      // Recorra ao código-fonte para o interior do Nuxt:
+      // https://github.com/nuxt/nuxt.js/blob/dev/packages/webpack/src/config/base.js
+      const barLoader = config.module.rules.find(rule => rule.loader === 'bar-loader')
+  })
+}</code></pre>
+        </section>
+      </section>
+      <section id="os-módulos-assíncronos" class="level2">
+        <h2>Os módulos assíncronos</h2>
+        <p>Nem todos os módulos farão tudo de forma síncrona. Por exemplo, você talvez queira desenvolver um módulo que precisar requisitar alguma API ou fazer operações assíncronas. Para isto, o Nuxt suporta módulos assíncronos que podem retornar uma promessa ou chamar um callback.</p>
+        <section id="use-o-asyncawait" class="level3">
+          <h3>Use o async/await</h3>
+          <pre class="language-js"><code class="language-js"><span class="token keyword module">import</span> <span class="token imports">fse</span> <span class="token keyword module">from</span> <span class="token string">'fs-extra'</span>
+
+<span class="token keyword module">export</span> <span class="token keyword module">default</span> <span class="token keyword">async</span> <span class="token keyword">function</span> <span class="token function">asyncModule</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  <span class="token comment">// Você pode fazer trabalho assíncrono aqui usando `async`/`await`</span>
+  <span class="token keyword">const</span> pages <span class="token operator">=</span> <span class="token keyword control-flow">await</span> fse<span class="token punctuation">.</span><span class="token method function property-access">readJson</span><span class="token punctuation">(</span><span class="token string">'./pages.json'</span><span class="token punctuation">)</span>
+<span class="token punctuation">}</span></code></pre>
+        </section>
+        <section id="retornar-uma-promessa" class="level3">
+          <h3>Retornar uma promessa</h3>
+          <pre class="language-js"><code class="language-js"><span class="token keyword module">export</span> <span class="token keyword module">default</span> <span class="token keyword">function</span> <span class="token function">asyncModule</span><span class="token punctuation">(</span><span class="token parameter">$http</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  <span class="token keyword control-flow">return</span> $http
+    <span class="token punctuation">.</span><span class="token method function property-access">get</span><span class="token punctuation">(</span><span class="token string">'https://jsonplaceholder.typicode.com/users'</span><span class="token punctuation">)</span>
+    <span class="token punctuation">.</span><span class="token method function property-access">then</span><span class="token punctuation">(</span><span class="token parameter">res</span> <span class="token arrow operator">=></span> res<span class="token punctuation">.</span><span class="token property-access">data</span><span class="token punctuation">.</span><span class="token method function property-access">map</span><span class="token punctuation">(</span><span class="token parameter">user</span> <span class="token arrow operator">=></span> <span class="token string">'/users/'</span> <span class="token operator">+</span> user<span class="token punctuation">.</span><span class="token property-access">username</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+    <span class="token punctuation">.</span><span class="token method function property-access">then</span><span class="token punctuation">(</span><span class="token parameter">routes</span> <span class="token arrow operator">=></span> <span class="token punctuation">{</span>
+      <span class="token comment">// Faça alguma coisa ao estender as rotas do nuxt</span>
+    <span class="token punctuation">}</span><span class="token punctuation">)</span>
+<span class="token punctuation">}</span></code></pre>
+          <section id="info-1" class="level4">
+            <h4>Info</h4>
+            <p>Existem mais gatilhos e possibilidades para módulos. Consulte o <a href="./internals-glossary/internals">Interior do Nuxt</a> para achar mais informações sobre a API nuxt-internal.</p>
+          </section>
+        </section>
+      </section>
+      <section id="publicando-o-seu-módulo" class="level2">
+        <h2>Publicando o seu módulo</h2>
+        <p><code>module.exports.meta</code>: Esta linha é exigida se você estiver publicando o módulo como um pacote npm. O Nuxt usa internamente o <code>meta</code> para trabalhar melhor com seu pacote.</p>
+        <pre class="language-js{}[modules/myModule.js]"><code class="language-js{}[modules/myModule.js]">module.exports.meta = require('./package.json')</code></pre>
+      </section>
+      <section id="a-propriedade-buildmodules" class="level2">
+        <h2>A propriedade buildModules</h2>
+        <p>Alguns módulos são apenas importados durante o tempo de desenvolvimento e construção. Usar <code>buildModules</code> ajuda tornar inicio da produção rápido e também diminuir significativamente o tamanho do seu diretório <code>node_modules</code> para deployments em produção. Recorra à documentação para cada módulo para ver se é recomendado usar a propriedade <code>modules</code> ou <code>buildModules</code>.</p>
+        <p>A diferença de uso é:</p>
+        <ul>
+          <li>Ao invés de adicionar ao <code>modules</code> dentro do <code>nuxt.config.js</code>, adicione ao <code>buildModules</code></li>
+        </ul>
+        <pre class="language-js{}[nuxt.config.js]"><code class="language-js{}[nuxt.config.js]">export default {
+  buildModules: ['@nuxtjs/eslint-module']
+}</code></pre>
+        <ul>
+          <li>Ao invés de adicionar ao <code>dependencies</code> dentro do <code>package.json</code>, adicione ao <code>devDependencies</code></li>
+        </ul>
+        <pre class="language-bash"><code class="language-bash"><span class="token function">yarn</span> <span class="token function">add</span> --dev @nuxtjs/eslint-module</code></pre>
+        <pre class="language-bash"><code class="language-bash"><span class="token function">npm</span> <span class="token function">install</span> --save-dev @nuxtjs/eslint-module</code></pre>
+        <section id="info-2" class="level4">
+          <h4>Info</h4>
+          <p>Se você é um autor de módulo, é altamente recomendado sugerir aos usuários que instalem o seu pacote como uma <code>devDependency</code> e usar o <code>buildModules</code> ao invés de <code>modules</code> para o <code>nuxt.config.js</code>.</p>
+          <p>O seu módulo é um <code>buildModules</code> a menos que:</p>
+          <ul>
+            <li>Ele esteja fornecendo um serverMiddleware</li>
+            <li>Ele tem de registar um gatilho para o tempo de execução do Node.js (como sentry)</li>
+            <li>Ele esteja afetando o comportamento do vue-renderer ou usando um gatilho do espaço de nome <code>server:</code> ou <code>vue-renderer</code></li>
+            <li>Outra coisa que esteja fora do escopo do webpack (sugestão: plugins e modelos que são compilados e estão dentro do escopo do webpack)</li>
+          </ul>
+        </section>
+        <section id="warning-1" class="level4">
+          <h4>Warning</h4>
+          <p>Se você está oferecendo o uso do <code>buildModules</code> mencione que esta funcionalidade está apenas disponível a partir da versão 2.9 do Nuxt. Usuários antigos devem atualizar ou usar a secção <code>modules</code>.</p>
+          <p><span style="float: footnote;"><a href="../index.html#toc">Go to TOC</a></span></p>
+        </section>
+      </section>
+    </section>
+  </body>
+</html>

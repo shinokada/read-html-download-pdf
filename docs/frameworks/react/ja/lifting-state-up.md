@@ -319,6 +319,6 @@ props もしくは state から派生的に作りだす事のできるデータ�
 
 UI で何かおかしな箇所があれば、[React Developer Tools](https://github.com/facebook/react/tree/main/packages/react-devtools) を使用して props を調査したり state の更新について責任を持っているコンポーネントに辿り着くまでツリーをさかのぼることができます。これによりバグをその原因まで追いかけることができます。
 
-<img src="../images/docs/react-devtools-state.gif" alt="Monitoring State in React DevTools" max-width="100%" height="100%">
+<img src="./docs/react-devtools-state.gif" alt="Monitoring State in React DevTools" max-width="100%" height="100%">
 
 <span style="float: footnote;"><a href="./index.html#toc">Go to TOC</a></span>

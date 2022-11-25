@@ -1,0 +1,251 @@
+<!doctype html>
+<html lang="zh-hant">
+  <head>
+    <meta charset="utf-8">
+    <title>Refs 和 DOM</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="https://raw.githubusercontent.com/shinokada/prism-coy-theme/main/theme_common.css">
+  </head>
+  <body>
+    <section id="refs-和-dom" class="level1">
+      <h1>Refs 和 DOM</h1>
+      <p>Ref 提供了一種可以取得 DOM 節點或在 render 方法內建立 React element 的方式。</p>
+      <p>在典型的 React 資料流裡，<a href="./components-and-props.html">props</a> 是 parent component 和 child component 唯一的互動方式。你會藉由使用新的 prop 重新 render 來改變你的 child。然而，有些情況下你需要在典型的資料流以外更改你的 child。這個被更改的 child 可能是 React component 的其中一個 instance，或他可能是個 DOM element。在這兩種情況下，React 提供了「逃生口」。</p>
+      <section id="when-to-use-refs" class="level3">
+        <h3>什麼時候該使用 Ref</h3>
+        <p>有幾種適合使用 ref 的情況：</p>
+        <ul>
+          <li>管理 focus、選擇文字、或影音播放。</li>
+          <li>觸發即時的動畫。</li>
+          <li>與第三方 DOM 函式庫整合。</li>
+        </ul>
+        <p>避免在任何可以宣告性完成事情的地方使用 ref。</p>
+        <p>例如，不要把 <code>Dialog</code> component 上的 <code>open()</code> 和 <code>close()</code> 對外公開，應該將 <code>isOpen</code> 的 prop 傳進去。</p>
+      </section>
+      <section id="dont-overuse-refs" class="level3">
+        <h3>不要過度使用 Ref</h3>
+        <p>你一開始可能會傾向於在應用程式裡使用 ref「讓事情發生」。如果這是你的情形，花點時間認真思考一下 state 應該在哪個 component 的層級被持有。通常你會清楚發現，在高層級的地方持有是比較合適的位置。請參閱<a href="./lifting-state-up.html">提升 State</a>這篇指南裡面的範例。</p>
+        <blockquote>
+          <p>注意</p>
+          <p>以下的範例已經被更新為使用 React 16.3 所引入的 <code>React.createRef()</code> API。如果你是利用比較舊版本的 React，我們推薦使用 <a href="#callback-refs">callback refs</a>。</p>
+        </blockquote>
+      </section>
+      <section id="creating-refs" class="level3">
+        <h3>建立 Ref</h3>
+        <p>Ref 是藉由使用 <code>React.createRef()</code> 所產生的，它藉由 <code>ref</code> 參數被依附在 React element。Ref 常常會在一個 component 被建立出來的時候，被賦值在某個 instance 屬性，這樣一來他們就可以在整個 component 裡面被參考。</p>
+        <pre class="language-javascript{4,7}"><code class="language-javascript{4,7}">class MyComponent extends React.Component {
+  constructor(props) {
+    super(props);
+    this.myRef = React.createRef();
+  }
+  render() {
+    return &#x3C;div ref={this.myRef} />;
+  }
+}</code></pre>
+      </section>
+      <section id="accessing-refs" class="level3">
+        <h3>存取 Ref</h3>
+        <p>當 ref 在 <code>render</code> 裡被傳到一個 element 的時候，一個指向節點對 ref 的 <code>current</code> 參數的參考會變得可以取得。</p>
+        <pre class="language-javascript"><code class="language-javascript"><span class="token keyword">const</span> node <span class="token operator">=</span> <span class="token keyword">this</span><span class="token punctuation">.</span><span class="token property-access">myRef</span><span class="token punctuation">.</span><span class="token property-access">current</span><span class="token punctuation">;</span></code></pre>
+        <p>Ref 的值會根據節點的類型而有所不同：</p>
+        <ul>
+          <li>當在 HTML element 上使用 <code>ref</code> 參數時，使用 <code>React.createRef()</code> 建立 <code>ref</code> 會取得它底下的 DOM element 來做為它的 <code>current</code> 屬性。</li>
+          <li>當在客製化的 class component 使用 <code>ref</code> 參數時，<code>ref</code> 取得被 mount 的 component 上的 instance 來當作他的 <code>current</code>。</li>
+          <li><strong>你不能在 function component 上使用 <code>ref</code></strong>，因為他們沒有 instance。</li>
+        </ul>
+        <p>下面的範例示範了差異。</p>
+        <section id="adding-a-ref-to-a-dom-element" class="level4">
+          <h4>在 DOM Element 加上 Ref</h4>
+          <p>這段程式碼利用 <code>ref</code> 來儲存對於 DOM 節點的參考：</p>
+          <pre class="language-javascript{5,12,22}"><code class="language-javascript{5,12,22}">class CustomTextInput extends React.Component {
+  constructor(props) {
+    super(props);
+    // 產生一個可以儲存 textInput DOM element 的 ref
+    this.textInput = React.createRef();
+    this.focusTextInput = this.focusTextInput.bind(this);
+  }
+
+  focusTextInput() {
+    // 特別利用原生的 DOM API 來關注文字的輸入
+    // 注意：我們正利用「current」來取得 DOM 節點
+    this.textInput.current.focus();
+  }
+
+  render() {
+    // 告訴 React 我們想要將 &#x3C;input> ref
+    // 和我們在 constructor 產生的 `textInput` 連結
+    return (
+      &#x3C;div>
+        &#x3C;input
+          type="text"
+          ref={this.textInput} />
+        &#x3C;input
+          type="button"
+          value="Focus the text input"
+          onClick={this.focusTextInput}
+        />
+      &#x3C;/div>
+    );
+  }
+}</code></pre>
+          <p>React 會在 component mount 的時候將 DOM element 賦值到 <code>current</code> 屬性，並在 unmount 時將它清空回 <code>null</code>。<code>ref</code> 的更新發生在生命週期 <code>componentDidMount</code> 或 <code>componentDidUpdate</code> 之前。</p>
+        </section>
+        <section id="adding-a-ref-to-a-class-component" class="level4">
+          <h4>在 Class Component 加上 Ref</h4>
+          <p>如果我們想要把上面的 <code>CustomTextInput</code> 包起來然後模擬它在被 mount 之後馬上被點擊，我們可以使用 ref 來獲得客製化的 input 併手動呼叫他的 <code>focusTextInput</code> 函式：</p>
+          <pre class="language-javascript{4,8,13}"><code class="language-javascript{4,8,13}">class AutoFocusTextInput extends React.Component {
+  constructor(props) {
+    super(props);
+    this.textInput = React.createRef();
+  }
+
+  componentDidMount() {
+    this.textInput.current.focusTextInput();
+  }
+
+  render() {
+    return (
+      &#x3C;CustomTextInput ref={this.textInput} />
+    );
+  }
+}</code></pre>
+          <p>注意這種情況只適用於利用 class 來宣告 <code>CustomTextInput</code> 的情形：</p>
+          <pre class="language-js{1}"><code class="language-js{1}">class CustomTextInput extends React.Component {
+  // ...
+}</code></pre>
+        </section>
+        <section id="refs-and-function-components" class="level4">
+          <h4>Ref 和 Function Component</h4>
+          <p>預設上，<strong>你不能在 function component 上使用 <code>ref</code></strong>，因為它們沒有 instance：</p>
+          <pre class="language-javascript{1,8,13}"><code class="language-javascript{1,8,13}">function MyFunctionComponent() {
+  return &#x3C;input />;
+}
+
+class Parent extends React.Component {
+  constructor(props) {
+    super(props);
+    this.textInput = React.createRef();
+  }
+  render() {
+    // This will *not* work!
+    return (
+      &#x3C;MyFunctionComponent ref={this.textInput} />
+    );
+  }
+}</code></pre>
+          <p>如果你想要讓其他人將 <code>ref</code> 帶到你的 function component，你可以使用 <a href="./forwarding-refs.html"><code>forwardRef</code></a>（可能與 <a href="./hooks-reference.html#useimperativehandle"><code>useImperativeHandle</code></a>），或者你可以轉換成 class component。</p>
+          <p>然而，只要你想要指到的是 DOM element 或 class component，你也可以<strong>在 function component 裡使用 <code>ref</code></strong>：</p>
+          <pre class="language-javascript{2,3,6,13}"><code class="language-javascript{2,3,6,13}">function CustomTextInput(props) {
+  // 必須在這裡宣告 textInput 使 ref 可以參考到它
+  const textInput = useRef(null);
+
+  function handleClick() {
+    textInput.current.focus();
+  }
+
+  return (
+    &#x3C;div>
+      &#x3C;input
+        type="text"
+        ref={textInput} />
+      &#x3C;input
+        type="button"
+        value="Focus the text input"
+        onClick={handleClick}
+      />
+    &#x3C;/div>
+  );
+}</code></pre>
+        </section>
+      </section>
+      <section id="exposing-dom-refs-to-parent-components" class="level3">
+        <h3>對 Parent Component 公開 DOM 的 Ref</h3>
+        <p>在很少的情況下，你可能會想要在 parent component 取得 child 的 DOM 節點。在一般的情形下，並不建議這麼做，因為這會破壞 component 的封裝，但有時候這麼做對於觸發 focus 或測量 child 的 DOM 節點的大小、位置是很有用的。</p>
+        <p>雖然你可以<a href="#adding-a-ref-to-a-class-component">在 child component 新增一個 ref</a>，但這並不是理想的解法，因為你只能拿到一個 component 的 instance 而不是一個 DOM 節點。另外，在 function component 裡並不適用。</p>
+        <p>如果你使用比 React 16.3 還新的版本，在這種情形下，我們推薦使用<a href="./forwarding-refs.html">傳送 ref</a>。<strong>傳送 Ref 使得 component 能夠選擇要不要把 child component 的 ref 當作自己的 ref</strong>。你可以在<a href="./forwarding-refs.html#forwarding-refs-to-dom-components">傳送 ref 的文件裡</a>找到詳細關於怎麼把 child 的 DOM 節點公開給 parent component 的範例。</p>
+        <p>如果你使用比 React 16.2 還舊的版本，或你需要比傳送 ref 的方式有更多的彈性，你可以使用<a href="https://gist.github.com/gaearon/1a018a023347fe1c2476073330cc5509">這個不同的方式</a>並把 ref 當作另個有名字的 prop 來傳進去。</p>
+        <p>可能的話，我們會建議不要把 DOM 節點公開，但這可能是個有用的逃生艙。要注意的是，這個方式需要你在 child component 新增一些程式碼。如果你對 child component 的實作完全無法控制，你的最終選擇是使用<a href="./react-dom.html#finddomnode"><code>findDOMNode()</code></a>，但我們並不建議使用，且在 <a href="./strict-mode.html#warning-about-deprecated-finddomnode-usage"><code>StrictMode</code></a> 裡他會被淘汰掉。</p>
+      </section>
+      <section id="callback-refs" class="level3">
+        <h3>Callback Refs</h3>
+        <p>React 也支援另一種設定 ref 的方式，這種方法叫做「callback refs」，它提供了對 ref 的設定上更細緻的控制。</p>
+        <p>不是將 <code>createRef()</code> 所產生的 <code>ref</code> 傳遞下去，而是把一個 function 往下傳。這個 function 會將 React component 的 instance 或 HTML DOM 作為他的參數，然後可以被儲存之後在別的地方使用。</p>
+        <p>下面的例子實作了一個常見的模式：利用 <code>ref</code> 的 callback 來儲存一個在 instance 屬性裡 DOM 節點的參考。</p>
+        <pre class="language-javascript{5,7-9,11-14,19,29,34}"><code class="language-javascript{5,7-9,11-14,19,29,34}">class CustomTextInput extends React.Component {
+  constructor(props) {
+    super(props);
+
+    this.textInput = null;
+
+    this.setTextInputRef = element => {
+      this.textInput = element;
+    };
+
+    this.focusTextInput = () => {
+      // 利用原生的 DOM API 來 focus 文字輸入
+      if (this.textInput) this.textInput.focus();
+    };
+  }
+
+  componentDidMount() {
+    // 在 mount 的時候自動 focus 輸入
+    this.focusTextInput();
+  }
+
+  render() {
+    // 利用 `ref` callback 來儲存 instance 欄位裡文字輸入 DOM 的參考
+    // （例如：this.textInput）
+    return (
+      &#x3C;div>
+        &#x3C;input
+          type="text"
+          ref={this.setTextInputRef}
+        />
+        &#x3C;input
+          type="button"
+          value="Focus the text input"
+          onClick={this.focusTextInput}
+        />
+      &#x3C;/div>
+    );
+  }
+}</code></pre>
+        <p>React 會在 component 安裝時用 DOM element 呼叫 <code>ref</code> callback，然後在 unmount 時用 <code>null</code> 呼叫他。Ref 被保證在 <code>componentDidMount</code> 或 <code>componentDidUpdate</code> 觸發時能夠維持在最新的狀態。</p>
+        <p>你可以將 callback ref 在 component 之間傳遞，就像你可以用一樣的方式在 <code>React.createRef()</code> 所產生的 object ref 一樣。</p>
+        <pre class="language-javascript{4,13}"><code class="language-javascript{4,13}">function CustomTextInput(props) {
+  return (
+    &#x3C;div>
+      &#x3C;input ref={props.inputRef} />
+    &#x3C;/div>
+  );
+}
+
+class Parent extends React.Component {
+  render() {
+    return (
+      &#x3C;CustomTextInput
+        inputRef={el => this.inputElement = el}
+      />
+    );
+  }
+}</code></pre>
+        <p>在上面的範例裡，<code>Parent</code> 將他的 ref callback 做為一個 <code>inputRef</code> prop 傳到 <code>CustomTextInput</code>，然後 <code>CustomTextInput</code> 將一樣的 function 當作特別的 <code>ref</code> 屬性來傳給 <code>&#x3C;input></code>。因此，在 <code>Parent</code> 的 <code>this.inputElement</code> 會被設為與在 <code>CustomTextInput</code> 裡 <code>&#x3C;input></code> element 相關的 DOM 節點。</p>
+      </section>
+      <section id="legacy-api-string-refs" class="level3">
+        <h3>Legacy API: String Refs</h3>
+        <p>如果你以前就使用過 React，你可能對一個舊的 API 有點熟悉，當 <code>ref</code> 屬性是字串的時候，例如 <code>"textInput"</code>，然後 DOM 節點被當作 <code>this.refs.textInput</code> 來取得。我們不建議使用它，因為 string ref 有<a href="https://github.com/facebook/react/pull/8333#issuecomment-271648615">一些問題</a>，所以他被視為 legacy，且<strong>很有可能會在未來的版本被移除</strong>。</p>
+        <blockquote>
+          <p>注意</p>
+          <p>如果你正在使用 <code>this.refs.textInput</code> 來取得 ref，我們建議使用 <a href="#callback-refs">callback 的方式</a>或 <a href="#creating-refs"><code>createRef</code> API</a>。</p>
+        </blockquote>
+      </section>
+      <section id="caveats-with-callback-refs" class="level3">
+        <h3>對 callback ref 的警告</h3>
+        <p>
+          如果 <code>ref</code> callback 是被 inline function 所定義的，他會在更新的時候被呼叫兩次，第一次用 <code>null</code> 然後再用 DOM element 呼叫一次。這是因為新的 function 的 instance 是在每次 render 的時候被產生，所以 React 需要將舊的 ref 清掉然後設定新的。你可以藉由定義 <code>ref</code> callback 為 class 上的一個 bound method 來避免這種情形，但在大多情況下他並沒有任何影響。
+          <span style="float: footnote;"><a href="./index.html#toc">Go to TOC</a></span>
+        </p>
+      </section>
+    </section>
+  </body>
+</html>

@@ -1,0 +1,279 @@
+<!doctype html>
+<html lang="pl">
+  <head>
+    <meta charset="utf-8">
+    <title>Właściwość renderująca</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="https://raw.githubusercontent.com/shinokada/prism-coy-theme/main/theme_common.css">
+  </head>
+  <body>
+    <section id="właściwość-renderująca" class="level1">
+      <h1>Właściwość renderująca</h1>
+      <p>Określenie <a href="https://cdb.reacttraining.com/use-a-render-prop-50de598f11ce">"właściwość renderująca"</a> odnosi się do techniki współdzielenia kodu pomiędzy komponentami reactowymi, przy użyciu właściwości, której wartością jest funkcja.</p>
+      <p>Komponent z właściwością renderującą przyjmuje funkcję, zwracającą element reactowy, a następnie wywołuje ją, nie implementując jednocześnie logiki renderowania tego komponentu.</p>
+      <pre class="language-jsx"><code class="language-jsx"><span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;</span><span class="token class-name">DataProvider</span></span> <span class="token attr-name">render</span><span class="token script language-javascript"><span class="token script-punctuation punctuation">=</span><span class="token punctuation">{</span><span class="token parameter">data</span> <span class="token arrow operator">=></span> <span class="token punctuation">(</span>
+  <span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;</span>h1</span><span class="token punctuation">></span></span><span class="token plain-text">Cześć, </span><span class="token punctuation">{</span>data<span class="token punctuation">.</span><span class="token property-access">target</span><span class="token punctuation">}</span><span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;/</span>h1</span><span class="token punctuation">></span></span>
+<span class="token punctuation">)</span><span class="token punctuation">}</span></span><span class="token punctuation">/></span></span></code></pre>
+      <p>Biblioteki używające właściwości renderujących to m.in. <a href="https://reacttraining.com/react-router/web/api/Route/render-func">React Router</a>, <a href="https://github.com/paypal/downshift">Downshift</a> oraz <a href="https://github.com/jaredpalmer/formik">Formik</a>.</p>
+      <p>W tym dokumencie przedyskutujemy przydatność właściwości renderujących i dowiemy się, jak napisać je samodzielnie.</p>
+      <section id="use-render-props-for-cross-cutting-concerns" class="level2">
+        <h2>Użycie właściwości renderujących przy zagadnieniach przekrojowych (ang. <em>cross-cutting concerns</em>)</h2>
+        <p>Komponenty są podstawowym sposobem na wielokrotne używanie funkcjonalności w Reakcie. Nie zawsze jednak jest oczywiste, jak należy współdzielić stan czy zachowanie zawarte w jednym komponencie, tak aby miały do nich dostęp inne komponenty.</p>
+        <p>Za przykład niech posłuży komponent śledzący pozycję kursora w aplikacji internetowej:</p>
+        <pre class="language-js"><code class="language-js"><span class="token keyword">class</span> <span class="token class-name">MouseTracker</span> <span class="token keyword">extends</span> <span class="token class-name">React<span class="token punctuation">.</span>Component</span> <span class="token punctuation">{</span>
+  <span class="token function">constructor</span><span class="token punctuation">(</span><span class="token parameter">props</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token keyword">super</span><span class="token punctuation">(</span>props<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token keyword">this</span><span class="token punctuation">.</span><span class="token property-access">handleMouseMove</span> <span class="token operator">=</span> <span class="token keyword">this</span><span class="token punctuation">.</span><span class="token method function property-access">handleMouseMove</span><span class="token punctuation">.</span><span class="token method function property-access">bind</span><span class="token punctuation">(</span><span class="token keyword">this</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token keyword">this</span><span class="token punctuation">.</span><span class="token property-access">state</span> <span class="token operator">=</span> <span class="token punctuation">{</span> <span class="token literal-property property">x</span><span class="token operator">:</span> <span class="token number">0</span><span class="token punctuation">,</span> <span class="token literal-property property">y</span><span class="token operator">:</span> <span class="token number">0</span> <span class="token punctuation">}</span><span class="token punctuation">;</span>
+  <span class="token punctuation">}</span>
+
+  <span class="token function">handleMouseMove</span><span class="token punctuation">(</span><span class="token parameter">event</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token keyword">this</span><span class="token punctuation">.</span><span class="token method function property-access">setState</span><span class="token punctuation">(</span><span class="token punctuation">{</span>
+      <span class="token literal-property property">x</span><span class="token operator">:</span> event<span class="token punctuation">.</span><span class="token property-access">clientX</span><span class="token punctuation">,</span>
+      <span class="token literal-property property">y</span><span class="token operator">:</span> event<span class="token punctuation">.</span><span class="token property-access">clientY</span>
+    <span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token punctuation">}</span>
+
+  <span class="token function">render</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token keyword control-flow">return</span> <span class="token punctuation">(</span>
+      <span class="token operator">&#x3C;</span>div style<span class="token operator">=</span><span class="token punctuation">{</span><span class="token punctuation">{</span> <span class="token literal-property property">height</span><span class="token operator">:</span> <span class="token string">'100vh'</span> <span class="token punctuation">}</span><span class="token punctuation">}</span> onMouseMove<span class="token operator">=</span><span class="token punctuation">{</span><span class="token keyword">this</span><span class="token punctuation">.</span><span class="token property-access">handleMouseMove</span><span class="token punctuation">}</span><span class="token operator">></span>
+        <span class="token operator">&#x3C;</span>h1<span class="token operator">></span><span class="token maybe-class-name">Porusz</span> myszką<span class="token operator">!</span><span class="token operator">&#x3C;</span><span class="token operator">/</span>h1<span class="token operator">></span>
+        <span class="token operator">&#x3C;</span>p<span class="token operator">></span><span class="token maybe-class-name">Aktualna</span> pozycja kursora <span class="token function">to</span> <span class="token punctuation">(</span><span class="token punctuation">{</span><span class="token keyword">this</span><span class="token punctuation">.</span><span class="token property-access">state</span><span class="token punctuation">.</span><span class="token property-access">x</span><span class="token punctuation">}</span><span class="token punctuation">,</span> <span class="token punctuation">{</span><span class="token keyword">this</span><span class="token punctuation">.</span><span class="token property-access">state</span><span class="token punctuation">.</span><span class="token property-access">y</span><span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token operator">&#x3C;</span><span class="token operator">/</span>p<span class="token operator">></span>
+      <span class="token operator">&#x3C;</span><span class="token operator">/</span>div<span class="token operator">></span>
+    <span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token punctuation">}</span>
+<span class="token punctuation">}</span></code></pre>
+        <p>Podczas gdy kursor przemieszcza się po ekranie, komponent wyświetla jego koordynaty (x, y) wewnątrz znacznika <code>&#x3C;p></code>.</p>
+        <p>Pytanie brzmi: jak użyć ponownie tego zachowania w innym komponencie? Innymi słowy, jeżeli inny komponent potrzebuje współrzędnych pozycji kursora, czy możemy zaimplementować to zachowanie tak, abyśmy mogli łatwo współdzielić je z tym komponentem?</p>
+        <p>Ponieważ komponenty są podstawowym sposobem na wielokrotne używanie funkcjonalności w Reakcie, spróbujmy przekształcić trochę powyższy kod tak, aby wykorzystać komponent <code>&#x3C;Mouse></code> zawierający w sobie zachowanie wymagane przez inny komponent.</p>
+        <pre class="language-js"><code class="language-js"><span class="token comment">// Komponent &#x3C;Mouse> posiada funkcjonalność, której potrzebujemy...</span>
+<span class="token keyword">class</span> <span class="token class-name">Mouse</span> <span class="token keyword">extends</span> <span class="token class-name">React<span class="token punctuation">.</span>Component</span> <span class="token punctuation">{</span>
+  <span class="token function">constructor</span><span class="token punctuation">(</span><span class="token parameter">props</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token keyword">super</span><span class="token punctuation">(</span>props<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token keyword">this</span><span class="token punctuation">.</span><span class="token property-access">handleMouseMove</span> <span class="token operator">=</span> <span class="token keyword">this</span><span class="token punctuation">.</span><span class="token method function property-access">handleMouseMove</span><span class="token punctuation">.</span><span class="token method function property-access">bind</span><span class="token punctuation">(</span><span class="token keyword">this</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token keyword">this</span><span class="token punctuation">.</span><span class="token property-access">state</span> <span class="token operator">=</span> <span class="token punctuation">{</span> <span class="token literal-property property">x</span><span class="token operator">:</span> <span class="token number">0</span><span class="token punctuation">,</span> <span class="token literal-property property">y</span><span class="token operator">:</span> <span class="token number">0</span> <span class="token punctuation">}</span><span class="token punctuation">;</span>
+  <span class="token punctuation">}</span>
+
+  <span class="token function">handleMouseMove</span><span class="token punctuation">(</span><span class="token parameter">event</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token keyword">this</span><span class="token punctuation">.</span><span class="token method function property-access">setState</span><span class="token punctuation">(</span><span class="token punctuation">{</span>
+      <span class="token literal-property property">x</span><span class="token operator">:</span> event<span class="token punctuation">.</span><span class="token property-access">clientX</span><span class="token punctuation">,</span>
+      <span class="token literal-property property">y</span><span class="token operator">:</span> event<span class="token punctuation">.</span><span class="token property-access">clientY</span>
+    <span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token punctuation">}</span>
+
+  <span class="token function">render</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token keyword control-flow">return</span> <span class="token punctuation">(</span>
+      <span class="token operator">&#x3C;</span>div style<span class="token operator">=</span><span class="token punctuation">{</span><span class="token punctuation">{</span> <span class="token literal-property property">height</span><span class="token operator">:</span> <span class="token string">'100vh'</span> <span class="token punctuation">}</span><span class="token punctuation">}</span> onMouseMove<span class="token operator">=</span><span class="token punctuation">{</span><span class="token keyword">this</span><span class="token punctuation">.</span><span class="token property-access">handleMouseMove</span><span class="token punctuation">}</span><span class="token operator">></span>
+
+        <span class="token punctuation">{</span><span class="token comment">/* ...ale jak wyrenderować coś innego niż &#x3C;p>? */</span><span class="token punctuation">}</span>
+        <span class="token operator">&#x3C;</span>p<span class="token operator">></span><span class="token maybe-class-name">The</span> current mouse position <span class="token function">is</span> <span class="token punctuation">(</span><span class="token punctuation">{</span><span class="token keyword">this</span><span class="token punctuation">.</span><span class="token property-access">state</span><span class="token punctuation">.</span><span class="token property-access">x</span><span class="token punctuation">}</span><span class="token punctuation">,</span> <span class="token punctuation">{</span><span class="token keyword">this</span><span class="token punctuation">.</span><span class="token property-access">state</span><span class="token punctuation">.</span><span class="token property-access">y</span><span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token operator">&#x3C;</span><span class="token operator">/</span>p<span class="token operator">></span>
+      <span class="token operator">&#x3C;</span><span class="token operator">/</span>div<span class="token operator">></span>
+    <span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token punctuation">}</span>
+<span class="token punctuation">}</span>
+
+<span class="token keyword">class</span> <span class="token class-name">MouseTracker</span> <span class="token keyword">extends</span> <span class="token class-name">React<span class="token punctuation">.</span>Component</span> <span class="token punctuation">{</span>
+  <span class="token function">render</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token keyword control-flow">return</span> <span class="token punctuation">(</span>
+      <span class="token operator">&#x3C;</span><span class="token operator">></span>
+        <span class="token operator">&#x3C;</span>h1<span class="token operator">></span><span class="token maybe-class-name">Porusz</span> myszką<span class="token operator">!</span><span class="token operator">&#x3C;</span><span class="token operator">/</span>h1<span class="token operator">></span>
+        <span class="token operator">&#x3C;</span><span class="token maybe-class-name">Mouse</span> <span class="token operator">/</span><span class="token operator">></span>
+      <span class="token operator">&#x3C;</span><span class="token operator">/</span><span class="token operator">></span>
+    <span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token punctuation">}</span>
+<span class="token punctuation">}</span></code></pre>
+        <p>Teraz komponent <code>&#x3C;Mouse></code> implementuje wszystkie zachowania związane z nasłuchiwaniem na zdarzenie <code>mousemove</code> i przechowuje pozycję kursora (x, y), jednak nie jest jeszcze w pełni reużywalny.</p>
+        <p>Dla przykładu, powiedzmy że mamy komponent <code>&#x3C;Cat></code>, który renderuje obrazek kota goniącego kursor na ekranie. Moglibyśmy użyć właściwości <code>&#x3C;Cat mouse={{ x, y }}></code>, aby przekazać komponentowi koordynaty kursora, tak aby wiedział, gdzie umieścić obrazek kota.</p>
+        <p>Początkowo możesz chcieć wyrenderować komponent <code>&#x3C;Cat></code> <em>wewnątrz metody <code>render</code> komponentu <code>&#x3C;Mouse></code></em>, na przykład w ten sposób:</p>
+        <pre class="language-js"><code class="language-js"><span class="token keyword">class</span> <span class="token class-name">Cat</span> <span class="token keyword">extends</span> <span class="token class-name">React<span class="token punctuation">.</span>Component</span> <span class="token punctuation">{</span>
+  <span class="token function">render</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token keyword">const</span> mouse <span class="token operator">=</span> <span class="token keyword">this</span><span class="token punctuation">.</span><span class="token property-access">props</span><span class="token punctuation">.</span><span class="token property-access">mouse</span><span class="token punctuation">;</span>
+    <span class="token keyword control-flow">return</span> <span class="token punctuation">(</span>
+      <span class="token operator">&#x3C;</span>img src<span class="token operator">=</span><span class="token string">"/cat.jpg"</span> style<span class="token operator">=</span><span class="token punctuation">{</span><span class="token punctuation">{</span> <span class="token literal-property property">position</span><span class="token operator">:</span> <span class="token string">'absolute'</span><span class="token punctuation">,</span> <span class="token literal-property property">left</span><span class="token operator">:</span> mouse<span class="token punctuation">.</span><span class="token property-access">x</span><span class="token punctuation">,</span> <span class="token literal-property property">top</span><span class="token operator">:</span> mouse<span class="token punctuation">.</span><span class="token property-access">y</span> <span class="token punctuation">}</span><span class="token punctuation">}</span> <span class="token operator">/</span><span class="token operator">></span>
+    <span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token punctuation">}</span>
+<span class="token punctuation">}</span>
+
+<span class="token keyword">class</span> <span class="token class-name">MouseWithCat</span> <span class="token keyword">extends</span> <span class="token class-name">React<span class="token punctuation">.</span>Component</span> <span class="token punctuation">{</span>
+  <span class="token function">constructor</span><span class="token punctuation">(</span><span class="token parameter">props</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token keyword">super</span><span class="token punctuation">(</span>props<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token keyword">this</span><span class="token punctuation">.</span><span class="token property-access">handleMouseMove</span> <span class="token operator">=</span> <span class="token keyword">this</span><span class="token punctuation">.</span><span class="token method function property-access">handleMouseMove</span><span class="token punctuation">.</span><span class="token method function property-access">bind</span><span class="token punctuation">(</span><span class="token keyword">this</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token keyword">this</span><span class="token punctuation">.</span><span class="token property-access">state</span> <span class="token operator">=</span> <span class="token punctuation">{</span> <span class="token literal-property property">x</span><span class="token operator">:</span> <span class="token number">0</span><span class="token punctuation">,</span> <span class="token literal-property property">y</span><span class="token operator">:</span> <span class="token number">0</span> <span class="token punctuation">}</span><span class="token punctuation">;</span>
+  <span class="token punctuation">}</span>
+
+  <span class="token function">handleMouseMove</span><span class="token punctuation">(</span><span class="token parameter">event</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token keyword">this</span><span class="token punctuation">.</span><span class="token method function property-access">setState</span><span class="token punctuation">(</span><span class="token punctuation">{</span>
+      <span class="token literal-property property">x</span><span class="token operator">:</span> event<span class="token punctuation">.</span><span class="token property-access">clientX</span><span class="token punctuation">,</span>
+      <span class="token literal-property property">y</span><span class="token operator">:</span> event<span class="token punctuation">.</span><span class="token property-access">clientY</span>
+    <span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token punctuation">}</span>
+
+  <span class="token function">render</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token keyword control-flow">return</span> <span class="token punctuation">(</span>
+      <span class="token operator">&#x3C;</span>div style<span class="token operator">=</span><span class="token punctuation">{</span><span class="token punctuation">{</span> <span class="token literal-property property">height</span><span class="token operator">:</span> <span class="token string">'100vh'</span> <span class="token punctuation">}</span><span class="token punctuation">}</span> onMouseMove<span class="token operator">=</span><span class="token punctuation">{</span><span class="token keyword">this</span><span class="token punctuation">.</span><span class="token property-access">handleMouseMove</span><span class="token punctuation">}</span><span class="token operator">></span>
+
+        <span class="token punctuation">{</span><span class="token comment">/*
+          Moglibyśmy w tym miejscu po prostu zamienić &#x3C;p> na &#x3C;Cat>... ale później
+          musielibyśmy stworzyć oddzielny komponent &#x3C;MouseWithSomethingElse>
+          dla każdego przypadku użycia, dlatego też &#x3C;MouseWithCat>
+          nie jest jeszcze w pełni używalny wielokrotnie.
+        */</span><span class="token punctuation">}</span>
+        <span class="token operator">&#x3C;</span><span class="token maybe-class-name">Cat</span> mouse<span class="token operator">=</span><span class="token punctuation">{</span><span class="token keyword">this</span><span class="token punctuation">.</span><span class="token property-access">state</span><span class="token punctuation">}</span> <span class="token operator">/</span><span class="token operator">></span>
+      <span class="token operator">&#x3C;</span><span class="token operator">/</span>div<span class="token operator">></span>
+    <span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token punctuation">}</span>
+<span class="token punctuation">}</span>
+
+<span class="token keyword">class</span> <span class="token class-name">MouseTracker</span> <span class="token keyword">extends</span> <span class="token class-name">React<span class="token punctuation">.</span>Component</span> <span class="token punctuation">{</span>
+  <span class="token function">render</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token keyword control-flow">return</span> <span class="token punctuation">(</span>
+      <span class="token operator">&#x3C;</span>div<span class="token operator">></span>
+        <span class="token operator">&#x3C;</span>h1<span class="token operator">></span><span class="token maybe-class-name">Porusz</span> myszką<span class="token operator">!</span><span class="token operator">&#x3C;</span><span class="token operator">/</span>h1<span class="token operator">></span>
+        <span class="token operator">&#x3C;</span><span class="token maybe-class-name">MouseWithCat</span> <span class="token operator">/</span><span class="token operator">></span>
+      <span class="token operator">&#x3C;</span><span class="token operator">/</span>div<span class="token operator">></span>
+    <span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token punctuation">}</span>
+<span class="token punctuation">}</span></code></pre>
+        <p>To podejście zadziałałoby w naszym specyficznym przypadku, ale nie osiągneliśmy prawdziwego celu, jakim jest hermetyzacja zachowania w taki sposób, aby można było je wykorzystywać wielokrotnie. W takim przypadku, za każdym razem gdy potrzebowalibyśmy inaczej wyświetlić coś na podstawie pozycji kursora, musielibyśmy stworzyć nowy komponent (innymi słowy, kolejny <code>&#x3C;MouseWithCat></code>), który wyrenderuje coś w odpowiedni sposób.</p>
+        <p>I tutaj do akcji wkracza właściwość renderująca. Zamiast na stałe osadzać <code>&#x3C;Cat></code> wewnątrz komponentu <code>&#x3C;Mouse></code>, jednocześnie zmieniając wyrenderowany przez niego wynik, możemy dostarczyć do komponentu <code>&#x3C;Mouse></code> właściwość będącą funkcją. Funkcja ta w sposób dynamiczny będzie określać, co powinno zostać wyrenderowane.</p>
+        <pre class="language-js"><code class="language-js"><span class="token keyword">class</span> <span class="token class-name">Cat</span> <span class="token keyword">extends</span> <span class="token class-name">React<span class="token punctuation">.</span>Component</span> <span class="token punctuation">{</span>
+  <span class="token function">render</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token keyword">const</span> mouse <span class="token operator">=</span> <span class="token keyword">this</span><span class="token punctuation">.</span><span class="token property-access">props</span><span class="token punctuation">.</span><span class="token property-access">mouse</span><span class="token punctuation">;</span>
+    <span class="token keyword control-flow">return</span> <span class="token punctuation">(</span>
+      <span class="token operator">&#x3C;</span>img src<span class="token operator">=</span><span class="token string">"/cat.jpg"</span> style<span class="token operator">=</span><span class="token punctuation">{</span><span class="token punctuation">{</span> <span class="token literal-property property">position</span><span class="token operator">:</span> <span class="token string">'absolute'</span><span class="token punctuation">,</span> <span class="token literal-property property">left</span><span class="token operator">:</span> mouse<span class="token punctuation">.</span><span class="token property-access">x</span><span class="token punctuation">,</span> <span class="token literal-property property">top</span><span class="token operator">:</span> mouse<span class="token punctuation">.</span><span class="token property-access">y</span> <span class="token punctuation">}</span><span class="token punctuation">}</span> <span class="token operator">/</span><span class="token operator">></span>
+    <span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token punctuation">}</span>
+<span class="token punctuation">}</span>
+
+<span class="token keyword">class</span> <span class="token class-name">Mouse</span> <span class="token keyword">extends</span> <span class="token class-name">React<span class="token punctuation">.</span>Component</span> <span class="token punctuation">{</span>
+  <span class="token function">constructor</span><span class="token punctuation">(</span><span class="token parameter">props</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token keyword">super</span><span class="token punctuation">(</span>props<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token keyword">this</span><span class="token punctuation">.</span><span class="token property-access">handleMouseMove</span> <span class="token operator">=</span> <span class="token keyword">this</span><span class="token punctuation">.</span><span class="token method function property-access">handleMouseMove</span><span class="token punctuation">.</span><span class="token method function property-access">bind</span><span class="token punctuation">(</span><span class="token keyword">this</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token keyword">this</span><span class="token punctuation">.</span><span class="token property-access">state</span> <span class="token operator">=</span> <span class="token punctuation">{</span> <span class="token literal-property property">x</span><span class="token operator">:</span> <span class="token number">0</span><span class="token punctuation">,</span> <span class="token literal-property property">y</span><span class="token operator">:</span> <span class="token number">0</span> <span class="token punctuation">}</span><span class="token punctuation">;</span>
+  <span class="token punctuation">}</span>
+
+  <span class="token function">handleMouseMove</span><span class="token punctuation">(</span><span class="token parameter">event</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token keyword">this</span><span class="token punctuation">.</span><span class="token method function property-access">setState</span><span class="token punctuation">(</span><span class="token punctuation">{</span>
+      <span class="token literal-property property">x</span><span class="token operator">:</span> event<span class="token punctuation">.</span><span class="token property-access">clientX</span><span class="token punctuation">,</span>
+      <span class="token literal-property property">y</span><span class="token operator">:</span> event<span class="token punctuation">.</span><span class="token property-access">clientY</span>
+    <span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token punctuation">}</span>
+
+  <span class="token function">render</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token keyword control-flow">return</span> <span class="token punctuation">(</span>
+      <span class="token operator">&#x3C;</span>div style<span class="token operator">=</span><span class="token punctuation">{</span><span class="token punctuation">{</span> <span class="token literal-property property">height</span><span class="token operator">:</span> <span class="token string">'100vh'</span> <span class="token punctuation">}</span><span class="token punctuation">}</span> onMouseMove<span class="token operator">=</span><span class="token punctuation">{</span><span class="token keyword">this</span><span class="token punctuation">.</span><span class="token property-access">handleMouseMove</span><span class="token punctuation">}</span><span class="token operator">></span>
+
+        <span class="token punctuation">{</span><span class="token comment">/*
+          Zamiast używać statycznej reprezentacji tego co renderuje &#x3C;Mouse>,
+          użyj właściwości `render`, aby dynamicznie określić, co należy wyrenderować.
+        */</span><span class="token punctuation">}</span>
+        <span class="token punctuation">{</span><span class="token keyword">this</span><span class="token punctuation">.</span><span class="token property-access">props</span><span class="token punctuation">.</span><span class="token method function property-access">render</span><span class="token punctuation">(</span><span class="token keyword">this</span><span class="token punctuation">.</span><span class="token property-access">state</span><span class="token punctuation">)</span><span class="token punctuation">}</span>
+      <span class="token operator">&#x3C;</span><span class="token operator">/</span>div<span class="token operator">></span>
+    <span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token punctuation">}</span>
+<span class="token punctuation">}</span>
+
+<span class="token keyword">class</span> <span class="token class-name">MouseTracker</span> <span class="token keyword">extends</span> <span class="token class-name">React<span class="token punctuation">.</span>Component</span> <span class="token punctuation">{</span>
+  <span class="token function">render</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token keyword control-flow">return</span> <span class="token punctuation">(</span>
+      <span class="token operator">&#x3C;</span>div<span class="token operator">></span>
+        <span class="token operator">&#x3C;</span>h1<span class="token operator">></span><span class="token maybe-class-name">Porusz</span> myszką<span class="token operator">!</span><span class="token operator">&#x3C;</span><span class="token operator">/</span>h1<span class="token operator">></span>
+        <span class="token operator">&#x3C;</span><span class="token maybe-class-name">Mouse</span> render<span class="token operator">=</span><span class="token punctuation">{</span><span class="token parameter">mouse</span> <span class="token arrow operator">=></span> <span class="token punctuation">(</span>
+          <span class="token operator">&#x3C;</span><span class="token maybe-class-name">Cat</span> mouse<span class="token operator">=</span><span class="token punctuation">{</span>mouse<span class="token punctuation">}</span> <span class="token operator">/</span><span class="token operator">></span>
+        <span class="token punctuation">)</span><span class="token punctuation">}</span><span class="token operator">/</span><span class="token operator">></span>
+      <span class="token operator">&#x3C;</span><span class="token operator">/</span>div<span class="token operator">></span>
+    <span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token punctuation">}</span>
+<span class="token punctuation">}</span></code></pre>
+        <p>Teraz, zamiast faktycznie klonować komponent <code>&#x3C;Mouse></code> i na stałe wpisywać coś innego w jego metodzie <code>render</code> dla poszczególnych przypadków, dostarczamy właściwość <code>render</code>, której komponent <code>&#x3C;Mouse></code> może użyć do dynamicznego określenia renderowanego wyniku.</p>
+        <p>Konkretnie rzecz ujmując, <strong>właściwość renderująca jest funkcją, której komponent używa, aby wiedzieć, co ma wyrenderować.</strong></p>
+        <p>Ta technika powoduje, że zachowanie, które chcemy współdzielić, staje się niezwykle przenośne. Aby uzyskać zamierzony efekt, wyrenderuj komponent <code>&#x3C;Mouse></code> wraz z właściwością <code>render</code>, która określi, co powinno zostać wyrenderowane biorąc pod uwagę aktualną pozycję (x, y) kursora myszy.</p>
+        <p>Ciekawostką, o której warto wspomnieć podczas opisywania właściwości renderujących, jest to, że większość <a href="./higher-order-components.html">komponentów wyższego rzędu (ang. <em>higher-order components</em>, <em>HOC</em>)</a> można zaimplementować przy użyciu zwykłego komponentu z właściwością renderującą. Dla przykładu, jeżeli wolisz korzystać z komponentu wyższego rzędu <code>withMouse</code> zamiast komponentu <code>&#x3C;Mouse></code>, możesz z łatwością go stworzyć przy użyciu <code>&#x3C;Mouse></code> z właściwością renderującą:</p>
+        <pre class="language-js"><code class="language-js"><span class="token comment">// Jeżeli z jakiegoś powodu naprawdę potrzebujesz HOC-a, możesz go łatwo</span>
+<span class="token comment">// stworzyć używając zwykłego komponentu z właściwością renderującą!</span>
+<span class="token keyword">function</span> <span class="token function">withMouse</span><span class="token punctuation">(</span><span class="token parameter"><span class="token maybe-class-name">Component</span></span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  <span class="token keyword control-flow">return</span> <span class="token keyword">class</span> <span class="token class-name">extends</span> <span class="token maybe-class-name">React</span><span class="token punctuation">.</span><span class="token property-access"><span class="token maybe-class-name">Component</span></span> <span class="token punctuation">{</span>
+    <span class="token function">render</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+      <span class="token keyword control-flow">return</span> <span class="token punctuation">(</span>
+        <span class="token operator">&#x3C;</span><span class="token maybe-class-name">Mouse</span> render<span class="token operator">=</span><span class="token punctuation">{</span><span class="token parameter">mouse</span> <span class="token arrow operator">=></span> <span class="token punctuation">(</span>
+          <span class="token operator">&#x3C;</span><span class="token maybe-class-name">Component</span> <span class="token punctuation">{</span><span class="token spread operator">...</span><span class="token keyword">this</span><span class="token punctuation">.</span><span class="token property-access">props</span><span class="token punctuation">}</span> mouse<span class="token operator">=</span><span class="token punctuation">{</span>mouse<span class="token punctuation">}</span> <span class="token operator">/</span><span class="token operator">></span>
+        <span class="token punctuation">)</span><span class="token punctuation">}</span><span class="token operator">/</span><span class="token operator">></span>
+      <span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+  <span class="token punctuation">}</span>
+<span class="token punctuation">}</span></code></pre>
+        <p>Użycie właściwości renderującej powoduje, że jest możliwe użycie obu wzorców.</p>
+      </section>
+      <section id="używanie-właściwości-innych-niż-render-using-props-other-than-render" class="level2">
+        <h2>Używanie właściwości innych niż <code>render</code> {#using-props-other-than-render}</h2>
+        <p>Pamiętaj, że pomimo iż wzorzec nosi nazwę "właściwości renderującej" (ang. <em>render prop</em>), nie musisz <em>używać właściwości o nazwie <code>render</code>, aby go zastosować</em>. W zasadzie <a href="https://cdb.reacttraining.com/use-a-render-prop-50de598f11ce"><em>każda</em> właściwość, która jest funkcją służącą do określenia, co powinno zostać wyrenderowane, jest technicznie rzecz ujmując "właściwością renderującą"</a>.</p>
+        <p>Pomimo że powyższe przykłady używają nazwy <code>render</code>, moglibyśmy po prostu użyć właściwości <code>children</code>!</p>
+        <pre class="language-js"><code class="language-js"><span class="token operator">&#x3C;</span><span class="token maybe-class-name">Mouse</span> children<span class="token operator">=</span><span class="token punctuation">{</span><span class="token parameter">mouse</span> <span class="token arrow operator">=></span> <span class="token punctuation">(</span>
+  <span class="token operator">&#x3C;</span>p<span class="token operator">></span><span class="token maybe-class-name">Pozycja</span> kursora to <span class="token punctuation">{</span>mouse<span class="token punctuation">.</span><span class="token property-access">x</span><span class="token punctuation">}</span><span class="token punctuation">,</span> <span class="token punctuation">{</span>mouse<span class="token punctuation">.</span><span class="token property-access">y</span><span class="token punctuation">}</span><span class="token operator">&#x3C;</span><span class="token operator">/</span>p<span class="token operator">></span>
+<span class="token punctuation">)</span><span class="token punctuation">}</span><span class="token operator">/</span><span class="token operator">></span></code></pre>
+        <p>Pamiętaj, że w JSX właściwości <code>children</code> nie musisz przekazywać na liście "atrybutów" twojego elementu. Zamiast tego możesz ją umieścić bezpośrednio <em>wewnątrz</em> znacznika!</p>
+        <pre class="language-js"><code class="language-js"><span class="token operator">&#x3C;</span><span class="token maybe-class-name">Mouse</span><span class="token operator">></span>
+  <span class="token punctuation">{</span><span class="token parameter">mouse</span> <span class="token arrow operator">=></span> <span class="token punctuation">(</span>
+    <span class="token operator">&#x3C;</span>p<span class="token operator">></span><span class="token maybe-class-name">Pozycja</span> kursora to <span class="token punctuation">{</span>mouse<span class="token punctuation">.</span><span class="token property-access">x</span><span class="token punctuation">}</span><span class="token punctuation">,</span> <span class="token punctuation">{</span>mouse<span class="token punctuation">.</span><span class="token property-access">y</span><span class="token punctuation">}</span><span class="token operator">&#x3C;</span><span class="token operator">/</span>p<span class="token operator">></span>
+  <span class="token punctuation">)</span><span class="token punctuation">}</span>
+<span class="token operator">&#x3C;</span><span class="token operator">/</span><span class="token maybe-class-name">Mouse</span><span class="token operator">></span></code></pre>
+        <p>Powyższa technika stosowana jest w bibliotece <a href="https://github.com/chenglou/react-motion">react-motion</a>.</p>
+        <p>Jako że ta technika wydaje się trochę niecodzienna, podczas projektowania swojego API prawdopodobnie zechcesz jawnie określić w <code>propTypes</code> komponentu, że właściwość <code>children</code> powinna być funkcją.</p>
+        <pre class="language-js"><code class="language-js"><span class="token maybe-class-name">Mouse</span><span class="token punctuation">.</span><span class="token property-access">propTypes</span> <span class="token operator">=</span> <span class="token punctuation">{</span>
+  <span class="token literal-property property">children</span><span class="token operator">:</span> <span class="token maybe-class-name">PropTypes</span><span class="token punctuation">.</span><span class="token property-access">func</span><span class="token punctuation">.</span><span class="token property-access">isRequired</span>
+<span class="token punctuation">}</span><span class="token punctuation">;</span></code></pre>
+      </section>
+      <section id="caveats" class="level2">
+        <h2>Ostrzeżenia</h2>
+        <section id="be-careful-when-using-render-props-with-reactpurecomponent" class="level3">
+          <h3>Uważaj przy stosowaniu właściwości renderującej dla komponentów dziedziczących po React.PureComponent</h3>
+          <p>Jeżeli stworzysz funkcję wewnątrz metody <code>render</code>, użycie właściwości renderującej może zniwelować korzyści płynące z użycia <a href="./react-api.html#reactpurecomponent"><code>React.PureComponent</code></a>. Dzieje się tak ponieważ płytkie porównanie (ang. <em>shallow comparison</em>) dla nowych właściwości zawsze będzie zwracać wartość <code>false</code>, a w tym przypadku każde wywołanie <code>render</code> będzie generować nową wartość dla właściwości renderującej.</p>
+          <p>Dla przykładu, kontynuując z komponentem <code>&#x3C;Mouse></code>, jeżeli <code>Mouse</code> rozszerzałaby klasę <code>React.PureComponent</code> zamiast <code>React.Component</code>, nasz przykład wyglądałby tak:</p>
+          <pre class="language-js"><code class="language-js"><span class="token keyword">class</span> <span class="token class-name">Mouse</span> <span class="token keyword">extends</span> <span class="token class-name">React<span class="token punctuation">.</span>PureComponent</span> <span class="token punctuation">{</span>
+  <span class="token comment">// Ta sama implementacja co wyżej...</span>
+<span class="token punctuation">}</span>
+
+<span class="token keyword">class</span> <span class="token class-name">MouseTracker</span> <span class="token keyword">extends</span> <span class="token class-name">React<span class="token punctuation">.</span>Component</span> <span class="token punctuation">{</span>
+  <span class="token function">render</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token keyword control-flow">return</span> <span class="token punctuation">(</span>
+      <span class="token operator">&#x3C;</span>div<span class="token operator">></span>
+        <span class="token operator">&#x3C;</span>h1<span class="token operator">></span><span class="token maybe-class-name">Porusz</span> myszką<span class="token operator">!</span><span class="token operator">&#x3C;</span><span class="token operator">/</span>h1<span class="token operator">></span>
+
+        <span class="token punctuation">{</span><span class="token comment">/*
+          Źle! Wartość właściwości `render` będzie
+          inna przy każdym wywołaniu metody render.
+        */</span><span class="token punctuation">}</span>
+        <span class="token operator">&#x3C;</span><span class="token maybe-class-name">Mouse</span> render<span class="token operator">=</span><span class="token punctuation">{</span><span class="token parameter">mouse</span> <span class="token arrow operator">=></span> <span class="token punctuation">(</span>
+          <span class="token operator">&#x3C;</span><span class="token maybe-class-name">Cat</span> mouse<span class="token operator">=</span><span class="token punctuation">{</span>mouse<span class="token punctuation">}</span> <span class="token operator">/</span><span class="token operator">></span>
+        <span class="token punctuation">)</span><span class="token punctuation">}</span><span class="token operator">/</span><span class="token operator">></span>
+      <span class="token operator">&#x3C;</span><span class="token operator">/</span>div<span class="token operator">></span>
+    <span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token punctuation">}</span>
+<span class="token punctuation">}</span></code></pre>
+          <p>W tym przykładzie, za każdym razem gdy <code>&#x3C;MouseTracker></code> jest renderowany, generowana jest nowa funkcja jako wartość dla właściwości <code>&#x3C;Mouse render></code>. Zatem w pierwszej kolejności neguje to efekt rozszerzania <code>React.PureComponent</code> przez komponent <code>&#x3C;Mouse></code>!</p>
+          <p>Aby obejść ten problem, możesz zdefiniować właściwość jako metodę instancji klasy:</p>
+          <pre class="language-js"><code class="language-js"><span class="token keyword">class</span> <span class="token class-name">MouseTracker</span> <span class="token keyword">extends</span> <span class="token class-name">React<span class="token punctuation">.</span>Component</span> <span class="token punctuation">{</span>
+  <span class="token comment">// Zdefiniowana jako metoda instancji, `this.renderTheCat` zawsze</span>
+  <span class="token comment">// odnosi się do *tej samej* funkcji podczas użycia w metodzie render</span>
+  <span class="token function">renderTheCat</span><span class="token punctuation">(</span><span class="token parameter">mouse</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token keyword control-flow">return</span> <span class="token operator">&#x3C;</span><span class="token maybe-class-name">Cat</span> mouse<span class="token operator">=</span><span class="token punctuation">{</span>mouse<span class="token punctuation">}</span> <span class="token operator">/</span><span class="token operator">></span><span class="token punctuation">;</span>
+  <span class="token punctuation">}</span>
+
+  <span class="token function">render</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token keyword control-flow">return</span> <span class="token punctuation">(</span>
+      <span class="token operator">&#x3C;</span>div<span class="token operator">></span>
+        <span class="token operator">&#x3C;</span>h1<span class="token operator">></span><span class="token maybe-class-name">Porusz</span> myszką<span class="token operator">!</span><span class="token operator">&#x3C;</span><span class="token operator">/</span>h1<span class="token operator">></span>
+        <span class="token operator">&#x3C;</span><span class="token maybe-class-name">Mouse</span> render<span class="token operator">=</span><span class="token punctuation">{</span><span class="token keyword">this</span><span class="token punctuation">.</span><span class="token property-access">renderTheCat</span><span class="token punctuation">}</span> <span class="token operator">/</span><span class="token operator">></span>
+      <span class="token operator">&#x3C;</span><span class="token operator">/</span>div<span class="token operator">></span>
+    <span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token punctuation">}</span>
+<span class="token punctuation">}</span></code></pre>
+          <p>
+            W przypadkach gdy nie możesz zdefiniować właściwości statycznej (na przykład, dlatego że musisz domknąć właściwości komponentu i/lub jego stan), <code>&#x3C;Mouse></code> powinien rozszerzać klasę <code>React.Component</code>.
+            <span style="float: footnote;"><a href="./index.html#toc">Go to TOC</a></span>
+          </p>
+        </section>
+      </section>
+    </section>
+  </body>
+</html>

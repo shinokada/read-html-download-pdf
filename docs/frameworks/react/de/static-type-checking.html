@@ -1,0 +1,242 @@
+<!doctype html>
+<html lang="de">
+  <head>
+    <meta charset="utf-8">
+    <title>Statische Typprüfung</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="https://raw.githubusercontent.com/shinokada/prism-coy-theme/main/theme_common.css">
+  </head>
+  <body>
+    <section id="statische-typprüfung" class="level1">
+      <h1>Statische Typprüfung</h1>
+      <p>Statische Typprüfer, wie <a href="https://flow.org/">Flow</a> und <a href="https://www.typescriptlang.org/">TypeScript</a> erkennen bestimmte Arten von Problemen, bevor der Code ausgeführt wird. Der Workflow bei der Entwicklung wird zum Beispiel durch Autovervollständigung verbessert. Daher empfehlen wir Flow oder Typescript für größere Codebasen, anstelle von <code>PropTypes</code>.</p>
+      <section id="flow" class="level2">
+        <h2>Flow</h2>
+        <p><a href="https://flow.org/">Flow</a> ist ein statischer Typprüfer für deinen JavaScript Code. Er wird bei Facebook entwickelt und oft mit React verwendet. Er ermöglicht dir Variablen, Funktionen und React-Komponenten mit einer speziellen Typ-Syntax zu versehen und so Fehler frühzeitig zu erkennen. Du kannst die <a href="https://flow.org/en/docs/getting-started/">Einführung in Flow</a> lesen um die Grundlagen zu lernen.</p>
+        <p>Um Flow zu verwenden, musst du folgendes tun:</p>
+        <ul>
+          <li>Füge Flow deinem Projekt als Abhängigkeit hinzu.</li>
+          <li>Stelle sicher, dass der Flow-Syntax aus kompiliertem Code entfernt wird.</li>
+          <li>Füge Typ-Anmerkungen hinzu und führe Flow aus, um diese zu überprüfen.</li>
+        </ul>
+        <p>Wir werden diese Schritte weiter unten im Detail erklären.</p>
+        <section id="adding-flow-to-a-project" class="level3">
+          <h3>Flow einem Projekt hinzufügen</h3>
+          <p>Navigiere zunächst im Terminal zu einem Projektverzeichnis. Du musst folgenden Befehl ausführen:</p>
+          <p>Wenn du <a href="https://yarnpkg.com/">Yarn</a> verwendest, führe folgendes aus:</p>
+          <pre class="language-bash"><code class="language-bash"><span class="token function">yarn</span> <span class="token function">add</span> --dev flow-bin</code></pre>
+          <p>Wenn du <a href="https://www.npmjs.com/">npm</a> verwendest, führe folgendes aus:</p>
+          <pre class="language-bash"><code class="language-bash"><span class="token function">npm</span> <span class="token function">install</span> --save-dev flow-bin</code></pre>
+          <p>Dieser Befehl installiert in deinem Projekt die neuste Version von Flow.</p>
+          <p>Füge nun <code>flow</code> dem <code>"scripts"</code> Abschnitt deiner <code>package.json</code> hinzu, um es vom Terminal aus zu nutzen:</p>
+          <pre class="language-js{4}"><code class="language-js{4}">{
+  // ...
+  "scripts": {
+    "flow": "flow",
+    // ...
+  },
+  // ...
+}</code></pre>
+          <p>Abschließend, führe folgende Befehle aus:</p>
+          <p>Wenn du <a href="https://yarnpkg.com/">Yarn</a> verwendest, führe folgendes aus:</p>
+          <pre class="language-bash"><code class="language-bash"><span class="token function">yarn</span> run flow init</code></pre>
+          <p>Wenn du <a href="https://www.npmjs.com/">npm</a> verwendest, führe folgendes aus:</p>
+          <pre class="language-bash"><code class="language-bash"><span class="token function">npm</span> run flow init</code></pre>
+          <p>Dieser Befehl erstellt eine Flow-Konfigurationsdatei, die du committen musst.</p>
+        </section>
+        <section id="stripping-flow-syntax-from-the-compiled-code" class="level3">
+          <h3>Entfernen der Flow-Syntax aus dem kompilierten Code</h3>
+          <p>Flow erweitert die Sprache JavaScript mit einer speziellen Syntax für Typ-Annotationen. Diese Syntax ist Browsern jedoch nicht bekannt, darum müssen wir sicherstellen, dass sie nicht im kompilierten JavaScript-Bundle landet, welches an den Browser gesendet wird.</p>
+          <p>Die genaue Vorgehensweise hängt von den Tools ab, die du zum kompilieren von JavaScript verwendest.</p>
+          <section id="create-react-app" class="level4">
+            <h4>Create React App</h4>
+            <p>Wenn dein Projekt mit <a href="https://github.com/facebookincubator/create-react-app">Create React App</a> erstellt wurde, gratulieren wir dir! Die Flow-Annotationen werden bereits standardmäßig entfernt, so dass du nicht weiter tun musst.</p>
+          </section>
+          <section id="babel" class="level4">
+            <h4>Babel</h4>
+            <blockquote>
+              <p>Hinweis:</p>
+              <p>Diese Anweisungen sind <em>nicht</em> für Create React App Benutzer. Auch wenn Create React App unter der Haube Babel verwendet. Es ist schon so vorkonfiguriert, dass Flow verstanden wird. Also folge diesen Schritten nur, wenn du <em>nicht</em> Create React App verwendest.</p>
+            </blockquote>
+            <p>Wenn du Babel für dein Projekt selbst eingerichtet hast, musst du spezielles Preset für Flow installieren.</p>
+            <p>Wenn du Yarn verwendest, führe folgendes aus:</p>
+            <pre class="language-bash"><code class="language-bash"><span class="token function">yarn</span> <span class="token function">add</span> --dev @babel/preset-flow</code></pre>
+            <p>Wenn du npm verwendest, führe folgendes aus:</p>
+            <pre class="language-bash"><code class="language-bash"><span class="token function">npm</span> <span class="token function">install</span> --save-dev @babel/preset-flow</code></pre>
+            <p>Füge dann das <code>flow</code>-Preset deiner <a href="https://babeljs.io/docs/usage/babelrc/">Babel Konfiguration</a> hinzu. Wenn du zum Beispiel Babel durch eine <code>.babelrc</code>-Datei konfigurierst, könnte es so aussehen:</p>
+            <pre class="language-js{3}"><code class="language-js{3}">{
+  "presets": [
+    "@babel/preset-flow",
+    "react"
+  ]
+}</code></pre>
+            <p>Dadurch kannst du die Flow-Syntax in deinem Code verwenden.</p>
+            <blockquote>
+              <p>Hinweis:</p>
+              <p>Flow erfordert nicht das <code>react</code>-Preset, jedoch werden sich auf zusammen verwendet. Flow selbst versteht die JSX-Syntax out of the box.</p>
+            </blockquote>
+          </section>
+          <section id="other-build-setups" class="level4">
+            <h4>Andere Build Einstellungen</h4>
+            <p>Wenn du weder Create React App, noch Babel verwendest, kannst du <a href="https://github.com/flowtype/flow-remove-types">flow-remove-types</a> benutzen um die Typ-Annotationen zu entfernen.</p>
+          </section>
+        </section>
+        <section id="running-flow" class="level3">
+          <h3>Ausführen von Flow</h3>
+          <p>Wenn du die obigen Anweisungen befolgt hast, wirst du in der Lage sein Flow das erste Mal zu ausführen.</p>
+          <pre class="language-bash"><code class="language-bash"><span class="token function">yarn</span> flow</code></pre>
+          <p>Wenn du npm verwendest, führe folgendes aus:</p>
+          <pre class="language-bash"><code class="language-bash"><span class="token function">npm</span> run flow</code></pre>
+          <p>Solltest du eine Nachricht sehen wie:</p>
+          <pre class="language-text"><code class="language-text">No errors!
+✨  Done in 0.17s.</code></pre>
+        </section>
+        <section id="adding-flow-type-annotations" class="level3">
+          <h3>Hinzufügen von Flow-Typ-Annotationen</h3>
+          <p>Standardmäßig prüft Flow nur die Dateien, die diese Annotation enthalten:</p>
+          <pre class="language-js"><code class="language-js"><span class="token comment">// @flow</span></code></pre>
+          <p>In der Regel wird sie an den Anfang einer Datei geschrieben. Versuche sie zu ein paar Dateien hinzuzufügen und <code>yarn flow</code> oder <code>npm run flow</code> auszuführen, um zu schauen, ob Flow bereits irgendwelche Probleme gefunden hat.</p>
+          <p>Es gibt auch <a href="https://flow.org/en/docs/config/options/#toc-all-boolean">eine Option</a>, die Flow zwingt, <em>alle</em> Dateien unabhängig von der Annotation zu prüfen. Dies kann ein bisschen zu viel sein für bestehende Projekte, aber ist sinnvoll für neue Projekte, wenn du volle Typisierung mit Flow haben möchtest.</p>
+          <p>Jetzt bist du bereit! Wir empfehlen dir, die folgenden Quellen zu anzuschauen, um mehr über Flow zu erfahren:</p>
+          <ul>
+            <li><a href="https://flow.org/en/docs/types/">Flow Documentation: Type Annotations</a></li>
+            <li><a href="https://flow.org/en/docs/editors/">Flow Documentation: Editors</a></li>
+            <li><a href="https://flow.org/en/docs/react/">Flow Documentation: React</a></li>
+            <li><a href="https://medium.com/flow-type/linting-in-flow-7709d7a7e969">Linting in Flow</a></li>
+          </ul>
+        </section>
+      </section>
+      <section id="typescript" class="level2">
+        <h2>TypeScript</h2>
+        <p><a href="https://www.typescriptlang.org/">TypeScript</a> ist eine Programmiersprache, die von Microsoft entwickelt wurde. Sie ist eine Superset von JavaScript und beinhaltet ihren eigenen Kompiler. Da es sich bei TypeScript um eine typisierte Sprache handelt, kann sie Fehler und Bugs zur Build-Zeit abfangen. Lange bevor deine Anwendung in Betrieb geht.Du kannst mehr über die Verwerdnung von TypeScript mit React <a href="https://github.com/Microsoft/TypeScript-React-Starter#typescript-react-starter">hier</a> lernen.</p>
+        <p>Um TypeScript zu benutzen, benötigst du folgendes:</p>
+        <ul>
+          <li>Füge TypeScript als Abhängigkeit in deinem Projekt hinzu</li>
+        </ul>
+        <ul>
+          <li>Konfiguriere die Optionen des TypeScript-Kompilers</li>
+          <li>Benutze die rictige Dateiendung</li>
+          <li>Füge Definitionen für die Bibliotheken hinzu, die du verwendest</li>
+        </ul>
+        <p>Lass uns diese im Detail durchgehen.</p>
+        <section id="using-typescript-with-create-react-app" class="level3">
+          <h3>Verwenden von TypeScript mit Create React App</h3>
+          <p>Create React App unterstützt TypeScript out of the box.</p>
+          <p>Um ein <strong>neues Projekt</strong> mit TypeScript-Unterstützung zu erstellen, führe folgendes aus:</p>
+          <pre class="language-bash"><code class="language-bash">npx create-react-app my-app --template typescript</code></pre>
+          <p>Du kannst es auch zu einem <strong>bestehenden Create React App Projekt</strong> hinzufügen, <a href="https://facebook.github.io/create-react-app/docs/adding-typescript">wie hier dokumentiert</a>.</p>
+          <blockquote>
+            <p>Hinweis:</p>
+            <p>Wenn du Create React App benutzt, <strong>kannst du den Rest dieser Seite überspringen</strong>. Er beschreibt die manuelle Einrichtung, die nicht für Create React App benutzer gilt.</p>
+          </blockquote>
+        </section>
+        <section id="adding-typescript-to-a-project" class="level3">
+          <h3>Typescript einem Projekt hinzufügen</h3>
+          <p>Es beginnt alles mit dem Ausführem von einem Befehl im Terminal.</p>
+          <p>Wenn du <a href="https://yarnpkg.com/">Yarn</a> verwendest, führe folgendes aus:</p>
+          <pre class="language-bash"><code class="language-bash"><span class="token function">yarn</span> <span class="token function">add</span> --dev typescript</code></pre>
+          <p>Wenn du <a href="https://yarnpkg.com/">npm</a> verwendest, führe folgendes aus:</p>
+          <pre class="language-bash"><code class="language-bash"><span class="token function">npm</span> <span class="token function">install</span> --save-dev typescript</code></pre>
+          <p>Gratulation! Du hast die neueste Version von TypeScript in deinem Projekt. Das Installieren von TypeScript gibt uns Zugriff auf den <code>tsc</code>-Befehl. Lass uns vor der Konfiguration <code>tsc</code> zum "scripts"-Abschnitt in unserer <code>package.json</code> hinzufügen:</p>
+          <pre class="language-js{4}"><code class="language-js{4}">{
+  // ...
+  "scripts": {
+    "build": "tsc",
+    // ...
+  },
+  // ...
+}</code></pre>
+        </section>
+        <section id="configuring-the-typescript-compiler" class="level3">
+          <h3>Konfigurieren des TypeScript-Kompilers</h3>
+          <p>The compiler is of no help to us until we tell it what to do. In TypeScript, these rules are defined in a special file called <code>tsconfig.json</code>. To generate this file:</p>
+          <p>Wenn du <a href="https://yarnpkg.com/">Yarn</a> verwendest, führe folgendes aus:</p>
+          <pre class="language-bash"><code class="language-bash"><span class="token function">yarn</span> run tsc --init</code></pre>
+          <p>Wenn du <a href="https://yarnpkg.com/">npm</a> verwendest, führe folgendes aus:</p>
+          <pre class="language-bash"><code class="language-bash">npx tsc --init</code></pre>
+          <p>Wenn du dir die jetzt genrierte <code>tsconfig.json</code> anschaust, siehst du, dass es viele Optionen für die Konfiguration des Kompilers gibt. Eine detailierte Beschreibung aller Optionen findest du <a href="https://www.typescriptlang.org/docs/handbook/tsconfig-json.html">hier</a>.</p>
+          <p>Von den vielen Optionen werden wir uns <code>rootDir</code> und <code>outDir</code> ansehen. Im Grunde nimmt der Kompiler TypeScript-Dateien und generiert daraus JavaScript-Dateien. Wir wollen jedoch nicht drucheinander kommen mit unseren Quelldateien und den generierten Dateien.</p>
+          <p>Wir werden dies in zwei Schritten angehen:</p>
+          <ul>
+            <li>Lass uns als erstes unsere Projektstruktur wie folgt anlegen. Wir platzieren unseren Quellcode im <code>src</code>-Ordner.</li>
+          </ul>
+          <pre class="language-text"><code class="language-text">├── package.json
+├── src
+│   └── index.ts
+└── tsconfig.json</code></pre>
+          <ul>
+            <li>Als nächstes werden wir dem Kompiler beibringen wo unsere Quelldateien liegen und er die genrierten Dateien ablegen soll.</li>
+          </ul>
+          <pre class="language-js{6,7}"><code class="language-js{6,7}">// tsconfig.json
+
+{
+  "compilerOptions": {
+    // ...
+    "rootDir": "src",
+    "outDir": "build"
+    // ...
+  },
+}</code></pre>
+          <p>Großartig! Wen wir jetzt unser Build-Script ausführen, wird der Kompiler unser generiertes JavaScipt im <code>build</code>-Ordner ablegen. <a href="https://github.com/Microsoft/TypeScript-React-Starter/blob/master/tsconfig.json">TypeScript React Starter</a> bietet eine <code>tsconfig.json</code> mit einer Menge guten Optionen zum Starten an.</p>
+          <p>Generell möchtest du das generierte JavaScript nicht in deiner Versionskontrolle haben, stelle also sicher, dass du den Build-Ordner deiner <code>.gitignore</code> hinzugefügt hast.</p>
+        </section>
+        <section id="file-extensions" class="level3">
+          <h3>Dateiendungen</h3>
+          <p>In React schreibst du meistens deine Komponenten in eine <code>.js</code>-Datei. In TypeScript haben wir 2 Dateiendungen:</p>
+          <p><code>.ts</code> ist die standardmäßige Dateiendung, wobei <code>.tsx</code> eine spezielle Endung für Dateien, die <code>JSX</code> beinhalten, ist.</p>
+        </section>
+        <section id="running-typescript" class="level3">
+          <h3>Ausführen von TypeScript</h3>
+          <p>Wenn die obigen Anweisungen befolgt hast, solltest du in der Lage sein TypeScript zum ersten Mal auszuführen.</p>
+          <pre class="language-bash"><code class="language-bash"><span class="token function">yarn</span> build</code></pre>
+          <p>Wenn du npm benutzt, führe folgendes aus:</p>
+          <pre class="language-bash"><code class="language-bash"><span class="token function">npm</span> run build</code></pre>
+          <p>Wenn du keine Ausgabe sieht, bedeutet das, dass alles erfolgreich verlaufen ist.</p>
+        </section>
+        <section id="type-definitions" class="level3">
+          <h3>Typ-Definitionen</h3>
+          <p>Um Fehler un Hinweise von anderen Paketen anzuzeigen, ist der Kompiler auf Deklarationsdateien angewiesen. Eine Deklarationsdatei liefert alle Typ-Informationen einer Bibliothek. Dies ermöglicht uns JavaScript-Bibliotheken, wie solche auf npm in unserem Projekt zu verwenden.</p>
+          <p>Es gibt im Wesentlichen zwei Möglichkeiten Deklarationen für eine Bibliothek zu erhalten:</p>
+          <p><strong>Bundled</strong> - Die Bibliothek beinhaltet ihre eigene Deklarationedatei. Das ist super für uns, da wir nur die Bibliothek installieren müssen und wir sie direkt benutzen können. Um zu prüfen ob eine Bibliothek Typen beinhaltet, halte im Projekt Ausschau nach einer <code>index.d.ts</code>-Datei. Manche Bibliotheken haben diese auch in ihrer <code>package.json</code> unter <code>typings</code> or <code>types</code> angegeben.</p>
+          <p><strong><a href="https://github.com/DefinitelyTyped/DefinitelyTyped">DefinitelyTyped</a></strong> - DefinitelyTyped ist ein großes Repository für Bibliotheken, die keine eigene Deklarationsdatei haben. Die Deklarationen sind crowd-sourced und werden von Microsoft und Open-Source-Mitwirkenden verwaltet. React zum Beipsiel hat keine eigene Deklarationsdatei. Stattdessen können wir sie von DefinitelyTyped bekommen. gib dazu diesen Befehl im Terminal ein.</p>
+          <pre class="language-bash"><code class="language-bash"><span class="token comment"># yarn</span>
+<span class="token function">yarn</span> <span class="token function">add</span> --dev @types/react
+
+<span class="token comment"># npm</span>
+<span class="token function">npm</span> i --save-dev @types/react</code></pre>
+          <p>
+            <strong>Local Declarations</strong>
+            Manchmal beinhaltet das Paket, welches du nutzt, keine Deklarationen oder ist auf DefinitelyTyped verfügbar. In diesem Fall können wir eine lokale Deklarationsdatei haben. Erstelle dazu eine <code>declarations.d.ts</code>-Datei und dem Stammverzeichnis deines Quellordners. Eine einfache Deklaration könnte wie folgt aussehen:
+          </p>
+          <pre class="language-typescript"><code class="language-typescript"><span class="token keyword">declare</span> <span class="token keyword">module</span> <span class="token string">'querystring'</span> <span class="token punctuation">{</span>
+  <span class="token keyword module">export</span> <span class="token keyword">function</span> <span class="token function">stringify</span><span class="token punctuation">(</span>val<span class="token operator">:</span> object<span class="token punctuation">)</span><span class="token operator">:</span> <span class="token builtin">string</span>
+  <span class="token keyword module">export</span> <span class="token keyword">function</span> <span class="token function">parse</span><span class="token punctuation">(</span>val<span class="token operator">:</span> <span class="token builtin">string</span><span class="token punctuation">)</span><span class="token operator">:</span> object
+<span class="token punctuation">}</span></code></pre>
+          <p>Du bist jetzt bereit zu Coden! Wir empfehelen dir die folgenden Quellen zu besuchen um mehr über TypeScript zu lernen:</p>
+          <ul>
+            <li><a href="https://www.typescriptlang.org/docs/handbook/2/everyday-types.html">TypeScript Documentation: Everyday Types</a></li>
+            <li><a href="https://www.typescriptlang.org/docs/handbook/migrating-from-javascript.html">TypeScript Documentation: Migrating from JavaScript</a></li>
+            <li><a href="https://www.typescriptlang.org/docs/handbook/react-&#x26;-webpack.html">TypeScript Documentation: React and Webpack</a></li>
+          </ul>
+        </section>
+      </section>
+      <section id="rescript" class="level2">
+        <h2>ReScript</h2>
+        <p><a href="https://rescript-lang.org/">ReScript</a> ist eine typisierte Sprache, welche zu zu JavaScript kompliliert. Einige der Kernfunktionen sind eine garantierte 100%ige Typabdeckung, erstklassige JSX-Unterstützung und <a href="https://rescript-lang.org/docs/react/latest/introduction">dedizierte React-Bindings</a>, um die Integration in bestehende JS / TS React-Codebases zu ermöglichen.</p>
+        <p>Mehr Infos zur Integration von ReScript in deine bestehende JS / React Codebasis findest du <a href="https://rescript-lang.org/docs/manual/latest/installation#integrate-into-an-existing-js-project">hier</a>.</p>
+      </section>
+      <section id="kotlin" class="level2">
+        <h2>Kotlin</h2>
+        <p><a href="https://kotlinlang.org/">Kotlin</a> ist von JetBrains entwickelte statisch typisierte Sprache. Zu ihren Zielplattformen zählt JVM, Android, LLVM und <a href="https://kotlinlang.org/docs/reference/js-overview.html">JavaScript</a>.</p>
+        <p>JetBrains entwickelt und pflegt verschiedenste Tools speziell für die React-Community: <a href="https://github.com/JetBrains/kotlin-wrappers">React bindings</a> sowohl als auch <a href="https://github.com/JetBrains/create-react-kotlin-app">Create React Kotlin App</a>. Letzteres hilft dir dabei, ReactAnwendungen mit Kotlin ohne Build-Konfiguration zu verwenden.</p>
+      </section>
+      <section id="other-languages" class="level2">
+        <h2>Andere Sprachen</h2>
+        <p>
+          Beachte, dass es auch andere statisch typisierte Sprachen gibt, die nach JavaScript kompilieren und somit mit React kompatibel sind. Zum Beispiel <a href="https://fable.io/">F#/Fable</a> mit <a href="https://elmish.github.io/react">elmish-react</a>. Schau dir die jeweiligen Seiten für mehr Informationen an und fühl dich frei dieser Seite weitere statisch typisierte Sprachen die mit React arbeiten hinzuzufügen!
+          <span style="float: footnote;"><a href="./index.html#toc">Go to TOC</a></span>
+        </p>
+      </section>
+    </section>
+  </body>
+</html>

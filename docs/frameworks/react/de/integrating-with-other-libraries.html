@@ -1,0 +1,250 @@
+<!doctype html>
+<html lang="de">
+  <head>
+    <meta charset="utf-8">
+    <title>Integration mit anderen Bibliotheken</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="https://raw.githubusercontent.com/shinokada/prism-coy-theme/main/theme_common.css">
+  </head>
+  <body>
+    <section id="integration-mit-anderen-bibliotheken" class="level1">
+      <h1>Integration mit anderen Bibliotheken</h1>
+      <p>React kann in jeder Webanwendung verwendet werden. Es kann in andere Anwendungen eingebettet werden, und mit ein wenig Sorgfalt können andere Anwendungen in React eingebettet werden. In diesem Handbuch werden einige der gebräuchlichsten Anwendungsfälle untersucht, wobei der Schwerpunkt auf der Integration mit <a href="https://jquery.com/">jQuery</a> und <a href="https://backbonejs.org/">Backbone</a> liegt der gleiche Ansatz kann jedoch angewandt werden, um Komponenten in bereits vorhandenen Code zu integrieren.</p>
+      <section id="integrating-with-dom-manipulation-plugins" class="level2">
+        <h2>Integration mit DOM-Manipulations-Plugins</h2>
+        <p>React kennt keine Änderungen am DOM außerhalb von React. Es ermittelt Aktualisierungen auf der Grundlage seiner eigenen internen Darstellung. Wenn dieselben DOM-Knoten von einer anderen Bibliothek bearbeitet werden, ist React verwirrt und kann nicht wiederhergestellt werden.</p>
+        <p>Dies bedeutet nicht, dass es unmöglich oder sogar zwangsläufig schwer ist, React mit anderen Möglichkeiten zur Beeinflussung des DOM zu kombinieren. Du musst lediglich bedenken, welche Folgen einzelne Möglichkeiten mit sich bringen.</p>
+        <p>Der einfachste Weg Konflikte zu vermeiden, besteht darin, zu verhindern, dass die React-Komponente aktualisiert wird. Du kannst dies tun, indem du Elemente renderst, für die React keinen Grund zum Aktualisieren hat, z. B. ein leeres <code>&#x3C;div /></code>.</p>
+        <section id="how-to-approach-the-problem" class="level3">
+          <h3>Wie nähere du dich dem Problem</h3>
+          <p>Um dies zu demonstrieren, skizzieren wir einen Wrapper für ein generisches jQuery-Plugin.</p>
+          <p>Wir werden eine [ref](/ docs / refs-and-the-dom.html) an das Root-DOM-Element anhängen. In <code>componentDidMount</code> erhalten wir einen Verweis darauf, damit wir ihn an das jQuery-Plugin übergeben können.</p>
+          <p>Um zu verhindern, dass React das DOM nach dem Mounten berücksichtigt, geben wir ein leeres <code>&#x3C;div /></code> von der <code>render()</code>-Methode zurück. Das <code>&#x3C;div /></code>-Element hat keine Eigenschaften oder untergeordneten Elemente, daher hat React keinen Grund, es zu aktualisieren, sodass das jQuery-Plugin diesen Teil des DOM verwalten kann:</p>
+          <pre class="language-js{3,4,8,12}"><code class="language-js{3,4,8,12}">class SomePlugin extends React.Component {
+  componentDidMount() {
+    this.$el = $(this.el);
+    this.$el.somePlugin();
+  }
+
+  componentWillUnmount() {
+    this.$el.somePlugin('destroy');
+  }
+
+  render() {
+    return &#x3C;div ref={el => this.el = el} />;
+  }
+}</code></pre>
+          <p>Beachte, dass wir sowohl <code>componentDidMount</code> als auch <code>componentWillUnmount</code> <a href="./react-component.html#the-component-lifecycle">Lebenszyklusmethoden</a> definiert haben. Viele jQuery-Plugins hängen Event-Listener an das DOM an, daher ist es wichtig, sie in <code>componentWillUnmount</code> zu entfernen. Wenn das Plugin keine Bereinigungsmethode bereitstellt, musst du wahrscheinlich eine eigene Methode bereitstellen. Denke daran, alle vom Plugin registrierten Event-Listener zu entfernen, um Speicherlecks zu vermeiden.</p>
+        </section>
+        <section id="integrating-with-jquery-chosen-plugin" class="level3">
+          <h3>Integration mit dem jQuery Chosen-Plugin</h3>
+          <p>Um ein konkreteres Beispiel für diese Konzepte zu finden, schreiben wir einen minimalen Wrapper für das Plugin <a href="https://harvesthq.github.io/chosen/">Chosen</a>, der die Eingaben von <code>&#x3C;select></code> erweitert.</p>
+          <blockquote>
+            <p><strong>Hinweis:</strong></p>
+            <p>Nur weil es möglich ist, heißt das nicht, dass es der beste Ansatz für React-Apps ist. Wir empfehlen dir die Verwendung von React-Komponenten, wenn du die freie Wahl hast. React-Komponenten lassen sich in React-Anwendungen leichter wiederverwenden und bieten häufig eine bessere Kontrolle über ihr Verhalten und Erscheinungsbild.</p>
+          </blockquote>
+          <p>Schauen wir uns zunächst an, was Chosen mit dem DOM macht.</p>
+          <p>Wenn du es auf einem <select>-DOM-Knoten aufrufst, liest es die Attribute des ursprünglichen DOM-Knotens aus, blendet sie in einem Inline-Stil aus und fügt unmittelbar nach dem &#x3C;select> einen separaten DOM-Knoten mit eigener visueller Darstellung hinzu. Anschließend werden jQuery-Events ausgelöst, um uns über die Änderungen zu informieren.Angenommen, dies ist die API, die wir mit unserer &#x3C;Chosen>-Wrapper-React-Komponente anstreben:function Example() {
+return (
+&#x3C;Chosen onChange={value => console.log(value)}>
+&#x3C;option>Vanille&#x3C;/option>
+&#x3C;option>Schokolade&#x3C;/option>
+&#x3C;option>Erdbeere&#x3C;/option>
+&#x3C;/Chosen>
+);
+}Der Einfachheit halber werden wir es als [unkontrollierte Komponente] (/docs/uncontrolled-components.html) implementieren.Zuerst erstellen wir eine leere Komponente mit einer render()-Methode, in der wir &#x3C;select> in ein &#x3C;div> eingeschlossen zurückgeben:class Chosen extends React.Component {
+render() {
+return (
+&#x3C;div>
+&#x3C;select className="Chosen-select" ref={el => this.el = el}>
+{this.props.children}
+&#x3C;/select>
+&#x3C;/div>
+);
+}
+}Beachte, wie wir &#x3C;select> mit einem zusätzlichen &#x3C;div> umschlossen haben. Dies ist notwendig, da Chosen ein weiteres DOM-Element direkt nach dem Knoten &#x3C;select> anfügt, den wir an ihn übergeben haben. In Bezug auf React hat &#x3C;div> jedoch immer nur ein einziges untergeordnetes Element. Auf diese Weise stellen wir sicher, dass React-Updates nicht mit dem von Chosen angehängten zusätzlichen DOM-Knoten in Konflikt stehen. Wenn du das DOM außerhalb von React Flow änderst, musst du sicherstellen, dass React keinen Grund hat, diese DOM-Knoten zu berücksichtigen.Als nächstes werden wir die Lebenszyklusmethoden implementieren. Wir müssen Chosen mit dem ref auf den &#x3C;select>-Knoten in componentDidMount initialisieren und ihn in componentWillUnmount zerstören:componentDidMount() {
+this.$el = $(this.el);
+this.$el.chosen();
+}
+componentWillUnmount() {
+this.$el.chosen('destroy');
+}Probiere es mit CodePen ausBeachte, dass React dem Feld this.el keine besondere Bedeutung zuweist. Es funktioniert nur, weil wir dieses Feld zuvor von einem ref in der render()-Methode zugewiesen haben:&#x3C;select className="Chosen-select" ref={el => this.el = el}>Dies reicht aus, um unsere Komponente rendern zu lassen, wir möchten jedoch auch über die Wertänderungen informiert werden. Dazu abonnieren wir das change jQuery-Event für das von Chosen verwaltete &#x3C;select>.Wir werden this.props.onChange nicht direkt an Chosen übergeben, da sich die Eigenschaften der Komponente im Laufe der Zeit ändern können, und dies schließt Event-Handler ein. Stattdessen deklarieren wir eine handleChange()-Methode, die this.props.onChange aufruft und abonnieren damit das change jQuery-Event:componentDidMount() {
+this.$el = $(this.el);
+this.$el.chosen();
+this.handleChange = this.handleChange.bind(this);
+this.$el.on('change', this.handleChange);
+}
+componentWillUnmount() {
+this.$el.off('change', this.handleChange);
+this.$el.chosen('destroy');
+}
+handleChange(e) {
+this.props.onChange(e.target.value);
+}Probiere es mit CodePen ausAbschließend müssen wir noch eine Sache erledigen. In React können sich Eigenschaften im Laufe der Zeit ändern. Beispielsweise kann die Komponente &#x3C;Chosen> verschiedene untergeordnete Elemente erhalten, wenn sich der State der übergeordneten Komponente ändert. Dies bedeutet, dass es an Integrationspunkten wichtig ist, dass wir das DOM manuell aktualisieren, um auf Änderungen der Eigenschaften zu reagieren, da React das DOM nicht mehr für uns verwalten kann.Aus der Dokumentation von Chosen geht hervor, dass wir die jQuery trigger()-API verwenden können, um Änderungen am ursprünglichen DOM-Element zu melden. Wir überlassen es React, this.props.children in &#x3C;select> zu aktualisieren, fügen aber auch eine componentDidUpdate()-Lebenszyklusmethode hinzu, die Chosen über Änderungen in der Liste der untergeordneten Elemente benachrichtigt:componentDidUpdate(prevProps) {
+if (prevProps.children !== this.props.children) {
+this.$el.trigger("chosen:updated");
+}
+}Auf diese Weise kann Chosen das DOM-Element aktualisieren, wenn sich die von React verwalteten, dem &#x3C;select> untergeordneten Elemente ändern.Die vollständige Implementierung der Chosen-Komponente sieht folgendermaßen aus:class Chosen extends React.Component {
+componentDidMount() {
+this.$el = $(this.el);
+this.$el.chosen();
+this.handleChange = this.handleChange.bind(this);
+this.$el.on('change', this.handleChange);
+}
+componentDidUpdate(prevProps) {
+if (prevProps.children !== this.props.children) {
+this.$el.trigger("chosen:updated");
+}
+}
+componentWillUnmount() {
+this.$el.off('change', this.handleChange);
+this.$el.chosen('destroy');
+}
+handleChange(e) {
+this.props.onChange(e.target.value);
+}
+render() {
+return (
+&#x3C;div>
+&#x3C;select className="Chosen-select" ref={el => this.el = el}>
+{this.props.children}
+&#x3C;/select>
+&#x3C;/div>
+);
+}
+}Probiere es mit CodePen ausIntegration mit anderen View-BibliothekenDank der Flexibilität von createRoot() kann React in andere Anwendungen eingebettet werden.Obwohl React üblicherweise beim Start verwendet wird, um eine einzelne React-Root-Komponente in das DOM zu laden, kann createRoot() auch mehrfach für unabhängige Teile der Benutzeroberfläche aufgerufen werden, die so klein wie ein Button oder so groß wie eine App sein können.Genau so wird React bei Facebook eingesetzt. Auf diese Weise können wir Anwendungen in React Stück für Stück schreiben und sie mit unseren vorhandenen servergenerierten Vorlagen und anderem clientseitigen Code kombinieren.String-basiertes Rendern durch React ersetzenEin in älteren Webanwendungen übliches Muster besteht darin, Teile des DOM als Zeichenfolge zu beschreiben und wie folgt in das DOM einzufügen: $el.html(htmlString). Diese Punkte in einer Codebasis eignen sich perfekt für die Einführung von React. Schreibe das stringbasierte Rendering einfach als React-Komponente um.Also die folgende jQuery-Implementierung ...$('#container').html('&#x3C;button id="btn">Sag Hallo&#x3C;/button>');
+$('#btn').click(function() {
+alert('Hallo!');
+});...könnte also mit einer React-Komponente umgeschrieben werden:function Button() {
+return &#x3C;button id="btn">Sag Hallo&#x3C;/button>;
+}
+$('#btn').click(function() {
+alert('Hello!');
+});Von hier aus kannst du mehr Logik in die Komponente verschieben und allgemeinere React-Praktiken anwenden. In Komponenten ist es beispielsweise am besten, sich nicht auf IDs zu verlassen, da dieselbe Komponente mehrmals gerendert werden kann. Stattdessen verwenden wir das React-Event-System und registrieren den Click-Handler direkt im React-Element &#x3C;button>:function Button(props) {
+return &#x3C;button onClick={props.onClick}>Sag Hallo&#x3C;/button>;
+}
+function HalloButton() {
+function handleClick() {
+alert('Hallo!');
+}
+return &#x3C;Button onClick={handleClick} />;
+}
+ReactDOM.render(
+&#x3C;HalloButton />,
+document.getElementById('container')
+);Probiere es mit CodePen ausDu kannst so viele isolierte Komponenten haben, wie du möchtest, und sie mit ReactDOM.createRoot() in verschiedenen DOM-Containern rendern. Wenn du mehr von deiner App in React konvertierst, kannst du diese nach und nach zu größeren Komponenten zusammenfassen und einige der ReactDOM.createRoot()-Aufrufe in die Hierarchie verschieben.Einbetten von React in eine Backbone-ViewBackbone Views verwenden normalerweise HTML-Strings oder Strings erzeugende Vorlagenfunktionen, um den Inhalt für ihre DOM-Elemente zu erstellen. Auch dieser Vorgang kann durch das Rendern einer React-Komponente ersetzt werden.Below, we will create a Backbone view called ParagraphView. It will override Backbone's render() function to render a React &#x3C;Paragraph> component into the DOM element provided by Backbone (this.el). Here, too, we are using ReactDOM.createRoot():function Paragraph(props) {
+return &#x3C;p>{props.text}&#x3C;/p>;
+}
+const ParagraphView = Backbone.View.extend({
+initialize(options) {
+this.reactRoot = ReactDOM.createRoot(this.el);
+},
+render() {
+const text = this.model.get('text');
+this.reactRoot.render(&#x3C;Paragraph text={text} />);
+return this;
+},
+remove() {
+this.reactRoot.unmount();
+Backbone.View.prototype.remove.call(this);
+}
+});Probiere es mit CodePen ausEs ist wichtig, dass wir in der Methode remove auch root.unmount() aufrufen, damit React die Registrierung von Event-Handlern und anderen Ressourcen aufhebt, die der Komponentenstruktur zugeordnet sind, wenn diese getrennt wird.Wenn eine Komponente aus einem React-Baum entfernt wird, wird die Bereinigung automatisch durchgeführt. Da wir jedoch den gesamten Baum manuell entfernen, müssen wir diese Methode aufrufen.Integration in ModellebenenIm Allgemeinen wird empfohlen, einen unidirektionalen Datenfluss zu verwenden, z. B. React state, Flux oder Redux, React-Komponenten können einen Modell-Layer aus anderen Frameworks und Bibliotheken verwenden.Verwenden von Backbone-Modellen in React-KomponenteDie einfachste Möglichkeit, Modelle und Sammlungen von Backbone aus einer React-Komponente zu verwenden, besteht darin, die verschiedenen Änderungsereignisse zu überwachen und manuell eine Aktualisierung zu erzwingen.Komponenten, die für das Rendern von Modellen verantwortlich sind, würden 'change'-Events abhören, während Komponenten, die für das Rendern von Sammlungen verantwortlich sind, 'add'- und 'remove'-Events abhören würden. Rufe in beiden Fällen this.forceUpdate() auf, um die Komponente mit den neuen Daten neu zu rendern.Im folgenden Beispiel rendert die List-Komponente eine Backbone-Sammlung, wobei die Item-Komponente zum Rendern einzelner Elemente verwendet wird.class Item extends React.Component {
+constructor(props) {
+super(props);
+this.handleChange = this.handleChange.bind(this);
+}
+handleChange() {
+this.forceUpdate();
+}
+componentDidMount() {
+this.props.model.on('change', this.handleChange);
+}
+componentWillUnmount() {
+this.props.model.off('change', this.handleChange);
+}
+render() {
+return &#x3C;li>{this.props.model.get('text')}&#x3C;/li>;
+}
+}
+class List extends React.Component {
+constructor(props) {
+super(props);
+this.handleChange = this.handleChange.bind(this);
+}
+handleChange() {
+this.forceUpdate();
+}
+componentDidMount() {
+this.props.collection.on('add', 'remove', this.handleChange);
+}
+componentWillUnmount() {
+this.props.collection.off('add', 'remove', this.handleChange);
+}
+render() {
+return (
+&#x3C;ul>
+{this.props.collection.map(model => (
+&#x3C;Item key={model.cid} model={model} />
+))}
+&#x3C;/ul>
+);
+}
+}Probiere es mit CodePen ausExtrahieren von Daten aus Backbone-ModellenFür die oben beschriebene Vorgehensweise müssen deine React-Komponenten die Backbone-Modelle und -Sammlungen kennen. Wenn du später auf eine andere Datenverwaltungslösung migrieren möchtest, möchtest du das Wissen über Backbone möglicherweise auf so wenige Teile des Codes wie möglich konzentrieren.Eine Lösung hierfür besteht darin, die Attribute des Modells bei jeder Änderung als reine Daten zu extrahieren und diese Logik an einem einzigen Ort zu speichern. Das Folgende ist eine übergeordnete Komponente, die alle Attribute eines Backbone-Modells in den State extrahiert und die Daten an die umschlossene Komponente übergibt.Auf diese Weise muss nur die übergeordnete Komponente die internen Daten des Backbone-Modells kennen, und die meisten Komponenten in der App können von Backbone unabhängig bleiben.Im folgenden Beispiel erstellen wir eine Kopie der Modellattribute, um den Anfangszustand zu bilden. Wir abonnieren das change-Event (und kündigen das Abonnement beim Abmelden) und aktualisieren in diesem Fall den State mit den aktuellen Attributen des Modells. Schließlich stellen wir sicher, dass wir nicht vergessen, das Abonnement des alten Modells zu kündigen und das neue zu abonnieren, wenn sich die Modellstütze selbst ändert.Beachte, dass dieses Beispiel in Bezug auf die Arbeit mit Backbone nicht erschöpfend sein soll, aber es sollte Ihnen eine Vorstellung davon geben, wie du dies allgemein angehen kannst:function connectToBackboneModel(WrappedComponent) {
+return class BackboneComponent extends React.Component {
+constructor(props) {
+super(props);
+this.state = Object.assign({}, props.model.attributes);
+this.handleChange = this.handleChange.bind(this);
+}
+componentDidMount() {
+this.props.model.on('change', this.handleChange);
+}
+componentWillReceiveProps(nextProps) {
+this.setState(Object.assign({}, nextProps.model.attributes));
+if (nextProps.model !== this.props.model) {
+this.props.model.off('change', this.handleChange);
+nextProps.model.on('change', this.handleChange);
+}
+}
+componentWillUnmount() {
+this.props.model.off('change', this.handleChange);
+}
+handleChange(model) {
+this.setState(model.changedAttributes());
+}
+render() {
+const propsExceptModel = Object.assign({}, this.props);
+delete propsExceptModel.model;
+return &#x3C;WrappedComponent {...propsExceptModel} {...this.state} />;
+}
+}
+}Um zu demonstrieren, wie es verwendet wird, verbinden wir eine NameInput-React-Komponente mit einem Backbone-Modell und aktualisieren dessen firstName-Attribut jedes Mal, wenn sich die Eingabe ändert:function NameInput(props) {
+return (
+&#x3C;p>
+&#x3C;input value={props.firstName} onChange={props.handleChange} />
+&#x3C;br />
+Ich heiße {props.firstName}.
+&#x3C;/p>
+);
+}
+const BackboneNameInput = connectToBackboneModel(NameInput);
+function Example(props) {
+function handleChange(e) {
+props.model.set('firstName', e.target.value);
+}
+return (
+&#x3C;BackboneNameInput
+model={props.model}
+handleChange={handleChange}
+/>
+);
+}
+const model = new Backbone.Model({ firstName: 'Frodo' });
+const root = ReactDOM.createRoot(document.getElementById('root'));
+root.render(&#x3C;Example model={model} />);Probiere es mit CodePen ausDiese Technik ist nicht auf Backbone beschränkt. Du kannst React mit jeder Modellbibliothek verwenden, indem du die Änderungen in den Lebenszyklusmethoden abonnierst und die Daten optional in den lokalen React-State kopierst.
+Go to TOC</select></p>
+        </section>
+      </section>
+    </section>
+  </body>
+</html>

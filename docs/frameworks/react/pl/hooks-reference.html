@@ -1,0 +1,570 @@
+<!doctype html>
+<html lang="pl">
+  <head>
+    <meta charset="utf-8">
+    <title>Hooki - interfejs API</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="https://raw.githubusercontent.com/shinokada/prism-coy-theme/main/theme_common.css">
+  </head>
+  <body>
+    <section id="hooki---interfejs-api" class="level1">
+      <h1>Hooki - interfejs API</h1>
+      <p><em>Hooki</em> są nowym dodatkiem w Reakcie 16.8. Pozwalają one używać stanu i innych funkcjonalności Reacta, bez użycia klas.</p>
+      <p>Ten rozdział opisuje interfejs API hooków wbudowanych w Reacta.</p>
+      <p>Jeżeli pierwszy raz stykasz się z hookami, możesz najpierw sprawdzić rozdział pt. <a href="./hooks-overview.html">„Hooki w pigułce”</a>. W rozdziale z <a href="./hooks-faq.html">najczęściej zadawanymi pytaniami</a> możesz znaleźć inne przydatne informacje.</p>
+      <ul>
+        <li><a href="#basic-hooks">Podstawowe hooki</a>
+          <ul>
+            <li><a href="#usestate"><code>useState</code></a></li>
+            <li><a href="#useeffect"><code>useEffect</code></a></li>
+            <li><a href="#usecontext"><code>useContext</code></a></li>
+          </ul>
+        </li>
+        <li><a href="#additional-hooks">Zaawansowane hooki</a>
+          <ul>
+            <li><a href="#usereducer"><code>useReducer</code></a></li>
+            <li><a href="#usecallback"><code>useCallback</code></a></li>
+            <li><a href="#usememo"><code>useMemo</code></a></li>
+            <li><a href="#useref"><code>useRef</code></a></li>
+            <li><a href="#useimperativehandle"><code>useImperativeHandle</code></a></li>
+            <li><a href="#uselayouteffect"><code>useLayoutEffect</code></a></li>
+            <li><a href="#usedebugvalue"><code>useDebugValue</code></a></li>
+            <li><a href="#usedeferredvalue"><code>useDeferredValue</code></a></li>
+            <li><a href="#usetransition"><code>useTransition</code></a></li>
+            <li><a href="#useid"><code>useId</code></a></li>
+          </ul>
+        </li>
+        <li><a href="#library-hooks">Hooki dla bibliotek</a>
+          <ul>
+            <li><a href="#usesyncexternalstore"><code>useSyncExternalStore</code></a></li>
+            <li><a href="#useinsertioneffect"><code>useInsertionEffect</code></a></li>
+          </ul>
+        </li>
+      </ul>
+      <section id="basic-hooks" class="level2">
+        <h2>Podstawowe hooki</h2>
+        <section id="usestate-usestate" class="level3">
+          <h3><code>useState</code> {#usestate}</h3>
+          <pre class="language-js"><code class="language-js"><span class="token keyword">const</span> <span class="token punctuation">[</span>state<span class="token punctuation">,</span> setState<span class="token punctuation">]</span> <span class="token operator">=</span> <span class="token function">useState</span><span class="token punctuation">(</span>initialState<span class="token punctuation">)</span><span class="token punctuation">;</span></code></pre>
+          <p>Zwraca zmienną przechowującą lokalny stan i funkcję do jego aktualizacji.</p>
+          <p>Podczas pierwszego renderowania zwrócona wartość stanu (<code>state</code>) jest taka sama jak wartość przekazana jako pierwszy argument (<code>initialState</code>).</p>
+          <p>Funkcja <code>setState</code> jest używana do aktualizacji stanu. Przyjmuje ona nową wartość stanu i kolejkuje ponowne renderowanie komponentu.</p>
+          <pre class="language-js"><code class="language-js"><span class="token function">setState</span><span class="token punctuation">(</span>newState<span class="token punctuation">)</span><span class="token punctuation">;</span></code></pre>
+          <p>Podczas kolejnych ponownych renderowań pierwszą wartością zwracaną przez <code>useState</code> będzie zawsze najnowszy, zaktualizowany stan.</p>
+          <blockquote>
+            <p>Uwaga</p>
+            <p>React daje gwarancje, że funkcja <code>setState</code> jest tożsamościowa i że nie zmienia się podczas kolejnych renderowań. Dlatego też można ją bezpiecznie pominąć na liście zależności <code>useEffect</code> i <code>useCallback</code>.</p>
+          </blockquote>
+          <section id="functional-updates" class="level4">
+            <h4>Aktualizacje funkcyjne</h4>
+            <p>Jeżeli nowy stan wyliczany jest z poprzedniego, możesz przekazać funkcję jako argument do <code>setState</code>. Funkcja otrzymuje poprzednią wartość stanu, a zwraca nową, zaktualizowaną wartość. Oto przykład komponentu licznika, który wykorzystuje obie formy <code>setState</code>:</p>
+            <pre class="language-js"><code class="language-js"><span class="token keyword">function</span> <span class="token function"><span class="token maybe-class-name">Counter</span></span><span class="token punctuation">(</span><span class="token parameter"><span class="token punctuation">{</span>initialCount<span class="token punctuation">}</span></span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  <span class="token keyword">const</span> <span class="token punctuation">[</span>count<span class="token punctuation">,</span> setCount<span class="token punctuation">]</span> <span class="token operator">=</span> <span class="token function">useState</span><span class="token punctuation">(</span>initialCount<span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token keyword control-flow">return</span> <span class="token punctuation">(</span>
+    <span class="token operator">&#x3C;</span><span class="token operator">></span>
+      <span class="token literal-property property">Licznik</span><span class="token operator">:</span> <span class="token punctuation">{</span>count<span class="token punctuation">}</span>
+      <span class="token operator">&#x3C;</span>button onClick<span class="token operator">=</span><span class="token punctuation">{</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token arrow operator">=></span> <span class="token function">setCount</span><span class="token punctuation">(</span>initialCount<span class="token punctuation">)</span><span class="token punctuation">}</span><span class="token operator">></span><span class="token maybe-class-name">Zresetuj</span><span class="token operator">&#x3C;</span><span class="token operator">/</span>button<span class="token operator">></span>
+      <span class="token operator">&#x3C;</span>button onClick<span class="token operator">=</span><span class="token punctuation">{</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token arrow operator">=></span> <span class="token function">setCount</span><span class="token punctuation">(</span><span class="token parameter">prevCount</span> <span class="token arrow operator">=></span> prevCount <span class="token operator">-</span> <span class="token number">1</span><span class="token punctuation">)</span><span class="token punctuation">}</span><span class="token operator">></span><span class="token operator">-</span><span class="token operator">&#x3C;</span><span class="token operator">/</span>button<span class="token operator">></span>
+      <span class="token operator">&#x3C;</span>button onClick<span class="token operator">=</span><span class="token punctuation">{</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token arrow operator">=></span> <span class="token function">setCount</span><span class="token punctuation">(</span><span class="token parameter">prevCount</span> <span class="token arrow operator">=></span> prevCount <span class="token operator">+</span> <span class="token number">1</span><span class="token punctuation">)</span><span class="token punctuation">}</span><span class="token operator">></span><span class="token operator">+</span><span class="token operator">&#x3C;</span><span class="token operator">/</span>button<span class="token operator">></span>
+    <span class="token operator">&#x3C;</span><span class="token operator">/</span><span class="token operator">></span>
+  <span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span></code></pre>
+            <p>Przyciski „+” i „-” wykorzystują formę funkcyjną, ponieważ zaktualizowana wartość bazuje na poprzedniej. Z kolei przycisk „Zresetuj” używa normalnej formy, ponieważ zawsze przywraca początkową wartość.</p>
+            <p>Jeśli twoja funkcja aktualizująca zwróci wartość identyczną z aktualnym stanem, nie spowoduje to ponownego wyrenderowania.</p>
+            <blockquote>
+              <p>Uwaga</p>
+              <p>W przeciwieństwie do metody <code>setState</code> znanej z komponentów klasowych, funkcja <code>useState</code> nie scala automatycznie obiektów reprezentujących aktualizację. Możesz powielić to zachowanie, łącząc formę aktualizacji funkcyjnej ze składnią operatora rozszczepienia (ang. <em>spread operator</em>) obiektu:</p>
+              <pre class="language-js"><code class="language-js"><span class="token keyword">const</span> <span class="token punctuation">[</span>state<span class="token punctuation">,</span> setState<span class="token punctuation">]</span> <span class="token operator">=</span> <span class="token function">useState</span><span class="token punctuation">(</span><span class="token punctuation">{</span><span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token function">setState</span><span class="token punctuation">(</span><span class="token parameter">prevState</span> <span class="token arrow operator">=></span> <span class="token punctuation">{</span>
+  <span class="token comment">// Object.assign również zadziała</span>
+  <span class="token keyword control-flow">return</span> <span class="token punctuation">{</span><span class="token spread operator">...</span>prevState<span class="token punctuation">,</span> <span class="token spread operator">...</span>updatedValues<span class="token punctuation">}</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">;</span></code></pre>
+              <p>Inną opcją jest hook <code>useReducer</code>, który jest bardziej odpowiedni do zarządzania obiektami stanów, zawierającymi wiele pod-wartości.</p>
+            </blockquote>
+          </section>
+          <section id="lazy-initial-state" class="level4">
+            <h4>Leniwa inicjalizacja stanu</h4>
+            <p>Argument <code>initialState</code> jest wartością stanu używaną podczas pierwszego rendera. W kolejnych renderowaniach jest on pomijany. Jeśli początkowy stan jest wynikiem kosztownych obliczeń, możesz zamiast tego przekazać funkcję, która zostanie wykonana tylko przy pierwszym renderowaniu:</p>
+            <pre class="language-js"><code class="language-js"><span class="token keyword">const</span> <span class="token punctuation">[</span>state<span class="token punctuation">,</span> setState<span class="token punctuation">]</span> <span class="token operator">=</span> <span class="token function">useState</span><span class="token punctuation">(</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token arrow operator">=></span> <span class="token punctuation">{</span>
+  <span class="token keyword">const</span> initialState <span class="token operator">=</span> <span class="token function">someExpensiveComputation</span><span class="token punctuation">(</span>props<span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token keyword control-flow">return</span> initialState<span class="token punctuation">;</span>
+<span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">;</span></code></pre>
+          </section>
+          <section id="bailing-out-of-a-state-update" class="level4">
+            <h4>Wycofanie się z aktualizacji stanu</h4>
+            <p>Jeżeli zaktualizujesz hook stanu do takiej samej wartości, jaka jest aktualnie przechowywana w stanie, React „wymiga się”, nie aktualizując potomków i nie uruchamiając efektów. (React używa <a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object/is#Description">algorytmu porównywania <code>Object.is</code></a>.)</p>
+            <p>Pamiętaj, że React może nadal wymagać wyrenderowania tego konkretnego komponentu, zanim wymiga się od dalszych zmian. Nie powinno to być problemem, ponieważ React nie będzie niepotrzebnie wchodził „głębiej” w drzewo. Jeśli wykonujesz kosztowne obliczenia podczas renderowania, możesz je zoptymalizować za pomocą <code>useMemo</code>.</p>
+          </section>
+          <section id="batching-of-state-updates" class="level4">
+            <h4>Grupowanie zmian stanu</h4>
+            <p>React w celach optymalizacyjnych potrafi zgrupować kilka zmian stanu, powodując tylko jedno ponowne renderowanie. W większości przypadków zwiększa to szybkość aplikacji i nie powinno wpływać na zachowanie twojej aplikacji.</p>
+            <p>Przed Reactem 18 grupowane były wyłącznie aktualizacje stanu wywołane z procedur obsługi zdarzeń (ang. <em>event handlers</em>). Od wersji React 18, <a href="/blog/2022/03/08/react-18-upgrade-guide.html#automatic-batching">grupowanie jest włączone domyślnie dla wszystkich aktualizacji</a>. Pamiętaj jednak, że React sam upewnia się, aby zmiany z kilku <em>różnych</em> zdarzeń zainicjowanych przez użytkownika (np. poprzez kliknięcie na przycisk dwukrotnie) zawsze były przetwarzane osobno i nigdy nie były grupowane. Zapobiega to błędom w logice.</p>
+            <p>W rzadkich sytuacjach, kiedy zajdzie potrzeba wymuszenia synchronicznej aktualizacji DOM, możesz skorzystać z <a href="./react-dom.html#flushsync"><code>flushSync</code></a>. Pamiętaj jednak, że taki zabieg wiąże się z spadkiem wydajności, więc korzystaj z niego z rozwagą.</p>
+          </section>
+        </section>
+        <section id="useeffect-useeffect" class="level3">
+          <h3><code>useEffect</code> {#useeffect}</h3>
+          <pre class="language-js"><code class="language-js"><span class="token function">useEffect</span><span class="token punctuation">(</span>didUpdate<span class="token punctuation">)</span><span class="token punctuation">;</span></code></pre>
+          <p>Przyjmuje funkcję zawierającą imperatywny kod, mogący zawierać efekty uboczne.</p>
+          <p>W ciele głównej funkcji komponentu (określanej jako <em>faza renderowania</em> Reacta) nie jest dozwolone mutowanie danych, tworzenie subskrypcji, timerów, logowanie i inne efekty uboczne. Robiąc tak należy spodziewać się mylących błędów i niespójności w interfejsie użytkownika.</p>
+          <p>Zamiast tego użyj <code>useEffect</code>. Funkcja przekazana do <code>useEffect</code> zostanie uruchomiona po tym, jak zmiany zostaną wyświetlone na ekranie. Traktuj efekty jako furtkę pomiędzy czysto funkcyjnym światem Reacta, a imperatywnym światem.</p>
+          <p>Domyślnie efekty są uruchamiane po każdym wyrenderowaniu komponentu, ale możesz sprawić, że uruchomią się <a href="#conditionally-firing-an-effect">tylko jeżeli zmienią się jakieś wartości</a>.</p>
+          <section id="cleaning-up-an-effect" class="level4">
+            <h4>Czyszczenie po efekcie</h4>
+            <p>Często efekty tworzą zasoby (np. subskrypcję czy ID timera), które należy uprzątnąć zanim komponent opuści ekran. Aby to uczynić funkcja przekazywana do <code>useEffect</code> może zwracać funkcję czyszczącą. Na przykład przy tworzeniu subskrypcji:</p>
+            <pre class="language-js"><code class="language-js"><span class="token function">useEffect</span><span class="token punctuation">(</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token arrow operator">=></span> <span class="token punctuation">{</span>
+  <span class="token keyword">const</span> subscription <span class="token operator">=</span> props<span class="token punctuation">.</span><span class="token property-access">source</span><span class="token punctuation">.</span><span class="token method function property-access">subscribe</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token keyword control-flow">return</span> <span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token arrow operator">=></span> <span class="token punctuation">{</span>
+    <span class="token comment">// Uprzątnij subskrypcję</span>
+    subscription<span class="token punctuation">.</span><span class="token method function property-access">unsubscribe</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token punctuation">}</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">;</span></code></pre>
+            <p>Aby zapobiec wyciekom pamięci, funkcja czyszcząca wywoływana jest zanim komponent zostanie usunięty z interfejsu użytkownika. Dodatkowo jeśli komponent jest renderowany kilkukrotnie (co zwykle ma miejsce), <strong>poprzedni efekt jest czyszczony przed wywołaniem kolejnego efektu</strong>. W naszym przykładzie oznacza to, że nowa subskrypcja tworzona jest przy każdej aktualizacji. W kolejnym podrozdziale opisujemy, jak uniknąć wywoływania efektów przy każdej aktualizacji.</p>
+          </section>
+          <section id="timing-of-effects" class="level4">
+            <h4>Momenty wywoływania efektów</h4>
+            <p>W przeciwieństwie do metod <code>componentDidMount</code> i <code>componentDidUpdate</code> funkcja przekazana do <code>useEffect</code> wywołana zostanie <strong>po tym</strong>, jak skomponowany i namalowany zostanie układ strony. Sprawia to, że nadaje się ona do obsługi wielu typowych efektów ubocznych, takich jak tworzenie subskrypcji czy obsługa zdarzeń. Większość tego typu operacji nie powinna powstrzymywać przeglądarki przed odświeżeniem widoku.</p>
+            <p>Jednakże nie wszystkie efekty mogą zostać odroczone. Na przykład manipulacja drzewem DOM, widoczna dla użytkownika, musi zostać wywołana synchronicznie przed każdym malowaniem, tak aby użytkownik nie dostrzegł wizualnej niespójności. (Rozróżnienie to w swej koncepcji podobne jest do pasywnych i aktywnych obserwatorów zdarzeń (ang. <em>event listeners</em>).) Dla tego typu efektów React przewiduje dodatkowy hook, nazwany <a href="#uselayouteffect"><code>useLayoutEffect</code></a>. Ma on tę samą sygnaturę co <code>useEffect</code>, różnie się jedynie tym, kiedy jest wywoływany.</p>
+            <p>Począwszy od Reacta 18, funkcja przekazana do <code>useEffect</code> jest wykonywana synchronicznie <strong>przed</strong> skomponowaniem i namalowaniem układu na stronie, jeżeli wywołanie jej wynika z akcji użytkownika, np. kliknięcia, lub jeśli jest wynikiem aktualizacji opakowanej w <a href="./react-dom.html#flushsync"><code>flushSync</code></a>. Takie zachowanie pozwala na to, by wynik efektu był obserwowalny przez system zdarzeń albo przez kod wywołujący <a href="./react-dom.html#flushsync"><code>flushSync</code></a>.</p>
+            <blockquote>
+              <p>Uwaga</p>
+              <p>Dotyczy to jedynie momentu wywołania funkcji przekazanej do <code>useEffect</code> - aktualizacje zaplanowane wewnątrz efektu nadal są odraczane. Różni się to od <a href="#uselayouteffect"><code>useLayoutEffect</code></a>, który wywołuje funkcję i przetwarza aktualizacje natychmiast.</p>
+            </blockquote>
+          </section>
+          <section id="conditionally-firing-an-effect" class="level4">
+            <h4>Warunkowe uruchamianie efektów</h4>
+            <p>Domyślnym zachowaniem efektów jest ich uruchamianie po każdym pomyślnym renderze. W ten sposób efekt jest zawsze tworzony na nowo, jeśli zmieni się jedna z jego zależności.</p>
+            <p>Jednakże w pewnych przypadkach może się to okazać zabójcze - choćby w przykładzie subskrypcji z poprzedniego podrozdziału. Nie ma potrzeby tworzyć nowej subskrypcji przy każdej aktualizacji, a jedynie wtedy, gdy zmieni się właściwość <code>source</code>.</p>
+            <p>Aby zaimplementować takie zachowanie należy przekazać do <code>useEffect</code> drugi argument, będący tablicą wartości, od których zależy efekt. Nasz zaktualizowany przykład wygląda następująco:</p>
+            <pre class="language-js"><code class="language-js"><span class="token function">useEffect</span><span class="token punctuation">(</span>
+  <span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token arrow operator">=></span> <span class="token punctuation">{</span>
+    <span class="token keyword">const</span> subscription <span class="token operator">=</span> props<span class="token punctuation">.</span><span class="token property-access">source</span><span class="token punctuation">.</span><span class="token method function property-access">subscribe</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token keyword control-flow">return</span> <span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token arrow operator">=></span> <span class="token punctuation">{</span>
+      subscription<span class="token punctuation">.</span><span class="token method function property-access">unsubscribe</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span><span class="token punctuation">;</span>
+  <span class="token punctuation">}</span><span class="token punctuation">,</span>
+  <span class="token punctuation">[</span>props<span class="token punctuation">.</span><span class="token property-access">source</span><span class="token punctuation">]</span><span class="token punctuation">,</span>
+<span class="token punctuation">)</span><span class="token punctuation">;</span></code></pre>
+            <p>Teraz subskrypcja zostanie stworzona ponownie tylko wtedy, gdy zmieni się właściwość <code>props.source</code>.</p>
+            <blockquote>
+              <p>Uwaga</p>
+              <p>Jeśli korzystasz z tej techniki optymalizacji, upewnij się, że przekazywana tablica zawiera <strong>wszystkie wartości z zasięgu komponentu (takie jak właściwości (ang. <em>props</em>) i stan), które zmieniają się w czasie i które są używane przez efekt.</strong> W przeciwnym razie twój kod odwoła się do starych wartości z poprzednich renderowań. Przeczytaj też, <a href="./hooks-faq.html#is-it-safe-to-omit-functions-from-the-list-of-dependencies">jak radzić sobie z funkcjami</a> i <a href="./hooks-faq.html#what-can-i-do-if-my-effect-dependencies-change-too-often">co robić, gdy tablica zmienia się zbyt często</a>.</p>
+              <p>Jeśli chcesz przeprowadzić efekt i posprzątać po nim tylko raz (podczas montowania i odmontowania), możesz przekazać pustą tablicę (<code>[]</code>) jako drugi argument. Dzięki temu React wie, że twój efekt nie zależy od <em>jakichkolwiek</em> wartości właściwości lub stanu, więc nigdy nie musi być ponownie uruchamiany. Nie jest to traktowane jako przypadek specjalny -- wynika to bezpośrednio z tego, jak zawsze działa tablica wejść.</p>
+              <p>Jeśli przekażesz pustą tablicę (<code>[]</code>) właściwości i stan wewnątrz efektu zawsze przyjmą swoje początkowe wartości. Pomimo że przekazywanie <code>[]</code> jest bliższe temu, co znamy z metod <code>componentDidMount</code> i <code>componentWillUnmount</code>, zwykle istnieją <a href="./hooks-faq.html#is-it-safe-to-omit-functions-from-the-list-of-dependencies">lepsze</a> <a href="./hooks-faq.html#what-can-i-do-if-my-effect-dependencies-change-too-often">rozwiązania</a> pomagające uniknąć zbyt częstego powtarzania efektów. Nie zapominaj też, że React opóźni wywołanie <code>useEffect</code> do momentu, aż przeglądarka nie skończy rysować widoku, więc dodatkowa praca tutaj nie jest dużym problemem.</p>
+              <p>Polecamy użycie reguły <a href="https://github.com/facebook/react/issues/14920"><code>exhaustive-deps</code></a>, będącej częścią naszego pakietu <a href="https://www.npmjs.com/package/eslint-plugin-react-hooks#installation"><code>eslint-plugin-react-hooks</code></a>. Ostrzega ona, gdy zależności są niepoprawnie zdefiniowane i sugeruje poprawki.</p>
+            </blockquote>
+            <p>Tablica zależności nie jest przekazywana jako argumenty do funkcji efektu. Koncepcyjnie jednak to właśnie przedstawiają: każda wartość, do której odwołuje się funkcja efektu, powinna również pojawić się w tablicy zależności. W przyszłości dostatecznie zaawansowany kompilator mógłby automatycznie tworzyć tę tablicę.</p>
+          </section>
+        </section>
+        <section id="usecontext-usecontext" class="level3">
+          <h3><code>useContext</code> {#usecontext}</h3>
+          <pre class="language-js"><code class="language-js"><span class="token keyword">const</span> value <span class="token operator">=</span> <span class="token function">useContext</span><span class="token punctuation">(</span><span class="token maybe-class-name">MyContext</span><span class="token punctuation">)</span><span class="token punctuation">;</span></code></pre>
+          <p>Przyjmuje obiekt kontekstu (wartość zwróconą przez <code>React.createContext</code>) i zwraca jego aktualną wartość. Wartość kontekstu jest określana przez właściwość (ang. <em>prop</em>) <code>value</code> najbliższego rodzica <code>&#x3C;MyContext.Provider></code> wywołującego komponentu.</p>
+          <p>Kiedy najbliższy rodzic <code>&#x3C;MyContext.Provider></code> zostanie zaktualizowany, ten hook wywoła ponowne renderowanie komponentu z najnowszą wartością kontekstową <code>value</code> przekazaną dostawcy (ang. <em>provider</em>) <code>MyContext</code>. Nawet jeśli któryś z rodziców korzysta z funkcji <a href="./react-api.html#reactmemo"><code>React.memo</code></a> lub metody <a href="./react-component.html#shouldcomponentupdate"><code>shouldComponentUpdate</code></a>, nastąpi ponowne wyrenderowanie poddrzewa, począwszy od komponentu korzystającego z <code>useContext</code>.</p>
+          <p>Pamiętaj, że argument przekazany do <code>useContext</code> musi być <em>samym obiektem kontekstu</em>:</p>
+          <ul>
+            <li><strong>Poprawnie:</strong> <code>useContext(MyContext)</code></li>
+            <li><strong>Niepoprawnie:</strong> <code>useContext(MyContext.Consumer)</code></li>
+            <li><strong>Niepoprawnie:</strong> <code>useContext(MyContext.Provider)</code></li>
+          </ul>
+          <p>Komponent wywołujący <code>useContext</code> będzie zawsze ponownie renderowany jeśli zmieni się wartość kontekstu. Jeżeli ponowne renderowanie danego komponentu jest kosztowne, możesz <a href="https://github.com/facebook/react/issues/15156#issuecomment-474590693">zoptymalizować to zachowanie</a>, używając techniki zapamiętywania (ang. <em>memoization</em>).</p>
+          <blockquote>
+            <p>Podpowiedź</p>
+            <p>Jeśli znasz już interfejs API kontekstu -- <code>useContext(MyContext)</code> jest odpowiednikiem klasowego <code>static contextType = MyContext</code> lub też <code>&#x3C;MyContext.Consumer></code>.</p>
+            <p><code>useContext(MyContext)</code> pozwala tylko na <em>czytanie</em> kontekstu i nasłuchiwanie jego zmian. Wciąż wymagane jest aby w drzewie, ponad komponentem, znalazł się <code>&#x3C;MyContext.Provider></code> by mógł <em>dostarczyć</em> (ang. <em>provide</em>) wartość tego kontekstu.</p>
+          </blockquote>
+          <p><strong>W całości z użyciem Context.Provider wygląda to tak:</strong></p>
+          <pre class="language-js{31-36}"><code class="language-js{31-36}">const themes = {
+  light: {
+    foreground: "#000000",
+    background: "#eeeeee"
+  },
+  dark: {
+    foreground: "#ffffff",
+    background: "#222222"
+  }
+};
+
+const ThemeContext = React.createContext(themes.light);
+
+function App() {
+  return (
+    &#x3C;ThemeContext.Provider value={themes.dark}>
+      &#x3C;Toolbar />
+    &#x3C;/ThemeContext.Provider>
+  );
+}
+
+function Toolbar(props) {
+  return (
+    &#x3C;div>
+      &#x3C;ThemedButton />
+    &#x3C;/div>
+  );
+}
+
+function ThemedButton() {
+  const theme = useContext(ThemeContext);
+
+  return (
+    &#x3C;button style={{ background: theme.background, color: theme.foreground }}>
+      Mam style z motywu kontekstowego!
+    &#x3C;/button>
+  );
+}</code></pre>
+          <p>Ten przykład został przygotowany pod hooki w oparciu o kod z rozdziału pt. <a href="./context.html">Zaawansowany poradnik dot. kontekstów</a>, w którym znajdziesz więcej informacji o tym, kiedy i jak używać kontekstów.</p>
+        </section>
+      </section>
+      <section id="additional-hooks" class="level2">
+        <h2>Zaawansowane hooki</h2>
+        <p>Poniższe hooki są albo są wariantami tych podstawowych, z poprzedniego podrozdziału, albo są stosowane tylko w określonych skrajnych wypadkach. Nie stresuj się na myśl o nauce o nich.</p>
+        <section id="usereducer-usereducer" class="level3">
+          <h3><code>useReducer</code> {#usereducer}</h3>
+          <pre class="language-js"><code class="language-js"><span class="token keyword">const</span> <span class="token punctuation">[</span>state<span class="token punctuation">,</span> dispatch<span class="token punctuation">]</span> <span class="token operator">=</span> <span class="token function">useReducer</span><span class="token punctuation">(</span>reducer<span class="token punctuation">,</span> initialArg<span class="token punctuation">,</span> init<span class="token punctuation">)</span><span class="token punctuation">;</span></code></pre>
+          <p>Alternatywa dla hooka <a href="#usestate"><code>useState</code></a>. Przyjmuje reduktor (ang. <em>reducer</em>), będący funkcją o sygnaturze <code>(stan, akcja) => nowyStan</code>, a zwraca aktualny stan w parze z metodą <code>dispatch</code>. (Jeżeli znasz bibliotekę Redux, wiesz już, jak to działa.)</p>
+          <p><code>useReducer</code> sprawdza się lepiej od <code>useState</code> tam, gdzie występuje skomplikowana logika związana ze stanem, obejmująca wiele pod-wartości lub gdy następny stan zależy od poprzedniego. <code>useReducer</code> pozwala też zoptymalizować wydajność komponentów uruchamiających głębokie aktualizacje, ponieważ zamiast przekazywać funkcje zwrotne (ang. <em>callback</em>), <a href="./hooks-faq.html#how-to-avoid-passing-callbacks-down">możesz przekazać funkcję <code>dispatch</code> w dół drzewa</a>.</p>
+          <p>Oto przykład licznika z podrozdziału <a href="#usestate"><code>useState</code></a> przepisany z użyciem reduktora:</p>
+          <pre class="language-js"><code class="language-js"><span class="token keyword">const</span> initialState <span class="token operator">=</span> <span class="token punctuation">{</span><span class="token literal-property property">count</span><span class="token operator">:</span> <span class="token number">0</span><span class="token punctuation">}</span><span class="token punctuation">;</span>
+
+<span class="token keyword">function</span> <span class="token function">reducer</span><span class="token punctuation">(</span><span class="token parameter">state<span class="token punctuation">,</span> action</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  <span class="token keyword control-flow">switch</span> <span class="token punctuation">(</span>action<span class="token punctuation">.</span><span class="token property-access">type</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token keyword">case</span> <span class="token string">'increment'</span><span class="token operator">:</span>
+      <span class="token keyword control-flow">return</span> <span class="token punctuation">{</span><span class="token literal-property property">count</span><span class="token operator">:</span> state<span class="token punctuation">.</span><span class="token property-access">count</span> <span class="token operator">+</span> <span class="token number">1</span><span class="token punctuation">}</span><span class="token punctuation">;</span>
+    <span class="token keyword">case</span> <span class="token string">'decrement'</span><span class="token operator">:</span>
+      <span class="token keyword control-flow">return</span> <span class="token punctuation">{</span><span class="token literal-property property">count</span><span class="token operator">:</span> state<span class="token punctuation">.</span><span class="token property-access">count</span> <span class="token operator">-</span> <span class="token number">1</span><span class="token punctuation">}</span><span class="token punctuation">;</span>
+    <span class="token keyword module">default</span><span class="token operator">:</span>
+      <span class="token keyword control-flow">throw</span> <span class="token keyword">new</span> <span class="token class-name">Error</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token punctuation">}</span>
+<span class="token punctuation">}</span>
+
+<span class="token keyword">function</span> <span class="token function"><span class="token maybe-class-name">Counter</span></span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  <span class="token keyword">const</span> <span class="token punctuation">[</span>state<span class="token punctuation">,</span> dispatch<span class="token punctuation">]</span> <span class="token operator">=</span> <span class="token function">useReducer</span><span class="token punctuation">(</span>reducer<span class="token punctuation">,</span> initialState<span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token keyword control-flow">return</span> <span class="token punctuation">(</span>
+    <span class="token operator">&#x3C;</span><span class="token operator">></span>
+      <span class="token literal-property property">Licznik</span><span class="token operator">:</span> <span class="token punctuation">{</span>state<span class="token punctuation">.</span><span class="token property-access">count</span><span class="token punctuation">}</span>
+      <span class="token operator">&#x3C;</span>button onClick<span class="token operator">=</span><span class="token punctuation">{</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token arrow operator">=></span> <span class="token function">dispatch</span><span class="token punctuation">(</span><span class="token punctuation">{</span><span class="token literal-property property">type</span><span class="token operator">:</span> <span class="token string">'decrement'</span><span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">}</span><span class="token operator">></span><span class="token operator">-</span><span class="token operator">&#x3C;</span><span class="token operator">/</span>button<span class="token operator">></span>
+      <span class="token operator">&#x3C;</span>button onClick<span class="token operator">=</span><span class="token punctuation">{</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token arrow operator">=></span> <span class="token function">dispatch</span><span class="token punctuation">(</span><span class="token punctuation">{</span><span class="token literal-property property">type</span><span class="token operator">:</span> <span class="token string">'increment'</span><span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">}</span><span class="token operator">></span><span class="token operator">+</span><span class="token operator">&#x3C;</span><span class="token operator">/</span>button<span class="token operator">></span>
+    <span class="token operator">&#x3C;</span><span class="token operator">/</span><span class="token operator">></span>
+  <span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span></code></pre>
+          <blockquote>
+            <p>Uwaga</p>
+            <p>React daje gwarancje, że funkcja <code>dispatch</code> jest tożsamościowa i że nie zmienia się podczas kolejnych renderowań. Dlatego też można ją bezpiecznie pominąć na liście zależności <code>useEffect</code> i <code>useCallback</code>.</p>
+          </blockquote>
+          <section id="specifying-the-initial-state" class="level4">
+            <h4>Określanie stanu początkowego</h4>
+            <p>Istnieją dwa sposoby na inicjalizację stanu <code>useReducer</code>. W zależności od potrzeb, możesz wybrać jeden z nich. Najprostszym sposobem jest przekazanie początkowego stanu, jako drugi argument:</p>
+            <pre class="language-js{3}"><code class="language-js{3}">  const [state, dispatch] = useReducer(
+    reducer,
+    {count: initialCount}
+  );</code></pre>
+            <blockquote>
+              <p>Uwaga</p>
+              <p>React nie używa spopularyzowanej przez Reduxa konwencji argumentu <code>state = initialState</code>. Może się zdarzyć, że początkowa wartość zależy od właściwości (ang. <em>props</em>), a więc jest ona określana przy wywoływaniu hooka. Nie zalecamy, ale jeśli naprawdę musisz, możesz wywołać <code>useReducer(reducer, undefined, reducer)</code>, aby zasymulować zachowanie Reduxa.</p>
+            </blockquote>
+          </section>
+          <section id="lazy-initialization" class="level4">
+            <h4>Leniwa inicjalizacja</h4>
+            <p>Możesz też leniwe zainicjalizować stan początkowy. Aby to zrobić, musisz przekazać funkcję inicjalizującą <code>init</code>, jako trzeci argument. Początkowy stan zostanie ustawiony na wynik wywołania <code>init(initialArg)</code>.</p>
+            <p>Pozwala to na wyodrębnić logikę dotyczącą obliczania stanu początkowego poza reduktor. Jest to też przydatne do późniejszego resetowania stanu, w odpowiedzi na akcję:</p>
+            <pre class="language-js{1-3,11-12,19,24}"><code class="language-js{1-3,11-12,19,24}">function init(initialCount) {
+  return {count: initialCount};
+}
+
+function reducer(state, action) {
+  switch (action.type) {
+    case 'increment':
+      return {count: state.count + 1};
+    case 'decrement':
+      return {count: state.count - 1};
+    case 'reset':
+      return init(action.payload);
+    default:
+      throw new Error();
+  }
+}
+
+function Counter({initialCount}) {
+  const [state, dispatch] = useReducer(reducer, initialCount, init);
+  return (
+    &#x3C;>
+      Licznik: {state.count}
+      &#x3C;button
+        onClick={() => dispatch({type: 'reset', payload: initialCount})}>
+        Zresetuj
+      &#x3C;/button>
+      &#x3C;button onClick={() => dispatch({type: 'decrement'})}>-&#x3C;/button>
+      &#x3C;button onClick={() => dispatch({type: 'increment'})}>+&#x3C;/button>
+    &#x3C;/>
+  );
+}</code></pre>
+          </section>
+          <section id="bailing-out-of-a-dispatch" class="level4">
+            <h4>Wycofanie się z posłania akcji</h4>
+            <p>Jeżeli reduktor zwróci tę samą wartość, jaką aktualnie przyjmuje stan, React „wymiga się” od aktualizacji potomków i uruchomienia efektów. (React używa <a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object/is#Description">algorytmu porównywania <code>Object.is</code></a>.)</p>
+            <p>Pamiętaj, że React może nadal wymagać wyrenderowania tego konkretnego komponentu, zanim wymiga się od dalszych zmian. Nie powinno to być problemem, ponieważ React nie będzie niepotrzebnie wchodził „głębiej” w drzewo. Jeśli wykonujesz kosztowne obliczenia podczas renderowania, możesz je zoptymalizować za pomocą <code>useMemo</code>.</p>
+          </section>
+        </section>
+        <section id="usecallback-usecallback" class="level3">
+          <h3><code>useCallback</code> {#usecallback}</h3>
+          <pre class="language-js"><code class="language-js"><span class="token keyword">const</span> memoizedCallback <span class="token operator">=</span> <span class="token function">useCallback</span><span class="token punctuation">(</span>
+  <span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token arrow operator">=></span> <span class="token punctuation">{</span>
+    <span class="token function">doSomething</span><span class="token punctuation">(</span>a<span class="token punctuation">,</span> b<span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token punctuation">}</span><span class="token punctuation">,</span>
+  <span class="token punctuation">[</span>a<span class="token punctuation">,</span> b<span class="token punctuation">]</span><span class="token punctuation">,</span>
+<span class="token punctuation">)</span><span class="token punctuation">;</span></code></pre>
+          <p>Zwraca <a href="https://en.wikipedia.org/wiki/Memoization">zapamiętaną</a> (ang <em>memoized</em>) funkcję zwrotną (ang. <em>callback</em>).</p>
+          <p>Przekaż funkcję zwrotną i tablicę zależności. <code>useCallback</code> zwróci zapamiętaną wersję funkcji, która zmieni się tylko wtedy, gdy zmieni się któraś z zależności. Jest to przydatne podczas przekazywania funkcji zwrotnych do zoptymalizowanych komponentów podrzędnych, które opierają się na równości referencji, aby zapobiec niepotrzebnym renderowaniom (np. <code>shouldComponentUpdate</code>).</p>
+          <p><code>useCallback(fn, deps)</code> jest równoważne <code>useMemo(() => fn, deps)</code>.</p>
+          <blockquote>
+            <p>Uwaga</p>
+            <p>Tablica zależności nie jest przekazywana jako argumenty do funkcji zwrotnej. Koncepcyjnie jednak to właśnie przedstawiają: każda wartość, do której odwołuje się funkcja zwrotna, powinna również pojawić się w tablicy zależności. W przyszłości dostatecznie zaawansowany kompilator mógłby automatycznie tworzyć tę tablicę.</p>
+            <p>Polecamy użycie reguły <a href="https://github.com/facebook/react/issues/14920"><code>exhaustive-deps</code></a>, będącej częścią naszego pakietu <a href="https://www.npmjs.com/package/eslint-plugin-react-hooks#installation"><code>eslint-plugin-react-hooks</code></a>. Ostrzega ona, gdy zależności są niepoprawnie zdefiniowane i sugeruje poprawki.</p>
+          </blockquote>
+        </section>
+        <section id="usememo-usememo" class="level3">
+          <h3><code>useMemo</code> {#usememo}</h3>
+          <pre class="language-js"><code class="language-js"><span class="token keyword">const</span> memoizedValue <span class="token operator">=</span> <span class="token function">useMemo</span><span class="token punctuation">(</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token arrow operator">=></span> <span class="token function">computeExpensiveValue</span><span class="token punctuation">(</span>a<span class="token punctuation">,</span> b<span class="token punctuation">)</span><span class="token punctuation">,</span> <span class="token punctuation">[</span>a<span class="token punctuation">,</span> b<span class="token punctuation">]</span><span class="token punctuation">)</span><span class="token punctuation">;</span></code></pre>
+          <p>Zwraca <a href="https://en.wikipedia.org/wiki/Memoization">zapamiętaną</a> (ang <em>memoized</em>) wartość.</p>
+          <p>Przekaż funkcję tworzącą i tablicę zależności. <code>useMemo</code> obliczy ponownie zapamiętaną wartość tylko wtedy, gdy zmieni się któraś z zależności. Ta optymalizacja pozwala uniknąć kosztownych obliczeń przy każdym renderowaniu.</p>
+          <p>Pamiętaj, że funkcja przekazana do <code>useMemo</code> uruchamiana jest podczas renderowania. Nie należy w niej robić niczego, czego normalnie nie robiono by podczas renderowania. Na przykład wszelkie efekty uboczne przynależą do <code>useEffect</code>, a nie <code>useMemo</code>.</p>
+          <p>Jeśli nie zostanie przekazana żadna tablica, nowa wartość będzie obliczana przy każdym renderowaniu.</p>
+          <p><strong>Możesz traktować <code>useMemo</code> jako metodę optymalizacji wydajności, nie jako semantyczną gwarancję.</strong> W przyszłości React może zdecydować się „zapomnieć” niektóre z wcześniej zapamiętanych wartości i ponownie obliczyć je przy następnym renderowaniu, np. aby zwolnić pamięć dla komponentów znajdujących się poza ekranem. Pisz swój kod tak, aby działał bez użycia hooka <code>useMemo</code>, a następnie dodaj go aby zoptymalizować wydajność.</p>
+          <blockquote>
+            <p>Uwaga</p>
+            <p>Tablica zależności nie jest przekazywana jako argumenty do funkcji zwrotnej. Koncepcyjnie jednak to właśnie przedstawiają: każda wartość, do której odwołuje się funkcja zwrotna, powinna również pojawić się w tablicy zależności. W przyszłości dostatecznie zaawansowany kompilator mógłby automatycznie tworzyć tę tablicę.</p>
+            <p>Polecamy użycie reguły <a href="https://github.com/facebook/react/issues/14920"><code>exhaustive-deps</code></a>, będącej częścią naszego pakietu <a href="https://www.npmjs.com/package/eslint-plugin-react-hooks#installation"><code>eslint-plugin-react-hooks</code></a>. Ostrzega ona, gdy zależności są niepoprawnie zdefiniowane i sugeruje poprawki.</p>
+          </blockquote>
+        </section>
+        <section id="useref-useref" class="level3">
+          <h3><code>useRef</code> {#useref}</h3>
+          <pre class="language-js"><code class="language-js"><span class="token keyword">const</span> refContainer <span class="token operator">=</span> <span class="token function">useRef</span><span class="token punctuation">(</span>initialValue<span class="token punctuation">)</span><span class="token punctuation">;</span></code></pre>
+          <p><code>useRef</code> zwraca mutowalny (ang. <em>mutable</em>) obiekt, którego właściwość <code>.current</code> jest inicjalizowana wartością przekazaną jako argument (<code>initialValue</code>). Zwrócony obiekt będzie trwał przez cały cykl życia komponentu.</p>
+          <p>Częstym przypadkiem użycia jest imperatywny dostęp do potomka:</p>
+          <pre class="language-js"><code class="language-js"><span class="token keyword">function</span> <span class="token function"><span class="token maybe-class-name">TextInputWithFocusButton</span></span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  <span class="token keyword">const</span> inputEl <span class="token operator">=</span> <span class="token function">useRef</span><span class="token punctuation">(</span><span class="token keyword null nil">null</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token keyword">const</span> <span class="token function-variable function">onButtonClick</span> <span class="token operator">=</span> <span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token arrow operator">=></span> <span class="token punctuation">{</span>
+    <span class="token comment">// `current` wskazuje na zamontowany element kontrolki formularza</span>
+    inputEl<span class="token punctuation">.</span><span class="token property-access">current</span><span class="token punctuation">.</span><span class="token method function property-access">focus</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token punctuation">}</span><span class="token punctuation">;</span>
+  <span class="token keyword control-flow">return</span> <span class="token punctuation">(</span>
+    <span class="token operator">&#x3C;</span><span class="token operator">></span>
+      <span class="token operator">&#x3C;</span>input ref<span class="token operator">=</span><span class="token punctuation">{</span>inputEl<span class="token punctuation">}</span> type<span class="token operator">=</span><span class="token string">"text"</span> <span class="token operator">/</span><span class="token operator">></span>
+      <span class="token operator">&#x3C;</span>button onClick<span class="token operator">=</span><span class="token punctuation">{</span>onButtonClick<span class="token punctuation">}</span><span class="token operator">></span><span class="token maybe-class-name">Ustaw</span> skupienie na kontrolce formularza<span class="token operator">&#x3C;</span><span class="token operator">/</span>button<span class="token operator">></span>
+    <span class="token operator">&#x3C;</span><span class="token operator">/</span><span class="token operator">></span>
+  <span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span></code></pre>
+          <p>Zasadniczo <code>useRef</code> jest jak „pudełko”, które może przechowywać mutowalną wartość w swojej właściwości <code>.current</code>.</p>
+          <p>Być może znasz już referencje (ang. <em>ref</em>) jako sposób na <a href="./refs-and-the-dom.html">dostęp do drzewa DOM</a>. Jeśli przekażesz obiekt referencji do Reacta, korzystając ze składni <code>&#x3C;div ref={myRef} /></code>, React ustawi jego właściwość <code>.current</code> na odpowiedni węzeł drzewa DOM przy każdej zmianie tego węzła.</p>
+          <p>Jednakże hook <code>useRef()</code> jest przydatny nie tylko jako atrybut <code>ref</code>. Jest też <a href="./hooks-faq.html#is-there-something-like-instance-variables">przydatną metodą na przechowywanie mutowalnej wartości</a>, podobną do właściwości instancji w przypadku komponentów klasowych.</p>
+          <p>Sposób ten zadziała ponieważ <code>useRef</code> tworzy czysty javascriptowy obiekt. Jedyną różnicą pomiędzy wywołaniem <code>useRef()</code>, a samodzielnym tworzeniem obiektu <code>{current: ...}</code> jest to, że <code>useRef</code> zwróci referencję tego samego obiektu przy każdym renderowaniu.</p>
+          <p>Miej na uwadze fakt, że <code>useRef</code> <em>nie</em> informuje o tym, że jego wartość się zmieniła. Zmiana (mutowanie) właściwości <code>.current</code> nie spowoduje ponownego renderowania. Jeżeli chcesz uruchomić jakiś kod, w momencie gdy React dopina i odpina referencje do węzła DOM, możesz zamiast tego użyć <a href="./hooks-faq.html#how-can-i-measure-a-dom-node">funkcji zwrotnej</a>.</p>
+        </section>
+        <section id="useimperativehandle-useimperativehandle" class="level3">
+          <h3><code>useImperativeHandle</code> {#useimperativehandle}</h3>
+          <pre class="language-js"><code class="language-js"><span class="token function">useImperativeHandle</span><span class="token punctuation">(</span>ref<span class="token punctuation">,</span> createHandle<span class="token punctuation">,</span> <span class="token punctuation">[</span>deps<span class="token punctuation">]</span><span class="token punctuation">)</span></code></pre>
+          <p><code>useImperativeHandle</code> dostosowuje wartość instancji, jaka przekazywana jest komponentom przodków, kiedy używają właściwości <code>ref</code>. Jak zwykle zalecamy aby w większości przypadków unikać imperatywnego kodu korzystającego z referencji. <code>useImperativeHandle</code> powinien być użyty w parze z <a href="./react-api.html#reactforwardref"><code>forwardRef</code></a>:</p>
+          <pre class="language-js"><code class="language-js"><span class="token keyword">function</span> <span class="token function"><span class="token maybe-class-name">FancyInput</span></span><span class="token punctuation">(</span><span class="token parameter">props<span class="token punctuation">,</span> ref</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  <span class="token keyword">const</span> inputRef <span class="token operator">=</span> <span class="token function">useRef</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token function">useImperativeHandle</span><span class="token punctuation">(</span>ref<span class="token punctuation">,</span> <span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token arrow operator">=></span> <span class="token punctuation">(</span><span class="token punctuation">{</span>
+    <span class="token function-variable function">focus</span><span class="token operator">:</span> <span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token arrow operator">=></span> <span class="token punctuation">{</span>
+      inputRef<span class="token punctuation">.</span><span class="token property-access">current</span><span class="token punctuation">.</span><span class="token method function property-access">focus</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+  <span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token keyword control-flow">return</span> <span class="token operator">&#x3C;</span>input ref<span class="token operator">=</span><span class="token punctuation">{</span>inputRef<span class="token punctuation">}</span> <span class="token spread operator">...</span> <span class="token operator">/</span><span class="token operator">></span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+<span class="token maybe-class-name">FancyInput</span> <span class="token operator">=</span> <span class="token function">forwardRef</span><span class="token punctuation">(</span><span class="token maybe-class-name">FancyInput</span><span class="token punctuation">)</span><span class="token punctuation">;</span></code></pre>
+          <p>W tym przykładzie komponent rodzica, który renderuje <code>&#x3C;FancyInput ref={inputRef} /></code> będzie w stanie wywołać <code>inputRef.current.focus()</code>.</p>
+        </section>
+        <section id="uselayouteffect-uselayouteffect" class="level3">
+          <h3><code>useLayoutEffect</code> {#uselayouteffect}</h3>
+          <p>Sygnatura funkcji jest taka sama jak <code>useEffect</code>, ale jest ona wywoływana synchronicznie po nałożeniu zmian na drzewo DOM. Użyj tego hooka, aby odczytać układ (ang. <em>layout</em>) z drzewa DOM i synchronicznie wyrenderować komponent ponownie. Bufor <code>useLayoutEffect</code> zostanie opróżniony synchronicznie, zanim przeglądarka będzie miała szansę na malowanie.</p>
+          <p>Kiedy to tylko możliwe używaj <code>useEffect</code> aby uniknąć blokujących aktualizacji wizualnych.</p>
+          <blockquote>
+            <p>Podpowiedź</p>
+            <p>Jeżeli przeprowadzasz migrację kodu z komponentu klasowego musisz wiedzieć, że <code>useLayoutEffect</code> uruchamiany jest w tych samych fazach, co <code>componentDidMount</code> i <code>componentDidUpdate</code>. Jednakże <strong>zalecamy zacząć od <code>useEffect</code></strong> i używać <code>useLayoutEffect</code> tylko, jeżeli tamta metoda spowoduje jakieś problemy.</p>
+            <p>Jeżeli używasz renderowania po stronie serwera pamiętaj, że <em>ani</em> <code>useLayoutEffect</code>, <em>ani</em> <code>useEffect</code> nie może działać dopóki kod JavaScript nie zostanie pobrany. Dlatego React ostrzega jeżeli komponent renderowany po stronie serwera zawiera <code>useLayoutEffect</code>. Aby to naprawić możesz albo przenieść logikę korzystającą z <code>useEffect</code> (jeżeli nie jest niezbędna przy pierwszym renderze), albo opóźnić wyświetlanie tego komponentu do czasu renderowania po stronie klienta (jeżeli kod HTML wygląda na popsuty przed uruchomieniem <code>useLayoutEffect</code>).</p>
+            <p>Aby wyłączyć komponent, który korzysta z tego rodzaju efektów z wyrenderowanego po stronie serwera kodu HTML, wyrenderuj go warunkowo, korzystając z zapisu <code>showChild &#x26;&#x26; &#x3C;Child /></code> i opóźnij jego wyświetlanie przy użyciu <code>useEffect(() => { setShowChild(true); }, [])</code>. W ten sposób interfejs użytkownika nie będzie wyglądał na zepsuty przed hydratacją (ang. <em>hydration</em>).</p>
+          </blockquote>
+        </section>
+        <section id="usedebugvalue-usedebugvalue" class="level3">
+          <h3><code>useDebugValue</code> {#usedebugvalue}</h3>
+          <pre class="language-js"><code class="language-js"><span class="token function">useDebugValue</span><span class="token punctuation">(</span>value<span class="token punctuation">)</span></code></pre>
+          <p><code>useDebugValue</code> może zostać użyty do wyświetlania etykiet dla własnych hooków w narzędziu React DevTools.</p>
+          <p>Rozważ na przykład własny hook <code>useFriendStatus</code> opisywany w rozdziale <a href="./hooks-custom.html">"Tworzenie własnych hooków"</a>:</p>
+          <pre class="language-js{6-8}"><code class="language-js{6-8}">function useFriendStatus(friendID) {
+  const [isOnline, setIsOnline] = useState(null);
+
+  // ...
+
+  // Wyświetl etykietę w narzędziu DevTools obok tego hooka
+  // np. "FriendStatus: Online"
+  useDebugValue(isOnline ? 'Online' : 'Offline');
+
+  return isOnline;
+}</code></pre>
+          <blockquote>
+            <p>Podpowiedź</p>
+            <p>Nie zalecamy dodawania „debugowych” wartości każdemu własnemu hookowi. Jest to najbardziej przydatne w przypadku hooków będących częścią współdzielonych bibliotek.</p>
+          </blockquote>
+          <section id="defer-formatting-debug-values" class="level4">
+            <h4>Odroczenie formatowania „debugowych” wartości</h4>
+            <p>W pewnych przypadkach formatowanie wartości może być kosztowną operacją. Jest też zbędne, dopóki hook nie jest rzeczywiście sprawdzany w narzędziach deweloperskich.</p>
+            <p>Dlatego też <code>useDebugValue</code> przyjmuje opcjonalnie jako drugi argument funkcję formatującą. Funkcja ta jest wywoływana tylko wtedy, gdy hooki są sprawdzane w narzędziach deweloperskich. Przyjmuje jako argument „debugową” wartość, a powinna zwrócić sformatowaną wartość.</p>
+            <p>Na przykład własny hook zwracający obiekt <code>Date</code> mógłby uniknąć niepotrzebnego wywołania funkcji <code>toDateString</code> poprzez przekazanie następującej funkcji formatującej:</p>
+            <pre class="language-js"><code class="language-js"><span class="token function">useDebugValue</span><span class="token punctuation">(</span>date<span class="token punctuation">,</span> <span class="token parameter">date</span> <span class="token arrow operator">=></span> date<span class="token punctuation">.</span><span class="token method function property-access">toDateString</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span></code></pre>
+          </section>
+        </section>
+        <section id="usedeferredvalue-usedeferredvalue" class="level3">
+          <h3><code>useDeferredValue</code> {#usedeferredvalue}</h3>
+          <pre class="language-js"><code class="language-js"><span class="token keyword">const</span> deferredValue <span class="token operator">=</span> <span class="token function">useDeferredValue</span><span class="token punctuation">(</span>value<span class="token punctuation">)</span><span class="token punctuation">;</span></code></pre>
+          <p><code>useDeferredValue</code> przyjmuje wartość i zwraca nową kopię oryginalnej wartości, jednak obliczaną z mniejszym priorytetem. Jeśli dany cykl renderowania został wywołany przez pilną aktualizację, np. akcję użytkownika, React zwróci poprzednią wartość, a nową obliczy, gdy owa pilna aktualizacja się zakończy.</p>
+          <p>Ten hook przypomina często spotykane hooki korzystające z mechanizmu odbicia (ang. <em>debounce</em>) czy dławienia (ang. <em>throttling</em>). Zaletą korzystania z <code>useDeferredValue</code> jest to, że React zakończy aktualizację, kiedy tylko zakończy się inna, bardziej pilna operacja (zamiast czekać określony czas). Ponadto, podobnie jak w przypadku <a href="./react-api.html#starttransition"><code>startTransition</code></a>, odroczone wartości mogą zawieszać (ang. <em>suspend</em>) działanie komponentu bez aktywowania niespodziewanych elementów zastępczych (ang. <em>fallback</em>).</p>
+          <section id="memoizing-deferred-children" class="level4">
+            <h4>Memoizacja odroczonych potomków</h4>
+            <p><code>useDeferredValue</code> odracza tylko tę wartość, którą mu przekażesz. Jeśli chcesz zapobiec ponownemu renderowaniu komponentu potomnego podczas pilnej aktualizacji, musisz go zmemoizować za pomocą <a href="./react-api.html#reactmemo"><code>React.memo</code></a> lub <a href="./hooks-reference.html#usememo"><code>React.useMemo</code></a>:</p>
+            <pre class="language-js"><code class="language-js"><span class="token keyword">function</span> <span class="token function"><span class="token maybe-class-name">Typeahead</span></span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  <span class="token keyword">const</span> query <span class="token operator">=</span> <span class="token function">useSearchQuery</span><span class="token punctuation">(</span><span class="token string">''</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token keyword">const</span> deferredQuery <span class="token operator">=</span> <span class="token function">useDeferredValue</span><span class="token punctuation">(</span>query<span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+  <span class="token comment">// Memoizacja informuje Reacta, żeby wyrenderował ponownie tylko wtedy, gdy zmieni się deferredQuery,</span>
+  <span class="token comment">// a nie samo query.</span>
+  <span class="token keyword">const</span> suggestions <span class="token operator">=</span> <span class="token function">useMemo</span><span class="token punctuation">(</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token arrow operator">=></span>
+    <span class="token operator">&#x3C;</span><span class="token maybe-class-name">SearchSuggestions</span> query<span class="token operator">=</span><span class="token punctuation">{</span>deferredQuery<span class="token punctuation">}</span> <span class="token operator">/</span><span class="token operator">></span><span class="token punctuation">,</span>
+    <span class="token punctuation">[</span>deferredQuery<span class="token punctuation">]</span>
+  <span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+  <span class="token keyword control-flow">return</span> <span class="token punctuation">(</span>
+    <span class="token operator">&#x3C;</span><span class="token operator">></span>
+      <span class="token operator">&#x3C;</span><span class="token maybe-class-name">SearchInput</span> query<span class="token operator">=</span><span class="token punctuation">{</span>query<span class="token punctuation">}</span> <span class="token operator">/</span><span class="token operator">></span>
+      <span class="token operator">&#x3C;</span><span class="token maybe-class-name">Suspense</span> fallback<span class="token operator">=</span><span class="token string">"Ładowanie wyników..."</span><span class="token operator">></span>
+        <span class="token punctuation">{</span>suggestions<span class="token punctuation">}</span>
+      <span class="token operator">&#x3C;</span><span class="token operator">/</span><span class="token maybe-class-name">Suspense</span><span class="token operator">></span>
+    <span class="token operator">&#x3C;</span><span class="token operator">/</span><span class="token operator">></span>
+  <span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span></code></pre>
+            <p>Memoizowanie potomków informuje Reacta, że ma je zaktualizować tylko wtedy, gdy zmieni się <code>deferredQuery</code>, a nie <code>query</code>. Nie jest to jednak zachowanie unikalne dla <code>useDeferredValue</code>; podobny wzorzec jest stosowany w hookach korzystających z mechanizmów (ang. <em>debounce</em>) czy dławienia (ang. <em>throttling</em>).</p>
+          </section>
+        </section>
+        <section id="usetransition-usetransition" class="level3">
+          <h3><code>useTransition</code> {#usetransition}</h3>
+          <pre class="language-js"><code class="language-js"><span class="token keyword">const</span> <span class="token punctuation">[</span>isPending<span class="token punctuation">,</span> startTransition<span class="token punctuation">]</span> <span class="token operator">=</span> <span class="token function">useTransition</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span></code></pre>
+          <p>Zwraca stan informujący o tym, czy tranzycja (ang. <em>transition</em>) jest jeszcze w toku, oraz funkcję, która pozwala uruchomić ją uruchomić.</p>
+          <p><code>startTransition</code> pozwala oznaczyć aktualizacje stanu jako tranzycję:</p>
+          <pre class="language-js"><code class="language-js"><span class="token function">startTransition</span><span class="token punctuation">(</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token arrow operator">=></span> <span class="token punctuation">{</span>
+  <span class="token function">setCount</span><span class="token punctuation">(</span>count <span class="token operator">+</span> <span class="token number">1</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span><span class="token punctuation">)</span></code></pre>
+          <p>Zmienna <code>isPending</code> informuje, czy tranzycja jest w toku, aby można było na jej podstawie wyświetlić stan ładowania:</p>
+          <pre class="language-js"><code class="language-js"><span class="token keyword">function</span> <span class="token function"><span class="token maybe-class-name">App</span></span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  <span class="token keyword">const</span> <span class="token punctuation">[</span>isPending<span class="token punctuation">,</span> startTransition<span class="token punctuation">]</span> <span class="token operator">=</span> <span class="token function">useTransition</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token keyword">const</span> <span class="token punctuation">[</span>count<span class="token punctuation">,</span> setCount<span class="token punctuation">]</span> <span class="token operator">=</span> <span class="token function">useState</span><span class="token punctuation">(</span><span class="token number">0</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  
+  <span class="token keyword">function</span> <span class="token function">handleClick</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token function">startTransition</span><span class="token punctuation">(</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token arrow operator">=></span> <span class="token punctuation">{</span>
+      <span class="token function">setCount</span><span class="token punctuation">(</span><span class="token parameter">c</span> <span class="token arrow operator">=></span> c <span class="token operator">+</span> <span class="token number">1</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span><span class="token punctuation">)</span>
+  <span class="token punctuation">}</span>
+
+  <span class="token keyword control-flow">return</span> <span class="token punctuation">(</span>
+    <span class="token operator">&#x3C;</span>div<span class="token operator">></span>
+      <span class="token punctuation">{</span>isPending <span class="token operator">&#x26;&#x26;</span> <span class="token operator">&#x3C;</span><span class="token maybe-class-name">Spinner</span> <span class="token operator">/</span><span class="token operator">></span><span class="token punctuation">}</span>
+      <span class="token operator">&#x3C;</span>button onClick<span class="token operator">=</span><span class="token punctuation">{</span>handleClick<span class="token punctuation">}</span><span class="token operator">></span><span class="token punctuation">{</span>count<span class="token punctuation">}</span><span class="token operator">&#x3C;</span><span class="token operator">/</span>button<span class="token operator">></span>
+    <span class="token operator">&#x3C;</span><span class="token operator">/</span>div<span class="token operator">></span>
+  <span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span></code></pre>
+          <blockquote>
+            <p>Uwaga:</p>
+            <p>Aktualizacje stanu oznaczone jako tranzycje ustępują pierwszeństwa pilniejszym aktualizacjom, np. spowodowanym kliknięciem przez użytkownika.</p>
+            <p>Aktualizacje zawarte w tranzycji nie aktywują elementu zastępczego (ang. <em>fallback</em>) dla ponownie zawieszonych (ang. <em>suspended</em>) komponentów. Dzięki temu użytkownik może nadal wchodzić w interakcję z aktualną zawartością aplikacji, podczas gdy w tle przygotowywana jest nowa wersja.</p>
+          </blockquote>
+        </section>
+        <section id="useid-useid" class="level3">
+          <h3><code>useId</code> {#useid}</h3>
+          <pre class="language-js"><code class="language-js"><span class="token keyword">const</span> id <span class="token operator">=</span> <span class="token function">useId</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span></code></pre>
+          <p><code>useId</code> służy do generowania unikalnych ID, które mają gwarancję stabilności pomiędzy serwerem i klientem, co pozwala uniknąć nieścisłości podczas hydratacji (ang. <em>hydration</em>).</p>
+          <blockquote>
+            <p>Uwaga</p>
+            <p>Hook <code>useId</code> <strong>nie służy</strong> do generowania <a href="./lists-and-keys.html#keys">kluczy w listach</a>. Klucze powinny być generowane na podstawie danych.</p>
+          </blockquote>
+          <p>Dla przykładu, możesz przekazać wygenerowane w ten sposób <code>id</code> bezpośrednio do komponentów, które go potrzebują:</p>
+          <pre class="language-js"><code class="language-js"><span class="token keyword">function</span> <span class="token function"><span class="token maybe-class-name">Checkbox</span></span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  <span class="token keyword">const</span> id <span class="token operator">=</span> <span class="token function">useId</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token keyword control-flow">return</span> <span class="token punctuation">(</span>
+    <span class="token operator">&#x3C;</span><span class="token operator">></span>
+      <span class="token operator">&#x3C;</span>label htmlFor<span class="token operator">=</span><span class="token punctuation">{</span>id<span class="token punctuation">}</span><span class="token operator">></span><span class="token maybe-class-name">Lubisz</span> <span class="token maybe-class-name">Reacta</span><span class="token operator">?</span><span class="token operator">&#x3C;</span><span class="token operator">/</span>label<span class="token operator">></span>
+      <span class="token operator">&#x3C;</span>input id<span class="token operator">=</span><span class="token punctuation">{</span>id<span class="token punctuation">}</span> type<span class="token operator">=</span><span class="token string">"checkbox"</span> name<span class="token operator">=</span><span class="token string">"react"</span><span class="token operator">/</span><span class="token operator">></span>
+    <span class="token operator">&#x3C;</span><span class="token operator">/</span><span class="token operator">></span>
+  <span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span><span class="token punctuation">;</span></code></pre>
+          <p>Jeśli potrzebujesz kilku ID dla tego samego komponentu, dopisz ręcznie przyrostek za wartością <code>id</code>:</p>
+          <pre class="language-js"><code class="language-js"><span class="token keyword">function</span> <span class="token function"><span class="token maybe-class-name">NameFields</span></span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  <span class="token keyword">const</span> id <span class="token operator">=</span> <span class="token function">useId</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token keyword control-flow">return</span> <span class="token punctuation">(</span>
+    <span class="token operator">&#x3C;</span>div<span class="token operator">></span>
+      <span class="token operator">&#x3C;</span>label htmlFor<span class="token operator">=</span><span class="token punctuation">{</span>id <span class="token operator">+</span> <span class="token string">'-firstName'</span><span class="token punctuation">}</span><span class="token operator">></span><span class="token maybe-class-name">Imię</span><span class="token operator">&#x3C;</span><span class="token operator">/</span>label<span class="token operator">></span>
+      <span class="token operator">&#x3C;</span>div<span class="token operator">></span>
+        <span class="token operator">&#x3C;</span>input id<span class="token operator">=</span><span class="token punctuation">{</span>id <span class="token operator">+</span> <span class="token string">'-firstName'</span><span class="token punctuation">}</span> type<span class="token operator">=</span><span class="token string">"text"</span> <span class="token operator">/</span><span class="token operator">></span>
+      <span class="token operator">&#x3C;</span><span class="token operator">/</span>div<span class="token operator">></span>
+      <span class="token operator">&#x3C;</span>label htmlFor<span class="token operator">=</span><span class="token punctuation">{</span>id <span class="token operator">+</span> <span class="token string">'-lastName'</span><span class="token punctuation">}</span><span class="token operator">></span><span class="token maybe-class-name">Nazwisko</span><span class="token operator">&#x3C;</span><span class="token operator">/</span>label<span class="token operator">></span>
+      <span class="token operator">&#x3C;</span>div<span class="token operator">></span>
+        <span class="token operator">&#x3C;</span>input id<span class="token operator">=</span><span class="token punctuation">{</span>id <span class="token operator">+</span> <span class="token string">'-lastName'</span><span class="token punctuation">}</span> type<span class="token operator">=</span><span class="token string">"text"</span> <span class="token operator">/</span><span class="token operator">></span>
+      <span class="token operator">&#x3C;</span><span class="token operator">/</span>div<span class="token operator">></span>
+    <span class="token operator">&#x3C;</span><span class="token operator">/</span>div<span class="token operator">></span>
+  <span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span></code></pre>
+          <blockquote>
+            <p>Uwaga:</p>
+            <p><code>useId</code> generuje ciąg znaków zawierający dwukropek <code>:</code>. Zapewnia to unikalność identyfikatora, lecz nie działa w selektorach CSS-owych i API takich jak <code>querySelectorAll</code>.</p>
+            <p><code>useId</code> umożliwia ustawienie opcji <code>identifierPrefix</code>, aby uniknąć kolizji w aplikacjach o wielu "korzeniach". Aby dowiedzieć się, jak skonfigurować tę opcję, przeczytaj dokumentację dla <a href="./react-dom-client.html#hydrateroot"><code>hydrateRoot</code></a> oraz <a href="./react-dom-server.html"><code>ReactDOMServer</code></a>.</p>
+          </blockquote>
+        </section>
+      </section>
+      <section id="library-hooks" class="level2">
+        <h2>Hooki dla bibliotek</h2>
+        <p>Poniższe hooki przewidziane są dla twórców bibliotek, aby umożliwić im bardziej dogłębną integrację z modelem Reacta, i zwykle nie stosuje się ich w aplikacjach.</p>
+        <section id="usesyncexternalstore-usesyncexternalstore" class="level3">
+          <h3><code>useSyncExternalStore</code> {#usesyncexternalstore}</h3>
+          <pre class="language-js"><code class="language-js"><span class="token keyword">const</span> state <span class="token operator">=</span> <span class="token function">useSyncExternalStore</span><span class="token punctuation">(</span>subscribe<span class="token punctuation">,</span> getSnapshot<span class="token punctuation">[</span><span class="token punctuation">,</span> getServerSnapshot<span class="token punctuation">]</span><span class="token punctuation">)</span><span class="token punctuation">;</span></code></pre>
+          <p><code>useSyncExternalStore</code> jest zalecany do odczytywania i subskrybowania się do zewnętrznych źródeł danych w sposób kompatybilny z funkcjonalnościami renderowania wspólbieżnego, jak np. selektywna hydratacja czy kwantowanie czasu.</p>
+          <p>Metoda ta zwraca wartość z magazynu i przyjmuje trzy argumenty:</p>
+          <ul>
+            <li><code>subscribe</code>: służy do zarejestrowania funkcji zwrotnej, która zostanie wywołana przy każdej zmianie wartości w magazynie.</li>
+            <li><code>getSnapshot</code>: służy do pobrania aktualnej wartości z magazynu.</li>
+            <li><code>getServerSnapshot</code>: służy do pobrania wartości podczas renderowania po stronie serwera.</li>
+          </ul>
+          <p>Najprostszy przykład może subskrybować się na cały magazyn:</p>
+          <pre class="language-js"><code class="language-js"><span class="token keyword">const</span> state <span class="token operator">=</span> <span class="token function">useSyncExternalStore</span><span class="token punctuation">(</span>store<span class="token punctuation">.</span><span class="token property-access">subscribe</span><span class="token punctuation">,</span> store<span class="token punctuation">.</span><span class="token property-access">getSnapshot</span><span class="token punctuation">)</span><span class="token punctuation">;</span></code></pre>
+          <p>Można jednak zasubskrybować się na konkretną wartość:</p>
+          <pre class="language-js"><code class="language-js"><span class="token keyword">const</span> selectedField <span class="token operator">=</span> <span class="token function">useSyncExternalStore</span><span class="token punctuation">(</span>
+  store<span class="token punctuation">.</span><span class="token property-access">subscribe</span><span class="token punctuation">,</span>
+  <span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token arrow operator">=></span> store<span class="token punctuation">.</span><span class="token method function property-access">getSnapshot</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token property-access">selectedField</span><span class="token punctuation">,</span>
+<span class="token punctuation">)</span><span class="token punctuation">;</span></code></pre>
+          <p>Podczas renderowania po stronie serwera musisz zserializować wartość magazynu i przekazać ją do <code>useSyncExternalStore</code>. React użyje jej podczas hydratacji, dzięki czemu nie powstaną niespójności:</p>
+          <pre class="language-js"><code class="language-js"><span class="token keyword">const</span> selectedField <span class="token operator">=</span> <span class="token function">useSyncExternalStore</span><span class="token punctuation">(</span>
+  store<span class="token punctuation">.</span><span class="token property-access">subscribe</span><span class="token punctuation">,</span>
+  <span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token arrow operator">=></span> store<span class="token punctuation">.</span><span class="token method function property-access">getSnapshot</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token property-access">selectedField</span><span class="token punctuation">,</span>
+  <span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token arrow operator">=></span> <span class="token constant">INITIAL_SERVER_SNAPSHOT</span><span class="token punctuation">.</span><span class="token property-access">selectedField</span><span class="token punctuation">,</span>
+<span class="token punctuation">)</span><span class="token punctuation">;</span></code></pre>
+          <blockquote>
+            <p>Uwaga:</p>
+            <p><code>getSnapshot</code> musi zwracać wartość zbuforowaną wartość. Jeśli <code>getSnapshot</code> zostanie wywołana kilka razy z rzędu, powinna zwrócić dokładnie tę samą wartość, chyba że faktycznie uległa ona zmianie.</p>
+            <p>Dostępny jest "shim" o nazwie <code>use-sync-external-store/shim</code> obsługujący wiele wersji Reacta. Preferuje on użycie hooka <code>useSyncExternalStore</code>, jeśli jest on dostępny, a w przypadku jego braku korzysta z innych dostępnych narzędzi.</p>
+            <p>Dla ułatwienia stworzyliśmy wersję tego API z automatycznym wsparciem dla memoizacji wyników z <code>getSnapshot</code>, dostępną pod nazwą <code>use-sync-external-store/with-selector</code>.</p>
+          </blockquote>
+        </section>
+        <section id="useinsertioneffect-useinsertioneffect" class="level3">
+          <h3><code>useInsertionEffect</code> {#useinsertioneffect}</h3>
+          <pre class="language-js"><code class="language-js"><span class="token function">useInsertionEffect</span><span class="token punctuation">(</span>didUpdate<span class="token punctuation">)</span><span class="token punctuation">;</span></code></pre>
+          <p>Sygnatura funkcji jest identyczna jak w przypadku hooka <code>useEffect</code>, jednak ten hook wywoływany jest synchronicznie <em>przed</em> wszystkimi mutacjami DOM. Użyj go, aby wstrzyknąć style do DOM, zanim <a href="#uselayouteffect"><code>useLayoutEffect</code></a> odczyta układ strony. Jako że ten hook ma ograniczony zakres, nie ma on dostępu do referencji i nie może zlecać aktualizacji stanu.</p>
+          <blockquote>
+            <p>Uwaga:</p>
+            <p>
+              <code>useInsertionEffect</code> powinien być używany głównie przez autorów bibliotek css-in-js. W innych przypadkach zalecamy korzystanie z <a href="#useeffect"><code>useEffect</code></a> lub <a href="#uselayouteffect"><code>useLayoutEffect</code></a>.
+              <span style="float: footnote;"><a href="./index.html#toc">Go to TOC</a></span>
+            </p>
+          </blockquote>
+        </section>
+      </section>
+    </section>
+  </body>
+</html>

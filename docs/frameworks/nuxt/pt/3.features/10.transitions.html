@@ -1,0 +1,178 @@
+<!doctype html>
+<html lang="pt">
+  <head>
+    <meta charset="utf-8">
+    <title>Transições</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="O Nuxt usa o componente de transição para permitir que você criar animações e transições incríveis entre suas rotas.">
+    <meta name="category" content="features">
+    <meta name="csb_link" content="https://codesandbox.io/embed/github/nuxt-academy/guides-examples/tree/master/03_features/05_transitions?fontsize=14&#x26;hidenavigation=1&#x26;theme=dark">
+    <link rel="stylesheet" href="https://raw.githubusercontent.com/shinokada/prism-coy-theme/main/theme_common.css">
+  </head>
+  <body>
+    <section id="transições" class="level1">
+      <h1>Transições</h1>
+      <p>O Nuxt usa o <a href="http://vuejs.org/v2/guide/transitions.html#Transitioning-Single-Elements-Components">componente de transição</a> para permitir que você criar animações e transições incríveis entre suas rotas.</p>
+      <hr>
+      <p>Para definir uma transição personalizada para uma rota específica, adiciona a chave <code>transition</code>  ao componente da página.</p>
+      <pre class="language-js{}[pages/index.vue]"><code class="language-js{}[pages/index.vue]">export default {
+  // Pode ser uma Sequência de Caracteres
+  transition: ''
+  // Ou um Objeto
+  transition: {}
+  // Ou uma Função
+  transition (to, from) {}
+}</code></pre>
+      <section id="sequência-de-caracteres" class="level2">
+        <h2>Sequência de Caracteres</h2>
+        <p>Se a chave <code>transition</code> for definida como uma sequência de caracteres, ela será usada como o <code>transition.name</code>.</p>
+        <pre class="language-js{}[pages/index.vue]"><code class="language-js{}[pages/index.vue]">export default {
+  transition: 'home'
+}</code></pre>
+        <p>O Nuxt usará essas configurações para definir o componente da seguinte forma:</p>
+        <pre class="language-html{}[pages/index.vue]"><code class="language-html{}[pages/index.vue]">&#x3C;transition name="home">&#x3C;/transition></code></pre>
+        <section id="warning" class="level4">
+          <h4>Warning</h4>
+          <p>Isto é feito automaticamente e você não precisa adicionar o componente <code>&#x3C;transition></code> a sua página ou esquemas (layouts).</p>
+          <p>Agora tudo o que você precisa fazer é criar a nova classe para suas transições.</p>
+          <pre class="language-html{}[pages/index.vue]"><code class="language-html{}[pages/index.vue]">&#x3C;style>
+  .home-enter-active, .home-leave-active { transition: opacity .5s; }
+  .home-enter, .home-leave-active { opacity: 0; }
+&#x3C;/style></code></pre>
+        </section>
+      </section>
+      <section id="objeto" class="level2">
+        <h2>Objeto</h2>
+        <p>Se a chave <code>transition</code>  for definida como um objeto:</p>
+        <pre class="language-js{}[pages/index.vue]"><code class="language-js{}[pages/index.vue]">export default {
+  transition: {
+    name: 'home',
+    mode: 'out-in'
+  }
+}</code></pre>
+        <p>O Nuxt usará essas configurações para definir o componente da seguinte forma:</p>
+        <pre class="language-html{}[pages/index.vue]"><code class="language-html{}[pages/index.vue]">&#x3C;transition name="home" mode="out-in">&#x3C;/transition></code></pre>
+        <p>O objeto <code>transition</code>  pode ter várias propriedades tais como name, mode, css, duration e muitas mais. Consulte a documentação do vue para ter informações mais detalhadas.</p>
+        <p>Você também pode definir métodos dentro da propriedade <code>transition</code> , para saber mais sobre consulte os <a href="https://vuejs.org/v2/guide/transitions.html#JavaScript-Hooks">Gatilhos de JavaScript</a> na documentação do vue.</p>
+        <pre class="language-js"><code class="language-js"><span class="token keyword module">export</span> <span class="token keyword module">default</span> <span class="token punctuation">{</span>
+  <span class="token literal-property property">transition</span><span class="token operator">:</span> <span class="token punctuation">{</span>
+    <span class="token function">afterLeave</span><span class="token punctuation">(</span><span class="token parameter">el</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+      <span class="token console class-name">console</span><span class="token punctuation">.</span><span class="token method function property-access">log</span><span class="token punctuation">(</span><span class="token string">'afterLeave'</span><span class="token punctuation">,</span> el<span class="token punctuation">)</span>
+    <span class="token punctuation">}</span>
+  <span class="token punctuation">}</span>
+<span class="token punctuation">}</span></code></pre>
+        <section id="modo-de-transição" class="level3">
+          <h3>Modo de Transição</h3>
+          <section id="warning-1" class="level4">
+            <h4>Warning</h4>
+            <p>O modo de transição padrão para páginas diferem do modo padrão no Vue.js. O modo <code>transition</code> está por padrão definido como <code>out-in</code>. Se você quiser executar as transições de entrada e saída simultaneamente, voê tem de definir o mode para uma string vazia <code>mode: ''</code>.</p>
+            <pre class="language-js{}[pages/index.vue]"><code class="language-js{}[pages/index.vue]">export default {
+  transition: {
+    name: 'home',
+    mode: ''
+  }
+}</code></pre>
+          </section>
+        </section>
+      </section>
+      <section id="função" class="level2">
+        <h2>Função</h2>
+        <p>Se a chave <code>transition</code> for definida como uma função:</p>
+        <pre class="language-js{}[pages/index.vue]"><code class="language-js{}[pages/index.vue]">export default {
+  transition(to, from) {
+    if (!from) {
+      return 'slide-left'
+    }
+    return +to.query.page &#x3C; +from.query.page ? 'slide-right' : 'slide-left'
+  }
+}</code></pre>
+        <p>Transições aplicadas na navegação:</p>
+        <p><code>/</code> to <code>/posts</code> => <code>slide-left</code>,<code>/posts</code> to <code>/posts?page=3</code> => <code>slide-left</code>,<code>/posts?page=3</code> to <code>/posts?page=2</code> => <code>slide-right</code>.</p>
+      </section>
+      <section id="configuração-global" class="level2">
+        <h2>Configuração Global</h2>
+        <p>O nome de transição padrão do Nuxt é <code>"page"</code>. Para adicionar uma transição fade para todas páginas da sua aplicação, tudo o que você precisa é um ficheiro CSS que é compartilhado por todas rotas.</p>
+        <p>Nosso css global dentro de <code>assets/main.css</code>:</p>
+        <pre class="language-css{}[assets/main.css]"><code class="language-css{}[assets/main.css]">.page-enter-active,
+.page-leave-active {
+  transition: opacity 0.5s;
+}
+.page-enter,
+.page-leave-to {
+  opacity: 0;
+}</code></pre>
+        <p>Depois adicionarmos seu caminho ao array <code>css</code> dentro do nosso ficheiro de configuração <code>nuxt.config.js</code> :</p>
+        <pre class="language-js{}[nuxt.config.js]"><code class="language-js{}[nuxt.config.js]">export default {
+  css: ['~/assets/main.css']
+}</code></pre>
+      </section>
+      <section id="configuração-das-configurações" class="level2">
+        <h2>Configuração das Configurações</h2>
+        <section id="a-propriedade-layouttransition" class="level3">
+          <h3>A Propriedade layoutTransition</h3>
+          <p>A transição do esquema (ou layout) é usada para definir as propriedades da transições de esquema (layout).</p>
+          <p>A configuração padrão para transições de esquema são:</p>
+          <pre class="language-js"><code class="language-js"><span class="token punctuation">{</span>
+  <span class="token literal-property property">name</span><span class="token operator">:</span> <span class="token string">'layout'</span><span class="token punctuation">,</span>
+  <span class="token literal-property property">mode</span><span class="token operator">:</span> <span class="token string">'out-in'</span>
+<span class="token punctuation">}</span></code></pre>
+          <pre class="language-css{}[assets/main.css]"><code class="language-css{}[assets/main.css]">.layout-enter-active,
+.layout-leave-active {
+  transition: opacity 0.5s;
+}
+.layout-enter,
+.layout-leave-active {
+  opacity: 0;
+}</code></pre>
+          <p>Se você quiser mudar as configurações padrões para as transições do seu esquema você pode fazer isso dentro do ficheiro <code>nuxt.config.js</code>.</p>
+          <pre class="language-js{}[nuxt.config.js]"><code class="language-js{}[nuxt.config.js]">export default {
+  layoutTransition: 'my-layouts'
+  // Ou
+  layoutTransition: {
+    name: 'my-layouts',
+    mode: 'out-in'
+  }
+}</code></pre>
+          <pre class="language-css{}[assets/main.css]"><code class="language-css{}[assets/main.css]">.my-layouts-enter-active,
+.my-layouts-leave-active {
+  transition: opacity 0.5s;
+}
+.my-layouts-enter,
+.my-layouts-leave-active {
+  opacity: 0;
+}</code></pre>
+        </section>
+        <section id="a-propriedade-pagetransition" class="level3">
+          <h3>A Propriedade pageTransition</h3>
+          <p>A configuração padrão para transições de página são:</p>
+          <pre class="language-js"><code class="language-js"><span class="token punctuation">{</span>
+  <span class="token literal-property property">name</span><span class="token operator">:</span> <span class="token string">'page'</span><span class="token punctuation">,</span>
+  <span class="token literal-property property">mode</span><span class="token operator">:</span> <span class="token string">'out-in'</span>
+<span class="token punctuation">}</span></code></pre>
+          <p>Deseja você modificar a configuração padrão, você pode fazer isso dentro do <code>nuxt.config.js</code></p>
+          <pre class="language-js{}[nuxt.config.js]"><code class="language-js{}[nuxt.config.js]">export default {
+  pageTransition: 'my-page'
+  // Ou
+  pageTransition: {
+    name: 'my-page',
+    mode: 'out-in',
+    beforeEnter (el) {
+      console.log('Before enter...');
+    }
+  }
+}</code></pre>
+          <p>Se você modificar o nome da transição da página você também terá de renomear a classe css.</p>
+          <pre class="language-css{}[assets/main.css]"><code class="language-css{}[assets/main.css]">.my-page-enter-active,
+.my-page-leave-active {
+  transition: opacity 0.5s;
+}
+.my-page-enter,
+.my-page-leave-to {
+  opacity: 0;
+}</code></pre>
+          <p><span style="float: footnote;"><a href="../index.html#toc">Go to TOC</a></span></p>
+        </section>
+      </section>
+    </section>
+  </body>
+</html>

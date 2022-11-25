@@ -1,0 +1,828 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="utf-8">
+    <title>build プロパティ</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="navigation.title" content="build">
+    <meta name="description" content="Nuxt では、webpack の設定をカスタマイズして web アプリケーションを思いのままに構築することができます。">
+    <meta name="menu" content="build">
+    <meta name="category" content="configuration-glossary">
+    <link rel="stylesheet" href="https://raw.githubusercontent.com/shinokada/prism-coy-theme/main/theme_common.css">
+  </head>
+  <body>
+    <section id="build-プロパティ" class="level1">
+      <h1>build プロパティ</h1>
+      <p>Nuxt では、webpack の設定をカスタマイズして web アプリケーションを思いのままに構築することができます。</p>
+      <hr>
+      <section id="analyze" class="level2">
+        <h2>analyze</h2>
+        <blockquote>
+          <p>Nuxt では <a href="https://github.com/webpack-contrib/webpack-bundle-analyzer">webpack-bundle-analyzer</a> を使ってバンドルファイルと最適化の仕方を視覚化できます。</p>
+        </blockquote>
+        <ul>
+          <li>型: <code>Boolean</code> または <code>Object</code></li>
+          <li>デフォルト: <code>false</code></li>
+        </ul>
+        <p>オブジェクトの場合、利用できるプロパティについて<a href="https://github.com/webpack-contrib/webpack-bundle-analyzer#options-for-plugin">こちら</a>を参照してください。</p>
+        <pre class="language-js{}[nuxt.config.js]"><code class="language-js{}[nuxt.config.js]">export default {
+  build: {
+    analyze: true,
+    // または
+    analyze: {
+      analyzerMode: 'static'
+    }
+  }
+}</code></pre>
+        <section id="info" class="level4">
+          <h4>Info</h4>
+          <p><strong>情報:</strong> <code>yarn nuxt build --analyze</code> または <code>yarn nuxt build -a</code> コマンドを使って、アプリケーションをビルドし、バンドルアナライザを <a href="http://localhost:8888">http://localhost:8888</a> で起動できます。<code>yarn</code> を使っていない場合は <code>npx</code> を使って実行できます。</p>
+        </section>
+      </section>
+      <section id="corejs" class="level2">
+        <h2>corejs</h2>
+        <blockquote>
+          <p><a href="https://github.com/nuxt/nuxt.js/releases/tag/v2.14.0">Nuxt@2.14</a> 以降、Nuxt は <code>core-js</code> の現在のバージョンを自動的に検出します。また、使用するバージョンを指定することもできます。</p>
+        </blockquote>
+        <ul>
+          <li>型: <code>number</code> | <code>string</code> （有効な値は <code>'auto'</code>、<code>2</code> そして <code>3</code> です）</li>
+          <li>デフォルト: <code>'auto'</code></li>
+        </ul>
+      </section>
+      <section id="babel" class="level2">
+        <h2>babel</h2>
+        <blockquote>
+          <p>JavaScript や Vue ファイル用に Babel の設定をカスタマイズします。デフォルトでは <code>.babelrc</code> は無視されます。</p>
+        </blockquote>
+        <ul>
+          <li>
+            <p>型: <code>Object</code></p>
+          </li>
+          <li>
+            <p><code>babel-loader</code> <a href="https://github.com/babel/babel-loader#options">オプション</a>と babel <a href="https://babeljs.io/docs/en/options">オプション</a>を参照してください</p>
+          </li>
+          <li>
+            <p>デフォルト:</p>
+            <pre class="language-js"><code class="language-js"><span class="token punctuation">{</span>
+  <span class="token literal-property property">babelrc</span><span class="token operator">:</span> <span class="token boolean">false</span><span class="token punctuation">,</span>
+  <span class="token literal-property property">cacheDirectory</span><span class="token operator">:</span> <span class="token keyword nil">undefined</span><span class="token punctuation">,</span>
+  <span class="token literal-property property">presets</span><span class="token operator">:</span> <span class="token punctuation">[</span><span class="token string">'@nuxt/babel-preset-app'</span><span class="token punctuation">]</span>
+<span class="token punctuation">}</span></code></pre>
+          </li>
+        </ul>
+        <p><a href="https://github.com/nuxt/nuxt.js/blob/dev/packages/babel-preset-app/src/index.js">@nuxt/babel-preset-app</a>のデフォルトのターゲットは <code>client</code> ビルドでは <code>ie: '9'</code>、<code>server</code> ビルドでは <code>node: 'current'</code> です。</p>
+        <section id="presets" class="level3">
+          <h3>presets</h3>
+          <ul>
+            <li>型: <code>Function</code></li>
+            <li>引数:
+              <ol>
+                <li><code>Object</code>: <ruby>isServer: true <rt>false</rt></ruby></li>
+                <li><code>Array</code>:
+                  <ul>
+                    <li>プリセット名 <code>@nuxt/babel-preset-app</code></li>
+                    <li><code>@nuxt/babel-preset-app</code> の<a href="https://github.com/nuxt/nuxt.js/tree/dev/packages/babel-preset-app#options"><code>オプション</code></a></li>
+                  </ul>
+                </li>
+              </ol>
+            </li>
+          </ul>
+          <p><strong>注意</strong>: <code>build.babel.presets</code> で設定されたプリセットはクライアントとサーバー両方のビルドに適用されます。ターゲットは（クライアント/サーバー）それぞれに応じて Nuxt によって設定されます。クライアントビルドとサーバービルドで異なるプリセットの設定をしたい場合は、関数として <code>presets</code> を使用してください：</p>
+          <blockquote>
+            <p>以下のカスタマイズの代わりにデフォルトのプリセットを使用することを<strong>強くおすすめします</strong></p>
+          </blockquote>
+          <pre class="language-js"><code class="language-js"><span class="token keyword module">export</span> <span class="token keyword module">default</span> <span class="token punctuation">{</span>
+  <span class="token literal-property property">build</span><span class="token operator">:</span> <span class="token punctuation">{</span>
+    <span class="token literal-property property">babel</span><span class="token operator">:</span> <span class="token punctuation">{</span>
+      <span class="token function">presets</span><span class="token punctuation">(</span><span class="token parameter"><span class="token punctuation">{</span> isServer <span class="token punctuation">}</span><span class="token punctuation">,</span> <span class="token punctuation">[</span> preset<span class="token punctuation">,</span> options <span class="token punctuation">]</span></span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token comment">// change options directly</span>
+        options<span class="token punctuation">.</span><span class="token property-access">targets</span> <span class="token operator">=</span> isServer <span class="token operator">?</span> <span class="token spread operator">...</span> <span class="token operator">:</span>  <span class="token spread operator">...</span>
+        options<span class="token punctuation">.</span><span class="token property-access">corejs</span> <span class="token operator">=</span> <span class="token spread operator">...</span>
+        <span class="token comment">// return nothing</span>
+      <span class="token punctuation">}</span>
+    <span class="token punctuation">}</span>
+  <span class="token punctuation">}</span>
+<span class="token punctuation">}</span></code></pre>
+          <p>またはプリセットのリスト全体を返すことによってデフォルトの値を上書きします：</p>
+          <pre class="language-js"><code class="language-js"><span class="token keyword module">export</span> <span class="token keyword module">default</span> <span class="token punctuation">{</span>
+  <span class="token literal-property property">build</span><span class="token operator">:</span> <span class="token punctuation">{</span>
+    <span class="token literal-property property">babel</span><span class="token operator">:</span> <span class="token punctuation">{</span>
+      <span class="token function">presets</span><span class="token punctuation">(</span><span class="token parameter"><span class="token punctuation">{</span> isServer <span class="token punctuation">}</span><span class="token punctuation">,</span> <span class="token punctuation">[</span>preset<span class="token punctuation">,</span> options<span class="token punctuation">]</span></span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token keyword control-flow">return</span> <span class="token punctuation">[</span>
+          <span class="token punctuation">[</span>
+            preset<span class="token punctuation">,</span>
+            <span class="token punctuation">{</span>
+              <span class="token literal-property property">targets</span><span class="token operator">:</span> isServer <span class="token operator">?</span> <span class="token spread operator">...</span> <span class="token operator">:</span>  <span class="token spread operator">...</span><span class="token punctuation">,</span>
+              <span class="token spread operator">...</span>options
+            <span class="token punctuation">}</span>
+          <span class="token punctuation">]</span><span class="token punctuation">,</span>
+          <span class="token punctuation">[</span>
+            <span class="token comment">// 他のプリセット</span>
+          <span class="token punctuation">]</span>
+        <span class="token punctuation">]</span>
+      <span class="token punctuation">}</span>
+    <span class="token punctuation">}</span>
+  <span class="token punctuation">}</span>
+<span class="token punctuation">}</span></code></pre>
+        </section>
+      </section>
+      <section id="cache" class="level2">
+        <h2>cache</h2>
+        <ul>
+          <li>型: <code>Boolean</code></li>
+          <li>デフォルト: <code>false</code></li>
+          <li>⚠️ 実験的機能</li>
+        </ul>
+        <blockquote>
+          <p><a href="https://github.com/webpack-contrib/terser-webpack-plugin#options">terser-webpack-plugin</a> と <a href="https://github.com/webpack-contrib/cache-loader#cache-loader">cache-loader</a> を使ってキャッシュを有効化します</p>
+        </blockquote>
+      </section>
+      <section id="csssourcemap" class="level2">
+        <h2>cssSourceMap</h2>
+        <ul>
+          <li>型: <code>boolean</code></li>
+          <li>デフォルト: 開発モードでは <code>true</code>、プロダクションモードでは <code>false</code></li>
+        </ul>
+        <blockquote>
+          <p>CSS ソースマップのサポートを有効にします</p>
+        </blockquote>
+      </section>
+      <section id="devmiddleware" class="level2">
+        <h2>devMiddleware</h2>
+        <ul>
+          <li>型: <code>Object</code></li>
+        </ul>
+        <p>利用できるオプションは <a href="https://github.com/webpack/webpack-dev-middleware">webpack-dev-middleware</a> を参照してください。</p>
+      </section>
+      <section id="devtools" class="level2">
+        <h2>devtools</h2>
+        <ul>
+          <li>型: <code>boolean</code></li>
+          <li>デフォルト: <code>false</code></li>
+        </ul>
+        <p><a href="https://github.com/vuejs/vue-devtools">vue-devtools</a> の検査を許可するかどうかを設定します。</p>
+        <p>既に nuxt.config.js などで有効化している場合は、このフラグに関係なく devtools が有効になります。</p>
+      </section>
+      <section id="extend" class="level2">
+        <h2>extend</h2>
+        <blockquote>
+          <p>クライアント及びサーバーのバンドルについて webpack の設定を手動で拡張します。</p>
+        </blockquote>
+        <ul>
+          <li>型: <code>Function</code></li>
+        </ul>
+        <p>extend メソッドは一度はサーバーのバンドルのため、一度はクライアントのバンドルのため、計二度呼び出されます。メソッドの引数は次のとおりです：</p>
+        <ol>
+          <li>webpack 設定オブジェクト</li>
+          <li>次のキーを持つオブジェクト（<code>loaders</code> を除きすべて真偽値）： <code>isDev</code>、<code>isClient</code>、<code>isServer</code>、<code>loaders</code></li>
+        </ol>
+        <section id="warning" class="level4">
+          <h4>Warning</h4>
+          <p><strong>警告:</strong> 提供される <code>isClient</code> と <code>isServer</code> は <a href="./internals-glossary/context"><code>context</code></a> で利用可能なキーとは別物です。これらのキーは非推奨では<strong>ありません。</strong>ここでは、<code>process.client</code> および <code>process.server</code> は <code>undefined</code> となるため使用しないでください</p>
+          <pre class="language-js{}[nuxt.config.js]"><code class="language-js{}[nuxt.config.js]">export default {
+  build: {
+    extend(config, { isClient }) {
+      // クライアントのバンドルの webpack 設定のみを拡張する
+      if (isClient) {
+        config.devtool = 'source-map'
+      }
+    }
+  }
+}</code></pre>
+          <p>デフォルトの webpack の設定についてもう少し見たい場合は <a href="https://github.com/nuxt/nuxt.js/tree/dev/packages/webpack/src/config">webpack ディレクトリ</a>を参照してください。</p>
+        </section>
+        <section id="extend-での-loaders" class="level3">
+          <h3>extend での loaders</h3>
+          <p><code>loaders</code> は <a href="#loaders">build.loaders</a> と同じオブジェクト構造を持っているため、<code>extend</code> 内部の loaders のオプションを変えることができます。</p>
+          <pre class="language-js{}[nuxt.config.js]"><code class="language-js{}[nuxt.config.js]">export default {
+  build: {
+    extend(config, { isClient, loaders: { vue } }) {
+      // クライアントのバンドルの webpack 設定のみを拡張する
+      if (isClient) {
+        vue.transformAssetUrls.video = ['src', 'poster']
+      }
+    }
+  }
+}</code></pre>
+        </section>
+      </section>
+      <section id="extractcss" class="level2">
+        <h2>extractCSS</h2>
+        <blockquote>
+          <p>Vue サーバーサイドレンダリング<a href="https://ssr.vuejs.org/en/css.html">ガイドライン</a>を使って共通の CSS を抽出できるようにします。</p>
+        </blockquote>
+        <ul>
+          <li>型: <code>Boolean</code> または <code>Object</code></li>
+          <li>デフォルト: <code>false</code></li>
+        </ul>
+        <p>内部で <a href="https://github.com/faceyspacey/extract-css-chunks-webpack-plugin/"><code>extract-css-chunks-webpack-plugin</code></a> が使われ、全ての CSS は別々のファイルに、通常はコンポーネントごとに 1 つ抽出されます。これは CSS と JavaScript を別々にキャッシュすることを可能にし、多くのグローバルまたは共通 CSS が存在する場合には試してみる価値があります。</p>
+        <p>例 (<code>nuxt.config.js</code>)：</p>
+        <pre class="language-js"><code class="language-js"><span class="token keyword module">export</span> <span class="token keyword module">default</span> <span class="token punctuation">{</span>
+  <span class="token literal-property property">build</span><span class="token operator">:</span> <span class="token punctuation">{</span>
+    <span class="token literal-property property">extractCSS</span><span class="token operator">:</span> <span class="token boolean">true</span><span class="token punctuation">,</span>
+    <span class="token comment">// またｈ</span>
+    <span class="token literal-property property">extractCSS</span><span class="token operator">:</span> <span class="token punctuation">{</span>
+      <span class="token literal-property property">ignoreOrder</span><span class="token operator">:</span> <span class="token boolean">true</span>
+    <span class="token punctuation">}</span>
+  <span class="token punctuation">}</span>
+<span class="token punctuation">}</span></code></pre>
+        <section id="info-1" class="level4">
+          <h4>Info</h4>
+          <p><strong>警告:</strong> Vue 2.5.18 以前では、このオプションを使用したときに重要な CSS のインポートが削除されるバグがありました。</p>
+          <p>全ての CSS を 1 つのファイルに抽出したい場合があります。このための回避策があります：</p>
+        </section>
+        <section id="warning-1" class="level4">
+          <h4>Warning</h4>
+          <p>全てのファイルを 1 つのファイルに抽出することはおすすめしません。複数の CSS ファイルに抽出する方が、キャッシングとプリロードの分離には適しています。また、必要なリソースのみをダウンロードして解決することによって、ページのパフォーマンスを向上させることもできます。</p>
+          <pre class="language-js"><code class="language-js"><span class="token keyword module">export</span> <span class="token keyword module">default</span> <span class="token punctuation">{</span>
+  <span class="token literal-property property">build</span><span class="token operator">:</span> <span class="token punctuation">{</span>
+    <span class="token literal-property property">extractCSS</span><span class="token operator">:</span> <span class="token boolean">true</span><span class="token punctuation">,</span>
+    <span class="token literal-property property">optimization</span><span class="token operator">:</span> <span class="token punctuation">{</span>
+      <span class="token literal-property property">splitChunks</span><span class="token operator">:</span> <span class="token punctuation">{</span>
+        <span class="token literal-property property">cacheGroups</span><span class="token operator">:</span> <span class="token punctuation">{</span>
+          <span class="token literal-property property">styles</span><span class="token operator">:</span> <span class="token punctuation">{</span>
+            <span class="token literal-property property">name</span><span class="token operator">:</span> <span class="token string">'styles'</span><span class="token punctuation">,</span>
+            <span class="token literal-property property">test</span><span class="token operator">:</span> <span class="token regex"><span class="token regex-delimiter">/</span><span class="token regex-source language-regex">\.(css|vue)$</span><span class="token regex-delimiter">/</span></span><span class="token punctuation">,</span>
+            <span class="token literal-property property">chunks</span><span class="token operator">:</span> <span class="token string">'all'</span><span class="token punctuation">,</span>
+            <span class="token literal-property property">enforce</span><span class="token operator">:</span> <span class="token boolean">true</span>
+          <span class="token punctuation">}</span>
+        <span class="token punctuation">}</span>
+      <span class="token punctuation">}</span>
+    <span class="token punctuation">}</span>
+  <span class="token punctuation">}</span>
+<span class="token punctuation">}</span></code></pre>
+        </section>
+      </section>
+      <section id="filenames" class="level2">
+        <h2>filenames</h2>
+        <blockquote>
+          <p>バンドルのファイル名をカスタマイズします。</p>
+        </blockquote>
+        <ul>
+          <li>
+            <p>型: <code>Object</code></p>
+          </li>
+          <li>
+            <p>デフォルト:</p>
+            <pre class="language-js"><code class="language-js"><span class="token punctuation">{</span>
+  <span class="token function-variable function">app</span><span class="token operator">:</span> <span class="token punctuation">(</span><span class="token parameter"><span class="token punctuation">{</span> isDev<span class="token punctuation">,</span> isModern <span class="token punctuation">}</span></span><span class="token punctuation">)</span> <span class="token arrow operator">=></span> isDev <span class="token operator">?</span> <span class="token template-string"><span class="token template-punctuation string">`</span><span class="token string">[name]</span><span class="token interpolation"><span class="token interpolation-punctuation punctuation">${</span>isModern <span class="token operator">?</span> <span class="token string">'.modern'</span> <span class="token operator">:</span> <span class="token string">''</span><span class="token interpolation-punctuation punctuation">}</span></span><span class="token string">.js</span><span class="token template-punctuation string">`</span></span> <span class="token operator">:</span> <span class="token template-string"><span class="token template-punctuation string">`</span><span class="token string">[contenthash:7]</span><span class="token interpolation"><span class="token interpolation-punctuation punctuation">${</span>isModern <span class="token operator">?</span> <span class="token string">'.modern'</span> <span class="token operator">:</span> <span class="token string">''</span><span class="token interpolation-punctuation punctuation">}</span></span><span class="token string">.js</span><span class="token template-punctuation string">`</span></span><span class="token punctuation">,</span>
+  <span class="token function-variable function">chunk</span><span class="token operator">:</span> <span class="token punctuation">(</span><span class="token parameter"><span class="token punctuation">{</span> isDev<span class="token punctuation">,</span> isModern <span class="token punctuation">}</span></span><span class="token punctuation">)</span> <span class="token arrow operator">=></span> isDev <span class="token operator">?</span> <span class="token template-string"><span class="token template-punctuation string">`</span><span class="token string">[name]</span><span class="token interpolation"><span class="token interpolation-punctuation punctuation">${</span>isModern <span class="token operator">?</span> <span class="token string">'.modern'</span> <span class="token operator">:</span> <span class="token string">''</span><span class="token interpolation-punctuation punctuation">}</span></span><span class="token string">.js</span><span class="token template-punctuation string">`</span></span> <span class="token operator">:</span> <span class="token template-string"><span class="token template-punctuation string">`</span><span class="token string">[contenthash:7]</span><span class="token interpolation"><span class="token interpolation-punctuation punctuation">${</span>isModern <span class="token operator">?</span> <span class="token string">'.modern'</span> <span class="token operator">:</span> <span class="token string">''</span><span class="token interpolation-punctuation punctuation">}</span></span><span class="token string">.js</span><span class="token template-punctuation string">`</span></span><span class="token punctuation">,</span>
+  <span class="token function-variable function">css</span><span class="token operator">:</span> <span class="token punctuation">(</span><span class="token parameter"><span class="token punctuation">{</span> isDev <span class="token punctuation">}</span></span><span class="token punctuation">)</span> <span class="token arrow operator">=></span> isDev <span class="token operator">?</span> <span class="token string">'[name].css'</span> <span class="token operator">:</span> <span class="token string">'css/[contenthash:7].css'</span><span class="token punctuation">,</span>
+  <span class="token function-variable function">img</span><span class="token operator">:</span> <span class="token punctuation">(</span><span class="token parameter"><span class="token punctuation">{</span> isDev <span class="token punctuation">}</span></span><span class="token punctuation">)</span> <span class="token arrow operator">=></span> isDev <span class="token operator">?</span> <span class="token string">'[path][name].[ext]'</span> <span class="token operator">:</span> <span class="token string">'img/[name].[contenthash:7].[ext]'</span><span class="token punctuation">,</span>
+  <span class="token function-variable function">font</span><span class="token operator">:</span> <span class="token punctuation">(</span><span class="token parameter"><span class="token punctuation">{</span> isDev <span class="token punctuation">}</span></span><span class="token punctuation">)</span> <span class="token arrow operator">=></span> isDev <span class="token operator">?</span> <span class="token string">'[path][name].[ext]'</span> <span class="token operator">:</span> <span class="token string">'fonts/[name].[contenthash:7].[ext]'</span><span class="token punctuation">,</span>
+  <span class="token function-variable function">video</span><span class="token operator">:</span> <span class="token punctuation">(</span><span class="token parameter"><span class="token punctuation">{</span> isDev <span class="token punctuation">}</span></span><span class="token punctuation">)</span> <span class="token arrow operator">=></span> isDev <span class="token operator">?</span> <span class="token string">'[path][name].[ext]'</span> <span class="token operator">:</span> <span class="token string">'videos/[name].[contenthash:7].[ext]'</span>
+<span class="token punctuation">}</span></code></pre>
+          </li>
+        </ul>
+        <p>この例ではチャンク名を数値の id に変更します：</p>
+        <pre class="language-js{}[nuxt.config.js]"><code class="language-js{}[nuxt.config.js]">export default {
+  build: {
+    filenames: {
+      chunk: ({ isDev }) => (isDev ? '[name].js' : '[id].[contenthash].js')
+    }
+  }
+}</code></pre>
+        <p>manifest の使い方をより理解するためにこの <a href="https://webpack.js.org/guides/code-splitting/">webpack ドキュメント</a>を参照してください。</p>
+        <section id="warning-2" class="level4">
+          <h4>Warning</h4>
+          <p>ハッシュ化されていないベースのファイル名を本番環境で使用する場合、ほとんどのブラウザはアセットをキャッシュし、最初のロード時には変更を検出しないので注意してください。</p>
+        </section>
+      </section>
+      <section id="friendlyerrors" class="level2">
+        <h2>friendlyErrors</h2>
+        <ul>
+          <li>型: <code>Boolean</code></li>
+          <li>デフォルト: <code>true</code> (上書きが有効）</li>
+        </ul>
+        <p><a href="https://github.com/nuxt/friendly-errors-webpack-plugin">FriendlyErrorsWebpackPlugin</a> を使って上書きを有効にするか無効にするかを設定します。</p>
+      </section>
+      <section id="hardsource" class="level2">
+        <h2>hardSource</h2>
+        <ul>
+          <li>型: <code>Boolean</code></li>
+          <li>デフォルト: <code>false</code></li>
+          <li>⚠️ 実験的機能</li>
+        </ul>
+        <p>キャッシュを改善するために <a href="https://github.com/mzgoddard/hard-source-webpack-plugin">HardSourceWebpackPlugin</a> を有効にします。</p>
+      </section>
+      <section id="hotmiddleware" class="level2">
+        <h2>hotMiddleware</h2>
+        <ul>
+          <li>型: <code>Object</code></li>
+        </ul>
+        <p>利用できるオプションは <a href="https://github.com/glenjamin/webpack-hot-middleware">webpack-hot-middleware</a> を参照してください。</p>
+      </section>
+      <section id="htmlminify" class="level2">
+        <h2>html.minify</h2>
+        <ul>
+          <li>型: <code>Object</code></li>
+          <li>デフォルト:</li>
+        </ul>
+        <pre class="language-js"><code class="language-js"><span class="token punctuation">{</span>
+  <span class="token literal-property property">collapseBooleanAttributes</span><span class="token operator">:</span> <span class="token boolean">true</span><span class="token punctuation">,</span>
+  <span class="token literal-property property">decodeEntities</span><span class="token operator">:</span> <span class="token boolean">true</span><span class="token punctuation">,</span>
+  <span class="token literal-property property">minifyCSS</span><span class="token operator">:</span> <span class="token boolean">true</span><span class="token punctuation">,</span>
+  <span class="token literal-property property">minifyJS</span><span class="token operator">:</span> <span class="token boolean">true</span><span class="token punctuation">,</span>
+  <span class="token literal-property property">processConditionalComments</span><span class="token operator">:</span> <span class="token boolean">true</span><span class="token punctuation">,</span>
+  <span class="token literal-property property">removeEmptyAttributes</span><span class="token operator">:</span> <span class="token boolean">true</span><span class="token punctuation">,</span>
+  <span class="token literal-property property">removeRedundantAttributes</span><span class="token operator">:</span> <span class="token boolean">true</span><span class="token punctuation">,</span>
+  <span class="token literal-property property">trimCustomFragments</span><span class="token operator">:</span> <span class="token boolean">true</span><span class="token punctuation">,</span>
+  <span class="token literal-property property">useShortDoctype</span><span class="token operator">:</span> <span class="token boolean">true</span>
+<span class="token punctuation">}</span></code></pre>
+        <p><strong>注意:</strong> <code>html.minify</code> に変更を加えても、それらはデフォルトとマージされません！</p>
+        <p>ビルドプロセス中に作成された HTML ファイルを最小化するために使用される <a href="https://github.com/kangax/html-minifier">html-minifier</a> プラグインの設定（<em>すべてのモード</em> に適用されます）。</p>
+      </section>
+      <section id="indicator" class="level2">
+        <h2>indicator</h2>
+        <blockquote>
+          <p>開発モードにおいて hot module replacement のビルドインジケータを表示する（<code>v2.8.0</code> 以上から利用可能）</p>
+        </blockquote>
+        <ul>
+          <li>型: <code>Boolean</code></li>
+          <li>デフォルト: <code>true</code></li>
+        </ul>
+        <figure>
+          <img src="https://user-images.githubusercontent.com/5158436/58500509-93ba0f80-8197-11e9-8524-e115c6d32571.gif" alt="nuxt-build-indicator">
+          <figcaption aria-hidden="true">nuxt-build-indicator</figcaption>
+        </figure>
+      </section>
+      <section id="loaders" class="level2">
+        <h2>loaders</h2>
+        <blockquote>
+          <p>Nuxt に統合された webpack loaders のカスタマイズオプション</p>
+        </blockquote>
+        <ul>
+          <li>型: <code>Object</code></li>
+          <li>デフォルト:</li>
+        </ul>
+        <pre class="language-js"><code class="language-js"><span class="token punctuation">{</span>
+  <span class="token literal-property property">file</span><span class="token operator">:</span> <span class="token punctuation">{</span><span class="token punctuation">}</span><span class="token punctuation">,</span>
+  <span class="token literal-property property">fontUrl</span><span class="token operator">:</span> <span class="token punctuation">{</span> <span class="token literal-property property">limit</span><span class="token operator">:</span> <span class="token number">1000</span> <span class="token punctuation">}</span><span class="token punctuation">,</span>
+  <span class="token literal-property property">imgUrl</span><span class="token operator">:</span> <span class="token punctuation">{</span> <span class="token literal-property property">limit</span><span class="token operator">:</span> <span class="token number">1000</span> <span class="token punctuation">}</span><span class="token punctuation">,</span>
+  <span class="token literal-property property">pugPlain</span><span class="token operator">:</span> <span class="token punctuation">{</span><span class="token punctuation">}</span><span class="token punctuation">,</span>
+  <span class="token literal-property property">vue</span><span class="token operator">:</span> <span class="token punctuation">{</span>
+    <span class="token literal-property property">transformAssetUrls</span><span class="token operator">:</span> <span class="token punctuation">{</span>
+      <span class="token literal-property property">video</span><span class="token operator">:</span> <span class="token string">'src'</span><span class="token punctuation">,</span>
+      <span class="token literal-property property">source</span><span class="token operator">:</span> <span class="token string">'src'</span><span class="token punctuation">,</span>
+      <span class="token literal-property property">object</span><span class="token operator">:</span> <span class="token string">'src'</span><span class="token punctuation">,</span>
+      <span class="token literal-property property">embed</span><span class="token operator">:</span> <span class="token string">'src'</span>
+    <span class="token punctuation">}</span>
+  <span class="token punctuation">}</span><span class="token punctuation">,</span>
+  <span class="token literal-property property">css</span><span class="token operator">:</span> <span class="token punctuation">{</span><span class="token punctuation">}</span><span class="token punctuation">,</span>
+  <span class="token literal-property property">cssModules</span><span class="token operator">:</span> <span class="token punctuation">{</span>
+    <span class="token literal-property property">localIdentName</span><span class="token operator">:</span> <span class="token string">'[local]_[hash:base64:5]'</span>
+  <span class="token punctuation">}</span><span class="token punctuation">,</span>
+  <span class="token literal-property property">less</span><span class="token operator">:</span> <span class="token punctuation">{</span><span class="token punctuation">}</span><span class="token punctuation">,</span>
+  <span class="token literal-property property">sass</span><span class="token operator">:</span> <span class="token punctuation">{</span>
+    <span class="token literal-property property">indentedSyntax</span><span class="token operator">:</span> <span class="token boolean">true</span>
+  <span class="token punctuation">}</span><span class="token punctuation">,</span>
+  <span class="token literal-property property">scss</span><span class="token operator">:</span> <span class="token punctuation">{</span><span class="token punctuation">}</span><span class="token punctuation">,</span>
+  <span class="token literal-property property">stylus</span><span class="token operator">:</span> <span class="token punctuation">{</span><span class="token punctuation">}</span><span class="token punctuation">,</span>
+  <span class="token literal-property property">vueStyle</span><span class="token operator">:</span> <span class="token punctuation">{</span><span class="token punctuation">}</span>
+<span class="token punctuation">}</span></code></pre>
+        <blockquote>
+          <p>注意: <code>nuxt.config.js</code> の設定で指定するだけでなく、<a href="#extend">build.extend</a> でも設定を変更することができます</p>
+        </blockquote>
+        <section id="loadersfile" class="level3">
+          <h3>loaders.file</h3>
+          <blockquote>
+            <p>詳細は <a href="https://github.com/webpack-contrib/file-loader#options">file-loader オプション</a>を参照してください。</p>
+          </blockquote>
+        </section>
+        <section id="loadersfonturl-と-loadersimgurl" class="level3">
+          <h3>loaders.fontUrl と loaders.imgUrl</h3>
+          <blockquote>
+            <p>詳細は <a href="https://github.com/webpack-contrib/url-loader#options">url-loader オプション</a>を参照してください。</p>
+          </blockquote>
+        </section>
+        <section id="loaderspugplain" class="level3">
+          <h3>loaders.pugPlain</h3>
+          <blockquote>
+            <p>詳細は <a href="https://github.com/yyx990803/pug-plain-loader">pug-plain-loader</a> または <a href="https://pugjs.org/api/reference.html#options">Pug compiler オプション</a>を参照してください。</p>
+          </blockquote>
+        </section>
+        <section id="loadersvue" class="level3">
+          <h3>loaders.vue</h3>
+          <blockquote>
+            <p>詳細は <a href="https://vue-loader.vuejs.org/options.html">vue-loader オプション</a> を参照してください。</p>
+          </blockquote>
+        </section>
+        <section id="loaderscss-と-loaderscssmodules" class="level3">
+          <h3>loaders.css と loaders.cssModules</h3>
+          <blockquote>
+            <p>詳細は <a href="https://github.com/webpack-contrib/css-loader#options">css-loader オプション</a>を参照してください。注意: cssModules は <a href="https://vue-loader.vuejs.org/guide/css-modules.html#css-modules">CSS Modules</a>を使うための loader オプションです。</p>
+          </blockquote>
+        </section>
+        <section id="loadersless" class="level3">
+          <h3>loaders.less</h3>
+          <blockquote>
+            <p>Less specific オプションは <code>loaders.less</code> を介して <code>less-loader</code> に渡すことができます。dash-case で利用可能な全てのオプションについては <a href="http://lesscss.org/usage/#command-line-usage-options">Less のドキュメント</a>を参照してください。</p>
+          </blockquote>
+        </section>
+        <section id="loaderssass-と-loadersscss" class="level3">
+          <h3>loaders.sass と loaders.scss</h3>
+          <blockquote>
+            <p>利用可能な Sass のオプションについては <a href="https://github.com/sass/dart-sass#javascript-api">Sass ドキュメント</a>を参照してください。注意: <code>loaders.sass</code> は <a href="http://sass-lang.com/documentation/file.INDENTED_SYNTAX.html">Sass Indented Syntax</a>用です。</p>
+          </blockquote>
+        </section>
+        <section id="loadersvuestyle" class="level3">
+          <h3>loaders.vueStyle</h3>
+          <blockquote>
+            <p>詳細は <a href="https://github.com/vuejs/vue-style-loader#options">vue-style-loader オプション</a>を参照してください。</p>
+          </blockquote>
+        </section>
+      </section>
+      <section id="optimization" class="level2">
+        <h2>optimization</h2>
+        <ul>
+          <li>
+            <p>型: <code>Object</code></p>
+          </li>
+          <li>
+            <p>デフォルト:</p>
+            <pre class="language-js"><code class="language-js"><span class="token punctuation">{</span>
+  <span class="token literal-property property">minimize</span><span class="token operator">:</span> <span class="token boolean">true</span><span class="token punctuation">,</span>
+  <span class="token literal-property property">minimizer</span><span class="token operator">:</span> <span class="token punctuation">[</span>
+    <span class="token comment">// terser-webpack-plugin</span>
+    <span class="token comment">// optimize-css-assets-webpack-plugin</span>
+  <span class="token punctuation">]</span><span class="token punctuation">,</span>
+  <span class="token literal-property property">splitChunks</span><span class="token operator">:</span> <span class="token punctuation">{</span>
+    <span class="token literal-property property">chunks</span><span class="token operator">:</span> <span class="token string">'all'</span><span class="token punctuation">,</span>
+    <span class="token literal-property property">automaticNameDelimiter</span><span class="token operator">:</span> <span class="token string">'.'</span><span class="token punctuation">,</span>
+    <span class="token literal-property property">name</span><span class="token operator">:</span> <span class="token keyword nil">undefined</span><span class="token punctuation">,</span>
+    <span class="token literal-property property">cacheGroups</span><span class="token operator">:</span> <span class="token punctuation">{</span><span class="token punctuation">}</span>
+  <span class="token punctuation">}</span>
+<span class="token punctuation">}</span></code></pre>
+          </li>
+        </ul>
+        <p><code>dev</code> または <code>analyze</code> モードでは <code>splitChunks.name</code> のデフォルト値は <code>true</code> です。</p>
+        <p>カスタマイズされたプラグインの配列に <code>minimizer</code> を設定するか、<code>minimize</code> を <code>false</code> にすることで全ての minimizer を無効にできます。（<code>minimize</code> はデフォルトで開発用に無効になっています）</p>
+        <p><a href="https://webpack.js.org/configuration/optimization">Webpack の最適化</a>を参照してください。</p>
+      </section>
+      <section id="optimizecss" class="level2">
+        <h2>optimizeCSS</h2>
+        <ul>
+          <li>型: <code>Object</code> または <code>Boolean</code></li>
+          <li>デフォルト:
+            <ul>
+              <li><code>false</code></li>
+              <li>extractCSS が有効になるときは <code>{}</code></li>
+            </ul>
+          </li>
+        </ul>
+        <p>OptimizeCSSAssets プラグインのオプションです。</p>
+        <p><a href="https://github.com/NMFR/optimize-css-assets-webpack-plugin">NMFR/optimize-css-assets-webpack-plugin</a> を参照してください。</p>
+      </section>
+      <section id="parallel" class="level2">
+        <h2>parallel</h2>
+        <ul>
+          <li>型: <code>Boolean</code></li>
+          <li>デフォルト: <code>false</code></li>
+          <li>⚠️ 実験的機能</li>
+        </ul>
+        <blockquote>
+          <p>webpack のビルドで <a href="https://github.com/webpack-contrib/thread-loader#thread-loader">thread-loader</a> を有効にする</p>
+        </blockquote>
+      </section>
+      <section id="plugins" class="level2">
+        <h2>plugins</h2>
+        <blockquote>
+          <p>webpack プラグインを追加する</p>
+        </blockquote>
+        <ul>
+          <li>型: <code>Array</code></li>
+          <li>デフォルト: <code>[]</code></li>
+        </ul>
+        <pre class="language-js{}[nuxt.config.js]"><code class="language-js{}[nuxt.config.js]">import webpack from 'webpack'
+import { version } from './package.json'
+export default {
+  build: {
+    plugins: [
+      new webpack.DefinePlugin({
+        'process.VERSION': version
+      })
+    ]
+  }
+}</code></pre>
+      </section>
+      <section id="postcss" class="level2">
+        <h2>postcss</h2>
+        <blockquote>
+          <p><a href="https://github.com/postcss/postcss-loader#usage">PostCSS Loader</a> プラグインをカスタマイズします</p>
+        </blockquote>
+        <ul>
+          <li>
+            <p>型: <code>Array</code>（レガシーな場合はデフォルトで上書きします）、<code>Object</code>（推奨）、<code>Function</code> または <code>Boolean</code></p>
+            <p><strong>注意:</strong> Nuxt は <a href="https://github.com/csstools/postcss-preset-env">PostCSS Preset Env</a>を適用しました。デフォルトでは、<a href="https://cssdb.org/">Stage 2 機能</a> と <a href="https://github.com/postcss/autoprefixer">Autoprefixer</a>が有効になっていますが、<code>build.postcss.preset</code> を使って設定できます。</p>
+          </li>
+          <li>
+            <p>デフォルト:</p>
+            <pre class="language-js{}[nuxt.config.js]"><code class="language-js{}[nuxt.config.js]">{
+  plugins: {
+    'postcss-import': {},
+    'postcss-url': {},
+    'postcss-preset-env': this.preset,
+    'cssnano': { preset: 'default' } // 開発モードでは無効化されています
+  },
+  order: 'presetEnvAndCssnanoLast',
+  preset: {
+    stage: 2
+  }
+}</code></pre>
+          </li>
+        </ul>
+        <p>カスタムプラグイン設定は、デフォルトのプラグイン設定にマージされます (<code>Object</code> のかわりに <code>Array</code> を使っている場合を除きます）。</p>
+        <pre class="language-js{}[nuxt.config.js]"><code class="language-js{}[nuxt.config.js]">export default {
+  build: {
+    postcss: {
+      plugins: {
+        // `postcss-url` の無効化
+        'postcss-url': false,
+        // プラグインの追加
+        'postcss-nested': {},
+        'postcss-responsive-type': {},
+        'postcss-hexrgba': {}
+      },
+      preset: {
+        autoprefixer: {
+          grid: true
+        }
+      }
+    }
+  }
+}</code></pre>
+        <p>postcss の設定が <code>Object</code> の場合、プラグインの順番の定義に <code>order</code> が利用できます：</p>
+        <ul>
+          <li>型: <code>Array</code> (順序付けされたプラグイン名）、<code>String</code> （順序プリセット名）、 <code>Function</code></li>
+          <li>デフォルト: <code>cssnanoLast</code>（最後に <code>cssnano</code> を配置する）</li>
+        </ul>
+        <pre class="language-js{}[nuxt.config.js]"><code class="language-js{}[nuxt.config.js]">export default {
+  build: {
+    postcss: {
+      // プリセット名
+      order: 'cssnanoLast',
+      // 順序付けされたプラグイン名
+      order: ['postcss-import', 'postcss-preset-env', 'cssnano']
+      // プラグインの順番を算出するための関数
+      order: (names, presets) => presets.cssnanoLast(names)
+    }
+  }
+}</code></pre>
+        <section id="postcss-plugins-と-nuxtjstailwindcss" class="level3">
+          <h3>postcss plugins と @nuxtjs/tailwindcss</h3>
+          <p>@nuxtjs/tailwindcss の設定で postcss プラグイン（例えば postcss-pxtorem）を適用したい場合、順番を変更して最初に tailwindcss を読み込む必要があります。</p>
+          <p><strong>この設定は nuxt-purgecss には影響しません。</strong></p>
+          <pre class="language-js{}[nuxt.config.js]"><code class="language-js{}[nuxt.config.js]">import { join } from 'path'
+
+export default {
+  // ...
+  build: {
+    postcss: {
+      plugins: {
+        tailwindcss: join(__dirname, 'tailwind.config.js'),
+        'postcss-pxtorem': {
+          propList: ['*', '!border*']
+        }
+      }
+    }
+  }
+}</code></pre>
+        </section>
+      </section>
+      <section id="profile" class="level2">
+        <h2>profile</h2>
+        <ul>
+          <li>型: <code>Boolean</code></li>
+          <li>デフォルト: コマンドライン引数 <code>--profile</code> で有効にします</li>
+        </ul>
+        <blockquote>
+          <p><a href="https://github.com/nuxt/webpackbar#profile">WebpackBar</a> の profiler で有効にします</p>
+        </blockquote>
+      </section>
+      <section id="publicpath" class="level2">
+        <h2>publicPath</h2>
+        <blockquote>
+          <p>Nuxt ではパフォーマンスの最大化のため dist ディレクトリ内のファイルを CDN にアップロードすることも可能です。そのためにはまず <code>publicPath</code> に CDN を指定します。</p>
+        </blockquote>
+        <ul>
+          <li>型: <code>String</code></li>
+          <li>デフォルト: <code>'/_nuxt/'</code></li>
+        </ul>
+        <pre class="language-js{}[nuxt.config.js]"><code class="language-js{}[nuxt.config.js]">export default {
+  build: {
+    publicPath: 'https://cdn.nuxtjs.org'
+  }
+}</code></pre>
+        <p>設定後、<code>nuxt build</code> を実行する際に <code>.nuxt/dist/client</code> ディレクトリの内容を CDN にアップロードしてください。</p>
+        <p>Nuxt v2.15 以降では、実行時にこのプロパティの値を変更すると、既にビルドされているアプリケーションの設定が上書きされます。</p>
+      </section>
+      <section id="quiet" class="level2">
+        <h2>quiet</h2>
+        <blockquote>
+          <p>ビルド出力ログの大半を抑制します</p>
+        </blockquote>
+        <ul>
+          <li>型: <code>Boolean</code></li>
+          <li>デフォルト: <a href="https://github.com/blindmedia/std-env">std-env</a>によって <code>CI</code> または <code>test</code> 環境で検出された際に有効になります</li>
+        </ul>
+      </section>
+      <section id="splitchunks" class="level2">
+        <h2>splitChunks</h2>
+        <ul>
+          <li>
+            <p>型: <code>Object</code></p>
+          </li>
+          <li>
+            <p>デフォルト:</p>
+            <pre class="language-js{}[nuxt.config.js]"><code class="language-js{}[nuxt.config.js]">export default {
+  build: {
+    splitChunks: {
+      layouts: false,
+      pages: true,
+      commons: true
+    }
+  }
+}</code></pre>
+          </li>
+        </ul>
+        <p><code>layout</code>、<code>pages</code> や <code>commons</code> で分割したコードの場合（共通ライブラリ:vue|vue-loader|vue-router|vuex...）</p>
+      </section>
+      <section id="ssr" class="level2">
+        <h2>ssr</h2>
+        <blockquote>
+          <p>SSR レンダラー用の webpack バンドルを作成します。</p>
+        </blockquote>
+        <ul>
+          <li>型: <code>Boolean</code></li>
+          <li>デフォルト: ユニバーサルモードでのデフォルト値は <code>true</code>、spa モードでのデフォルト値は <code>false</code></li>
+        </ul>
+        <p>このオプションは、指定されていない場合は <code>mode</code> 値に基づいて自動的に設定されます。</p>
+      </section>
+      <section id="standalone" class="level2">
+        <h2>standalone</h2>
+        <blockquote>
+          <p>サーバービルドにおいて依存関係をインラインでバンドル（アドバンスド）</p>
+        </blockquote>
+        <ul>
+          <li>型: <code>Boolean</code></li>
+          <li>デフォルト: <code>false</code></li>
+        </ul>
+        <p>このモードは通常サーバービルドで外部として保存される <code>node_modules</code> をバンドルします（<a href="https://github.com/nuxt/nuxt.js/pull/4661">詳細</a>）</p>
+        <section id="warning-3" class="level4">
+          <h4>Warning</h4>
+          <p>ランタイムの依存関係（モジュール、 <code>nuxt.config</code> 、サーバーミドルウェア、静的ディレクトリ）はバンドルされていません。この機能は、server-bundle での <a href="https://webpack.js.org/configuration/externals/">webpack-externals</a> の使用のみを無効にします。</p>
+        </section>
+        <section id="info-2" class="level4">
+          <h4>Info</h4>
+          <p>コマンド <code>yarnnuxt build --standalone</code> を使用して、コマンドラインでこのモードを有効にすることができます。（ <code>yarn</code> を使用していない場合は、 <code>npx</code> を使用してコマンドを実行できます）</p>
+        </section>
+      </section>
+      <section id="styleresources" class="level2">
+        <h2>styleResources</h2>
+        <ul>
+          <li>型: <code>Object</code></li>
+          <li>デフォルト: <code>{}</code></li>
+        </ul>
+        <section id="warning-4" class="level4">
+          <h4>Warning</h4>
+          <p>このプロパティは非推奨です。パフォーマンスおよび開発体験の向上のために、代わりに <a href="https://github.com/nuxt-community/style-resources-module/">style-resources-module</a> を使ってください。</p>
+          <p>毎回インポートせずに変数やミックスインをページに挿入する必要がある場合に便利です。</p>
+          <p>Nuxt はこの動作を実現するために <a href="https://github.com/yenshih/style-resources-loader">https://github.com/yenshih/style-resources-loader</a> を使用しています。</p>
+          <p>特定のプリプロセッサ（<code>less</code>、<code>sass</code>、<code>scss</code> または <code>stylus</code>）に含めるパターン/パスを指定する必要があります：</p>
+          <p>ここではパスのエイリアス（<code>~</code> や <code>@</code>）を使用することができないため、相対パスまたは絶対パスを使用する必要があります。</p>
+          <pre class="language-js{}[nuxt.config.js]"><code class="language-js{}[nuxt.config.js]">{
+  build: {
+    styleResources: {
+      scss: './assets/variables.scss',
+      less: './assets/*.less',
+      // sass: ...,
+      // scss: ...
+      options: {
+        // https://github.com/yenshih/style-resources-loader#options の
+        // `patterns` プロパティ以外を参照してください
+      }
+    }
+  }
+}</code></pre>
+        </section>
+      </section>
+      <section id="templates" class="level2">
+        <h2>templates</h2>
+        <blockquote>
+          <p>Nuxt では設定に基づいてレンダリングされる独自のテンプレートを提供できます。この機能はモジュールを使う場合にとりわけ便利です。</p>
+        </blockquote>
+        <ul>
+          <li>型: <code>Array</code></li>
+        </ul>
+        <pre class="language-js{}[nuxt.config.js]"><code class="language-js{}[nuxt.config.js]">export default {
+  build: {
+    templates: [
+      {
+        src: '~/modules/support/plugin.js', // `src` は絶対パスもしくは相対パスで指定してください
+        dst: 'support.js', // `dst` は `.nuxt` ディレクトリからみた相対パスです
+        options: {
+          // Options は `options` キーとしてテンプレートに提供されます
+          live_chat: false
+        }
+      }
+    ]
+  }
+}</code></pre>
+        <p>テンプレートは <a href="https://lodash.com/docs/#template"><code>lodash.template</code></a> を使ってレンダリングされます。<a href="https://github.com/learn-co-students/javascript-lodash-templates-lab-v-000">こちら</a>でより詳細な使い方を知ることができます。</p>
+      </section>
+      <section id="terser" class="level2">
+        <h2>terser</h2>
+        <ul>
+          <li>型: <code>Object</code> または <code>Boolean</code></li>
+          <li>デフォルト:</li>
+        </ul>
+        <pre class="language-js{}[nuxt.config.js]"><code class="language-js{}[nuxt.config.js]">{
+  parallel: true,
+  cache: false,
+  sourceMap: false,
+  extractComments: {
+    filename: 'LICENSES'
+  },
+  terserOptions: {
+    output: {
+      comments: /^\**!|@preserve|@license|@cc_on/
+    }
+  }
+}</code></pre>
+        <p>Terser プラグインのオプションです。<code>false</code> を設定するとこのプラグインは無効になります。</p>
+        <p><code>sourceMap</code> を有効にすると、webpack の <code>config.devtool</code> が <code>source-map</code> に設定されている場合、各出力ファイルの最後に <code>//# sourceMappingURL</code> というリンクコメントが残ります。</p>
+        <p><a href="https://github.com/webpack-contrib/terser-webpack-plugin">webpack-contrib/terser-webpack-plugin</a>を参照してください</p>
+      </section>
+      <section id="transpile" class="level2">
+        <h2>transpile</h2>
+        <ul>
+          <li>型: <code>Array&#x3C;String | RegExp | Function></code></li>
+          <li>デフォルト: <code>[]</code></li>
+        </ul>
+        <p>特定の依存関係を Babel でトランスパイルしたい場合、<code>build.transpile</code> を追加することができます。transpile の項目はパッケージ名や依存関係のファイル名にマッチする文字列または正規表現オブジェクトになります。</p>
+        <p><code>v2.9.0</code> からは条件付きでトランスパイルするために関数を使うこともできます。関数はオブジェクト（<code>{ isDev, isServer, isClient, isModern, isLegacy }</code>）を受け取ります：</p>
+        <pre class="language-js{}[nuxt.config.js]"><code class="language-js{}[nuxt.config.js]">{
+  build: {
+    transpile: [({ isLegacy }) => isLegacy &#x26;&#x26; 'ky']
+  }
+}</code></pre>
+        <p>この例では、Nuxt が<a href="./configuration-glossary/configuration-modern">modern mode</a>でない場合、<code>ky</code>は Babel によってトランスパイルされます。</p>
+      </section>
+      <section id="vueloader" class="level2">
+        <h2>vueLoader</h2>
+        <blockquote>
+          <p>注意: この設定は Nuxt 2.0 から削除されました。代わりに <a href="#loaders"><code>build.loaders.vue</code></a> を使ってください。</p>
+        </blockquote>
+        <ul>
+          <li>
+            <p>型: <code>Object</code></p>
+          </li>
+          <li>
+            <p>デフォルト:</p>
+            <pre class="language-js{}[nuxt.config.js]"><code class="language-js{}[nuxt.config.js]">{
+  productionMode: !this.options.dev,
+  transformAssetUrls: {
+    video: 'src',
+    source: 'src',
+    object: 'src',
+    embed: 'src'
+  }
+}</code></pre>
+          </li>
+        </ul>
+        <blockquote>
+          <p><a href="https://vue-loader.vuejs.org/options.html">Vue Loader オプション</a>を指定します。</p>
+        </blockquote>
+      </section>
+      <section id="watch" class="level2">
+        <h2>watch</h2>
+        <blockquote>
+          <p>監視や変更後に再生成を行うカスタムファイルを提供することができます。この機能は<a href="./directory-structure/modules">モジュール</a>を使用する場合にとりわけ便利です。</p>
+        </blockquote>
+        <ul>
+          <li>型: <code>Array&#x3C;String></code></li>
+        </ul>
+        <pre class="language-js{}[nuxt.config.js]"><code class="language-js{}[nuxt.config.js]">export default {
+  build: {
+    watch: ['~/.nuxt/support.js']
+  }
+}</code></pre>
+      </section>
+      <section id="followsymlinks" class="level2">
+        <h2>followSymlinks</h2>
+        <blockquote>
+          <p>デフォルトでは、ビルドプロセスはシンボリックリンク内のファイルをスキャンしません。この boolean 値はスキャンするかどうかを含むため、followSymlinks を true に設定すると例えば "pages" フォルダなどでフォルダ内のシンボリックリンクを使うことができます。</p>
+        </blockquote>
+        <ul>
+          <li>型: <code>Boolean</code></li>
+        </ul>
+        <pre class="language-js{}[nuxt.config.js]"><code class="language-js{}[nuxt.config.js]">export default {
+  build: {
+    followSymlinks: true
+  }
+}</code></pre>
+        <p><span style="float: footnote;"><a href="../index.html#toc">Go to TOC</a></span></p>
+      </section>
+    </section>
+  </body>
+</html>

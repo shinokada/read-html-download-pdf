@@ -1,0 +1,335 @@
+<!doctype html>
+<html lang="zh-hant">
+  <head>
+    <meta charset="utf-8">
+    <title>深入 JSX</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="https://raw.githubusercontent.com/shinokada/prism-coy-theme/main/theme_common.css">
+  </head>
+  <body>
+    <section id="深入-jsx" class="level1">
+      <h1>深入 JSX</h1>
+      <p>基本上，JSX 單純只是 <code>React.createElement(component, props, ...children)</code> function 的一個語法糖。以下 JSX 程式碼：</p>
+      <pre class="language-js"><code class="language-js"><span class="token operator">&#x3C;</span><span class="token maybe-class-name">MyButton</span> color<span class="token operator">=</span><span class="token string">"blue"</span> shadowSize<span class="token operator">=</span><span class="token punctuation">{</span><span class="token number">2</span><span class="token punctuation">}</span><span class="token operator">></span>
+  <span class="token maybe-class-name">Click</span> <span class="token maybe-class-name">Me</span>
+<span class="token operator">&#x3C;</span><span class="token operator">/</span><span class="token maybe-class-name">MyButton</span><span class="token operator">></span></code></pre>
+      <p>會編譯成：</p>
+      <pre class="language-js"><code class="language-js"><span class="token maybe-class-name">React</span><span class="token punctuation">.</span><span class="token method function property-access">createElement</span><span class="token punctuation">(</span>
+  <span class="token maybe-class-name">MyButton</span><span class="token punctuation">,</span>
+  <span class="token punctuation">{</span><span class="token literal-property property">color</span><span class="token operator">:</span> <span class="token string">'blue'</span><span class="token punctuation">,</span> <span class="token literal-property property">shadowSize</span><span class="token operator">:</span> <span class="token number">2</span><span class="token punctuation">}</span><span class="token punctuation">,</span>
+  <span class="token string">'Click Me'</span>
+<span class="token punctuation">)</span></code></pre>
+      <p>如果沒有 children 的話你也可以使用閉合的標籤形式。例如：</p>
+      <pre class="language-js"><code class="language-js"><span class="token operator">&#x3C;</span>div className<span class="token operator">=</span><span class="token string">"sidebar"</span> <span class="token operator">/</span><span class="token operator">></span></code></pre>
+      <p>會編譯成：</p>
+      <pre class="language-js"><code class="language-js"><span class="token maybe-class-name">React</span><span class="token punctuation">.</span><span class="token method function property-access">createElement</span><span class="token punctuation">(</span>
+  <span class="token string">'div'</span><span class="token punctuation">,</span>
+  <span class="token punctuation">{</span><span class="token literal-property property">className</span><span class="token operator">:</span> <span class="token string">'sidebar'</span><span class="token punctuation">}</span>
+<span class="token punctuation">)</span></code></pre>
+      <p>如果你想測試某些特定的 JSX 會轉換成什麼樣的 JavaScript，你可以在<a href="babel://jsx-simple-example">線上 Babel 編譯器</a>進行測試。</p>
+      <section id="specifying-the-react-element-type" class="level2">
+        <h2>指定 React Element 類型</h2>
+        <p>JSX 標籤的第一個部分決定 React element 的類型。</p>
+        <p>大寫字母的 JSX 標籤代表它們是 React Component。這些標籤會編譯成指向命名變數的 reference，所以當你使用 JSX <code>&#x3C;Foo /></code> 表達式時，<code>Foo</code> 就必須在作用域內。</p>
+        <section id="react-must-be-in-scope" class="level3">
+          <h3>React 必須在作用域內</h3>
+          <p>因為 JSX 會編譯成呼叫 <code>React.createElement</code> 的形式，<code>React</code> 函式庫必須同時與你的 JSX 程式碼在相同的作用域內。</p>
+          <p>舉例來說，雖然 <code>React</code> 與 <code>CustomButton</code> 並沒有在 JavaScript 中被直接使用，但是在此程式碼中它們必須被導入：</p>
+          <pre class="language-js{1,2,5}"><code class="language-js{1,2,5}">import React from 'react';
+import CustomButton from './CustomButton';
+
+function WarningButton() {
+  // return React.createElement(CustomButton, {color: 'red'}, null);
+  return &#x3C;CustomButton color="red" />;
+}</code></pre>
+          <p>如果你不使用任何 JavaScript bundler 並從 <code>&#x3C;script></code> 標籤來載入 React，那麼它就已經以 <code>React</code> 存在於作用域中了。</p>
+        </section>
+        <section id="using-dot-notation-for-jsx-type" class="level3">
+          <h3>在 JSX 類型中使用點記法</h3>
+          <p>你也可以在 JSX 中使用點記法來指向一個 React Component。這對當你有一個會導出許多 React component 的 module 來講是十分方便的。舉例來說，如果 <code>MyComponents.DatePicker</code> 是一個 component，那麼你可以在 JSX 中直接這樣使用：</p>
+          <pre class="language-js{10}"><code class="language-js{10}">import React from 'react';
+
+const MyComponents = {
+  DatePicker: function DatePicker(props) {
+    return &#x3C;div>Imagine a {props.color} datepicker here.&#x3C;/div>;
+  }
+}
+
+function BlueDatePicker() {
+  return &#x3C;MyComponents.DatePicker color="blue" />;
+}</code></pre>
+        </section>
+        <section id="user-defined-components-must-be-capitalized" class="level3">
+          <h3>使用者定義的 Component 必須由大寫字母開頭</h3>
+          <p>當一個 element 為小寫字母開頭時，它就會指向內建的 component，例如 <code>&#x3C;div></code> 或 <code>&#x3C;span></code> 會生產成字串 <code>'div'</code> 或 <code>'span'</code> 並傳遞給 <code>React.createElement</code>。像 <code>&#x3C;Foo /></code> 大寫字母開頭的 element 會編譯成 <code>React.createElement(Foo)</code> 並且在你的 JavaScript 檔案裡對應自定義或導入的 component。</p>
+          <p>我們建議以大寫字母開頭來命名 component。如果你有一個小寫字母開頭的 component，請在 JSX 裡使用之前把它賦值給一個大寫字母開頭的變數。</p>
+          <p>例如，以下程式碼並不會按照預期運行：</p>
+          <pre class="language-js{3,4,10,11}"><code class="language-js{3,4,10,11}">import React from 'react';
+
+// 錯誤！這是一個 component 並且應該由大寫字母開頭：
+function hello(props) {
+  // 正確！因為 div 是一個有效的 HTML 標籤，所以使用&#x3C;div> 是可行的：
+  return &#x3C;div>Hello {props.toWhat}&#x3C;/div>;
+}
+
+function HelloWorld() {
+  // 錯誤！React 會因為非大寫字母開頭而認為 &#x3C;hello /> 是一個 HTML 標籤：
+  return &#x3C;hello toWhat="World" />;
+}</code></pre>
+          <p>為了解決這個問題，我們將重新命名 <code>hello</code> 成 <code>Hello</code> 並且以 <code>&#x3C;Hello /></code> 來使用它：</p>
+          <pre class="language-js{3,4,10,11}"><code class="language-js{3,4,10,11}">import React from 'react';
+
+// 正確！這是一個 component 並且應該由大寫字母開頭：
+function Hello(props) {
+  // 正確！因為 div 是一個有效的 HTML 標籤，所以使用 &#x3C;div> 是可行的：
+  return &#x3C;div>Hello {props.toWhat}&#x3C;/div>;
+}
+
+function HelloWorld() {
+  // 正確！React 會因為大寫字母開頭而了解 &#x3C;Hello /> 是一個 component。
+  return &#x3C;Hello toWhat="World" />;
+}</code></pre>
+        </section>
+        <section id="choosing-the-type-at-runtime" class="level3">
+          <h3>在 Runtime 時選擇類型</h3>
+          <p>你不能用通用表達式當作 React element 的類型。如果你想要用通用表達式來表示 element 的類型，你可以先把它賦值給一個大寫字母開頭的變數。這是在當你想要根據一個 prop 來決定 render 不同 component 時常常發生的：</p>
+          <pre class="language-js{10,11}"><code class="language-js{10,11}">import React from 'react';
+import { PhotoStory, VideoStory } from './stories';
+
+const components = {
+  photo: PhotoStory,
+  video: VideoStory
+};
+
+function Story(props) {
+  // 錯誤！JSX 不能是表達式。
+  return &#x3C;components[props.storyType] story={props.story} />;
+}</code></pre>
+          <p>為了解決這個問題，我們首先將類型賦值給一個大寫字母開頭的變數：</p>
+          <pre class="language-js{10-12}"><code class="language-js{10-12}">import React from 'react';
+import { PhotoStory, VideoStory } from './stories';
+
+const components = {
+  photo: PhotoStory,
+  video: VideoStory
+};
+
+function Story(props) {
+  // 正確！JSX 類型可以是大寫字母開頭的變數。
+  const SpecificStory = components[props.storyType];
+  return &#x3C;SpecificStory story={props.story} />;
+}</code></pre>
+        </section>
+      </section>
+      <section id="props-in-jsx" class="level2">
+        <h2>JSX 中的 Props</h2>
+        <p>在 JSX 中有不同的方式可以指定 props。</p>
+        <section id="javascript-expressions-as-props" class="level3">
+          <h3>JavaScript 表達式作為 Props</h3>
+          <p>你可以用 <code>{}</code> 包住任何 JavaScript 表達式作為一個 prop 傳遞。例如，在以下 JSX 中：</p>
+          <pre class="language-js"><code class="language-js"><span class="token operator">&#x3C;</span><span class="token maybe-class-name">MyComponent</span> foo<span class="token operator">=</span><span class="token punctuation">{</span><span class="token number">1</span> <span class="token operator">+</span> <span class="token number">2</span> <span class="token operator">+</span> <span class="token number">3</span> <span class="token operator">+</span> <span class="token number">4</span><span class="token punctuation">}</span> <span class="token operator">/</span><span class="token operator">></span></code></pre>
+          <p>對 <code>MyComponent</code> 來說，因為 <code>1 + 2 + 3 + 4</code> 會被解讀，所以 <code>props.foo</code> 的值會是 <code>10</code>。</p>
+          <p>因為 <code>if</code> 語法與 <code>for</code> 迴圈都不屬於 JavaScript 表達式，所以它們並不能在 JSX 中被直接使用。不過，你可以在它周圍外的程式碼中使用。例如：</p>
+          <pre class="language-js{3-7}"><code class="language-js{3-7}">function NumberDescriber(props) {
+  let description;
+  if (props.number % 2 == 0) {
+    description = &#x3C;strong>even&#x3C;/strong>;
+  } else {
+    description = &#x3C;i>odd&#x3C;/i>;
+  }
+  return &#x3C;div>{props.number} is an {description} number&#x3C;/div>;
+}</code></pre>
+          <p>你可以在對應的段落中了解更多關於<a href="./conditional-rendering.html">條件式 render</a> 與<a href="./lists-and-keys.html">迴圈</a>。</p>
+        </section>
+        <section id="string-literals" class="level3">
+          <h3>字串字面值</h3>
+          <p>你可以傳遞一個字串字面值作為 prop。以下兩個 JSX 表達式是相等的：</p>
+          <pre class="language-js"><code class="language-js"><span class="token operator">&#x3C;</span><span class="token maybe-class-name">MyComponent</span> message<span class="token operator">=</span><span class="token string">"hello world"</span> <span class="token operator">/</span><span class="token operator">></span>
+
+<span class="token operator">&#x3C;</span><span class="token maybe-class-name">MyComponent</span> message<span class="token operator">=</span><span class="token punctuation">{</span><span class="token string">'hello world'</span><span class="token punctuation">}</span> <span class="token operator">/</span><span class="token operator">></span></code></pre>
+          <p>當你傳遞一個字串字面值時，它的值是未經 HTML 轉義的。所以以下兩個 JSX 表達式是相等的：</p>
+          <pre class="language-js"><code class="language-js"><span class="token operator">&#x3C;</span><span class="token maybe-class-name">MyComponent</span> message<span class="token operator">=</span><span class="token string">"&#x26;lt;3"</span> <span class="token operator">/</span><span class="token operator">></span>
+
+<span class="token operator">&#x3C;</span><span class="token maybe-class-name">MyComponent</span> message<span class="token operator">=</span><span class="token punctuation">{</span><span class="token string">'&#x3C;3'</span><span class="token punctuation">}</span> <span class="token operator">/</span><span class="token operator">></span></code></pre>
+          <p>這種行為通常是無關緊要的。在此只是為了完整性而提及。</p>
+        </section>
+        <section id="props-default-to-true" class="level3">
+          <h3>Props 預設為 「True」</h3>
+          <p>如果你沒給 prop 賦值，那麼它的預設值就是 <code>true</code>。以下兩個 JSX 表達式是相等的：</p>
+          <pre class="language-js"><code class="language-js"><span class="token operator">&#x3C;</span><span class="token maybe-class-name">MyTextBox</span> autocomplete <span class="token operator">/</span><span class="token operator">></span>
+
+<span class="token operator">&#x3C;</span><span class="token maybe-class-name">MyTextBox</span> autocomplete<span class="token operator">=</span><span class="token punctuation">{</span><span class="token boolean">true</span><span class="token punctuation">}</span> <span class="token operator">/</span><span class="token operator">></span></code></pre>
+          <p>一般來說，我們不建議<em>不</em>傳遞 prop 的值，因為容易把它跟 <a href="https://developer.mozilla.org/zh-TW/docs/Web/JavaScript/Reference/Operators/Object_initializer#New_notations_in_ECMAScript_2015">ES6 object shorthand</a> 混淆，<code>{foo}</code> 是 <code>{foo: foo}</code> 的簡寫而不是 <code>{foo: true}</code>，所以並不建議這樣使用。這種行為存在只是為了相配 HTML 的行為。</p>
+        </section>
+        <section id="spread-attributes" class="level3">
+          <h3>展開屬性</h3>
+          <p>如果你已經有了一個 <code>props</code> 的 object，並且想把它傳遞進 JSX，你可以使用 <code>...</code> 作為展開運算子來傳遞整個 props object。以下兩個 component 是相等的：</p>
+          <pre class="language-js{7}"><code class="language-js{7}">function App1() {
+  return &#x3C;Greeting firstName="Ben" lastName="Hector" />;
+}
+
+function App2() {
+  const props = {firstName: 'Ben', lastName: 'Hector'};
+  return &#x3C;Greeting {...props} />;
+}</code></pre>
+          <p>你也可以使用展開運算子來分開並挑選 component 所需的 props。</p>
+          <pre class="language-js{2}"><code class="language-js{2}">const Button = props => {
+  const { kind, ...other } = props;
+  const className = kind === "primary" ? "PrimaryButton" : "SecondaryButton";
+  return &#x3C;button className={className} {...other} />;
+};
+
+const App = () => {
+  return (
+    &#x3C;div>
+      &#x3C;Button kind="primary" onClick={() => console.log("clicked!")}>
+        Hello World!
+      &#x3C;/Button>
+    &#x3C;/div>
+  );
+};</code></pre>
+          <p>
+            在以上的範例中，<code>kind</code> prop 被安全地挑出並且<em>不會</em>被傳遞進 DOM 中的 <code>&#x3C;button></code> element。
+            所有其它的 props 藉由 <code>...other</code> object 被傳遞，讓 component 的應用非常具有彈性。你可以看見它傳遞一個 <code>onClick</code> 與 <code>children</code> props。
+          </p>
+          <p>展開運算子不但可以如此靈活地使用，它能讓我們輕易挑選出對於 component 不重要且多餘的 props，也能讓我們傳遞無效的 HTML 屬性到 DOM 裡。</p>
+        </section>
+      </section>
+      <section id="children-in-jsx" class="level2">
+        <h2>JSX 中的 Children</h2>
+        <p>在 JSX 表達式有包含開始與結束標籤的情形下，夾在兩者之間的內容會被傳遞為特別的 prop：<code>props.children</code>。有幾種不同的方法來傳遞 children：</p>
+        <section id="string-literals-1" class="level3">
+          <h3>字串字面值</h3>
+          <p>你可以在兩個標籤之間放置字串，而 <code>props.children</code> 就會是那個字串。這對許多內建的 HTML element 是很有用的。例如：</p>
+          <pre class="language-js"><code class="language-js"><span class="token operator">&#x3C;</span><span class="token maybe-class-name">MyComponent</span><span class="token operator">></span><span class="token maybe-class-name">Hello</span> world<span class="token operator">!</span><span class="token operator">&#x3C;</span><span class="token operator">/</span><span class="token maybe-class-name">MyComponent</span><span class="token operator">></span></code></pre>
+          <p>這是有效的 JSX，而 <code>props.children</code> 在 <code>MyComponent</code> 中單純就會是 <code>"Hello world!"</code>。HTML 是未經轉義的，所以你可以這樣如同 HTML 來寫 JSX：</p>
+          <pre class="language-html"><code class="language-html"><span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;</span>div</span><span class="token punctuation">></span></span>This is valid HTML <span class="token entity named-entity" title="&#x26;">&#x26;amp;</span> JSX at the same time.<span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;/</span>div</span><span class="token punctuation">></span></span></code></pre>
+          <p>JSX 會把開頭與結尾的空白去除，也會去除空行。與標籤相鄰的新行會去除；在字串字面值中間的新行則會被壓縮成單一空格。所以以下都會 render 同樣的結果：</p>
+          <pre class="language-js"><code class="language-js"><span class="token operator">&#x3C;</span>div<span class="token operator">></span><span class="token maybe-class-name">Hello</span> <span class="token maybe-class-name">World</span><span class="token operator">&#x3C;</span><span class="token operator">/</span>div<span class="token operator">></span>
+
+<span class="token operator">&#x3C;</span>div<span class="token operator">></span>
+  <span class="token maybe-class-name">Hello</span> <span class="token maybe-class-name">World</span>
+<span class="token operator">&#x3C;</span><span class="token operator">/</span>div<span class="token operator">></span>
+
+<span class="token operator">&#x3C;</span>div<span class="token operator">></span>
+  <span class="token maybe-class-name">Hello</span>
+  <span class="token maybe-class-name">World</span>
+<span class="token operator">&#x3C;</span><span class="token operator">/</span>div<span class="token operator">></span>
+
+<span class="token operator">&#x3C;</span>div<span class="token operator">></span>
+
+  <span class="token maybe-class-name">Hello</span> <span class="token maybe-class-name">World</span>
+<span class="token operator">&#x3C;</span><span class="token operator">/</span>div<span class="token operator">></span></code></pre>
+        </section>
+        <section id="jsx-children" class="level3">
+          <h3>JSX Children</h3>
+          <p>你可以提供許多 JSX element 作為 children。這在顯示巢狀 component 時是非常實用的：</p>
+          <pre class="language-js"><code class="language-js"><span class="token operator">&#x3C;</span><span class="token maybe-class-name">MyContainer</span><span class="token operator">></span>
+  <span class="token operator">&#x3C;</span><span class="token maybe-class-name">MyFirstComponent</span> <span class="token operator">/</span><span class="token operator">></span>
+  <span class="token operator">&#x3C;</span><span class="token maybe-class-name">MySecondComponent</span> <span class="token operator">/</span><span class="token operator">></span>
+<span class="token operator">&#x3C;</span><span class="token operator">/</span><span class="token maybe-class-name">MyContainer</span><span class="token operator">></span></code></pre>
+          <p>你可以混合不同類型的 children，所以你也能夠同時使用字串字面值與 JSX children。這也是 JSX 與 HTML 另一相似的點，而以下是有效的 JSX 同時也是有效的 HTML：</p>
+          <pre class="language-html"><code class="language-html"><span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;</span>div</span><span class="token punctuation">></span></span>
+  Here is a list:
+  <span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;</span>ul</span><span class="token punctuation">></span></span>
+    <span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;</span>li</span><span class="token punctuation">></span></span>Item 1<span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;/</span>li</span><span class="token punctuation">></span></span>
+    <span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;</span>li</span><span class="token punctuation">></span></span>Item 2<span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;/</span>li</span><span class="token punctuation">></span></span>
+  <span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;/</span>ul</span><span class="token punctuation">></span></span>
+<span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;/</span>div</span><span class="token punctuation">></span></span></code></pre>
+          <p>一個 React component 也能夠回傳一個陣列 element：</p>
+          <pre class="language-js"><code class="language-js"><span class="token function">render</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  <span class="token comment">// 沒有必要把多餘的 list items 包在 element 裡頭！</span>
+  <span class="token keyword control-flow">return</span> <span class="token punctuation">[</span>
+    <span class="token comment">// 別忘了加 keys :)</span>
+    <span class="token operator">&#x3C;</span>li key<span class="token operator">=</span><span class="token string">"A"</span><span class="token operator">></span><span class="token maybe-class-name">First</span> item<span class="token operator">&#x3C;</span><span class="token operator">/</span>li<span class="token operator">></span><span class="token punctuation">,</span>
+    <span class="token operator">&#x3C;</span>li key<span class="token operator">=</span><span class="token string">"B"</span><span class="token operator">></span><span class="token maybe-class-name">Second</span> item<span class="token operator">&#x3C;</span><span class="token operator">/</span>li<span class="token operator">></span><span class="token punctuation">,</span>
+    <span class="token operator">&#x3C;</span>li key<span class="token operator">=</span><span class="token string">"C"</span><span class="token operator">></span><span class="token maybe-class-name">Third</span> item<span class="token operator">&#x3C;</span><span class="token operator">/</span>li<span class="token operator">></span><span class="token punctuation">,</span>
+  <span class="token punctuation">]</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span></code></pre>
+        </section>
+        <section id="javascript-expressions-as-children" class="level3">
+          <h3>JavaScript 表達式作為 Children</h3>
+          <p>你可以傳遞任何封裝在 <code>{}</code> 內的 JavaScript 表達式作為 children。例如，以下表達式皆相等：</p>
+          <pre class="language-js"><code class="language-js"><span class="token operator">&#x3C;</span><span class="token maybe-class-name">MyComponent</span><span class="token operator">></span>foo<span class="token operator">&#x3C;</span><span class="token operator">/</span><span class="token maybe-class-name">MyComponent</span><span class="token operator">></span>
+
+<span class="token operator">&#x3C;</span><span class="token maybe-class-name">MyComponent</span><span class="token operator">></span><span class="token punctuation">{</span><span class="token string">'foo'</span><span class="token punctuation">}</span><span class="token operator">&#x3C;</span><span class="token operator">/</span><span class="token maybe-class-name">MyComponent</span><span class="token operator">></span></code></pre>
+          <p>這在要 render 任意長度的 JSX 表達式列表時是非常實用的。例如，這會 render 一個 HTML 列表：</p>
+          <pre class="language-js{2,9}"><code class="language-js{2,9}">function Item(props) {
+  return &#x3C;li>{props.message}&#x3C;/li>;
+}
+
+function TodoList() {
+  const todos = ['finish doc', 'submit pr', 'nag dan to review'];
+  return (
+    &#x3C;ul>
+      {todos.map((message) => &#x3C;Item key={message} message={message} />)}
+    &#x3C;/ul>
+  );
+}</code></pre>
+          <p>JavaScript 表達式可以與不同類型的 children 混合。這在不使用樣板字串時非常實用：</p>
+          <pre class="language-js{2}"><code class="language-js{2}">function Hello(props) {
+  return &#x3C;div>Hello {props.addressee}!&#x3C;/div>;
+}</code></pre>
+        </section>
+        <section id="functions-as-children" class="level3">
+          <h3>Functions 作為 Children</h3>
+          <p>正常來說，在 JSX 中的 JavaScript 表達式會被轉換成字串、React element、或者包含這些的列表。不過，<code>props.children</code> 就像其它 prop 一樣可以傳遞任何類型的資料，而並不局限於只有 React 知道如何 render 的資料。舉例來說，假如你有一個自訂 component，你可以把 callback 作為 <code>props.children</code> 傳遞：</p>
+          <pre class="language-js{4,13}"><code class="language-js{4,13}">// numTimes 次呼叫 children callback 來重複生成 component
+function Repeat(props) {
+  let items = [];
+  for (let i = 0; i &#x3C; props.numTimes; i++) {
+    items.push(props.children(i));
+  }
+  return &#x3C;div>{items}&#x3C;/div>;
+}
+
+function ListOfTenThings() {
+  return (
+    &#x3C;Repeat numTimes={10}>
+      {(index) => &#x3C;div key={index}>This is item {index} in the list&#x3C;/div>}
+    &#x3C;/Repeat>
+  );
+}</code></pre>
+          <p>被傳遞進自訂 component 的 children 可以是任何東西，只要 component 能夠在 render 之前把它轉換成 React 能夠理解的東西就可以了。這種用法並不普遍，但能夠顯示出 JSX 的延伸性。</p>
+        </section>
+        <section id="booleans-null-and-undefined-are-ignored" class="level3">
+          <h3>Booleans, Null, 與 Undefined 會被忽略</h3>
+          <p><code>false</code>, <code>null</code>, <code>undefined</code>, 與 <code>true</code> 都是有效的 children。它們只是單純不會被 render。以下 JSX 表達式皆會 render 相同的結果：</p>
+          <pre class="language-js"><code class="language-js"><span class="token operator">&#x3C;</span>div <span class="token operator">/</span><span class="token operator">></span>
+
+<span class="token operator">&#x3C;</span>div<span class="token operator">></span><span class="token operator">&#x3C;</span><span class="token operator">/</span>div<span class="token operator">></span>
+
+<span class="token operator">&#x3C;</span>div<span class="token operator">></span><span class="token punctuation">{</span><span class="token boolean">false</span><span class="token punctuation">}</span><span class="token operator">&#x3C;</span><span class="token operator">/</span>div<span class="token operator">></span>
+
+<span class="token operator">&#x3C;</span>div<span class="token operator">></span><span class="token punctuation">{</span><span class="token keyword null nil">null</span><span class="token punctuation">}</span><span class="token operator">&#x3C;</span><span class="token operator">/</span>div<span class="token operator">></span>
+
+<span class="token operator">&#x3C;</span>div<span class="token operator">></span><span class="token punctuation">{</span><span class="token keyword nil">undefined</span><span class="token punctuation">}</span><span class="token operator">&#x3C;</span><span class="token operator">/</span>div<span class="token operator">></span>
+
+<span class="token operator">&#x3C;</span>div<span class="token operator">></span><span class="token punctuation">{</span><span class="token boolean">true</span><span class="token punctuation">}</span><span class="token operator">&#x3C;</span><span class="token operator">/</span>div<span class="token operator">></span></code></pre>
+          <p>這在需要條件式 render 不同 React elements 時非常方便。以下 JSX 只會在 <code>showHeader</code> 為 <code>true</code> 時 render <code>&#x3C;Header /></code>：</p>
+          <pre class="language-js{2}"><code class="language-js{2}">&#x3C;div>
+  {showHeader &#x26;&#x26; &#x3C;Header />}
+  &#x3C;Content />
+&#x3C;/div></code></pre>
+          <p>值得注意的是有一些像是數字 <code>0</code> 的 <a href="https://developer.mozilla.org/zh-TW/docs/Glossary/Falsy">「falsy」值</a> 仍然會被 React 給 render。舉例來說，以下的程式碼可能不會如同你預期般地運作，因為當 <code>props.messages</code> 是一個空 array 時， <code>0</code> 會被印出：</p>
+          <pre class="language-js{2}"><code class="language-js{2}">&#x3C;div>
+  {props.messages.length &#x26;&#x26;
+    &#x3C;MessageList messages={props.messages} />
+  }
+&#x3C;/div></code></pre>
+          <p>為了解決這個問題，確保在 <code>&#x26;&#x26;</code> 之前的表達式為 boolean：</p>
+          <pre class="language-js{2}"><code class="language-js{2}">&#x3C;div>
+  {props.messages.length > 0 &#x26;&#x26;
+    &#x3C;MessageList messages={props.messages} />
+  }
+&#x3C;/div></code></pre>
+          <p>相反地，如果你想要印出 <code>false</code>、<code>true</code>、<code>null</code> 或者 <code>undefined</code> 時，你必須要先把它<a href="https://developer.mozilla.org/zh-TW/docs/Web/JavaScript/Reference/Global_Objects/String#String_conversion">轉換成一個字串</a>：</p>
+          <pre class="language-js{2}"><code class="language-js{2}">&#x3C;div>
+  My JavaScript variable is {String(myVariable)}.
+&#x3C;/div></code></pre>
+          <p><span style="float: footnote;"><a href="./index.html#toc">Go to TOC</a></span></p>
+        </section>
+      </section>
+    </section>
+  </body>
+</html>

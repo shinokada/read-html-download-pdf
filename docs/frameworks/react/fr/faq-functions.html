@@ -1,0 +1,315 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="utf-8">
+    <title>Passer des fonctions aux composants</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="https://raw.githubusercontent.com/shinokada/prism-coy-theme/main/theme_common.css">
+  </head>
+  <body>
+    <section id="passer-des-fonctions-aux-composants" class="level1">
+      <h1>Passer des fonctions aux composants</h1>
+      <section id="how-do-i-pass-an-event-handler-like-onclick-to-a-component" class="level3">
+        <h3>Comment passer un gestionnaire d'événements (par exemple onClick) à un composant ?</h3>
+        <p>On peut passer un gestionnaire d'événements et d'autres fonctions dans les props d'un composant, comme n’importe quelle autre valeur :</p>
+        <pre class="language-jsx"><code class="language-jsx"><span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;</span>button</span> <span class="token attr-name">onClick</span><span class="token script language-javascript"><span class="token script-punctuation punctuation">=</span><span class="token punctuation">{</span><span class="token keyword">this</span><span class="token punctuation">.</span><span class="token property-access">handleClick</span><span class="token punctuation">}</span></span><span class="token punctuation">></span></span></code></pre>
+        <p>Si vous avez besoin d'accéder au composant parent dans le gestionnaire d'événements, vous devrez lier la fonction à l'instance du composant (comme ci-dessous).</p>
+      </section>
+      <section id="how-do-i-bind-a-function-to-a-component-instance" class="level3">
+        <h3>Comment lier une fonction à l'instance d'un composant ?</h3>
+        <p>Il y'a plusieurs façons de s'assurer que des fonctions ont accès aux attributs du composant comme <code>this.props</code> et <code>this.state</code>, qui dépendent de la syntaxe et de l’outillage éventuel que vous utilisez.</p>
+        <section id="bind-in-constructor-es2015" class="level4">
+          <h4>Lier la fonction dans le constructeur (ES2015)</h4>
+          <pre class="language-jsx"><code class="language-jsx"><span class="token keyword">class</span> <span class="token class-name">Foo</span> <span class="token keyword">extends</span> <span class="token class-name">Component</span> <span class="token punctuation">{</span>
+  <span class="token function">constructor</span><span class="token punctuation">(</span><span class="token parameter">props</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token keyword">super</span><span class="token punctuation">(</span>props<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token keyword">this</span><span class="token punctuation">.</span><span class="token property-access">handleClick</span> <span class="token operator">=</span> <span class="token keyword">this</span><span class="token punctuation">.</span><span class="token method function property-access">handleClick</span><span class="token punctuation">.</span><span class="token method function property-access">bind</span><span class="token punctuation">(</span><span class="token keyword">this</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token punctuation">}</span>
+  <span class="token function">handleClick</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token console class-name">console</span><span class="token punctuation">.</span><span class="token method function property-access">log</span><span class="token punctuation">(</span><span class="token string">'Cliqué'</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token punctuation">}</span>
+  <span class="token function">render</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token keyword control-flow">return</span> <span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;</span>button</span> <span class="token attr-name">onClick</span><span class="token script language-javascript"><span class="token script-punctuation punctuation">=</span><span class="token punctuation">{</span><span class="token keyword">this</span><span class="token punctuation">.</span><span class="token property-access">handleClick</span><span class="token punctuation">}</span></span><span class="token punctuation">></span></span><span class="token plain-text">Cliquez ici</span><span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;/</span>button</span><span class="token punctuation">></span></span><span class="token punctuation">;</span>
+  <span class="token punctuation">}</span>
+<span class="token punctuation">}</span></code></pre>
+        </section>
+        <section id="class-properties-stage-3-proposal" class="level4">
+          <h4>Propriété de classe (proposition stade 3)</h4>
+          <pre class="language-jsx"><code class="language-jsx"><span class="token keyword">class</span> <span class="token class-name">Foo</span> <span class="token keyword">extends</span> <span class="token class-name">Component</span> <span class="token punctuation">{</span>
+  <span class="token comment">// Remarque : cette syntaxe est expérimentale et n'est pas encore standardisée</span>
+  <span class="token function-variable function">handleClick</span> <span class="token operator">=</span> <span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token arrow operator">=></span> <span class="token punctuation">{</span>
+    <span class="token console class-name">console</span><span class="token punctuation">.</span><span class="token method function property-access">log</span><span class="token punctuation">(</span><span class="token string">'Cliqué'</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token punctuation">}</span>
+  <span class="token function">render</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token keyword control-flow">return</span> <span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;</span>button</span> <span class="token attr-name">onClick</span><span class="token script language-javascript"><span class="token script-punctuation punctuation">=</span><span class="token punctuation">{</span><span class="token keyword">this</span><span class="token punctuation">.</span><span class="token property-access">handleClick</span><span class="token punctuation">}</span></span><span class="token punctuation">></span></span><span class="token plain-text">Cliquez ici</span><span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;/</span>button</span><span class="token punctuation">></span></span><span class="token punctuation">;</span>
+  <span class="token punctuation">}</span>
+<span class="token punctuation">}</span></code></pre>
+        </section>
+        <section id="lier-dans-la-méthode-render-bind-in-render" class="level4">
+          <h4>Lier dans la méthode <code>render</code> {#bind-in-render}</h4>
+          <pre class="language-jsx"><code class="language-jsx"><span class="token keyword">class</span> <span class="token class-name">Foo</span> <span class="token keyword">extends</span> <span class="token class-name">Component</span> <span class="token punctuation">{</span>
+  <span class="token function">handleClick</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token console class-name">console</span><span class="token punctuation">.</span><span class="token method function property-access">log</span><span class="token punctuation">(</span><span class="token string">'Cliqué'</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token punctuation">}</span>
+  <span class="token function">render</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token keyword control-flow">return</span> <span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;</span>button</span> <span class="token attr-name">onClick</span><span class="token script language-javascript"><span class="token script-punctuation punctuation">=</span><span class="token punctuation">{</span><span class="token keyword">this</span><span class="token punctuation">.</span><span class="token method function property-access">handleClick</span><span class="token punctuation">.</span><span class="token method function property-access">bind</span><span class="token punctuation">(</span><span class="token keyword">this</span><span class="token punctuation">)</span><span class="token punctuation">}</span></span><span class="token punctuation">></span></span><span class="token plain-text">Cliquez ici</span><span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;/</span>button</span><span class="token punctuation">></span></span><span class="token punctuation">;</span>
+  <span class="token punctuation">}</span>
+<span class="token punctuation">}</span></code></pre>
+          <blockquote>
+            <p>Remarque</p>
+            <p>Utiliser <code>Function.prototype.bind</code> dans la méthode <code>render</code> crée une nouvelle fonction à chaque fois que le composant est affiché, ce qui peut impacter négativement les performances (voir plus bas).</p>
+          </blockquote>
+        </section>
+        <section id="arrow-function-in-render" class="level4">
+          <h4>Fonction fléchée dans le rendu</h4>
+          <pre class="language-jsx"><code class="language-jsx"><span class="token keyword">class</span> <span class="token class-name">Foo</span> <span class="token keyword">extends</span> <span class="token class-name">Component</span> <span class="token punctuation">{</span>
+  <span class="token function">handleClick</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token console class-name">console</span><span class="token punctuation">.</span><span class="token method function property-access">log</span><span class="token punctuation">(</span><span class="token string">'Cliqué'</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token punctuation">}</span>
+  <span class="token function">render</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token keyword control-flow">return</span> <span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;</span>button</span> <span class="token attr-name">onClick</span><span class="token script language-javascript"><span class="token script-punctuation punctuation">=</span><span class="token punctuation">{</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token arrow operator">=></span> <span class="token keyword">this</span><span class="token punctuation">.</span><span class="token method function property-access">handleClick</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">}</span></span><span class="token punctuation">></span></span><span class="token plain-text">Cliquez ici</span><span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;/</span>button</span><span class="token punctuation">></span></span><span class="token punctuation">;</span>
+  <span class="token punctuation">}</span>
+<span class="token punctuation">}</span></code></pre>
+          <blockquote>
+            <p>Remarque</p>
+            <p>Utiliser une fonction fléchée dans la fonction de rendu crée une nouvelle fonction à chaque fois que le composant est affiché, ce qui peut impacter négativement les optimisations basées sur une comparaison stricte d'identité.</p>
+          </blockquote>
+        </section>
+      </section>
+      <section id="is-it-ok-to-use-arrow-functions-in-render-methods" class="level3">
+        <h3>Est-il acceptable d'utiliser une fonction fléchée à l’intérieur de la méthode <code>render</code> ?</h3>
+        <p>C'est généralement acceptable, et c'est souvent la façon la plus facile de passer des arguments à une fonction de rappel.</p>
+        <p>Si vous avez des problèmes de performances, n’hésitez pas à optimiser !</p>
+      </section>
+      <section id="why-is-binding-necessary-at-all" class="level3">
+        <h3>Pourquoi est-il parfois nécessaire de lier une fonction ?</h3>
+        <p>En JavaScript, ces deux extraits de code ne sont <strong>pas</strong> équivalents :</p>
+        <pre class="language-js"><code class="language-js">obj<span class="token punctuation">.</span><span class="token method function property-access">method</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span></code></pre>
+        <pre class="language-js"><code class="language-js"><span class="token keyword">var</span> method <span class="token operator">=</span> obj<span class="token punctuation">.</span><span class="token property-access">method</span><span class="token punctuation">;</span>
+<span class="token function">method</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span></code></pre>
+        <p>Lier les méthodes permet de s'assurer que le deuxième extrait de code fonctionne de la même manière que le premier.</p>
+        <p>Avec React, vous n’avez généralement besoin de lier que les méthodes que vous <em>passez</em> à d'autres composants. Par exemple, <code>&#x3C;button onClick={this.handleClick}></code> passe <code>this.handleClick</code>, vous devez donc la lier. Cependant, il n'est pas nécessaire de lier la méthode <code>render</code> ou les méthodes de cycle de vie : on ne les passe pas à d'autres composants.</p>
+        <p><a href="https://yehudakatz.com/2011/08/11/understanding-javascript-function-invocation-and-this/">Cet article de Yehuda Katz</a> (en anglais) explique en détail ce qu'est la liaison de méthode et comment les fonctions marchent en JavaScript.</p>
+      </section>
+      <section id="why-is-my-function-being-called-every-time-the-component-renders" class="level3">
+        <h3>Pourquoi ma fonction est appelée à chaque affichage du composant ?</h3>
+        <p>Vérifiez que vous <em>n'appelez pas la fonction</em> en la passant au composant :</p>
+        <pre class="language-jsx"><code class="language-jsx"><span class="token function">render</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  <span class="token comment">// Erroné : handleClick est appelée au lieu d'être passée par référence !</span>
+  <span class="token keyword control-flow">return</span> <span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;</span>button</span> <span class="token attr-name">onClick</span><span class="token script language-javascript"><span class="token script-punctuation punctuation">=</span><span class="token punctuation">{</span><span class="token keyword">this</span><span class="token punctuation">.</span><span class="token method function property-access">handleClick</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">}</span></span><span class="token punctuation">></span></span><span class="token plain-text">Cliquez ici</span><span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;/</span>button</span><span class="token punctuation">></span></span>
+<span class="token punctuation">}</span></code></pre>
+        <p>Au lieu de ça, <em>passez la fonction</em> (sans les parenthèses) :</p>
+        <pre class="language-jsx"><code class="language-jsx"><span class="token function">render</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  <span class="token comment">// Correct : handleClick est passée par référence !</span>
+  <span class="token keyword control-flow">return</span> <span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;</span>button</span> <span class="token attr-name">onClick</span><span class="token script language-javascript"><span class="token script-punctuation punctuation">=</span><span class="token punctuation">{</span><span class="token keyword">this</span><span class="token punctuation">.</span><span class="token property-access">handleClick</span><span class="token punctuation">}</span></span><span class="token punctuation">></span></span><span class="token plain-text">Cliquez ici</span><span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;/</span>button</span><span class="token punctuation">></span></span>
+<span class="token punctuation">}</span></code></pre>
+      </section>
+      <section id="how-do-i-pass-a-parameter-to-an-event-handler-or-callback" class="level3">
+        <h3>Comment passer un argument à un gestionnaire d'événements ou une fonction de rappel ?</h3>
+        <p>Vous pouvez utiliser une fonction fléchée pour enrober un gestionnaire d'événements et lui passer des arguments :</p>
+        <pre class="language-jsx"><code class="language-jsx"><span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;</span>button</span> <span class="token attr-name">onClick</span><span class="token script language-javascript"><span class="token script-punctuation punctuation">=</span><span class="token punctuation">{</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token arrow operator">=></span> <span class="token keyword">this</span><span class="token punctuation">.</span><span class="token method function property-access">handleClick</span><span class="token punctuation">(</span>id<span class="token punctuation">)</span><span class="token punctuation">}</span></span> <span class="token punctuation">/></span></span></code></pre>
+        <p>Le code ci-dessous est équivalent à une utilisation de <code>.bind</code> :</p>
+        <pre class="language-jsx"><code class="language-jsx"><span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;</span>button</span> <span class="token attr-name">onClick</span><span class="token script language-javascript"><span class="token script-punctuation punctuation">=</span><span class="token punctuation">{</span><span class="token keyword">this</span><span class="token punctuation">.</span><span class="token method function property-access">handleClick</span><span class="token punctuation">.</span><span class="token method function property-access">bind</span><span class="token punctuation">(</span><span class="token keyword">this</span><span class="token punctuation">,</span> id<span class="token punctuation">)</span><span class="token punctuation">}</span></span> <span class="token punctuation">/></span></span></code></pre>
+        <section id="example-passing-params-using-arrow-functions" class="level4">
+          <h4>Exemple : passer des arguments en utilisant une fonction fléchée</h4>
+          <pre class="language-jsx"><code class="language-jsx"><span class="token keyword">const</span> <span class="token constant">A</span> <span class="token operator">=</span> <span class="token number">65</span> <span class="token comment">// Code de caractère ASCII</span>
+
+<span class="token keyword">class</span> <span class="token class-name">Alphabet</span> <span class="token keyword">extends</span> <span class="token class-name">React<span class="token punctuation">.</span>Component</span> <span class="token punctuation">{</span>
+  <span class="token function">constructor</span><span class="token punctuation">(</span><span class="token parameter">props</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token keyword">super</span><span class="token punctuation">(</span>props<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token keyword">this</span><span class="token punctuation">.</span><span class="token property-access">handleClick</span> <span class="token operator">=</span> <span class="token keyword">this</span><span class="token punctuation">.</span><span class="token method function property-access">handleClick</span><span class="token punctuation">.</span><span class="token method function property-access">bind</span><span class="token punctuation">(</span><span class="token keyword">this</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token keyword">this</span><span class="token punctuation">.</span><span class="token property-access">state</span> <span class="token operator">=</span> <span class="token punctuation">{</span>
+      <span class="token literal-property property">justClicked</span><span class="token operator">:</span> <span class="token keyword null nil">null</span><span class="token punctuation">,</span>
+      <span class="token literal-property property">letters</span><span class="token operator">:</span> <span class="token known-class-name class-name">Array</span><span class="token punctuation">.</span><span class="token keyword module">from</span><span class="token punctuation">(</span><span class="token punctuation">{</span><span class="token literal-property property">length</span><span class="token operator">:</span> <span class="token number">26</span><span class="token punctuation">}</span><span class="token punctuation">,</span> <span class="token punctuation">(</span><span class="token parameter">_<span class="token punctuation">,</span> i</span><span class="token punctuation">)</span> <span class="token arrow operator">=></span> <span class="token known-class-name class-name">String</span><span class="token punctuation">.</span><span class="token method function property-access">fromCharCode</span><span class="token punctuation">(</span><span class="token constant">A</span> <span class="token operator">+</span> i<span class="token punctuation">)</span><span class="token punctuation">)</span>
+    <span class="token punctuation">}</span><span class="token punctuation">;</span>
+  <span class="token punctuation">}</span>
+  <span class="token function">handleClick</span><span class="token punctuation">(</span><span class="token parameter">letter</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token keyword">this</span><span class="token punctuation">.</span><span class="token method function property-access">setState</span><span class="token punctuation">(</span><span class="token punctuation">{</span> <span class="token literal-property property">justClicked</span><span class="token operator">:</span> letter <span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token punctuation">}</span>
+  <span class="token function">render</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token keyword control-flow">return</span> <span class="token punctuation">(</span>
+      <span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;</span>div</span><span class="token punctuation">></span></span><span class="token plain-text">
+        Cliqué : </span><span class="token punctuation">{</span><span class="token keyword">this</span><span class="token punctuation">.</span><span class="token property-access">state</span><span class="token punctuation">.</span><span class="token property-access">justClicked</span><span class="token punctuation">}</span><span class="token plain-text">
+        </span><span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;</span>ul</span><span class="token punctuation">></span></span><span class="token plain-text">
+          </span><span class="token punctuation">{</span><span class="token keyword">this</span><span class="token punctuation">.</span><span class="token property-access">state</span><span class="token punctuation">.</span><span class="token property-access">letters</span><span class="token punctuation">.</span><span class="token method function property-access">map</span><span class="token punctuation">(</span><span class="token parameter">letter</span> <span class="token arrow operator">=></span>
+            <span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;</span>li</span> <span class="token attr-name">key</span><span class="token script language-javascript"><span class="token script-punctuation punctuation">=</span><span class="token punctuation">{</span>letter<span class="token punctuation">}</span></span> <span class="token attr-name">onClick</span><span class="token script language-javascript"><span class="token script-punctuation punctuation">=</span><span class="token punctuation">{</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token arrow operator">=></span> <span class="token keyword">this</span><span class="token punctuation">.</span><span class="token method function property-access">handleClick</span><span class="token punctuation">(</span>letter<span class="token punctuation">)</span><span class="token punctuation">}</span></span><span class="token punctuation">></span></span><span class="token plain-text">
+              </span><span class="token punctuation">{</span>letter<span class="token punctuation">}</span><span class="token plain-text">
+            </span><span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;/</span>li</span><span class="token punctuation">></span></span>
+          <span class="token punctuation">)</span><span class="token punctuation">}</span><span class="token plain-text">
+        </span><span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;/</span>ul</span><span class="token punctuation">></span></span><span class="token plain-text">
+      </span><span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;/</span>div</span><span class="token punctuation">></span></span>
+    <span class="token punctuation">)</span>
+  <span class="token punctuation">}</span>
+<span class="token punctuation">}</span></code></pre>
+        </section>
+        <section id="exemple-passer-des-arguments-en-utilisant-des-attributs-data--example-passing-params-using-data-attributes" class="level4">
+          <h4>Exemple : passer des arguments en utilisant des attributs <code>data-*</code> {#example-passing-params-using-data-attributes}</h4>
+          <p>Une autre approche consiste à utiliser des API DOM pour stocker les données nécessaires aux gestionnaires d'événements. Pensez-y si vous avez besoin d'optimiser un grand nombre d'éléments ou si vous avez des composants basés sur <code>React.PureComponent</code>.</p>
+          <pre class="language-jsx"><code class="language-jsx"><span class="token keyword">const</span> <span class="token constant">A</span> <span class="token operator">=</span> <span class="token number">65</span> <span class="token comment">// Code de caractère ASCII</span>
+
+<span class="token keyword">class</span> <span class="token class-name">Alphabet</span> <span class="token keyword">extends</span> <span class="token class-name">React<span class="token punctuation">.</span>Component</span> <span class="token punctuation">{</span>
+  <span class="token function">constructor</span><span class="token punctuation">(</span><span class="token parameter">props</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token keyword">super</span><span class="token punctuation">(</span>props<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token keyword">this</span><span class="token punctuation">.</span><span class="token property-access">handleClick</span> <span class="token operator">=</span> <span class="token keyword">this</span><span class="token punctuation">.</span><span class="token method function property-access">handleClick</span><span class="token punctuation">.</span><span class="token method function property-access">bind</span><span class="token punctuation">(</span><span class="token keyword">this</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token keyword">this</span><span class="token punctuation">.</span><span class="token property-access">state</span> <span class="token operator">=</span> <span class="token punctuation">{</span>
+      <span class="token literal-property property">justClicked</span><span class="token operator">:</span> <span class="token keyword null nil">null</span><span class="token punctuation">,</span>
+      <span class="token literal-property property">letters</span><span class="token operator">:</span> <span class="token known-class-name class-name">Array</span><span class="token punctuation">.</span><span class="token keyword module">from</span><span class="token punctuation">(</span><span class="token punctuation">{</span><span class="token literal-property property">length</span><span class="token operator">:</span> <span class="token number">26</span><span class="token punctuation">}</span><span class="token punctuation">,</span> <span class="token punctuation">(</span><span class="token parameter">_<span class="token punctuation">,</span> i</span><span class="token punctuation">)</span> <span class="token arrow operator">=></span> <span class="token known-class-name class-name">String</span><span class="token punctuation">.</span><span class="token method function property-access">fromCharCode</span><span class="token punctuation">(</span><span class="token constant">A</span> <span class="token operator">+</span> i<span class="token punctuation">)</span><span class="token punctuation">)</span>
+    <span class="token punctuation">}</span><span class="token punctuation">;</span>
+  <span class="token punctuation">}</span>
+
+  <span class="token function">handleClick</span><span class="token punctuation">(</span><span class="token parameter">e</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token keyword">this</span><span class="token punctuation">.</span><span class="token method function property-access">setState</span><span class="token punctuation">(</span><span class="token punctuation">{</span>
+      <span class="token literal-property property">justClicked</span><span class="token operator">:</span> e<span class="token punctuation">.</span><span class="token property-access">target</span><span class="token punctuation">.</span><span class="token property-access">dataset</span><span class="token punctuation">.</span><span class="token property-access">letter</span>
+    <span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token punctuation">}</span>
+
+  <span class="token function">render</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token keyword control-flow">return</span> <span class="token punctuation">(</span>
+      <span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;</span>div</span><span class="token punctuation">></span></span><span class="token plain-text">
+        Cliqué : </span><span class="token punctuation">{</span><span class="token keyword">this</span><span class="token punctuation">.</span><span class="token property-access">state</span><span class="token punctuation">.</span><span class="token property-access">justClicked</span><span class="token punctuation">}</span><span class="token plain-text">
+        </span><span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;</span>ul</span><span class="token punctuation">></span></span><span class="token plain-text">
+          </span><span class="token punctuation">{</span><span class="token keyword">this</span><span class="token punctuation">.</span><span class="token property-access">state</span><span class="token punctuation">.</span><span class="token property-access">letters</span><span class="token punctuation">.</span><span class="token method function property-access">map</span><span class="token punctuation">(</span><span class="token parameter">letter</span> <span class="token arrow operator">=></span>
+            <span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;</span>li</span> <span class="token attr-name">key</span><span class="token script language-javascript"><span class="token script-punctuation punctuation">=</span><span class="token punctuation">{</span>letter<span class="token punctuation">}</span></span> <span class="token attr-name">data-letter</span><span class="token script language-javascript"><span class="token script-punctuation punctuation">=</span><span class="token punctuation">{</span>letter<span class="token punctuation">}</span></span> <span class="token attr-name">onClick</span><span class="token script language-javascript"><span class="token script-punctuation punctuation">=</span><span class="token punctuation">{</span><span class="token keyword">this</span><span class="token punctuation">.</span><span class="token property-access">handleClick</span><span class="token punctuation">}</span></span><span class="token punctuation">></span></span><span class="token plain-text">
+              </span><span class="token punctuation">{</span>letter<span class="token punctuation">}</span><span class="token plain-text">
+            </span><span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;/</span>li</span><span class="token punctuation">></span></span>
+          <span class="token punctuation">)</span><span class="token punctuation">}</span><span class="token plain-text">
+        </span><span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;/</span>ul</span><span class="token punctuation">></span></span><span class="token plain-text">
+      </span><span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;/</span>div</span><span class="token punctuation">></span></span>
+    <span class="token punctuation">)</span>
+  <span class="token punctuation">}</span>
+<span class="token punctuation">}</span></code></pre>
+        </section>
+      </section>
+      <section id="how-can-i-prevent-a-function-from-being-called-too-quickly-or-too-many-times-in-a-row" class="level3">
+        <h3>Comment éviter qu'une fonction soit appelée trop tôt ou trop souvent ?</h3>
+        <p>Si vous avez un gestionnaire d'événements comme <code>onClick</code> ou <code>onScroll</code> et que vous voulez éviter que la fonction de rappel soit appelée trop fréquemment, vous pouvez limiter sa fréquence d‘exécution. Vous pouvez le faire en utilisant :</p>
+        <ul>
+          <li><strong>le <em>throttling</em></strong> : limitation de la fréquence de déclenchement (exemple : <a href="https://lodash.com/docs#throttle"><code>_.throttle</code></a>)</li>
+          <li><strong>le <em>debouncing</em></strong> : application des modifications après une période d'inactivité (exemple : <a href="https://lodash.com/docs#debounce"><code>_.debounce</code></a>)</li>
+          <li><strong>le <em>throttling</em> basé sur <code>requestAnimationFrame</code></strong> : limitation de la fréquence de déclenchement grâce à <a href="https://developer.mozilla.org/fr/docs/Web/API/Window/requestAnimationFrame"><code>requestAnimationFrame</code></a> (exemple : <a href="https://github.com/alexreardon/raf-schd"><code>raf-schd</code></a>)</li>
+        </ul>
+        <p>Jetez un coup d'œil à <a href="http://demo.nimius.net/debounce_throttle/">cette visualisation</a> pour une comparaison intuitive des fonctions <code>throttle</code> et <code>debounce</code>.</p>
+        <blockquote>
+          <p>Remarque</p>
+          <p><code>_.debounce</code>, <code>_.throttle</code> et <code>raf-schd</code> fournissent une méthode <code>cancel</code> pour annuler l'appel à la fonction de rappel différée. Il est recommandé d'appeler cette méthode dans <code>componentWillUnmount</code> <em>ou</em> de s'assurer dans la fonction différée que le composant est toujours monté.</p>
+        </blockquote>
+        <section id="throttle" class="level4">
+          <h4>Throttle</h4>
+          <p>Le <em>throttling</em> évite qu'une fonction soit appelée plus d'une fois dans un certain laps de temps. L'exemple ci-dessous limite le gestionnaire d'événements de clic pour éviter qu'il soit appelé plus d'une fois par seconde.</p>
+          <pre class="language-jsx"><code class="language-jsx"><span class="token keyword module">import</span> <span class="token imports">throttle</span> <span class="token keyword module">from</span> <span class="token string">'lodash.throttle'</span><span class="token punctuation">;</span>
+
+<span class="token keyword">class</span> <span class="token class-name">LoadMoreButton</span> <span class="token keyword">extends</span> <span class="token class-name">React<span class="token punctuation">.</span>Component</span> <span class="token punctuation">{</span>
+  <span class="token function">constructor</span><span class="token punctuation">(</span><span class="token parameter">props</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token keyword">super</span><span class="token punctuation">(</span>props<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token keyword">this</span><span class="token punctuation">.</span><span class="token property-access">handleClick</span> <span class="token operator">=</span> <span class="token keyword">this</span><span class="token punctuation">.</span><span class="token method function property-access">handleClick</span><span class="token punctuation">.</span><span class="token method function property-access">bind</span><span class="token punctuation">(</span><span class="token keyword">this</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token keyword">this</span><span class="token punctuation">.</span><span class="token property-access">handleClickThrottled</span> <span class="token operator">=</span> <span class="token function">throttle</span><span class="token punctuation">(</span><span class="token keyword">this</span><span class="token punctuation">.</span><span class="token property-access">handleClick</span><span class="token punctuation">,</span> <span class="token number">1000</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token punctuation">}</span>
+
+  <span class="token function">componentWillUnmount</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token keyword">this</span><span class="token punctuation">.</span><span class="token property-access">handleClickThrottled</span><span class="token punctuation">.</span><span class="token method function property-access">cancel</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token punctuation">}</span>
+
+  <span class="token function">render</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token keyword control-flow">return</span> <span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;</span>button</span> <span class="token attr-name">onClick</span><span class="token script language-javascript"><span class="token script-punctuation punctuation">=</span><span class="token punctuation">{</span><span class="token keyword">this</span><span class="token punctuation">.</span><span class="token property-access">handleClickThrottled</span><span class="token punctuation">}</span></span><span class="token punctuation">></span></span><span class="token plain-text">Charger la suite</span><span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;/</span>button</span><span class="token punctuation">></span></span><span class="token punctuation">;</span>
+  <span class="token punctuation">}</span>
+
+  <span class="token function">handleClick</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token keyword">this</span><span class="token punctuation">.</span><span class="token property-access">props</span><span class="token punctuation">.</span><span class="token method function property-access">loadMore</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token punctuation">}</span>
+<span class="token punctuation">}</span></code></pre>
+        </section>
+        <section id="debounce" class="level4">
+          <h4>Debounce</h4>
+          <p>Le <em>debouncing</em> garantit qu'une fonction ne sera appelée qu'après qu‘un certain temps a passé depuis le dernier appel à cette fonction : on garantit un intervalle minimal entre deux exécutions. Ça peut être utile quand vous avez un calcul complexe à faire en réponse à un événement susceptible d’être déclenché fréquemment (comme le défilement d'une page ou les frappes au clavier). L'exemple ci-dessous utilise cette méthode sur un champ texte avec un délai de 250 ms.</p>
+          <pre class="language-jsx"><code class="language-jsx"><span class="token keyword module">import</span> <span class="token imports">debounce</span> <span class="token keyword module">from</span> <span class="token string">'lodash.debounce'</span><span class="token punctuation">;</span>
+
+<span class="token keyword">class</span> <span class="token class-name">Searchbox</span> <span class="token keyword">extends</span> <span class="token class-name">React<span class="token punctuation">.</span>Component</span> <span class="token punctuation">{</span>
+  <span class="token function">constructor</span><span class="token punctuation">(</span><span class="token parameter">props</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token keyword">super</span><span class="token punctuation">(</span>props<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token keyword">this</span><span class="token punctuation">.</span><span class="token property-access">handleChange</span> <span class="token operator">=</span> <span class="token keyword">this</span><span class="token punctuation">.</span><span class="token method function property-access">handleChange</span><span class="token punctuation">.</span><span class="token method function property-access">bind</span><span class="token punctuation">(</span><span class="token keyword">this</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token keyword">this</span><span class="token punctuation">.</span><span class="token property-access">emitChangeDebounced</span> <span class="token operator">=</span> <span class="token function">debounce</span><span class="token punctuation">(</span><span class="token keyword">this</span><span class="token punctuation">.</span><span class="token property-access">emitChange</span><span class="token punctuation">,</span> <span class="token number">250</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token punctuation">}</span>
+
+  <span class="token function">componentWillUnmount</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token keyword">this</span><span class="token punctuation">.</span><span class="token property-access">emitChangeDebounced</span><span class="token punctuation">.</span><span class="token method function property-access">cancel</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token punctuation">}</span>
+
+  <span class="token function">render</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token keyword control-flow">return</span> <span class="token punctuation">(</span>
+      <span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;</span>input</span>
+        <span class="token attr-name">type</span><span class="token attr-value"><span class="token punctuation attr-equals">=</span><span class="token punctuation">"</span>text<span class="token punctuation">"</span></span>
+        <span class="token attr-name">onChange</span><span class="token script language-javascript"><span class="token script-punctuation punctuation">=</span><span class="token punctuation">{</span><span class="token keyword">this</span><span class="token punctuation">.</span><span class="token property-access">handleChange</span><span class="token punctuation">}</span></span>
+        <span class="token attr-name">placeholder</span><span class="token attr-value"><span class="token punctuation attr-equals">=</span><span class="token punctuation">"</span>Recherche...<span class="token punctuation">"</span></span>
+        <span class="token attr-name">defaultValue</span><span class="token script language-javascript"><span class="token script-punctuation punctuation">=</span><span class="token punctuation">{</span><span class="token keyword">this</span><span class="token punctuation">.</span><span class="token property-access">props</span><span class="token punctuation">.</span><span class="token property-access">value</span><span class="token punctuation">}</span></span>
+      <span class="token punctuation">/></span></span>
+    <span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token punctuation">}</span>
+
+  <span class="token function">handleChange</span><span class="token punctuation">(</span><span class="token parameter">e</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token comment">// React recycle les événements, on a donc besoin de lire la valeur avant le différé.</span>
+    <span class="token comment">// On aurait aussi pu appeler `event.persist()` et passer l’événement complet.</span>
+    <span class="token comment">// Pour en apprendre davantage, consultez fr.reactjs.org/docs/events.html#event-pooling</span>
+    <span class="token keyword">this</span><span class="token punctuation">.</span><span class="token method function property-access">emitChangeDebounced</span><span class="token punctuation">(</span>e<span class="token punctuation">.</span><span class="token property-access">target</span><span class="token punctuation">.</span><span class="token property-access">value</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token punctuation">}</span>
+
+  <span class="token function">emitChange</span><span class="token punctuation">(</span><span class="token parameter">value</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token keyword">this</span><span class="token punctuation">.</span><span class="token property-access">props</span><span class="token punctuation">.</span><span class="token method function property-access">onChange</span><span class="token punctuation">(</span>value<span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token punctuation">}</span>
+<span class="token punctuation">}</span></code></pre>
+        </section>
+        <section id="throttling-basé-sur-requestanimationframe-requestanimationframe-throttling" class="level4">
+          <h4><em>Throttling</em> basé sur <code>requestAnimationFrame</code> {#requestanimationframe-throttling}</h4>
+          <p><a href="https://developer.mozilla.org/fr/docs/Web/API/Window/requestAnimationFrame"><code>requestAnimationFrame</code></a> permet de différer une fonction pour qu'elle soit exécutée par le navigateur à un moment optimal pour les performances d'affichage. Une fonction différée avec <code>requestAnimationFrame</code> sera exécutée à la prochaine passe d'affichage <em>(frame, NdT)</em>. Le navigateur fera de son mieux pour qu'il y ait toujours 60 passes par seconde (60 fps). Cependant, si le navigateur n’y arrive pas, il <em>limitera</em> naturellement le nombre de passes par seconde. Par exemple, un appareil pourrait n'être capable d'afficher que 30 fps, vous n'obtiendrez donc que 30 passes par seconde. Utiliser <code>requestAnimationFrame</code> pour limiter l’exécution est une technique pratique afin d'éviter de faire plus de 60 mises à jour par seconde. Si vous faites 100 mises à jour en une seconde, vous créez une charge de travail supplémentaire pour le navigateur que l'utilisateur ne pourra de toutes façons pas voir.</p>
+          <blockquote>
+            <p>Remarque</p>
+            <p>Utiliser cette technique ne capturera que la dernière valeur publiée à chaque passe. Vous pouvez voir un exemple du fonctionnement de cette optimisation sur le <a href="https://developer.mozilla.org/fr/docs/Web/Events/scroll"><code>MDN</code></a>.</p>
+          </blockquote>
+          <pre class="language-jsx"><code class="language-jsx"><span class="token keyword module">import</span> <span class="token imports">rafSchedule</span> <span class="token keyword module">from</span> <span class="token string">'raf-schd'</span><span class="token punctuation">;</span>
+
+<span class="token keyword">class</span> <span class="token class-name">ScrollListener</span> <span class="token keyword">extends</span> <span class="token class-name">React<span class="token punctuation">.</span>Component</span> <span class="token punctuation">{</span>
+  <span class="token function">constructor</span><span class="token punctuation">(</span><span class="token parameter">props</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token keyword">super</span><span class="token punctuation">(</span>props<span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+    <span class="token keyword">this</span><span class="token punctuation">.</span><span class="token property-access">handleScroll</span> <span class="token operator">=</span> <span class="token keyword">this</span><span class="token punctuation">.</span><span class="token method function property-access">handleScroll</span><span class="token punctuation">.</span><span class="token method function property-access">bind</span><span class="token punctuation">(</span><span class="token keyword">this</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+    <span class="token comment">// Crée une nouvelle fonction à planifier</span>
+    <span class="token keyword">this</span><span class="token punctuation">.</span><span class="token property-access">scheduleUpdate</span> <span class="token operator">=</span> <span class="token function">rafSchedule</span><span class="token punctuation">(</span>
+      <span class="token parameter">point</span> <span class="token arrow operator">=></span> <span class="token keyword">this</span><span class="token punctuation">.</span><span class="token property-access">props</span><span class="token punctuation">.</span><span class="token method function property-access">onScroll</span><span class="token punctuation">(</span>point<span class="token punctuation">)</span>
+    <span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token punctuation">}</span>
+
+  <span class="token function">handleScroll</span><span class="token punctuation">(</span><span class="token parameter">e</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token comment">// Quand on reçoit un événement de défilement de la page, planifier une mise à jour.</span>
+    <span class="token comment">// Si on reçoit plusieurs mises à jour dans la même passe, on ne publiera que la</span>
+    <span class="token comment">// dernière valeur.</span>
+    <span class="token keyword">this</span><span class="token punctuation">.</span><span class="token method function property-access">scheduleUpdate</span><span class="token punctuation">(</span><span class="token punctuation">{</span> <span class="token literal-property property">x</span><span class="token operator">:</span> e<span class="token punctuation">.</span><span class="token property-access">clientX</span><span class="token punctuation">,</span> <span class="token literal-property property">y</span><span class="token operator">:</span> e<span class="token punctuation">.</span><span class="token property-access">clientY</span> <span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token punctuation">}</span>
+
+  <span class="token function">componentWillUnmount</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token comment">// Annule toute mise à jour en attente puisqu’on démonte le composant</span>
+    <span class="token keyword">this</span><span class="token punctuation">.</span><span class="token property-access">scheduleUpdate</span><span class="token punctuation">.</span><span class="token method function property-access">cancel</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token punctuation">}</span>
+
+  <span class="token function">render</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token keyword control-flow">return</span> <span class="token punctuation">(</span>
+      <span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;</span>div</span>
+        <span class="token attr-name">style</span><span class="token script language-javascript"><span class="token script-punctuation punctuation">=</span><span class="token punctuation">{</span><span class="token punctuation">{</span> <span class="token literal-property property">overflow</span><span class="token operator">:</span> <span class="token string">'scroll'</span> <span class="token punctuation">}</span><span class="token punctuation">}</span></span>
+        <span class="token attr-name">onScroll</span><span class="token script language-javascript"><span class="token script-punctuation punctuation">=</span><span class="token punctuation">{</span><span class="token keyword">this</span><span class="token punctuation">.</span><span class="token property-access">handleScroll</span><span class="token punctuation">}</span></span>
+      <span class="token punctuation">></span></span><span class="token plain-text">
+        </span><span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;</span>img</span> <span class="token attr-name">src</span><span class="token attr-value"><span class="token punctuation attr-equals">=</span><span class="token punctuation">"</span>/my-huge-image.jpg<span class="token punctuation">"</span></span> <span class="token punctuation">/></span></span><span class="token plain-text">
+      </span><span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;/</span>div</span><span class="token punctuation">></span></span>
+    <span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token punctuation">}</span>
+<span class="token punctuation">}</span></code></pre>
+        </section>
+        <section id="testing-your-rate-limiting" class="level4">
+          <h4>Tester votre limitation de fréquence</h4>
+          <p>
+            Afin de tester que votre code de limitation de fréquence fonctionne correctement, il est utile de pouvoir manipuler le temps. Si vous utilisez <a href="https://facebook.github.io/jest/"><code>jest</code></a>, vous pouvez utiliser les <a href="https://facebook.github.io/jest/docs/en/timer-mocks.html">fausses horloges</a> <em>(mock timers, NdT)</em> pour accélérer le temps. Si vous utilisez <code>requestAnimationFrame</code>, vous pouvez utiliser <a href="https://github.com/alexreardon/raf-stub"><code>raf-stub</code></a> afin de contrôler la progression des passes d'animation.
+            <span style="float: footnote;"><a href="./index.html#toc">Go to TOC</a></span>
+          </p>
+        </section>
+      </section>
+    </section>
+  </body>
+</html>

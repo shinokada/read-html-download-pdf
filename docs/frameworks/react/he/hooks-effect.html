@@ -1,0 +1,401 @@
+<!doctype html>
+<html lang="he">
+  <head>
+    <meta charset="utf-8">
+    <title>שימוש ב-Effect Hook</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="https://raw.githubusercontent.com/shinokada/prism-coy-theme/main/theme_common.css">
+  </head>
+  <body>
+    <section id="שימוש-ב-effect-hook" class="level1">
+      <h1>שימוש ב-Effect Hook</h1>
+      <p><em>Hooks</em> נוספו ב-React 16.8. הם מאפשרים לנו להשתמש ב- state ופיצ'רים נוספים של ריאקט מבלי לכתוב מחלקה.</p>
+      <p>ה-<em>Effect Hook</em> נותן לנו לבצע תופעות לוואי בתוך קומפוננטות פונקציונליות:</p>
+      <pre class="language-js{1,6-10}"><code class="language-js{1,6-10}">import React, { useState, useEffect } from 'react';
+
+function Example() {
+  const [count, setCount] = useState(0);
+
+  // דומה ל- ComponentDidMount ו- componentDidUpdate:
+  useEffect(() => {
+    // עדכון כותרת העמוד על ידי שימוש ב-API של הדפדפן
+    document.title = `You clicked ${count} times`;
+  });
+
+  return (
+    &#x3C;div>
+      &#x3C;p>לחצת {count} פעמים&#x3C;/p>
+      &#x3C;button onClick={() => setCount(count + 1)}>
+        לחץ עליי
+      &#x3C;/button>
+    &#x3C;/div>
+  );
+}</code></pre>
+      <p>הקטע לעיל מבוסס על <a href="./hooks-state.html">דוגמת ה- counter מהעמוד הקודם</a>, אבל הוספנו פיצ'ר חדש לזה: קובעים את כותרת העמוד להודעה מותאמת כשכוללת את מספר ההקלקות.</p>
+      <p>אחזור מידע, הגדרת subscription, ושינוי ידני של ה- DOM בקומפוננטות ריאקט הם כולם דוגמאות של תופעות לוואי. בין אם לאו דווקא אתה רגיל לקרוא לפעולות הללו "תופעות לוואי" (או רק "תופעות"), רוב הסיכויים שביצעת אותן בקומפוננטות שלך בעבר.</p>
+      <blockquote>
+        <p>טיפ</p>
+        <p>אם יש לך נסיון עם מתודות מחזור חיים במחלקות ריאקט, אתה יכול לחשוב על <code>useEffect</code> כ- <code>componentDidMount</code>, <code>componentDidUpdate</code>, ו- <code>componentWillUnmount</code> משולבות.</p>
+      </blockquote>
+      <p>ישנם שני סוגים של תופעות לוואי בקומפוננטות ריאקט: אלה שלא דורשים ניקוי, ואלה שכן. נסתכל על הבחנה זו ביתר פירוט.</p>
+      <section id="effects-without-cleanup" class="level2">
+        <h2>Effects ללא ניקוי</h2>
+        <p>לעיתים, אנו רוצים <strong>להריץ קוד נוסף לאחר שריאקט עדכנה את ה- DOM.</strong> בקשות רשת, שינויים ידניים של ה- DOM, ו- logging הם דוגמאות של effects שלא דורשים ניקוי. אנו אומרים זאת בגלל שניתן להריץ אותם ומיד לשכוח מהם. הבה נשווה בין איך מחלקות ו-Hooks נותנים לנו לבטא את תופעות הלוואי הללו.</p>
+        <section id="example-using-classes" class="level3">
+          <h3>דוגמאות עם שימוש במחלקות</h3>
+          <p>במחלקות קומפוננטות בריאקט, המתודה <code>render</code> לא אמורה ליצור תופעות לוואי. זה יהיה מוקדם מדי – בדרך כלל נרצה לבצע את ה- effects שלנו <em>לאחר</em> שריאקט עדכנה את ה- DOM.</p>
+          <p>זאת הסיבה שבמחלקות ריאקט, אנו שמים תופעות לוואי בתוך <code>componentDidMount</code> ו- <code>componentDidUpdate</code>. בחזרה לדוגמה שלנו, הנה מחלקת counter בקומפוננטה שמעדכנת את כותרת העמוד מיד לאחר שריאקט משנה את ה-DOM:</p>
+          <pre class="language-js{9-15}"><code class="language-js{9-15}">class Example extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = {
+      count: 0
+    };
+  }
+
+  componentDidMount() {
+    document.title = `לחצת ${this.state.count} פעמים`;
+  }
+
+  componentDidUpdate() {
+    document.title = `לחצת ${this.state.count} פעמים`;
+  }
+
+  render() {
+    return (
+      &#x3C;div>
+        &#x3C;p>לחצת {this.state.count} פעמים&#x3C;/p>
+        &#x3C;button onClick={() => this.setState({ count: this.state.count + 1 })}>
+          לחץ עליי
+        &#x3C;/button>
+      &#x3C;/div>
+    );
+  }
+}</code></pre>
+          <p>שים לב כיצד <strong>אנו צריכים לשכפל את הקוד בין שתי מתודות מחזור החיים במחלקה.</strong></p>
+          <p>זה בגלל שבמקרים רבים אנו רוצים לבצע את אותה תופעת הלוואי ללא קשר לאם הקומפוננטה "הותקנה"(mounted), או אם היא עודכנה. מבחינה מושגית, אנו רוצים שזה יקרה אחרי כל רינדור – אבל לקומפוננטות מחלקתיות בריאקט אין מתודה כזאת. נוכל לחלץ מתודה נפרדת אבל נצטרך עדיין לקרוא לה בשתי מקומות.</p>
+          <p>הבה נראה כיצד נוכל לעשות את אותו הדבר עם <code>useEffect</code>.</p>
+        </section>
+        <section id="example-using-hooks" class="level3">
+          <h3>דוגמא של שימוש ב- Hooks</h3>
+          <p>ראינו כבר את הדוגמא הזו בראש העמוד, אבל הבה נסתכל עליה מקרוב:</p>
+          <pre class="language-js{1,6-8}"><code class="language-js{1,6-8}">import React, { useState, useEffect } from 'react';
+
+function Example() {
+  const [count, setCount] = useState(0);
+
+  useEffect(() => {
+    document.title = `לחצת ${count} פעמים`;
+  });
+
+  return (
+    &#x3C;div>
+      &#x3C;p>לחצת {count} פעמים&#x3C;/p>
+      &#x3C;button onClick={() => setCount(count + 1)}>
+        לחץ עליי
+      &#x3C;/button>
+    &#x3C;/div>
+  );
+}</code></pre>
+          <p><strong>מה useEffect עושה?</strong> על ידי שימוש ב-Hook הזה, אנו אומרים לריאקט שהקומפוננטה שלך צריכה לעשות משהו לאחר הרינדור. ריאקט תזכור את הפונקציה שהעברת (נתייחס אל זה כה- effect שלנו), ונקרא לה לאחר ביצוע עדכוני ה-DOM. ב-effect הזה, אנו קובעים את כותרת העמוד, אבל נוכל בנוסף לבצע אחזור מידע או לקרוא ל- API הכרחי אחר.</p>
+          <p><strong>מדוע קוראים ל- useEffect בתוך קומפוננטה?</strong> הצבת <code>useEffect</code> בתוך הקומפוננטה נותנת לנו גישה למשתנה- <code>count </code>state (או כל prop אחר) ישר מה-effect. אנו לא צריכים API מיוחד על מנת לקרוא אותו – זה כבר בתוך ה- scope של הפונקציה. Hooks משתמשים ב- closures ונמנעים מהצגת APIs ספציפיים של ריאקט היכן ש-JavaScript נותנת פתרון.</p>
+          <p><strong>האם useEffect רץ אחרי כל רינדור?</strong> כן! כברירת מחדל, זה רץ גם אחרי הרינדור הראשון <em>וגם</em> אחרי כל עדכון. (נדבר אחר כך על <a href="#tip-optimizing-performance-by-skipping-effects">להתאים אישית את זה</a>.) במקום לחשוב במונחים של "mounting" ו-"עדכון", יכול להיות שיהיה לך יותר קל לחשוב ש-effects קורים "אחרי רינדור". ריאקט מבטיח שה-DOM עודכן כאשר זה מריץ את ה- effects.</p>
+        </section>
+        <section id="detailed-explanation" class="level3">
+          <h3>הסבר מפורט</h3>
+          <p>עכשיו כשאנו יודעים עוד על effects, השורות הבאות אמורות להיות מובנות:</p>
+          <pre class="language-js"><code class="language-js"><span class="token keyword">function</span> <span class="token function"><span class="token maybe-class-name">Example</span></span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  <span class="token keyword">const</span> <span class="token punctuation">[</span>count<span class="token punctuation">,</span> setCount<span class="token punctuation">]</span> <span class="token operator">=</span> <span class="token function">useState</span><span class="token punctuation">(</span><span class="token number">0</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+  <span class="token function">useEffect</span><span class="token punctuation">(</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token arrow operator">=></span> <span class="token punctuation">{</span>
+    <span class="token dom variable">document</span><span class="token punctuation">.</span><span class="token property-access">title</span> <span class="token operator">=</span> <span class="token template-string"><span class="token template-punctuation string">`</span><span class="token string">לחצת </span><span class="token interpolation"><span class="token interpolation-punctuation punctuation">${</span>count<span class="token interpolation-punctuation punctuation">}</span></span><span class="token string"> פעמים</span><span class="token template-punctuation string">`</span></span><span class="token punctuation">;</span>
+  <span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span></code></pre>
+          <p>אנו מצהירים על המשתנה state <code>count</code>, ואז אנו אומרים לריאקט שאנחנו צריכים להשתמש ב- effect. נעביר פונקציה ל- <code>useEffect</code>. הפונקציה שאנו מעבירים היא ה-effect שלנו. בתוך ה- effect שלנו, נקבע את כותרת העמוד על ידי שימוש ב- <code>document.title</code> שהוא חלק מה-API של הדפדפן. נוכל לקרוא את ה-<code>count</code> האחרון בתוך ה- effect בגלל שהוא בתוך ה-scope של הפונקציה שלנו. כשריאקט מרנדר את הקומפוננטה שלנו, הוא יזכור את ה- effect שבו השתמשנו, ואז יריץ את ה- effect לאחר שיעדכן את ה-DOM. זה קורה לכל רינדור, כולל הראשון.</p>
+          <p>מפתחי JavaScript מנוסים אולי ישימו לב שהפונקציה שמועברת ל- <code>useEffect</code> הולכת להיות שונה לכל רינדור. זה נעשה בכוונה. למעשה, זה מה שנותן לנו לקרוא את הערך <code>count</code> מתוך ה- effect מבלי לדאוג שהוא לא יהיה עדכני. כל זמן שאנו מרנדרים מחדש, אנחנו מתזמנים effect <em>אחר</em>, שמחליף את קודמו. במידה מסוימת, זה גורם ל- effects להתנהג יותר כמו חלק מתוצאת הרינדור – כל effect "שייך" לרינדור מסוים. נראה יותר ברור למה זה שימושי <a href="#explanation-why-effects-run-on-each-update">בהמשך העמוד</a>.</p>
+          <blockquote>
+            <p>טיפ</p>
+            <p>בניגוד ל- <code>componentDidMount</code> או <code>componentDidUpdate</code>, effects שמתוזמנים עם <code>useEffect</code> לא חוסמים את הדפדפן מלעדכן את המסך. זה גורם ליישום שלך להרגיש יותר רספונסיבי. הרוב ה- effects לא צריכים להתקיים באופן סינכרוני. במקרים הנדירים שהם כן מתקיימים בסינכרוניות (כמו מדידת ה- layout), יש <a href="./hooks-reference.html#uselayouteffect"><code>useLayoutEffect</code></a> נפרד עם API מקביל ל- <code>useEffect</code>.</p>
+          </blockquote>
+        </section>
+      </section>
+      <section id="effects-with-cleanup" class="level2">
+        <h2>Effects עם ניקוי</h2>
+        <p>למרות זאת, ישנם effects שכן דורשים. לדוגמא, <strong>אולי נרצה להגדיר subscription</strong> למקור מידע חיצוני כלשהו. במקרה זה, זה חשוב לנקות על מנת שלא תהיה דליפת זיכרון! נשווה איך ניתן לעשות זאת עם מחלקות ו- Hooks.</p>
+        <section id="example-using-classes-1" class="level3">
+          <h3>דוגמה עם שימוש במחלקות</h3>
+          <p>במחלקת ריאקט, בדרך כלל מגדירים subscription בתוך <code>componentDidMount</code>, ומנקים אותו בתוך <code>componentWillUnmount</code>. לדוגמה, נגיד שיש לנו מודול <code>ChatAPI</code> שנותן לנו לעשות subscribe לסטטוס חיבור של חבר אונליין. הנה איך נוכל לעשות subscribe לסטטוס ולהציג אותו על ידי שימוש במחלקה:</p>
+          <pre class="language-js{8-26}"><code class="language-js{8-26}">class FriendStatus extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = { isOnline: null };
+    this.handleStatusChange = this.handleStatusChange.bind(this);
+  }
+
+  componentDidMount() {
+    ChatAPI.subscribeToFriendStatus(
+      this.props.friend.id,
+      this.handleStatusChange
+    );
+  }
+
+  componentWillUnmount() {
+    ChatAPI.unsubscribeFromFriendStatus(
+      this.props.friend.id,
+      this.handleStatusChange
+    );
+  }
+
+  handleStatusChange(status) {
+    this.setState({
+      isOnline: status.isOnline
+    });
+  }
+
+  render() {
+    if (this.state.isOnline === null) {
+      return 'טוען...';
+    }
+    return this.state.isOnline ? 'מחובר' : 'לא מחובר';
+  }
+}</code></pre>
+          <p>שים לב איך <code>componentDidMount</code> ו- <code>componentWillUnmount</code> צריכים לשקף אחד את השני. מתודות מחזור חיים מכריחות אותנו לפצל את הלוגיקה למרות שבאופן מושגי הקוד בשניהם קשור לאותו effect.</p>
+          <blockquote>
+            <p>הערה</p>
+            <p>קוראים חדי-עין ישימו לב שדוגמה זאת צריכה בנוסף מתודת <code>componentDidUpdate</code> כדי להיות נכונה לחלוטין. נתעלם מכך אבל נחזור לזה <a href="#explanation-why-effects-run-on-each-update">בחלק אחר</a> של העמוד.</p>
+          </blockquote>
+        </section>
+        <section id="example-using-hooks-1" class="level3">
+          <h3>דוגמה עם שימוש ב- Hooks</h3>
+          <p>הבה נראה איך נוכל לכתוב את קומפוננטה זו בשימוש של Hooks.</p>
+          <p>יכול להיות שאתה חושב שנצטרך effect נפרד על מנת לבצע את הניקוי. אולם קוד שמיועד להוספה ולהסרה של subscription כל כך קשור ש- <code>useEffect</code> מתוכנן להשאיר אותו ביחד. אם ה-effect שלך מחזיר פונקציה, ריאקט יריץ אותה כשיגיע הזמן לנקות:</p>
+          <pre class="language-js{6-16}"><code class="language-js{6-16}">import React, { useState, useEffect } from 'react';
+
+function FriendStatus(props) {
+  const [isOnline, setIsOnline] = useState(null);
+
+  useEffect(() => {
+    function handleStatusChange(status) {
+      setIsOnline(status.isOnline);
+    }
+
+    ChatAPI.subscribeToFriendStatus(props.friend.id, handleStatusChange);
+    // ציין איך לנקות אחרי ה-effect:
+    return function cleanup() {
+      ChatAPI.unsubscribeFromFriendStatus(props.friend.id, handleStatusChange);
+    };
+  });
+
+  if (isOnline === null) {
+    return 'טוען...';
+  }
+  return isOnline ? 'מחובר' : 'לא מחובר';
+}</code></pre>
+          <p><strong>מדוע החזרנו פונקציה מה- effect שלנו?</strong> זה מנגנון ניקוי אופציונאלי ל- effects. כל effect יכול להחזיר פונקציה שמנקה אחריה. זה נותן לנו להשאיר את הלוגיקות להוספה והסרה של subscriptions קרובות אחת לשניה. הן חלק מאותו effect!</p>
+          <p><strong>מתי בדיוק ריאקט מנקה אחרי effect?</strong> ריאקט מבצעת את הניקיון בזמן unmounting של קומפוננטה. למרות זאת, כפי שלמדנו קודם, effects רצים אחרי כל רינדור ולא רק פעם אחת. זאת הסיבה שריאקט מנקה <em>גם</em> effects מרינדורים קודמים לפני הרצת effects בפעם הבאה. נדבר על <a href="#explanation-why-effects-run-on-each-update">למה זה עוזר לנו להימנע מבאגים</a> <a href="#tip-optimizing-performance-by-skipping-effects">וגם איך להימנע מהתנהגות זו במקרה וזה יוצר בעיות מבחינת ביצועים.</a> בהמשך.</p>
+          <blockquote>
+            <p>הערה</p>
+            <p>אנו לא צריכים להחזיר פונקציה עם שם מ- effect זה. קראנו לה <code>cleanup</code> פה כדי להבהיר את מטרתה, אך תוכל להחזיר arrow function או לקרוא לה בשם אחר.</p>
+          </blockquote>
+        </section>
+      </section>
+      <section id="recap" class="level2">
+        <h2>סיכום</h2>
+        <p>למדנו ש- <code>useEffect</code> נותן לנו להביע סוגים שונים של תופעות לוואי לאחר רינדור קומפוננטה. בגלל ש- effects מסוימים דורשים ניקיון הם מחזירים פונקציה:</p>
+        <pre class="language-js"><code class="language-js">  <span class="token function">useEffect</span><span class="token punctuation">(</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token arrow operator">=></span> <span class="token punctuation">{</span>
+    <span class="token keyword">function</span> <span class="token function">handleStatusChange</span><span class="token punctuation">(</span><span class="token parameter">status</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+      <span class="token function">setIsOnline</span><span class="token punctuation">(</span>status<span class="token punctuation">.</span><span class="token property-access">isOnline</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+
+    <span class="token maybe-class-name">ChatAPI</span><span class="token punctuation">.</span><span class="token method function property-access">subscribeToFriendStatus</span><span class="token punctuation">(</span>props<span class="token punctuation">.</span><span class="token property-access">friend</span><span class="token punctuation">.</span><span class="token property-access">id</span><span class="token punctuation">,</span> handleStatusChange<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token keyword control-flow">return</span> <span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token arrow operator">=></span> <span class="token punctuation">{</span>
+      <span class="token maybe-class-name">ChatAPI</span><span class="token punctuation">.</span><span class="token method function property-access">unsubscribeFromFriendStatus</span><span class="token punctuation">(</span>props<span class="token punctuation">.</span><span class="token property-access">friend</span><span class="token punctuation">.</span><span class="token property-access">id</span><span class="token punctuation">,</span> handleStatusChange<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span><span class="token punctuation">;</span>
+  <span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">;</span></code></pre>
+        <p>Effects אחרים לא ידרשו שלב ניקיון, מכאן שלא יחזירו כלום.</p>
+        <pre class="language-js"><code class="language-js">  <span class="token function">useEffect</span><span class="token punctuation">(</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token arrow operator">=></span> <span class="token punctuation">{</span>
+    <span class="token dom variable">document</span><span class="token punctuation">.</span><span class="token property-access">title</span> <span class="token operator">=</span> <span class="token template-string"><span class="token template-punctuation string">`</span><span class="token string">לחצת </span><span class="token interpolation"><span class="token interpolation-punctuation punctuation">${</span>count<span class="token interpolation-punctuation punctuation">}</span></span><span class="token string"> פעמים</span><span class="token template-punctuation string">`</span></span><span class="token punctuation">;</span>
+  <span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">;</span></code></pre>
+        <p>ה-Effect Hook מאחד בו את שני מקרי השימוש ב- API אחד.</p>
+        <hr>
+        <p><strong>אם אתה מרגיש מרגיש שיש לך תפיסה טובה של איך Effect Hook עובד, או אם אתה מרגיש שזה יותר מדי מידע, תוכל לעבור <a href="./hooks-rules.html">לעמוד הבא שמדבר על חוקי Hooks</a> עכשיו.</strong></p>
+        <hr>
+      </section>
+      <section id="tips-for-using-effects" class="level2">
+        <h2>טיפים לשימוש ב- Effects</h2>
+        <p>נמשיך את עמוד זה עם מבט מעמיק על כמה מההיבטים של <code>useEffect</code> שיכולים לעניין משתמשי ריאקט מנוסים. אין חובה להעמיק בהם עכשיו. תוכל תמיד לחזור לעמוד זה על מנת ללמוד עוד פרטים על Effect Hook.</p>
+        <section id="tip-use-multiple-effects-to-separate-concerns" class="level3">
+          <h3>טיפ: השתמש במספר effects לבעיות נפרדות</h3>
+          <p>אחת מהבעיות שפירטנו עליה <a href="./hooks-intro.html#complex-components-become-hard-to-understand">במוטיבציה</a> ל- Hooks היא שמחלקות מתודות מחזור חיים מכילות לוגיקה לא קשורה, אך לוגיקה קשורה מפוצלת לכמה מתודות. הנה קומפוננטה שמחברת את לוגיקת ה-counter ודוגמת בדיקת הסטטוס חבר אונליין מהדוגמאות הקודמות:</p>
+          <pre class="language-js"><code class="language-js"><span class="token keyword">class</span> <span class="token class-name">FriendStatusWithCounter</span> <span class="token keyword">extends</span> <span class="token class-name">React<span class="token punctuation">.</span>Component</span> <span class="token punctuation">{</span>
+  <span class="token function">constructor</span><span class="token punctuation">(</span><span class="token parameter">props</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token keyword">super</span><span class="token punctuation">(</span>props<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token keyword">this</span><span class="token punctuation">.</span><span class="token property-access">state</span> <span class="token operator">=</span> <span class="token punctuation">{</span> <span class="token literal-property property">count</span><span class="token operator">:</span> <span class="token number">0</span><span class="token punctuation">,</span> <span class="token literal-property property">isOnline</span><span class="token operator">:</span> <span class="token keyword null nil">null</span> <span class="token punctuation">}</span><span class="token punctuation">;</span>
+    <span class="token keyword">this</span><span class="token punctuation">.</span><span class="token property-access">handleStatusChange</span> <span class="token operator">=</span> <span class="token keyword">this</span><span class="token punctuation">.</span><span class="token method function property-access">handleStatusChange</span><span class="token punctuation">.</span><span class="token method function property-access">bind</span><span class="token punctuation">(</span><span class="token keyword">this</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token punctuation">}</span>
+
+  <span class="token function">componentDidMount</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token dom variable">document</span><span class="token punctuation">.</span><span class="token property-access">title</span> <span class="token operator">=</span> <span class="token template-string"><span class="token template-punctuation string">`</span><span class="token string">לחצת </span><span class="token interpolation"><span class="token interpolation-punctuation punctuation">${</span><span class="token keyword">this</span><span class="token punctuation">.</span><span class="token property-access">state</span><span class="token punctuation">.</span><span class="token property-access">count</span><span class="token interpolation-punctuation punctuation">}</span></span><span class="token string"> פעמים</span><span class="token template-punctuation string">`</span></span><span class="token punctuation">;</span>
+    <span class="token maybe-class-name">ChatAPI</span><span class="token punctuation">.</span><span class="token method function property-access">subscribeToFriendStatus</span><span class="token punctuation">(</span>
+      <span class="token keyword">this</span><span class="token punctuation">.</span><span class="token property-access">props</span><span class="token punctuation">.</span><span class="token property-access">friend</span><span class="token punctuation">.</span><span class="token property-access">id</span><span class="token punctuation">,</span>
+      <span class="token keyword">this</span><span class="token punctuation">.</span><span class="token property-access">handleStatusChange</span>
+    <span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token punctuation">}</span>
+
+  <span class="token function">componentDidUpdate</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token dom variable">document</span><span class="token punctuation">.</span><span class="token property-access">title</span> <span class="token operator">=</span> <span class="token template-string"><span class="token template-punctuation string">`</span><span class="token string">לחצת </span><span class="token interpolation"><span class="token interpolation-punctuation punctuation">${</span><span class="token keyword">this</span><span class="token punctuation">.</span><span class="token property-access">state</span><span class="token punctuation">.</span><span class="token property-access">count</span><span class="token interpolation-punctuation punctuation">}</span></span><span class="token string"> פעמים</span><span class="token template-punctuation string">`</span></span><span class="token punctuation">;</span>
+  <span class="token punctuation">}</span>
+
+  <span class="token function">componentWillUnmount</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token maybe-class-name">ChatAPI</span><span class="token punctuation">.</span><span class="token method function property-access">unsubscribeFromFriendStatus</span><span class="token punctuation">(</span>
+      <span class="token keyword">this</span><span class="token punctuation">.</span><span class="token property-access">props</span><span class="token punctuation">.</span><span class="token property-access">friend</span><span class="token punctuation">.</span><span class="token property-access">id</span><span class="token punctuation">,</span>
+      <span class="token keyword">this</span><span class="token punctuation">.</span><span class="token property-access">handleStatusChange</span>
+    <span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token punctuation">}</span>
+
+  <span class="token function">handleStatusChange</span><span class="token punctuation">(</span><span class="token parameter">status</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token keyword">this</span><span class="token punctuation">.</span><span class="token method function property-access">setState</span><span class="token punctuation">(</span><span class="token punctuation">{</span>
+      <span class="token literal-property property">isOnline</span><span class="token operator">:</span> status<span class="token punctuation">.</span><span class="token property-access">isOnline</span>
+    <span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token punctuation">}</span>
+  <span class="token comment">// ...</span></code></pre>
+          <p>שים לב איך הלוגיקה שמגדירה את <code>document.title</code> מפוצלת בין <code>componentDidMount</code> ו- <code>componentDidUpdate</code>. לוגיקת הסטטוס גם היא מפוצלת בין <code>componentDidMount</code> ו- <code>componentWillUnmount</code>. ו- <code>componentDidMount</code> מכילה קוד לשתי המטלות.</p>
+          <p>אז, איך Hooks פותרים את בעיה זו? כמו <a href="./hooks-state.html#tip-using-multiple-state-variables">שניתן להשתמש ב- <em>State</em> Hook יותר מפעם אחת</a>, ניתן להשתמש במספר effects. זה נותן לנו לפצל לוגיקה לא קשורה ל- effects שונים:</p>
+          <pre class="language-js{3,8}"><code class="language-js{3,8}">function FriendStatusWithCounter(props) {
+  const [count, setCount] = useState(0);
+  useEffect(() => {
+    document.title = `לחצת ${count} פעמים`;
+  });
+
+  const [isOnline, setIsOnline] = useState(null);
+  useEffect(() => {
+    function handleStatusChange(status) {
+      setIsOnline(status.isOnline);
+    }
+
+    ChatAPI.subscribeToFriendStatus(props.friend.id, handleStatusChange);
+    return () => {
+      ChatAPI.unsubscribeFromFriendStatus(props.friend.id, handleStatusChange);
+    };
+  });
+  // ...
+}</code></pre>
+          <p><strong>Hooks נותנים לנו לפצל קוד בהתבסס על מה שהוא עושה</strong> ולא בהתבסס על שם מתודת מחזור חיים. ריאקט יחיל <em>כל</em> effect שמשומש על ידי הקומפוננטה, בסדר שהן צוינו.</p>
+        </section>
+        <section id="explanation-why-effects-run-on-each-update" class="level3">
+          <h3>הסבר: למה effects רצים על כל עדכון</h3>
+          <p>אם אתה רגיל למחלקות, יכול להיות שאתה תוהה למה שלב ניקוי ה-effect קורה לאחר כל רינדור מחדש, ולא רק פעם אחת בזמן unmounting. הבא נראה דוגמה פרקטית שמסבירה למה תכנון זה עוזר לנו ליצור קומפוננטות עם פחות באגים.</p>
+          <p><a href="#example-using-classes-1">מוקדם יותר בעמוד זה</a>, הצגנו את הקומפוננטה <code>FriendStatus</code> שמציגה האם חבר מחובר או לא. המחלקה שלנו קוראת את <code>friend.id</code> מ- <code>this.props</code>, מתחברת לסטטוס החבר לאחר ה-mounting של הקומפוננטה, ומתנתקת בזמן unmounting:</p>
+          <pre class="language-js"><code class="language-js">  <span class="token function">componentDidMount</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token maybe-class-name">ChatAPI</span><span class="token punctuation">.</span><span class="token method function property-access">subscribeToFriendStatus</span><span class="token punctuation">(</span>
+      <span class="token keyword">this</span><span class="token punctuation">.</span><span class="token property-access">props</span><span class="token punctuation">.</span><span class="token property-access">friend</span><span class="token punctuation">.</span><span class="token property-access">id</span><span class="token punctuation">,</span>
+      <span class="token keyword">this</span><span class="token punctuation">.</span><span class="token property-access">handleStatusChange</span>
+    <span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token punctuation">}</span>
+
+  <span class="token function">componentWillUnmount</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token maybe-class-name">ChatAPI</span><span class="token punctuation">.</span><span class="token method function property-access">unsubscribeFromFriendStatus</span><span class="token punctuation">(</span>
+      <span class="token keyword">this</span><span class="token punctuation">.</span><span class="token property-access">props</span><span class="token punctuation">.</span><span class="token property-access">friend</span><span class="token punctuation">.</span><span class="token property-access">id</span><span class="token punctuation">,</span>
+      <span class="token keyword">this</span><span class="token punctuation">.</span><span class="token property-access">handleStatusChange</span>
+    <span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token punctuation">}</span></code></pre>
+          <p><strong>אבל מה קורה אם ה- friend prop משתנה</strong> בזמן שהקומפוננטה על המסך? הקומפוננטה שלנו תמשיך להציג את הסטטוס של חבר אחר. זה באג. נגרום גם לדליפת זיכרון או קריסה בזמן unmounting בגלל שקריאת ההתנתקות תשתמש ב- id השגוי של החבר.</p>
+          <p>בקומפוננטת מחלקה, נצטרך גם להוסיף <code>componentDidUpdate</code> לטפל במקרה זה:</p>
+          <pre class="language-js{8-19}"><code class="language-js{8-19}">  componentDidMount() {
+    ChatAPI.subscribeToFriendStatus(
+      this.props.friend.id,
+      this.handleStatusChange
+    );
+  }
+
+  componentDidUpdate(prevProps) {
+    // התנתק מה- friend.id הקודם
+    ChatAPI.unsubscribeFromFriendStatus(
+      prevProps.friend.id,
+      this.handleStatusChange
+    );
+    // התחבר ל- friend.id הבא
+    ChatAPI.subscribeToFriendStatus(
+      this.props.friend.id,
+      this.handleStatusChange
+    );
+  }
+
+  componentWillUnmount() {
+    ChatAPI.unsubscribeFromFriendStatus(
+      this.props.friend.id,
+      this.handleStatusChange
+    );
+  }</code></pre>
+          <p>מקור נפוץ של באגים הוא מפתחים ששוכחים לטפל ב- <code>componentDidUpdate</code> ביישומי ריאקט.</p>
+          <p>עכשיו נשקול את הגרסה הזו של הקומפוננטה שמשתמשת ב- Hooks:</p>
+          <pre class="language-js"><code class="language-js"><span class="token keyword">function</span> <span class="token function"><span class="token maybe-class-name">FriendStatus</span></span><span class="token punctuation">(</span><span class="token parameter">props</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  <span class="token comment">// ...</span>
+  <span class="token function">useEffect</span><span class="token punctuation">(</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token arrow operator">=></span> <span class="token punctuation">{</span>
+    <span class="token comment">// ...</span>
+    <span class="token maybe-class-name">ChatAPI</span><span class="token punctuation">.</span><span class="token method function property-access">subscribeToFriendStatus</span><span class="token punctuation">(</span>props<span class="token punctuation">.</span><span class="token property-access">friend</span><span class="token punctuation">.</span><span class="token property-access">id</span><span class="token punctuation">,</span> handleStatusChange<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token keyword control-flow">return</span> <span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token arrow operator">=></span> <span class="token punctuation">{</span>
+      <span class="token maybe-class-name">ChatAPI</span><span class="token punctuation">.</span><span class="token method function property-access">unsubscribeFromFriendStatus</span><span class="token punctuation">(</span>props<span class="token punctuation">.</span><span class="token property-access">friend</span><span class="token punctuation">.</span><span class="token property-access">id</span><span class="token punctuation">,</span> handleStatusChange<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span><span class="token punctuation">;</span>
+  <span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">;</span></code></pre>
+          <p>היא לא סובלת מבאג זה. ( אבל לא שינינו אותה גם.)</p>
+          <p>אין קוד מיוחד לטיפול בעדכונים בגלל ש- <code>useEffect</code> מטפלת בהם <em>כברירת מחדל</em>. היא מנקה את ה-effects הקודמים לפני השמת ה-effects הבאים. על מנת להדגים זאת, הנה רצף של קריאות התחברות והתנתקות שהקומפוננטה יכולה ליצר לאורך זמן:</p>
+          <pre class="language-js"><code class="language-js"><span class="token maybe-class-name">ChatAPI</span><span class="token punctuation">.</span><span class="token method function property-access">subscribeToFriendStatus</span><span class="token punctuation">(</span><span class="token number">100</span><span class="token punctuation">,</span> handleStatusChange<span class="token punctuation">)</span><span class="token punctuation">;</span>     <span class="token comment">// הרצת effect ראשון</span>
+
+<span class="token maybe-class-name">ChatAPI</span><span class="token punctuation">.</span><span class="token method function property-access">unsubscribeFromFriendStatus</span><span class="token punctuation">(</span><span class="token number">100</span><span class="token punctuation">,</span> handleStatusChange<span class="token punctuation">)</span><span class="token punctuation">;</span> <span class="token comment">// ניקוי effect קודם</span>
+<span class="token maybe-class-name">ChatAPI</span><span class="token punctuation">.</span><span class="token method function property-access">subscribeToFriendStatus</span><span class="token punctuation">(</span><span class="token number">200</span><span class="token punctuation">,</span> handleStatusChange<span class="token punctuation">)</span><span class="token punctuation">;</span>     <span class="token comment">// הרצת ה-effect הבא</span>
+
+<span class="token maybe-class-name">ChatAPI</span><span class="token punctuation">.</span><span class="token method function property-access">unsubscribeFromFriendStatus</span><span class="token punctuation">(</span><span class="token number">200</span><span class="token punctuation">,</span> handleStatusChange<span class="token punctuation">)</span><span class="token punctuation">;</span> <span class="token comment">// ניקוי effect קודם</span>
+<span class="token maybe-class-name">ChatAPI</span><span class="token punctuation">.</span><span class="token method function property-access">subscribeToFriendStatus</span><span class="token punctuation">(</span><span class="token number">300</span><span class="token punctuation">,</span> handleStatusChange<span class="token punctuation">)</span><span class="token punctuation">;</span>     <span class="token comment">// הרצת ה-effect הבא</span>
+
+<span class="token comment">// Unmount</span>
+<span class="token maybe-class-name">ChatAPI</span><span class="token punctuation">.</span><span class="token method function property-access">unsubscribeFromFriendStatus</span><span class="token punctuation">(</span><span class="token number">300</span><span class="token punctuation">,</span> handleStatusChange<span class="token punctuation">)</span><span class="token punctuation">;</span> <span class="token comment">// ניקוי ה- effect האחרון</span></code></pre>
+          <p>התנהגות זאת מבטיחה עקביות כברירת מחדל ומונעת באגים נפוצים בקומפוננטות מחלקה בגלל לוגיקת עדכון חסרה.</p>
+        </section>
+        <section id="tip-optimizing-performance-by-skipping-effects" class="level3">
+          <h3>טיפ: מיטוב ביצועים על ידי דילוג על effects</h3>
+          <p>במקרים מסוימים, ניקיון או השמת effect לאחר כל רינדור יכולה ליצור בעיות ביצועים. בקומפוננטות מחלקה, נוכל לפתור בעיה זו על ידי כתיבה של השוואה נוספת עם <code>prevProps</code> או <code>prevState</code> בתוך <code>componentDidUpdate</code>:</p>
+          <pre class="language-js"><code class="language-js"><span class="token function">componentDidUpdate</span><span class="token punctuation">(</span><span class="token parameter">prevProps<span class="token punctuation">,</span> prevState</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  <span class="token keyword control-flow">if</span> <span class="token punctuation">(</span>prevState<span class="token punctuation">.</span><span class="token property-access">count</span> <span class="token operator">!==</span> <span class="token keyword">this</span><span class="token punctuation">.</span><span class="token property-access">state</span><span class="token punctuation">.</span><span class="token property-access">count</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token dom variable">document</span><span class="token punctuation">.</span><span class="token property-access">title</span> <span class="token operator">=</span> <span class="token template-string"><span class="token template-punctuation string">`</span><span class="token string">לחצת </span><span class="token interpolation"><span class="token interpolation-punctuation punctuation">${</span><span class="token keyword">this</span><span class="token punctuation">.</span><span class="token property-access">state</span><span class="token punctuation">.</span><span class="token property-access">count</span><span class="token interpolation-punctuation punctuation">}</span></span><span class="token string"> פעמים</span><span class="token template-punctuation string">`</span></span><span class="token punctuation">;</span>
+  <span class="token punctuation">}</span>
+<span class="token punctuation">}</span></code></pre>
+          <p>דרישה זו היא נפוצה מספיק שהיא כבר בנויה לתוך <code>useEffect</code>. אתה יכול לומר לריאקט <em>לדלג</em> על השמת effect אם ערכים מסוימים לא השתנו בין רינדורים. על מנת לעשות זאת, העבר מערך כארגומנט שני אופציונאלי ל- <code>useEffect</code>:</p>
+          <pre class="language-js{3}"><code class="language-js{3}">useEffect(() => {
+  document.title = `לחצת ${count} פעמים`;
+}, [count]); // הרץ מחדש את ה-effect אם count משתנה</code></pre>
+          <p>בדוגמה לעיל, אנו מעבירים <code>[count]</code> כארגומנט שני. מה זה אומר? אם <code>count</code> שווה ל- <code>5</code>, ואז הקומפוננטה שלנו מתרנדרת מחדש עם <code>count</code> שעדיין שווה ל- <code>5</code>, ריאקט תשווה את <code>[5]</code> מהרינדור הקודם ו- <code>[5]</code> מהרינדור הבא. בגלל שכל הערכים במערך הם אותו <code>(5 === 5)</code>, ריאקט ידלג על ה-effect. זוהי האופטימיזציה שלנו.</p>
+          <p>כשאנו מרנדרים עם <code>count</code> שמעודכן ל- <code>6</code>, ריאקט תשווה את הערכים בתוך מערך ה- <code>[5]</code> מהרינדור הקודם לערכים במערך ה- <code>[6]</code> ברינדור הבא. בפעם הזו, ריאקט יישם מחדש את ה-effect בגלל ש- <code>5 !== 6</code>. אם ישנם ערכים נוספים במערך, ריאקט יריץ את ה-effect מחדש גם אם אחד מהם שונה.</p>
+          <p>זה גם עובד על effects בעלי שלב ניקיון:</p>
+          <pre class="language-js{10}"><code class="language-js{10}">useEffect(() => {
+  function handleStatusChange(status) {
+    setIsOnline(status.isOnline);
+  }
+
+  ChatAPI.subscribeToFriendStatus(props.friend.id, handleStatusChange);
+  return () => {
+    ChatAPI.unsubscribeFromFriendStatus(props.friend.id, handleStatusChange);
+  };
+}, [props.friend.id]); // התחבר מחדש רק אם props.friend.id משתנה</code></pre>
+          <p>בעתיד, יכול להיות שהארגומנט השני יוסף אוטומטית על ידי טרנספורמציה בזמן בנייה. ( build-time).</p>
+          <blockquote>
+            <p>הערה</p>
+            <p>אם אתה משתמש באופטימיזציה זו, ודא שהמערך מכיל <strong>את כל הערכים מה- scope של הקומפוננטה (כמו props ו- state) שמשתנים לאורך זמן ומשומשים על ידי ה- effect.</strong> אחרת, הקוד שלך יתייחס לערכים ישנים מרינדורים קודמים. למד עוד על <a href="./hooks-faq.html#is-it-safe-to-omit-functions-from-the-list-of-dependencies">איך לטפל בפונקציות</a> ומה <a href="./hooks-faq.html#what-can-i-do-if-my-effect-dependencies-change-too-often">לעשות כשהמערך משתנה בתדירות גבוהה מדי</a>.</p>
+            <p>אם אתה רוצה להריץ effect ולנקות אותו רק פעם אחת (ב- mount ו- unmount), תוכל להעביר מערך ריק (<code>[]</code>) כארגומנט שני. זה אומר לריאקט שה- effect שלך לא תלוי <em>בשום</em> ערך מ- props או state, אז הוא לא צריך לרוץ מחדש. זה לא מטופל על ידי מקרה מיוחד – הדבר ממשיך ישירות מאיך מערך ה-dependencies תמיד עובד.</p>
+            <p>אם אתה מעביר מערך ריק (<code>[]</code>), ה-props ו- state בתוך ה-effect תמיד יכילו את הערכים ההתחלתיים שלהם. בזמן שהעברת (<code>[]</code>) כארגומנט שני היא קרובה יותר למודלים המוכרים <code>componentDidMount</code> ו- <code>componentWillUnmount</code>, ישנם בדרך כלל <a href="./hooks-faq.html#is-it-safe-to-omit-functions-from-the-list-of-dependencies">פתרונות טובים</a> <a href="./hooks-faq.html#what-can-i-do-if-my-effect-dependencies-change-too-often">יותר</a> על מנת להימנע מהרצה מחדש של effects מהר מדי. בנוסף, אל תשכח שריאקט דוחה את הרצת <code>useEffect</code> עד לאחר שהדפדפן "צייר" את ה-effect, אז ביצוע עבודה נוספת היא לא בעיה.</p>
+            <p>אנו ממליצים על שימוש בחוק <a href="https://github.com/facebook/react/issues/14920"><code>exhaustive-deps</code></a> כחלק מחבילת ה- <a href="https://www.npmjs.com/package/eslint-plugin-react-hooks#installation"><code>eslint-plugin-react-hooks</code></a> זה מזהיר כש- dependencies מצוינים באופן לא נכון ומציעה פתרון.</p>
+          </blockquote>
+        </section>
+      </section>
+      <section id="next-steps" class="level2">
+        <h2>השלבים הבאים</h2>
+        <p>מזל טוב! זה היה עמוד ארוך, אבל אנו מקווים שבסופו רוב השאלות שלך בקשר ל- effects נענו. למדת גם על ה-state hook וגם על effect hook, ויש עוד <em>הרבה</em> שניתן לעשות עם שניהם ביחד. הם מכסים את רוב מקרי השימוש למחלקות – והיכן שהם לא, יכול להיות שתמצא את <a href="./hooks-reference.html">Hooks נוספים</a> שימושי.</p>
+        <p>אנו גם מתחילים לראות איך Hooks פותרים בעיות שהוצגו במוטיבציה <a href="./hooks-intro.html#motivation">במוטיבציה</a>. ראינו איך ניקיון effect מונע שכפול ב- <code>componentDidUpdate</code> ו- <code>componentWillUnmount</code>, מביא קוד קשור קרוב יותר, ועוזר לנו להימנע מבאגים. ראינו גם איך ניתן לפצל effects לפי מטרתם, שזה משהו שלא יכולנו לעשות במחלקות כלל.</p>
+        <p>
+          בנקודה זו יכול להיות שאתה עדיין תוהה איך Hooks עובדים. איך ריאקט יודעת איזה קריאת <code>useState</code> מתאים לאיזה משתנה state בין רינדורים? איך ריאקט "מתאימה" effects קודמים והבאים על כל עדכון? <strong>בעמוד הבא נלמד עוד על <a href="./hooks-rules.html">Rules of Hooks</a> -- הם חיוניים על מנת לגרום ל- Hooks לעבוד.</strong>
+          <span style="float: footnote;"><a href="./index.html#toc">Go to TOC</a></span>
+        </p>
+      </section>
+    </section>
+  </body>
+</html>

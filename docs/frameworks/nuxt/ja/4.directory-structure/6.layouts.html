@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="utf-8">
+    <title>レイアウトディレクトリ</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="navigation.title" content="layouts">
+    <meta name="description" content="レイアウトは Nuxt アプリケーションのルック&#x26;フィールを変えるとき、とても役に立ちます。例えばサイドバーを含めたいときや、モバイルとデスクトップのための別々のレイアウトを持ちたいときなどに有用です。">
+    <meta name="category" content="directory-structure">
+    <meta name="csb_link" content="https://codesandbox.io/embed/github/nuxt-academy/guides-examples/tree/master/04_directory_structure/07_layouts?fontsize=14&#x26;hidenavigation=1&#x26;theme=dark">
+    <link rel="stylesheet" href="https://raw.githubusercontent.com/shinokada/prism-coy-theme/main/theme_common.css">
+  </head>
+  <body>
+    <section id="レイアウトディレクトリ" class="level1">
+      <h1>レイアウトディレクトリ</h1>
+      <p>レイアウトは Nuxt アプリケーションのルック&#x26;フィールを変えるとき、とても役に立ちます。例えばサイドバーを含めたいときや、モバイルとデスクトップのための別々のレイアウトを持ちたいときなどに有用です。</p>
+      <hr>
+      <section id="warning" class="level4">
+        <h4>Warning</h4>
+        <p>このディレクトリは追加の設定なしに名前を変更できません</p>
+      </section>
+      <section id="デフォルトレイアウト" class="level3">
+        <h3>デフォルトレイアウト</h3>
+        <p><code>layouts/default.vue</code> ファイルを追加することでメインレイアウトを設定できます。これはレイアウトが指定されていない全てのページで使用されます。ページコンポーネントを含むレイアウトを作成するときには <code>&#x3C;Nuxt></code> コンポーネントを記述することを忘れないようにしてください。</p>
+        <p>レイアウトに必要なのは、ページコンポーネントをレンダリングするための 3 行のコードだけです。</p>
+        <pre class="language-html{}[layouts/default.vue]"><code class="language-html{}[layouts/default.vue]">&#x3C;template>
+  &#x3C;Nuxt />
+&#x3C;/template></code></pre>
+        <p>ナビゲーションやヘッダー、フッターのようなコンポーネントもここに追加できます。</p>
+        <pre class="language-html{}[layouts/default.vue]"><code class="language-html{}[layouts/default.vue]">&#x3C;template>
+  &#x3C;div>
+    &#x3C;TheHeader />
+    &#x3C;Nuxt />
+    &#x3C;TheFooter />
+  &#x3C;/div>
+&#x3C;/template></code></pre>
+        <section id="info" class="level4">
+          <h4>Info</h4>
+          <p>もし <a href="./directory-structure/components">components プロパティを true</a> に設定していたら、コンポーネントを追加するために import 文は必要ないです。</p>
+        </section>
+      </section>
+      <section id="カスタムレイアウト" class="level3">
+        <h3>カスタムレイアウト</h3>
+        <p><code>layout</code> ディレクトリの全てのファイル（<em>トップレベル</em>）は、ページコンポーネントの <code>layout</code> プロパティで使えるカスタムレイアウトが作られます。</p>
+        <p>ブログレイアウトを作成して <code>layouts/blog.vue</code> に保存しましょう：</p>
+        <pre class="language-html{}[layouts/blog.vue]"><code class="language-html{}[layouts/blog.vue]">&#x3C;template>
+  &#x3C;div>
+    &#x3C;div>My blog navigation bar here&#x3C;/div>
+    &#x3C;Nuxt />
+  &#x3C;/div>
+&#x3C;/template></code></pre>
+        <p>その後、カスタムレイアウトを使用するためにページに教えなければなりません。</p>
+        <pre class="language-js{}[pages/posts.vue]"><code class="language-js{}[pages/posts.vue]">&#x3C;script>
+export default {
+  layout: 'blog',
+  // OR
+  layout (context) {
+    return 'blog'
+  }
+}
+&#x3C;/script></code></pre>
+      </section>
+      <section id="エラーページ" class="level2">
+        <h2>エラーページ</h2>
+        <p>エラーページはエラーが発生したときいつも表示される <em>ページコンポーネント</em> です（サーバーサイドで発生したエラーではない）。</p>
+        <section id="warning-1" class="level4">
+          <h4>Warning</h4>
+          <p>このファイルは <code>layout</code> フォルダに置かれますが、ページとして扱われるべきです。</p>
+          <p>上述したように、このレイアウトは特殊でテンプレートの中に <code>&#x3C;Nuxt></code> を含めるべきではありません。このレイアウトは、エラーが発生したときに表示されるコンポーネントとして表示されなければなりません（<code>404</code>、<code>500</code> など）。他のページコンポーネントと同様に、エラーページにも通常の方法でカスタムレイアウトを設定することができます。</p>
+          <p><code>layouts/error.vue</code> ファイルを追加することで、エラーページをカスタマイズできます：</p>
+          <pre class="language-js{}[layouts/error.vue]"><code class="language-js{}[layouts/error.vue]">&#x3C;template>
+  &#x3C;div class="container">
+    &#x3C;h1 v-if="error.statusCode === 404">Page not found&#x3C;/h1>
+    &#x3C;h1 v-else>An error occurred&#x3C;/h1>
+    &#x3C;NuxtLink to="/">Home page&#x3C;/NuxtLink>
+  &#x3C;/div>
+&#x3C;/template>
+
+&#x3C;script>
+export default {
+  props: ['error'],
+  layout: 'blog' // エラーページ用のカスタムレイアウトを設定できます
+}
+&#x3C;/script></code></pre>
+        </section>
+        <section id="info-1" class="level4">
+          <h4>Info</h4>
+          <p>デフォルトのエラーページのソースコードは <a href="https://github.com/nuxt/nuxt.js/blob/dev/packages/vue-app/template/components/nuxt-error.vue">GitHub で参照できます</a>。</p>
+          <p><span style="float: footnote;"><a href="../index.html#toc">Go to TOC</a></span></p>
+        </section>
+      </section>
+    </section>
+  </body>
+</html>

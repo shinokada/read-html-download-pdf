@@ -1,0 +1,171 @@
+<!doctype html>
+<html lang="zh-hant">
+  <head>
+    <meta charset="utf-8">
+    <title>嚴格模式</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="https://raw.githubusercontent.com/shinokada/prism-coy-theme/main/theme_common.css">
+  </head>
+  <body>
+    <section id="嚴格模式" class="level1">
+      <h1>嚴格模式</h1>
+      <p><code>嚴格模式</code>是一個用來突顯應用程式裡潛在問題的工具。如同 <code>Fragment</code> 一樣，<code>嚴格模式</code>不會 render 任何可見的 UI。它為了底下的所有的依賴們啟動了額外的檢查和警告。</p>
+      <blockquote>
+        <p>注意：</p>
+        <p>嚴格模式檢查只會在開發模式中執行；<em>它們不應該影響正式環境</em>。</p>
+      </blockquote>
+      <p>你可以在應用程式的任何地方打開嚴格模式。例如：<code>embed:strict-mode/enabling-strict-mode.js</code></p>
+      <p>在上面的範例裡，嚴格模式檢查將<em>不會</em>跑在 <code>Header</code> 和 <code>Footer</code> 元件上。然而 <code>ComponentOne</code> 和 <code>ComponentTwo</code>，以及它們底下的所有子依賴，都會被檢查。</p>
+      <p><code>StrictMode</code> 目前可以幫助：</p>
+      <ul>
+        <li><a href="#identifying-unsafe-lifecycles">發現擁有不安全生命週期的 component</a></li>
+        <li><a href="#warning-about-legacy-string-ref-api-usage">警告使用了 legacy string ref API</a></li>
+        <li><a href="#warning-about-deprecated-finddomnode-usage">警告使用到了被棄用的 findDOMNode</a></li>
+        <li><a href="#detecting-unexpected-side-effects">偵測意想不到的副作用</a></li>
+        <li><a href="#detecting-legacy-context-api">偵測 legacy context API</a></li>
+        <li><a href="#ensuring-reusable-state">確保可重用的 state</a></li>
+      </ul>
+      <p>其他功能會在未來版本的 React 釋出時被加進去。</p>
+      <section id="identifying-unsafe-lifecycles" class="level3">
+        <h3>發現不安全的生命週期</h3>
+        <p>如<a href="/blog/2018/03/27/update-on-async-rendering.html">這篇文章</a>所述，某些遺留的生命週期在非同步的 React 應用程式裡使用是不安全的。然而，如果你的應用程式使用到第三方套件，確認這些生命週期有沒有被使用到是很困難的。幸好嚴格模式可以在這點幫助我們！</p>
+        <p>當嚴格模式被打開的時候，React 編譯了一整串用到這些不安全生命週期的 class component，然後記錄了這些 component 的警告訊息，例如：</p>
+        <p>
+          <img src="../images/blog/strict-mode-unsafe-lifecycles-warning.png">
+        </p>
+        <p><em>現在</em> 就關注這些被嚴格模式所發現的問題，會幫助你在 React 將來的版本裡處理非同步 render 的時候更容易。</p>
+      </section>
+      <section id="warning-about-legacy-string-ref-api-usage" class="level3">
+        <h3>警告使用到了 legacy string ref API</h3>
+        <p>以前 React 提供了兩種管理 ref 的方式：legacy string ref API 和 callback API。雖然 string ref API 在兩者之間是比較方便的，但它有很多<a href="https://github.com/facebook/react/issues/1373">缺點</a>，所以我們的官方推薦是<a href="./refs-and-the-dom.html#legacy-api-string-refs">使用 callback form</a>.</p>
+        <p>
+          React 16.3 加上了第三種選擇，提供了 string ref 的便利性且免除了那些缺點：
+          <code>embed:16-3-release-blog-post/create-ref-example.js</code>
+        </p>
+        <p>因為 object ref 已經大量取代了 string ref，嚴格模式現在會在你使用 string ref 的時候警告你。</p>
+        <blockquote>
+          <p><strong>注意：</strong></p>
+          <p>除了新的 <code>createRef</code> API 以外，callback ref 會持續被支援。</p>
+          <p>你不需要改掉你 component 裡的 callback ref。它們稍微更有彈性，所以它們會持續是一個進階性的功能。</p>
+        </blockquote>
+        <p><a href="./refs-and-the-dom.html">學習更多關於新的 <code>createRef</code> API。</a></p>
+      </section>
+      <section id="warning-about-deprecated-finddomnode-usage" class="level3">
+        <h3>警告使用到了被棄用的 findDOMNode</h3>
+        <p>React 過去支援了 <code>findDOMNode</code> 來用 class instance 搜尋 tree 裡面的 DOM 節點。通常你不需要這個，因為你可以 <a href="./refs-and-the-dom.html#creating-refs">直接把一個 ref 附到你的 DOM 節點</a>。</p>
+        <p><code>findDOMNode</code> 也可以被使用在 class component 上，但這是一個破壞抽象層的用法，它允許了 parent 來要求 render 某個特定的 children。它產生了重構的風險，因為 parent 可能會進入到某個 DOM 節點，所以你不能隨意改變 component 的實作細節。<code>findDOMNode</code> 只會回傳第一個 child，但如果使用了 Fragment，有可能某個 component 會 render 多個 DOM 節點。<code>findDOMNode</code> 是一個只能讀一次的 API。它只在你要求的時候告訴你答案。如果一個 child component render 了不同的節點，沒有任何方法可以處理這樣的改變。所以 <code>findDOMNode</code> 只在元件永遠回傳一個單一且永遠不改變的 DOM 節點時有用。</p>
+        <p>你可以藉由傳遞 ref 到你的客製化 component，且把它傳到使用 <a href="./forwarding-refs.html#forwarding-refs-to-dom-components">ref forwarding</a> 的 DOM，使它變得明顯。</p>
+        <p>你也可以在你的 component 加上一個包裹的 DOM 節點，然後把 ref 直接附在它上面。</p>
+        <pre class="language-javascript{4,7}"><code class="language-javascript{4,7}">class MyComponent extends React.Component {
+  constructor(props) {
+    super(props);
+    this.wrapper = React.createRef();
+  }
+  render() {
+    return &#x3C;div ref={this.wrapper}>{this.props.children}&#x3C;/div>;
+  }
+}</code></pre>
+        <blockquote>
+          <p>注意：</p>
+          <p>在 CSS 裡，如果你不想要某個節點成為 layout 的一部份，<a href="https://developer.mozilla.org/en-US/docs/Web/CSS/display#display_contents"><code>display: contents</code></a> attribute 可以被使用。</p>
+        </blockquote>
+      </section>
+      <section id="detecting-unexpected-side-effects" class="level3">
+        <h3>偵測意想不到的副作用</h3>
+        <p>概念上，React 在兩種面相上能夠運作：</p>
+        <ul>
+          <li><strong>render</strong> 面相決定了必須做出什麼改變到例如 DOM 的地方。在這個面相上，React 呼叫 <code>render</code> 然後比較了它與上一次 render 的結果。</li>
+          <li><strong>commit</strong> 面相是每當 React 運用到任何改變的時候。（在 React DOM 的例子，當 React 插入、更新、或移除 DOM 節點。）React 也在這個面相上呼叫了像是 <code>componentDidMount</code> 和 <code>componentDidUpdate</code> 的生命週期。</li>
+        </ul>
+        <p>Commit 面相通常非常快，但 render 可能會很慢。為了這個原因，將來的非同步模式（還沒被預設成開啟）會把 render 的工作切成小塊，暫停和恢復這些工作藉以避免阻擋瀏覽器。 這表示 React 可能會在 commit 之前調用多次 render 面相的生命週期，或是他會不管有沒有 commit 就調用它們（因為錯誤或是更高優先性的中斷）。</p>
+        <p>Render 面相的生命週期包含了以下 class component 函式:</p>
+        <ul>
+          <li><code>constructor</code></li>
+          <li><code>componentWillMount</code>（或 <code>UNSAFE_componentWillMount</code>）</li>
+          <li><code>componentWillReceiveProps</code>（或 <code>UNSAFE_componentWillReceiveProps</code>）</li>
+          <li><code>componentWillUpdate</code>（或 <code>UNSAFE_componentWillUpdate</code>）</li>
+          <li><code>getDerivedStateFromProps</code></li>
+          <li><code>shouldComponentUpdate</code></li>
+          <li><code>render</code></li>
+          <li><code>setState</code> updater functions (第一個參數)</li>
+        </ul>
+        <p>因為以上函式可能會被呼叫不只一次，不包含副作用是很重要的。忽視這個規則可能會導致各種問題，包含記憶體滲漏，和不合法的應用程式 state。不幸的是，偵測這些問題很困難，因為它們通常是 <a href="https://en.wikipedia.org/wiki/Deterministic_algorithm">non-deterministic</a>。</p>
+        <p>嚴格模式無法自動檢測 side effect，但它可以藉由使這些 side effect 變得更有確定性，來幫助你發現它們。它藉由故意調用兩次下面的函式來完成這個功能：</p>
+        <ul>
+          <li>Class component <code>constructor</code>、<code>render</code> 和 <code>shouldComponentUpdate</code> 方法</li>
+          <li>Class component 的靜態 <code>getDerivedStateFromProps</code> 方法</li>
+          <li>Function component 的內容</li>
+          <li>狀態更新函式（<code>setState</code> 的第一個參數）</li>
+          <li>函數傳遞至 <code>useState</code>、<code>useMemo</code> 或 <code>useReducer</code></li>
+        </ul>
+        <blockquote>
+          <p>注意：</p>
+          <p>這個只在開發模式發生。<em>生命週期不會被重複調用在正式環境。</em></p>
+        </blockquote>
+        <p>
+          例如，考慮以下程式碼：
+          <code>embed:strict-mode/side-effects-in-constructor.js</code>
+        </p>
+        <p>第一眼看這段程式碼，可能不會覺得它有問題。但如果 <code>SharedApplicationState.recordEvent</code> 不是 <a href="https://en.wikipedia.org/wiki/Idempotence#Computer_science_meaning">idempotent</a> 的話，多次實體化這個 component 可能會導致不合法的應用程式 state。這種細微的錯誤可能在開發期間不會出現，或者會不一致地出現，因此被忽略了。</p>
+        <p>通過有意地雙重調用如 component constructor，嚴格模式使這種模式更容易被發現。</p>
+        <blockquote>
+          <p>注意：</p>
+          <p>從 React 17 開始，React 會自動更改如 <code>console.log()</code> 的 console 方法，以在第二次調用生命週期函數時使 log 靜音，在某些情況下，它可能會導致無法預期的行為，你<a href="https://github.com/facebook/react/issues/20090#issuecomment-715927125">可以使用替代方案</a>。</p>
+          <p>從 React 18 開始，React 不會抑制任何 log。然而，如果你有安裝 React DevTools，則第二次呼叫時會顯得有些黯淡。React DevTools 也提供了一個設定（預設關閉）來完全抑制它們。</p>
+        </blockquote>
+      </section>
+      <section id="detecting-legacy-context-api" class="level3">
+        <h3>檢測 legacy context API</h3>
+        <p>Legacy context API 是容易出錯的，並將在以後的主要版本中刪除。它仍然適用於所有 16.x 版本，但將在嚴格模式下顯示以下警告訊息：</p>
+        <p>
+          <img src="../images/blog/warn-legacy-context-in-strict-mode.png">
+        </p>
+        <p>閱讀<a href="./context.html">新的 context API 文件</a>，以助於遷移到新版本。</p>
+      </section>
+      <section id="ensuring-reusable-state" class="level3">
+        <h3>Ensuring reusable state</h3>
+        <p>In the future, we’d like to add a feature that allows React to add and remove sections of the UI while preserving state. For example, when a user tabs away from a screen and back, React should be able to immediately show the previous screen. To do this, React will support remounting trees using the same component state used before unmounting.</p>
+        <p>This feature will give React better performance out-of-the-box, but requires components to be resilient to effects being mounted and destroyed multiple times. Most effects will work without any changes, but some effects do not properly clean up subscriptions in the destroy callback, or implicitly assume they are only mounted or destroyed once.</p>
+        <p>To help surface these issues, React 18 introduces a new development-only check to Strict Mode. This new check will automatically unmount and remount every component, whenever a component mounts for the first time, restoring the previous state on the second mount.</p>
+        <p>To demonstrate the development behavior you'll see in Strict Mode with this feature, consider what happens when React mounts a new component. Without this change, when a component mounts, React creates the effects:</p>
+        <pre class="language-text"><code class="language-text">* React mounts the component.
+  * Layout effects are created.
+  * Effects are created.</code></pre>
+        <p>With Strict Mode starting in React 18, whenever a component mounts in development, React will simulate immediately unmounting and remounting the component:</p>
+        <pre class="language-text"><code class="language-text">* React mounts the component.
+    * Layout effects are created.
+    * Effect effects are created.
+* React simulates effects being destroyed on a mounted component.
+    * Layout effects are destroyed.
+    * Effects are destroyed.
+* React simulates effects being re-created on a mounted component.
+    * Layout effects are created
+    * Effect setup code runs</code></pre>
+        <p>On the second mount, React will restore the state from the first mount. This feature simulates user behavior such as a user tabbing away from a screen and back, ensuring that code will properly handle state restoration.</p>
+        <p>When the component unmounts, effects are destroyed as normal:</p>
+        <pre class="language-text"><code class="language-text">* React unmounts the component.
+  * Layout effects are destroyed.
+  * Effect effects are destroyed.</code></pre>
+        <p>Unmounting and remounting includes:</p>
+        <ul>
+          <li><code>componentDidMount</code></li>
+          <li><code>componentWillUnmount</code></li>
+          <li><code>useEffect</code></li>
+          <li><code>useLayoutEffect</code></li>
+          <li><code>useInsertionEffect</code></li>
+        </ul>
+        <blockquote>
+          <p>Note:</p>
+          <p>This only applies to development mode, <em>production behavior is unchanged</em>.</p>
+        </blockquote>
+        <p>For help supporting common issues, see:</p>
+        <ul>
+          <li>
+            <a href="https://github.com/reactwg/react-18/discussions/18">How to support Reusable State in Effects</a>
+            <span style="float: footnote;"><a href="./index.html#toc">Go to TOC</a></span>
+          </li>
+        </ul>
+      </section>
+    </section>
+  </body>
+</html>

@@ -1,0 +1,178 @@
+<!doctype html>
+<html lang="pl">
+  <head>
+    <meta charset="utf-8">
+    <title>ReactDOMServer</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="https://raw.githubusercontent.com/shinokada/prism-coy-theme/main/theme_common.css">
+  </head>
+  <body>
+    <section id="reactdomserver" class="level1">
+      <h1>ReactDOMServer</h1>
+      <p>Obiekt <code>ReactDOMServer</code> pozwala na renderowanie komponentów do statycznych znaczników. Zazwyczaj jest używany na serwerze Node'owym:</p>
+      <pre class="language-js"><code class="language-js"><span class="token comment">// ES modules</span>
+<span class="token keyword module">import</span> <span class="token imports"><span class="token operator">*</span> <span class="token keyword module">as</span> <span class="token maybe-class-name">ReactDOMServer</span></span> <span class="token keyword module">from</span> <span class="token string">'react-dom/server'</span><span class="token punctuation">;</span>
+<span class="token comment">// CommonJS</span>
+<span class="token keyword">var</span> <span class="token maybe-class-name">ReactDOMServer</span> <span class="token operator">=</span> <span class="token function">require</span><span class="token punctuation">(</span><span class="token string">'react-dom/server'</span><span class="token punctuation">)</span><span class="token punctuation">;</span></code></pre>
+      <section id="overview" class="level2">
+        <h2>Ogólne informacje</h2>
+        <p>Następujące metody mogą zostać użyte tylko w <strong>środowiskach obsługujących <a href="https://nodejs.dev/learn/nodejs-streams">strumienie Node.js (ang. <em>Node.js Streams</em>)</a>:</strong></p>
+        <ul>
+          <li><a href="#rendertopipeablestream"><code>renderToPipeableStream()</code></a></li>
+          <li><a href="#rendertonodestream"><code>renderToNodeStream()</code></a> (przestarzałe)</li>
+          <li><a href="#rendertostaticnodestream"><code>renderToStaticNodeStream()</code></a></li>
+        </ul>
+        <p>Następujące metody mogą być użyte tylko w <strong>środowiskach obsługujących <a href="https://developer.mozilla.org/en-US/docs/Web/API/Streams_API">strumienie webowe (ang. <em>Web Streams</em>)</a></strong> (m.in. przeglądarki, Deno, niektóre nowoczesne wersje Edge):</p>
+        <ul>
+          <li><a href="#rendertoreadablestream"><code>renderToReadableStream()</code></a></li>
+        </ul>
+        <p>Następujące metody mogą być użyte w środowiskach, które nie obsługują strumieni:</p>
+        <ul>
+          <li><a href="#rendertostring"><code>renderToString()</code></a></li>
+          <li><a href="#rendertostaticmarkup"><code>renderToStaticMarkup()</code></a></li>
+        </ul>
+      </section>
+      <section id="reference" class="level2">
+        <h2>Dokumentacja</h2>
+        <section id="rendertopipeablestream-rendertopipeablestream" class="level3">
+          <h3><code>renderToPipeableStream()</code> {#rendertopipeablestream}</h3>
+          <pre class="language-javascript"><code class="language-javascript"><span class="token maybe-class-name">ReactDOMServer</span><span class="token punctuation">.</span><span class="token method function property-access">renderToPipeableStream</span><span class="token punctuation">(</span>element<span class="token punctuation">,</span> options<span class="token punctuation">)</span></code></pre>
+          <p>Renderuje reactowy element do jego początkowego kodu HTML. Zwraca strumień z metodą <code>pipe(res)</code> do przekierowania wyniku oraz <code>abort()</code> do przerwania żądania. Posiada pełne wsparcie dla zawieszeń (ang. <em>Suspense</em>) i strumieniowania kodu HTML o "opóźnionych" blokach treści "wskakujących" jako znaczniki <code>&#x3C;script></code>. <a href="https://github.com/reactwg/react-18/discussions/37">Czytaj więcej na ten temat</a></p>
+          <p>Jeśli wywołasz metodę <a href="./react-dom-client.html#hydrateroot"><code>ReactDOM.hydrateRoot()</code></a> na węźle, który zawiera już znaczniki wyrenderowane po stronie serwera, React zachowa je i dołączy jedynie procedury obsługi zdarzeń. Poprawi to wydajność i wrażenia przy pierwszym ładowaniu strony.</p>
+          <pre class="language-javascript"><code class="language-javascript"><span class="token keyword">let</span> didError <span class="token operator">=</span> <span class="token boolean">false</span><span class="token punctuation">;</span>
+<span class="token keyword">const</span> stream <span class="token operator">=</span> <span class="token function">renderToPipeableStream</span><span class="token punctuation">(</span>
+  <span class="token operator">&#x3C;</span><span class="token maybe-class-name">App</span> <span class="token operator">/</span><span class="token operator">></span><span class="token punctuation">,</span>
+  <span class="token punctuation">{</span>
+    <span class="token function">onShellReady</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+      <span class="token comment">// Treść ponad wszystkimi granicami zawieszeń (ang. *Suspense boundaries*) jest gotowa.</span>
+      <span class="token comment">// Jeśli coś się "wykrzaczyło" przed początkiem strumieniowania, ustawiamy odpowiedni kod błędu.</span>
+      res<span class="token punctuation">.</span><span class="token property-access">statusCode</span> <span class="token operator">=</span> didError <span class="token operator">?</span> <span class="token number">500</span> <span class="token operator">:</span> <span class="token number">200</span><span class="token punctuation">;</span>
+      res<span class="token punctuation">.</span><span class="token method function property-access">setHeader</span><span class="token punctuation">(</span><span class="token string">'Content-type'</span><span class="token punctuation">,</span> <span class="token string">'text/html'</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+      stream<span class="token punctuation">.</span><span class="token method function property-access">pipe</span><span class="token punctuation">(</span>res<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span><span class="token punctuation">,</span>
+    <span class="token function">onShellError</span><span class="token punctuation">(</span><span class="token parameter">error</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+      <span class="token comment">// Coś się "wykrzaczyło", zanim zakończyliśmy powłokę, więc wysyłamy alternatywną powłokę.</span>
+      res<span class="token punctuation">.</span><span class="token property-access">statusCode</span> <span class="token operator">=</span> <span class="token number">500</span><span class="token punctuation">;</span>
+      res<span class="token punctuation">.</span><span class="token method function property-access">send</span><span class="token punctuation">(</span>
+        <span class="token string">'&#x3C;!doctype html>&#x3C;p>Ładowanie...&#x3C;/p>&#x3C;script src="clientrender.js">&#x3C;/script>'</span>
+      <span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span><span class="token punctuation">,</span>
+    <span class="token function">onAllReady</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+      <span class="token comment">// Jeśli nie potrzebujesz strumieniowania, skorzystaj z tej metody zamiast onShellReady.</span>
+      <span class="token comment">// Zostanie ona wywołana po wygenerowaniu treści całej strony.</span>
+      <span class="token comment">// Można jej użyć w celu dostarczenia treści dla wyszukiwarek lub dla wygenerowania statycznej treści.</span>
+
+      <span class="token comment">// res.statusCode = didError ? 500 : 200;</span>
+      <span class="token comment">// res.setHeader('Content-type', 'text/html');</span>
+      <span class="token comment">// stream.pipe(res);</span>
+    <span class="token punctuation">}</span><span class="token punctuation">,</span>
+    <span class="token function">onError</span><span class="token punctuation">(</span><span class="token parameter">err</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+      didError <span class="token operator">=</span> <span class="token boolean">true</span><span class="token punctuation">;</span>
+      <span class="token console class-name">console</span><span class="token punctuation">.</span><span class="token method function property-access">error</span><span class="token punctuation">(</span>err<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span><span class="token punctuation">,</span>
+  <span class="token punctuation">}</span>
+<span class="token punctuation">)</span><span class="token punctuation">;</span></code></pre>
+          <p>Zobacz <a href="https://github.com/facebook/react/blob/14c2be8dac2d5482fda8a0906a31d239df8551fc/packages/react-dom/src/server/ReactDOMFizzServerNode.js#L36-L46">pełną listę opcji</a>.</p>
+          <blockquote>
+            <p>Uwaga:</p>
+            <p>To jest funkcjonalność specyficzna dla Node.js. Środowiska z obsługą <a href="https://developer.mozilla.org/en-US/docs/Web/API/Streams_API">strumieni webowych (ang. <em>Web Streams</em>)</a>, jak np. Deno czy współczesne wersje Edge, powinny korzystać z <a href="#rendertoreadablestream"><code>renderToReadableStream</code></a>.</p>
+          </blockquote>
+          <hr>
+        </section>
+        <section id="rendertoreadablestream-rendertoreadablestream" class="level3">
+          <h3><code>renderToReadableStream()</code> {#rendertoreadablestream}</h3>
+          <pre class="language-javascript"><code class="language-javascript"><span class="token maybe-class-name">ReactDOMServer</span><span class="token punctuation">.</span><span class="token method function property-access">renderToReadableStream</span><span class="token punctuation">(</span>element<span class="token punctuation">,</span> options<span class="token punctuation">)</span><span class="token punctuation">;</span></code></pre>
+          <p>Strumieniuje reactowy element do jego początkowego kodu HTML. Zwraca obietnicę (ang. <em>Promise</em>), która zwraca <a href="https://developer.mozilla.org/en-US/docs/Web/API/ReadableStream">strumień do odczytu (ang. <em>Readable Stream</em>)</a>. Posiada pełne wsparcie dla zawieszania (ang. <em>Suspense</em>) oraz strumieniowania HTML. <a href="https://github.com/reactwg/react-18/discussions/127">Czytaj więcej na ten temat</a></p>
+          <p>Jeśli wywołasz metodę <a href="./react-dom-client.html#hydrateroot"><code>ReactDOM.hydrateRoot()</code></a> na węźle, który zawiera już znaczniki wyrenderowane po stronie serwera, React zachowa je i dołączy jedynie procedury obsługi zdarzeń. Poprawi to wydajność i wrażenia przy pierwszym ładowaniu strony.</p>
+          <pre class="language-javascript"><code class="language-javascript"><span class="token keyword">let</span> controller <span class="token operator">=</span> <span class="token keyword">new</span> <span class="token class-name">AbortController</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token keyword">let</span> didError <span class="token operator">=</span> <span class="token boolean">false</span><span class="token punctuation">;</span>
+<span class="token keyword control-flow">try</span> <span class="token punctuation">{</span>
+  <span class="token keyword">let</span> stream <span class="token operator">=</span> <span class="token keyword control-flow">await</span> <span class="token function">renderToReadableStream</span><span class="token punctuation">(</span>
+    <span class="token operator">&#x3C;</span>html<span class="token operator">></span>
+      <span class="token operator">&#x3C;</span>body<span class="token operator">></span><span class="token maybe-class-name">Sukces</span><span class="token operator">&#x3C;</span><span class="token operator">/</span>body<span class="token operator">></span>
+    <span class="token operator">&#x3C;</span><span class="token operator">/</span>html<span class="token operator">></span><span class="token punctuation">,</span>
+    <span class="token punctuation">{</span>
+      <span class="token literal-property property">signal</span><span class="token operator">:</span> controller<span class="token punctuation">.</span><span class="token property-access">signal</span><span class="token punctuation">,</span>
+      <span class="token function">onError</span><span class="token punctuation">(</span><span class="token parameter">error</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        didError <span class="token operator">=</span> <span class="token boolean">true</span><span class="token punctuation">;</span>
+        <span class="token console class-name">console</span><span class="token punctuation">.</span><span class="token method function property-access">error</span><span class="token punctuation">(</span>error<span class="token punctuation">)</span><span class="token punctuation">;</span>
+      <span class="token punctuation">}</span>
+    <span class="token punctuation">}</span>
+  <span class="token punctuation">)</span><span class="token punctuation">;</span>
+  
+  <span class="token comment">// Można w ten sposób poczekać na zakończenie wszystkich zawieszeń (ang. *Suspense*). Możesz</span>
+  <span class="token comment">// odkomentować tę linię, jeśli chcesz zbuforować cały kod HTML, zamiast go strumieniować.</span>
+  <span class="token comment">// Możesz także użyć tego do przystosowania aplikacji dla wyszukiwarek lub do wygenerowania statycznej treści:</span>
+
+  <span class="token comment">// await stream.allReady;</span>
+
+  <span class="token keyword control-flow">return</span> <span class="token keyword">new</span> <span class="token class-name">Response</span><span class="token punctuation">(</span>stream<span class="token punctuation">,</span> <span class="token punctuation">{</span>
+    <span class="token literal-property property">status</span><span class="token operator">:</span> didError <span class="token operator">?</span> <span class="token number">500</span> <span class="token operator">:</span> <span class="token number">200</span><span class="token punctuation">,</span>
+    <span class="token literal-property property">headers</span><span class="token operator">:</span> <span class="token punctuation">{</span><span class="token string-property property">'Content-Type'</span><span class="token operator">:</span> <span class="token string">'text/html'</span><span class="token punctuation">}</span><span class="token punctuation">,</span>
+  <span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span> <span class="token keyword control-flow">catch</span> <span class="token punctuation">(</span>error<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  <span class="token keyword control-flow">return</span> <span class="token keyword">new</span> <span class="token class-name">Response</span><span class="token punctuation">(</span>
+    <span class="token string">'&#x3C;!doctype html>&#x3C;p>Ładowanie...&#x3C;/p>&#x3C;script src="clientrender.js">&#x3C;/script>'</span><span class="token punctuation">,</span>
+    <span class="token punctuation">{</span>
+      <span class="token literal-property property">status</span><span class="token operator">:</span> <span class="token number">500</span><span class="token punctuation">,</span>
+      <span class="token literal-property property">headers</span><span class="token operator">:</span> <span class="token punctuation">{</span><span class="token string-property property">'Content-Type'</span><span class="token operator">:</span> <span class="token string">'text/html'</span><span class="token punctuation">}</span><span class="token punctuation">,</span>
+    <span class="token punctuation">}</span>
+  <span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span></code></pre>
+          <p>Zobacz <a href="https://github.com/facebook/react/blob/14c2be8dac2d5482fda8a0906a31d239df8551fc/packages/react-dom/src/server/ReactDOMFizzServerBrowser.js#L27-L35">pełną listę opcji</a>.</p>
+          <blockquote>
+            <p>Uwaga:</p>
+            <p>Ta funkcjonalność jest zależna od <a href="https://developer.mozilla.org/en-US/docs/Web/API/Streams_API">strumienni web (ang. <em>Web Streams</em>)</a>. W Node.js użyj <a href="#rendertopipeablestream"><code>renderToPipeableStream</code></a>.</p>
+          </blockquote>
+          <hr>
+        </section>
+        <section id="rendertonodestream" class="level3">
+          <h3><code>renderToNodeStream()</code> (przestarzałe)</h3>
+          <pre class="language-javascript"><code class="language-javascript"><span class="token maybe-class-name">ReactDOMServer</span><span class="token punctuation">.</span><span class="token method function property-access">renderToNodeStream</span><span class="token punctuation">(</span>element<span class="token punctuation">)</span></code></pre>
+          <p>Renderuje reactowy element do jego początkowego kodu HTML. Zwraca <a href="https://nodejs.org/api/stream.html#stream_readable_streams">strumień Node.js do odczytu</a>, który na wyjściu zwróci ciąg znaków HTML. Zwrócony przez strumień kod HTML jest identyczny z tym, który zwróciłaby funkcja <a href="#rendertostring"><code>ReactDOMServer.renderToString</code></a>. Możesz użyć tej metody, aby wygenerować kod HTML po stronie serwera, a następnie wysłać znaczniki jako odpowiedź na pierwsze żądanie, co pozwoli przyspieszyć ładowanie strony i umożliwić wyszukiwarkom indeksowanie jej w celach SEO.</p>
+          <p>Jeśli wywołasz metodę <a href="./react-dom-client.html#hydrateroot"><code>ReactDOM.hydrateRoot()</code></a> na węźle, który zawiera już znaczniki wyrenderowane po stronie serwera, React zachowa je i dołączy jedynie procedury obsługi zdarzeń. Poprawi to wydajność i wrażenia przy pierwszym ładowaniu strony.</p>
+          <blockquote>
+            <p>Uwaga:</p>
+            <p>Do użycia tylko po stronie serwera. Ten interfejs API nie jest dostępny w przeglądarce.</p>
+            <p>Strumień zwrócony przez tę metodę zwróci strumień bajtów zakodowany w utf-8. Jeśli potrzebujesz strumienia z innym kodowaniem, skorzystaj na przykład z paczki <a href="https://www.npmjs.com/package/iconv-lite">iconv-lite</a>, która dostarcza strumienie transformujące do transkodowania tekstu.</p>
+          </blockquote>
+          <hr>
+        </section>
+        <section id="rendertostaticnodestream-rendertostaticnodestream" class="level3">
+          <h3><code>renderToStaticNodeStream()</code> {#rendertostaticnodestream}</h3>
+          <pre class="language-javascript"><code class="language-javascript"><span class="token maybe-class-name">ReactDOMServer</span><span class="token punctuation">.</span><span class="token method function property-access">renderToStaticNodeStream</span><span class="token punctuation">(</span>element<span class="token punctuation">)</span></code></pre>
+          <p>Działa analogicznie do <a href="#rendertonodestream"><code>renderToNodeStream</code></a>, z tą różnicą, że nie tworzy dodatkowych atrybutów DOM, takich jak<code> data-reactroot</code> (używanych wewnętrznie przez Reacta). Przydaje się, jeśli chcesz używać Reacta jako prostego generatora statycznych stron, gdzie usunięcie dodatkowych atrybutów pozwoli zaoszczędzić kilka bajtów.</p>
+          <p>Kod HTML zwrócony przez strumień jest identyczny z tym, jaki zwróciłaby funkcja <a href="#rendertostaticmarkup"><code>ReactDOMServer.renderToStaticMarkup</code></a>.</p>
+          <p>Jeżeli planujesz używać Reacta po stronie klienta w celu dodania znacznikom interaktywności, nie używaj tej metody. Zamiast niej użyj <a href="#rendertonodestream"><code>renderToNodeStream</code></a> na serwerze i <a href="./react-dom-client.html#hydrateroot"><code>ReactDOM.hydrateRoot()</code></a> po stronie klienta.</p>
+          <blockquote>
+            <p>Uwaga:</p>
+            <p>Do użycia tylko po stronie serwera. Ten interfejs API nie jest dostępny w przeglądarce.</p>
+            <p>Strumień zwrócony przez tę metodę zwróci strumień bajtów zakodowany w utf-8. Jeśli potrzebujesz strumienia z innym kodowaniem, skorzystaj na przykład z paczki <a href="https://www.npmjs.com/package/iconv-lite">iconv-lite</a>, która dostarcza strumienie transformujące do transkodowania tekstu.</p>
+          </blockquote>
+          <hr>
+        </section>
+        <section id="rendertostring-rendertostring" class="level3">
+          <h3><code>renderToString()</code> {#rendertostring}</h3>
+          <pre class="language-javascript"><code class="language-javascript"><span class="token maybe-class-name">ReactDOMServer</span><span class="token punctuation">.</span><span class="token method function property-access">renderToString</span><span class="token punctuation">(</span>element<span class="token punctuation">)</span></code></pre>
+          <p>Renderuje element reactowy do jego początkowego kodu HTML. Zwraca kod HTML w formie tekstowej. Możesz użyć tej metody, aby wygenerować kod HTML po stronie serwera, a następnie wysłać znaczniki jako odpowiedź na pierwsze żądanie, co pozwoli przyspieszyć ładowanie strony i umożliwić wyszukiwarkom indeksowanie jej w celach SEO.</p>
+          <p>Jeśli wywołasz <a href="./react-dom-client.html#hydrateroot"><code>ReactDOM.hydrateRoot()</code></a> na węźle, który zawiera już taki kod wyrenderowany po stronie serwera, React zachowa go i jedynie doda do niego procedury obsługi zdarzeń, zapewniając szybkie wstępne ładowanie stronie.</p>
+          <blockquote>
+            <p>Uwaga</p>
+            <p>Ta funkcjonalność na ograniczone wsparcie dla zawieszeń (ang. <em>Suspense</em>) i nie obsługuje strumieniowania.</p>
+            <p>Sugerujemy po stronie serwera korzystać z <a href="#rendertopipeablestream"><code>renderToPipeableStream</code></a> (dla Node.js) lub <a href="#rendertoreadablestream"><code>renderToReadableStream</code></a> (dla Web Streams) instead.</p>
+          </blockquote>
+          <hr>
+        </section>
+        <section id="rendertostaticmarkup-rendertostaticmarkup" class="level3">
+          <h3><code>renderToStaticMarkup()</code> {#rendertostaticmarkup}</h3>
+          <pre class="language-javascript"><code class="language-javascript"><span class="token maybe-class-name">ReactDOMServer</span><span class="token punctuation">.</span><span class="token method function property-access">renderToStaticMarkup</span><span class="token punctuation">(</span>element<span class="token punctuation">)</span></code></pre>
+          <p>Działa podobnie do <a href="#rendertostring"><code>renderToString</code></a>, lecz nie tworzy dodatkowych atrybutów DOM, których React potrzebuje do działania, np. <code>data-reactroot</code>. Przydaje się, jeśli chcesz użyć Reacta jako prostego generowania statycznych stron, ponieważ usunięcie ich pozwala zaoszczędzić kilka cennych bajtów.</p>
+          <p>
+            Jeśli planujesz używać Reacta po stronie klienta, aby dodać aplikacji nieco interakcyjności, nie używaj tej metody. Zamiast niej skorzystaj z <a href="#rendertostring"><code>renderToString</code></a> po stronie serwera, a następnie <a href="./react-dom-client.html#hydrateroot"><code>ReactDOM.hydrateRoot()</code></a> po stronie klienta.
+            <span style="float: footnote;"><a href="./index.html#toc">Go to TOC</a></span>
+          </p>
+        </section>
+      </section>
+    </section>
+  </body>
+</html>

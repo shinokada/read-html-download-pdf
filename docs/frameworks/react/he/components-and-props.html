@@ -1,0 +1,185 @@
+<!doctype html>
+<html lang="he">
+  <head>
+    <meta charset="utf-8">
+    <title>קומפוננטות ו-Props</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="https://raw.githubusercontent.com/shinokada/prism-coy-theme/main/theme_common.css">
+  </head>
+  <body>
+    <section id="קומפוננטות-ו-props" class="level1">
+      <h1>קומפוננטות ו-Props</h1>
+      <p>קומפוננטות מאפשרות לכם לפצל את ממשק המשתמש לחתיכות עצמאיות המאפשרות שימוש חוזר, ולחשוב על כל חתיכה בנפרד. דף זה מספק מבוא לרעיון של קומפוננטות. תוכלו למצוא <a href="./react-component.html">הסבר מפורט של ה-API של קומפוננטות כאן</a>.</p>
+      <p>מבחינה תפיסתית, קומפוננטות הן כמו פונקציות JavaScript. הן מקבלות קלט שרירותי (נקרא "props") ומחזירות אלמנטים של React המתארים מה אמור להופיע על המסך.</p>
+      <section id="function-and-class-components" class="level2">
+        <h2>קומפוננטות מסוגי פונקציות ומחלקות</h2>
+        <p>הדרך הפשוטה ביותר להגדיר קומפוננטה היא לכתוב פונקציית JavaScript:</p>
+        <pre class="language-js"><code class="language-js"><span class="token keyword">function</span> <span class="token function"><span class="token maybe-class-name">Welcome</span></span><span class="token punctuation">(</span><span class="token parameter">props</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  <span class="token keyword control-flow">return</span> <span class="token operator">&#x3C;</span>h1<span class="token operator">></span><span class="token maybe-class-name">Hello</span><span class="token punctuation">,</span> <span class="token punctuation">{</span>props<span class="token punctuation">.</span><span class="token property-access">name</span><span class="token punctuation">}</span><span class="token operator">&#x3C;</span><span class="token operator">/</span>h1<span class="token operator">></span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span></code></pre>
+        <p>פונקציה זו היא קומפוננטת React חוקית משום שהיא מקבלת ארגומנט אובייקט נתונים יחיד מסוג "props" (קיצור של המילה תכונות, properties באנגלית) ומחזירה אלמנט React. אנו מכנים קומפוננטות כאלה "קומפוננטת פונקציה" משום שהם פשוט פונקציות JavaScript.</p>
+        <p>תוכלו גם להשתמש ב<a href="https://developer.mozilla.org/en/docs/Web/JavaScript/Reference/Classes">מחלקה של ES6</a> כדי להגדיר קומפוננטה:</p>
+        <pre class="language-js"><code class="language-js"><span class="token keyword">class</span> <span class="token class-name">Welcome</span> <span class="token keyword">extends</span> <span class="token class-name">React<span class="token punctuation">.</span>Component</span> <span class="token punctuation">{</span>
+  <span class="token function">render</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token keyword control-flow">return</span> <span class="token operator">&#x3C;</span>h1<span class="token operator">></span><span class="token maybe-class-name">Hello</span><span class="token punctuation">,</span> <span class="token punctuation">{</span><span class="token keyword">this</span><span class="token punctuation">.</span><span class="token property-access">props</span><span class="token punctuation">.</span><span class="token property-access">name</span><span class="token punctuation">}</span><span class="token operator">&#x3C;</span><span class="token operator">/</span>h1<span class="token operator">></span><span class="token punctuation">;</span>
+  <span class="token punctuation">}</span>
+<span class="token punctuation">}</span></code></pre>
+        <p>שתי הקומפוננטות מעלה הן זהות מנקודת המבט של React.</p>
+        <p>לקומפוננטות פונקציה ומחלקות יש כמה פיצ'רים נוספים שנדבר עליהם <a href="./state-and-lifecycle.htm">בקטעים הבאים</a>.</p>
+      </section>
+      <section id="rendering-a-component" class="level2">
+        <h2>רינדור של קומפוננטה</h2>
+        <p>עד כה, נתקלנו רק ברכיבי React שמייצגים תגי DOM:</p>
+        <pre class="language-js"><code class="language-js"><span class="token keyword">const</span> element <span class="token operator">=</span> <span class="token operator">&#x3C;</span>div <span class="token operator">/</span><span class="token operator">></span><span class="token punctuation">;</span></code></pre>
+        <p>עם זאת, אלמנטים יכולים גם לייצג קומפוננטות המוגדרות על ידי המשתמש:</p>
+        <pre class="language-js"><code class="language-js"><span class="token keyword">const</span> element <span class="token operator">=</span> <span class="token operator">&#x3C;</span><span class="token maybe-class-name">Welcome</span> name<span class="token operator">=</span><span class="token string">"Sara"</span> <span class="token operator">/</span><span class="token operator">></span><span class="token punctuation">;</span></code></pre>
+        <p>כאשר React רואה אלמנט המייצג קומפוננטה שהודגרה על ידי המשתמש, היא מעבירה את המאפיינים שהוגדרו ב-JSX ואת ה"ילדים" לקומפוננטה זו כאובייקט יחיד. אנו קוראים לאובייקט זה "props".</p>
+        <p>לדוגמה, הקוד הזה מרנדר "Hello, Sara" על העמוד:</p>
+        <pre class="language-js{1,6}"><code class="language-js{1,6}">function Welcome(props) {
+  return &#x3C;h1>Hello, {props.name}&#x3C;/h1>;
+}
+
+const root = ReactDOM.createRoot(document.getElementById('root'));
+const element = &#x3C;Welcome name="Sara" />;
+root.render(element);</code></pre>
+        <p><strong><a href="https://codepen.io/gaearon/pen/YGYmEG?editors=1010">נסו את זה ב-codepen</a></strong></p>
+        <p>בואו נסכם מה קורה בדוגמה זו:</p>
+        <ol>
+          <li>אנחנו קוראים ל-<code>ReactDOM.render()</code> עם האלמנט <code>&#x3C;Welcome name="Sara" /></code>.</li>
+          <li>React קוראת לקומפוננטת <code>Welcome</code> עם <code>{name: 'Sara'}</code> בתור ה-props.</li>
+          <li>קומפוננטת <code>Welcome</code> שלנו מחזירה אלמנט <code>&#x3C;h1>Hello, Sara&#x3C;/h1></code> בתור התוצאה שלה.</li>
+          <li>React DOM מעדכן ביעילות את ה-DOM להיות תואם ל-<code>&#x3C;h1>Hello, Sara&#x3C;/h1></code>.</li>
+        </ol>
+        <blockquote>
+          <p><strong>הערה:</strong> יש להתחיל שמות קומפוננטות עם אות גדולה.</p>
+          <p>React מתייחסת לקומפוננטות המתחילות באותיות קטנות בתור תגי DOM. לדוגמה, <code>&#x3C;div /></code> מייצג תג div של HTML, אך <code>&#x3C;Welcome /></code> מייצג קומפוננטה ומחייב את <code>Welcome</code> להיות ב-scope.</p>
+          <p>כדי ללמוד עוד על הסיבות מאחורי קונבנציה זו, אנא קראו את <a href="./jsx-in-depth.html#user-defined-components-must-be-capitalized">JSX באופן מעמיק</a>.</p>
+        </blockquote>
+      </section>
+      <section id="composing-components" class="level2">
+        <h2>יצירת קומפוננטות</h2>
+        <p>קומפוננטות יכולות להתייחס לקומפוננטות אחרות בפלט שלהם. דבר זה מאפשר לנו להשתמש באותה הפשטת קומפוננטות עבור כל רמה של פירוט. לחצן, טופס, תיבת דו-שיח, מסך: באפליקציות React, כל אלה בדרך כלל באים לידי ביטוי כקומפוננטות.</p>
+        <p>למשל, אנו יכולים ליצור קומפוננטת <code>App</code> שמרנדרת את <code>Welcome</code> הרבה פעמים:</p>
+        <pre class="language-js{8-10}"><code class="language-js{8-10}">function Welcome(props) {
+  return &#x3C;h1>Hello, {props.name}&#x3C;/h1>;
+}
+
+function App() {
+  return (
+    &#x3C;div>
+      &#x3C;Welcome name="Sara" />
+      &#x3C;Welcome name="Cahal" />
+      &#x3C;Welcome name="Edite" />
+    &#x3C;/div>
+  );
+}</code></pre>
+        <p><strong><a href="https://codepen.io/gaearon/pen/KgQKPr?editors=1010">נסו את זה ב-codepen</a></strong></p>
+        <p>בדרך כלל, אפליקציות React חדשות כוללות קומפוננטת <code>App</code> אחת בראש האפליקציה. עם זאת, אם תשלבו את React באפליקציה קיימת, תוכלו להתחיל מלמטה למעלה באמצעות קומפוננטה קטנה כגון <code>Button</code>, ובהדרגה להגיע לחלק העליון ביותר של הירארכיית התצוגה.</p>
+      </section>
+      <section id="extracting-components" class="level2">
+        <h2>חילוץ קומפוננטות</h2>
+        <p>אל תפחדו לפצל קומפוננטות לקומפוננטות קטנות יותר.</p>
+        <p>למשל, הביטו בקומפוננטת <code>Comment</code> הבאה:</p>
+        <pre class="language-js"><code class="language-js"><span class="token keyword">function</span> <span class="token function"><span class="token maybe-class-name">Comment</span></span><span class="token punctuation">(</span><span class="token parameter">props</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  <span class="token keyword control-flow">return</span> <span class="token punctuation">(</span>
+    <span class="token operator">&#x3C;</span>div className<span class="token operator">=</span><span class="token string">"Comment"</span><span class="token operator">></span>
+      <span class="token operator">&#x3C;</span>div className<span class="token operator">=</span><span class="token string">"UserInfo"</span><span class="token operator">></span>
+        <span class="token operator">&#x3C;</span>img className<span class="token operator">=</span><span class="token string">"Avatar"</span>
+          src<span class="token operator">=</span><span class="token punctuation">{</span>props<span class="token punctuation">.</span><span class="token property-access">author</span><span class="token punctuation">.</span><span class="token property-access">avatarUrl</span><span class="token punctuation">}</span>
+          alt<span class="token operator">=</span><span class="token punctuation">{</span>props<span class="token punctuation">.</span><span class="token property-access">author</span><span class="token punctuation">.</span><span class="token property-access">name</span><span class="token punctuation">}</span>
+        <span class="token operator">/</span><span class="token operator">></span>
+        <span class="token operator">&#x3C;</span>div className<span class="token operator">=</span><span class="token string">"UserInfo-name"</span><span class="token operator">></span>
+          <span class="token punctuation">{</span>props<span class="token punctuation">.</span><span class="token property-access">author</span><span class="token punctuation">.</span><span class="token property-access">name</span><span class="token punctuation">}</span>
+        <span class="token operator">&#x3C;</span><span class="token operator">/</span>div<span class="token operator">></span>
+      <span class="token operator">&#x3C;</span><span class="token operator">/</span>div<span class="token operator">></span>
+      <span class="token operator">&#x3C;</span>div className<span class="token operator">=</span><span class="token string">"Comment-text"</span><span class="token operator">></span>
+        <span class="token punctuation">{</span>props<span class="token punctuation">.</span><span class="token property-access">text</span><span class="token punctuation">}</span>
+      <span class="token operator">&#x3C;</span><span class="token operator">/</span>div<span class="token operator">></span>
+      <span class="token operator">&#x3C;</span>div className<span class="token operator">=</span><span class="token string">"Comment-date"</span><span class="token operator">></span>
+        <span class="token punctuation">{</span><span class="token function">formatDate</span><span class="token punctuation">(</span>props<span class="token punctuation">.</span><span class="token property-access">date</span><span class="token punctuation">)</span><span class="token punctuation">}</span>
+      <span class="token operator">&#x3C;</span><span class="token operator">/</span>div<span class="token operator">></span>
+    <span class="token operator">&#x3C;</span><span class="token operator">/</span>div<span class="token operator">></span>
+  <span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span></code></pre>
+        <p><strong><a href="https://codepen.io/gaearon/pen/VKQwEo?editors=1010">נסו את זה ב-codepen</a></strong></p>
+        <p>היא מקבלת את <code>author</code> (אובייקט), <code>text</code> (מחרוזת) ו-<code>date</code> (תאריך) בתור props, ומתארת תגובה באתר אינטרנט של מדיה חברתית.</p>
+        <p>קומפוננטה זו יכולה להיות מסובכת לשינוי בגלל כל הקינון שבה, ובנוסף קשה לעשות שימוש חוזר בחלקים אינדיבידואלים שלה. בואו נחלץ מספר קומפוננטות ממנה.</p>
+        <p>ראשית, נחלץ את <code>Avatar</code>:</p>
+        <pre class="language-js{3-6}"><code class="language-js{3-6}">function Avatar(props) {
+  return (
+    &#x3C;img className="Avatar"
+      src={props.user.avatarUrl}
+      alt={props.user.name}
+    />
+  );
+}</code></pre>
+        <p>ה-<code>Avatar</code> לא צריך לדעת שהוא מתרנדר בתוך <code>Comment</code>. זו הסיבה שבגללה נתנו ל-prop שלו שם גנרי יותר: <code>user</code> (משתמש) ולא <code>author</code> (מחבר).</p>
+        <p>אנו ממליצים על מתן שמות ל-props מנקודת המבט של הקומפוננטה עצמה ולא על סמך הקונטקסט שבו הם נמצאים בשימוש.</p>
+        <p>אנו יכולים כעת לפשט <code>Comment</code> מעט:</p>
+        <pre class="language-js{5}"><code class="language-js{5}">function Comment(props) {
+  return (
+    &#x3C;div className="Comment">
+      &#x3C;div className="UserInfo">
+        &#x3C;Avatar user={props.author} />
+        &#x3C;div className="UserInfo-name">
+          {props.author.name}
+        &#x3C;/div>
+      &#x3C;/div>
+      &#x3C;div className="Comment-text">
+        {props.text}
+      &#x3C;/div>
+      &#x3C;div className="Comment-date">
+        {formatDate(props.date)}
+      &#x3C;/div>
+    &#x3C;/div>
+  );
+}</code></pre>
+        <p>בשלב הבא, נחלץ את קומפוננטת <code>UserInfo</code> שמרנדרת <code>Avatar</code> לצד שם המשתמש:</p>
+        <pre class="language-js{3-8}"><code class="language-js{3-8}">function UserInfo(props) {
+  return (
+    &#x3C;div className="UserInfo">
+      &#x3C;Avatar user={props.user} />
+      &#x3C;div className="UserInfo-name">
+        {props.user.name}
+      &#x3C;/div>
+    &#x3C;/div>
+  );
+}</code></pre>
+        <p>זה מאפשר לנו לפשט את <code>Comment</code> אפילו יותר:</p>
+        <pre class="language-js{4}"><code class="language-js{4}">function Comment(props) {
+  return (
+    &#x3C;div className="Comment">
+      &#x3C;UserInfo user={props.author} />
+      &#x3C;div className="Comment-text">
+        {props.text}
+      &#x3C;/div>
+      &#x3C;div className="Comment-date">
+        {formatDate(props.date)}
+      &#x3C;/div>
+    &#x3C;/div>
+  );
+}</code></pre>
+        <p><strong><a href="https://codepen.io/gaearon/pen/rrJNJY?editors=1010">נסו את זה ב-codepen</a></strong></p>
+        <p>חילוץ קומפוננטות אולי נראה כמו עבודה שחורה בהתחלה, אבל בעלות על מגוון קומפוננטות לשימוש חוזר משתלמת באפליקציות גדולות יותר. כלל אצבע טוב הוא שאם חלק מממשק המשתמש שלכם נמצא בשימוש מספר פעמים (<code>Button</code>, <code>Panel</code>, <code>Avatar</code>), או שהוא מורכב מספיק בכוחות עצמו (<code>App</code>, <code>FeedStory</code>, <code>Comment</code>), הוא מועמד טוב להיות מחולץ לקומפוננטה אחרת.</p>
+      </section>
+      <section id="props-are-read-only" class="level2">
+        <h2>Props הם לקריאה בלבד</h2>
+        <p>בין אם אתם מצהירים על קומפוננטה <a href="#function-and-class-components">כפונקציה או כמחלקה</a>, אסור לה לעולם לשנות את ה-props שלה. הביטו בפונקציה <code>sum</code> הבאה:</p>
+        <pre class="language-js"><code class="language-js"><span class="token keyword">function</span> <span class="token function">sum</span><span class="token punctuation">(</span><span class="token parameter">a<span class="token punctuation">,</span> b</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  <span class="token keyword control-flow">return</span> a <span class="token operator">+</span> b<span class="token punctuation">;</span>
+<span class="token punctuation">}</span></code></pre>
+        <p>פונקציות אלה נקראות <a href="https://en.wikipedia.org/wiki/Pure_function">"טהורות"</a> מכיוון שהן לא מנסות לשנות את הקלטים שלהן, ותמיד מחזירות את אותה התוצאה עבור אותם קלטים.</p>
+        <p>לעומת זאת, פונקציה זו אינה טהורה משום שהיא משנה את הקלט שלה:</p>
+        <pre class="language-js"><code class="language-js"><span class="token keyword">function</span> <span class="token function">withdraw</span><span class="token punctuation">(</span><span class="token parameter">account<span class="token punctuation">,</span> amount</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  account<span class="token punctuation">.</span><span class="token property-access">total</span> <span class="token operator">-=</span> amount<span class="token punctuation">;</span>
+<span class="token punctuation">}</span></code></pre>
+        <p>React היא די גמישה אבל יש לה כלל אחד נוקשה:</p>
+        <p><strong>כל קומפוננטות React חייבות לפעול כמו פונקציות טהורות ביחס ל-props שלהן.</strong></p>
+        <p>
+          כמובן, ממשקי המשתמש של אפליקציות הם דינמיים ומשתנים עם הזמן. ב<a href="./state-and-lifecycle.html">חלק הבא</a>, נציג את הקונספט החדש של "state" (מצב). ה-state מאפשר לקומפוננטות React לשנות את הפלט שלהן לאורך הזמן בתגובה לפעולות משתמש, תשובות מהרשת, וכל דבר אחר, מבלי להפר כלל זה.
+          <span style="float: footnote;"><a href="./index.html#toc">Go to TOC</a></span>
+        </p>
+      </section>
+    </section>
+  </body>
+</html>

@@ -404,7 +404,7 @@ host 内部インスタンスは以下のものを格納する必要がありま
 
 より複雑なアプリケーションにおいて、内部インスタンスのツリーがどのような構造になるのか想像しづらい場合は、[React DevTools](https://github.com/facebook/react-devtools) が host インスタンスを灰色に、composite インスタンスを紫色にハイライトしてくれるので、内部インスタンスのツリーにかなり近いものを得ることができます：
 
- <img src="../images/docs/implementation-notes-tree.png" width="500" style="max-width: 100%" alt="React DevTools tree" />
+ <img src="./docs/implementation-notes-tree.png" width="500" style="max-width: 100%" alt="React DevTools tree" />
 
 このリファクタリングを完了するため、完全なツリーをコンテナノードとパブリックインスタンスにマウントする関数を導入することにします。
 

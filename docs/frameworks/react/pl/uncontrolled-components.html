@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="pl">
+  <head>
+    <meta charset="utf-8">
+    <title>Komponenty niekontrolowane</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="https://raw.githubusercontent.com/shinokada/prism-coy-theme/main/theme_common.css">
+  </head>
+  <body>
+    <section id="komponenty-niekontrolowane" class="level1">
+      <h1>Komponenty niekontrolowane</h1>
+      <p>W większości przypadków zalecamy stosowanie <a href="./forms.html#controlled-components">komponentów kontrolowanych</a> do implementacji formularzy. W komponencie kontrolowanym, dane formularza są obsługiwane przez komponent reactowy. Alternatywą są komponenty niekontrolowane, w których dane formularza są obsługiwane przez sam DOM.</p>
+      <p>Aby stworzyć komponent niekontrolowany, zamiast pisać funkcję obsługującą każdą zmianę stanu, możesz <a href="./refs-and-the-dom.html">użyć właściwości ref</a>, aby uzyskać wartości formularza z DOM.</p>
+      <p>Na przykład, ten kod akceptuje pojedynczą nazwę w komponencie niekontrolowanym:</p>
+      <pre class="language-javascript{5,9,18}"><code class="language-javascript{5,9,18}">class NameForm extends React.Component {
+  constructor(props) {
+    super(props);
+    this.handleSubmit = this.handleSubmit.bind(this);
+    this.input = React.createRef();
+  }
+
+  handleSubmit(event) {
+    alert('Podano następujące imię: ' + this.input.current.value);
+    event.preventDefault();
+  }
+
+  render() {
+    return (
+      &#x3C;form onSubmit={this.handleSubmit}>
+        &#x3C;label>
+          Imię:
+          &#x3C;input type="text" ref={this.input} />
+        &#x3C;/label>
+        &#x3C;input type="submit" value="Wyślij" />
+      &#x3C;/form>
+    );
+  }
+}</code></pre>
+      <p><a href="https://codepen.io/gaearon/pen/WooRWa?editors=0010"><strong>Przetestuj kod na CodePen</strong></a></p>
+      <p>Ponieważ komponent niekontrolowany zachowuje źródło prawdy w DOM, czasami łatwiej jest zintegrować kod reactowy z kodem niereactowym, gdy używa się komponentów niekontrolowanych. Użycie komponentów niekontrolowanych pozwala zaimplementować formularz "na szybko" dzięki mniejszej ilości kodu. Zwykle jednak powinno używać się komponentów kontrolowanych.</p>
+      <p>Jeśli nadal nie jest jasne, jakiego rodzaju komponentu należy użyć w konkretnej sytuacji, pomocny może okazać się <a href="https://goshakkk.name/controlled-vs-uncontrolled-inputs-react/">ten artykuł o kontrolowanych i niekontrolowanych polach formularza</a>.</p>
+      <section id="default-values" class="level3">
+        <h3>Wartości domyślne</h3>
+        <p>W reactowym cyklu życia renderowania, wartość atrybutu <code>value</code> przypisanego do elementów formularza zastąpi wartość w DOM. W przypadku komponentu niekontrolowanego często zależy nam, aby to React określił wartość początkową, ale by kolejne aktualizacje pozostały niekontrolowane. Aby obsłużyć ten przypadek, zamiast atrybutu <code>value</code> można podać atrybut <code>defaultValue</code>. Warto jednak pamiętać, że zmiana wartości <code>defaultValue</code> po tym, jak komponent zostanie już zamontowany, nie będzie miała wpływu na to, co trafi do DOM.</p>
+        <pre class="language-javascript{7}"><code class="language-javascript{7}">render() {
+  return (
+    &#x3C;form onSubmit={this.handleSubmit}>
+      &#x3C;label>
+        Imię:
+        &#x3C;input
+          defaultValue="Bob"
+          type="text"
+          ref={this.input} />
+      &#x3C;/label>
+      &#x3C;input type="submit" value="Wyślij" />
+    &#x3C;/form>
+  );
+}</code></pre>
+        <p>Podobnie <code>&#x3C;input type="checkbox"></code> i <code>&#x3C;input type="radio"></code> obsługują atrybut <code>defaultChecked</code>, a <code>&#x3C;select></code> i <code>&#x3C;textarea></code> obsługują <code>defaultValue</code>.</p>
+      </section>
+      <section id="the-file-input-tag" class="level2">
+        <h2>Znacznik <code>input</code> dla plików</h2>
+        <p>W HTML-u <code>&#x3C;input type="file"></code> pozwala użytkownikowi wybrać z pamięci urządzenia jeden lub więcej plików, które mają zostać przesłane na serwer lub obsłużone przez JavaScript za pomocą <a href="https://developer.mozilla.org/en-US/docs/Web/API/File/Using_files_from_web_applications">interfejsu File API</a>.</p>
+        <pre class="language-html"><code class="language-html"><span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;</span>input</span> <span class="token attr-name">type</span><span class="token attr-value"><span class="token punctuation attr-equals">=</span><span class="token punctuation">"</span>file<span class="token punctuation">"</span></span> <span class="token punctuation">/></span></span></code></pre>
+        <p>W Reakcie <code>&#x3C;input type="file" /></code> jest zawsze komponentem niekontrolowanym, ponieważ jego wartość może ustawić tylko użytkownik - nie można jej ustawić programowo.</p>
+        <p>Do interakcji z plikami należy używać interfejsu File API. Poniższy przykład pokazuje, jak utworzyć <a href="./refs-and-the-dom.html">odwołanie do węzła DOM</a>, aby uzyskać dostęp do plików za pomocą procedury obsługi wysłania formularza:</p>
+        <p><code>embed:uncontrolled-components/input-type-file.js</code></p>
+        <p><a href="codepen://uncontrolled-components/input-type-file"></a><span style="float: footnote;"><a href="./index.html#toc">Go to TOC</a></span></p>
+      </section>
+    </section>
+  </body>
+</html>

@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8">
+    <title>The Fetch Hook</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="The fetch hook is for fetching data asynchronously. It is called on server-side when rendering the route, and on client-side when navigating.">
+    <meta name="navigation" content="[object Object]">
+    <meta name="category" content="components-glossary">
+    <link rel="stylesheet" href="https://raw.githubusercontent.com/shinokada/prism-coy-theme/main/theme_common.css">
+  </head>
+  <body>
+    <section id="the-fetch-hook" class="level1">
+      <h1>The Fetch hook</h1>
+      <p>The <code>fetch</code> hook is for fetching data asynchronously. It is called on server-side when rendering the route, and on client-side when navigating.</p>
+      <hr>
+      <section id="nuxt--212" class="level2">
+        <h2>Nuxt >= 2.12</h2>
+        <p>Nuxt <code>v2.12</code> introduces a new hook called <code>fetch</code> which you can use <strong>in any of your Vue components</strong>. Use fetch every time you need to get <strong>asynchronous</strong> data. <code>fetch</code> is called on server-side when rendering the route, and on client-side when navigating.</p>
+        <p>It exposes <code>$fetchState</code> at the component level:</p>
+        <ul>
+          <li><code>$fetchState.pending</code>: <code>Boolean</code>, allows you to display a placeholder when <code>fetch</code> is being called <em>on client-side</em>.</li>
+          <li><code>$fetchState.error</code>: <code>null</code> or <code>Error</code>, allows you to display an error message</li>
+          <li><code>$fetchState.timestamp</code>: <code>Integer</code>, is a timestamp of the last fetch, useful for caching with <code>keep-alive</code></li>
+        </ul>
+        <p>If you want to call the <code>fetch</code> hook from your template use:</p>
+        <pre class="language-html"><code class="language-html"><span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;</span>button</span> <span class="token attr-name">@click</span><span class="token attr-value"><span class="token punctuation attr-equals">=</span><span class="token punctuation">"</span>$fetch<span class="token punctuation">"</span></span><span class="token punctuation">></span></span>Refresh<span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;/</span>button</span><span class="token punctuation">></span></span></code></pre>
+        <p>or component method:</p>
+        <pre class="language-javascript"><code class="language-javascript"><span class="token comment">// from component methods in script section</span>
+<span class="token keyword module">export</span> <span class="token keyword module">default</span> <span class="token punctuation">{</span>
+  <span class="token literal-property property">methods</span><span class="token operator">:</span> <span class="token punctuation">{</span>
+    <span class="token function">refresh</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+      <span class="token keyword">this</span><span class="token punctuation">.</span><span class="token method function property-access">$fetch</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+    <span class="token punctuation">}</span>
+  <span class="token punctuation">}</span>
+<span class="token punctuation">}</span></code></pre>
+        <p>You can access the Nuxt <a href="./internals-glossary/context">context</a> within the fetch hook using <code>this.$nuxt.context</code>.</p>
+        <section id="options" class="level3">
+          <h3>Options</h3>
+          <ul>
+            <li><code>fetchOnServer</code>: <code>Boolean</code> or <code>Function</code> (default: <code>true</code>), call <code>fetch()</code> when server-rendering the page</li>
+            <li><code>fetchKey</code>: <code>String</code> or <code>Function</code> (defaults to the component scope ID or component name), a key (or a function that produces a unique key) that identifies the result of this component's fetch (available on Nuxt 2.15+) <a href="https://github.com/nuxt/nuxt.js/pull/8466">More information available in original PR</a>.</li>
+            <li><code>fetchDelay</code>: <code>Integer</code> (default: <code>200</code>), set the minimum executing time in milliseconds (to avoid quick flashes)</li>
+          </ul>
+          <p>When <code>fetchOnServer</code> is falsy (<code>false</code> or returns <code>false</code>), <code>fetch</code> will be called only on client-side and <code>$fetchState.pending</code> will return <code>true</code> when server-rendering the component.</p>
+          <pre class="language-html"><code class="language-html"><span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;</span>script</span><span class="token punctuation">></span></span><span class="token script"><span class="token language-javascript">
+  <span class="token keyword module">export</span> <span class="token keyword module">default</span> <span class="token punctuation">{</span>
+    <span class="token function">data</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+      <span class="token keyword control-flow">return</span> <span class="token punctuation">{</span>
+        <span class="token literal-property property">posts</span><span class="token operator">:</span> <span class="token punctuation">[</span><span class="token punctuation">]</span>
+      <span class="token punctuation">}</span>
+    <span class="token punctuation">}</span><span class="token punctuation">,</span>
+    <span class="token keyword">async</span> <span class="token function">fetch</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+      <span class="token keyword">this</span><span class="token punctuation">.</span><span class="token property-access">posts</span> <span class="token operator">=</span> <span class="token keyword control-flow">await</span> <span class="token keyword">this</span><span class="token punctuation">.</span><span class="token property-access">$http</span><span class="token punctuation">.</span><span class="token method function property-access">$get</span><span class="token punctuation">(</span><span class="token string">'https://api.nuxtjs.dev/posts'</span><span class="token punctuation">)</span>
+    <span class="token punctuation">}</span><span class="token punctuation">,</span>
+    <span class="token literal-property property">fetchOnServer</span><span class="token operator">:</span> <span class="token boolean">false</span><span class="token punctuation">,</span>
+    <span class="token comment">// multiple components can return the same `fetchKey` and Nuxt will track them both separately</span>
+    <span class="token literal-property property">fetchKey</span><span class="token operator">:</span> <span class="token string">'site-sidebar'</span><span class="token punctuation">,</span>
+    <span class="token comment">// alternatively, for more control, a function can be passed with access to the component instance</span>
+    <span class="token comment">// It will be called in `created` and must not depend on fetched data</span>
+    <span class="token function">fetchKey</span><span class="token punctuation">(</span><span class="token parameter">getCounter</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+      <span class="token comment">// getCounter is a method that can be called to get the next number in a sequence</span>
+      <span class="token comment">// as part of generating a unique fetchKey.</span>
+      <span class="token keyword control-flow">return</span> <span class="token keyword">this</span><span class="token punctuation">.</span><span class="token property-access">someOtherData</span> <span class="token operator">+</span> <span class="token function">getCounter</span><span class="token punctuation">(</span><span class="token string">'sidebar'</span><span class="token punctuation">)</span>
+    <span class="token punctuation">}</span>
+  <span class="token punctuation">}</span>
+</span></span><span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;/</span>script</span><span class="token punctuation">></span></span></code></pre>
+          <section id="next" class="level4">
+            <h4>Next</h4>
+            <p>For more info on the Fetch Hook checkout the <a href="./features/data-fetching">data fetching</a> chapter of our Features book</p>
+            <p><span style="float: footnote;"><a href="../index.html#toc">Go to TOC</a></span></p>
+          </section>
+        </section>
+      </section>
+    </section>
+  </body>
+</html>

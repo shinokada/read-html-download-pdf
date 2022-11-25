@@ -1,0 +1,170 @@
+<!doctype html>
+<html lang="pt-br">
+  <head>
+    <meta charset="utf-8">
+    <title>O Ciclo de Vida do Nuxt</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="Não importa qual ferramenta você use, você sempre se sentirá mais confiante quando entender como a ferramenta funciona por baixo dos panos. O mesmo se aplica ao Nuxt.">
+    <meta name="category" content="concepts">
+    <meta name="img" content="/docs/nuxt-lifecycle.svg">
+    <meta name="imgAlt" content="understanding-nuxt-2-12-lifecycle-hooks">
+    <link rel="stylesheet" href="https://raw.githubusercontent.com/shinokada/prism-coy-theme/main/theme_common.css">
+  </head>
+  <body>
+    <section id="o-ciclo-de-vida-do-nuxt" class="level1">
+      <h1>O Ciclo de Vida do Nuxt</h1>
+      <p>Não importa qual ferramenta você use, você sempre se sentirá mais confiante quando entender como a ferramenta funciona por baixo dos panos. O mesmo se aplica ao Nuxt.</p>
+      <hr>
+      <p>
+        <img src="../docs/nuxt-lifecycle.svg">
+      </p>
+      <p>O objetivo deste capítulo é dar uma visão geral das diferentes partes do framework, sua ordem de execução e como elas trabalham em conjunto.</p>
+      <p>O Ciclo de Vida do Nuxt descreve o que acontece após a fase de construção, onde sua aplicação é empacotada, fragmentada e reduzida. O que acontece após esta fase depende se você tem ou não a renderização do lado do servidor habilitada. E se você tiver, depende ainda do tipo de renderização do lado do servidor que você escolheu:</p>
+      <p>SSR Dinâmico (<code>nuxt start</code>)</p>
+      <p>ou Geração de Site Estático (<code>nuxt generate</code>)</p>
+      <section id="ciclo-de-vida" class="level2">
+        <h2>Ciclo de Vida</h2>
+        <section id="servidor" class="level3">
+          <h3>Servidor</h3>
+          <p>Para SSR, essas etapas serão executadas para cada requisição inicial ao seu aplicativo.</p>
+          <ul>
+            <li>O servidor inicia (<code>nuxt start</code>)</li>
+          </ul>
+          <p>Ao utilizar a geração de sites estáticos, os passos do servidor são executados apenas no momento da construção e uma vez para cada página que será gerada.</p>
+          <ul>
+            <li>
+              <p>O processo de geração inicia (<code>nuxt generate</code>)</p>
+            </li>
+            <li>
+              <p>Hooks do Nuxt</p>
+            </li>
+            <li>
+              <p>serverMiddleware</p>
+            </li>
+            <li>
+              <p>Módulos do lado do servidor</p>
+              <ul>
+                <li>em ordem conforme definido no <code>nuxt.config.js</code></li>
+              </ul>
+            </li>
+            <li>
+              <p>nuxtServerInit</p>
+              <ul>
+                <li>Ação Vuex que é chamada apenas no lado do servidor para pré-carregar o store</li>
+                <li>O primeiro argumento é o <strong>Contexto Vuex</strong>, o segundo argumento é o <strong>Contexto Nuxt</strong>.
+                  <ul>
+                    <li>Nós despachamos outras ações daqui → é apenas o "ponto de entrada" para outras ações no lado do servidor</li>
+                  </ul>
+                </li>
+                <li>só pode ser definido em <code>store/index.js</code></li>
+              </ul>
+            </li>
+            <li>
+              <p>Middleware</p>
+              <ul>
+                <li>Middleware Global</li>
+                <li>Middleware do Layout</li>
+                <li>Middleware de Rotas</li>
+              </ul>
+            </li>
+            <li>
+              <p>asyncData</p>
+            </li>
+            <li>
+              <p>beforeCreate (Método do ciclo de vida do Vue)</p>
+            </li>
+            <li>
+              <p>created (Método do ciclo de vida do Vue)</p>
+            </li>
+            <li>
+              <p>Um novo fetch (de cima para baixo, em paralelo se forem vizinhos)</p>
+            </li>
+            <li>
+              <p>Serialização do estado (Hook<code>render:routeContext</code> do Nuxt)</p>
+            </li>
+            <li>
+              <p>A renderização do HTML acontece (Hook <code>render:route</code> do Nuxt)</p>
+            </li>
+            <li>
+              <p>Hook <code>render:routeDone</code>, quando o HTML foi enviado para o navegador</p>
+            </li>
+            <li>
+              <p>Hook <code>generate:before</code> do Nuxt</p>
+            </li>
+            <li>
+              <p>Arquivos HTML são gerados</p>
+              <ul>
+                <li><strong>Geração estática total</strong>
+                  <ul>
+                    <li>por exemplo, payloads estáticos são extraídos</li>
+                  </ul>
+                </li>
+                <li><code>generate:page</code> (HTML editável)</li>
+                <li><code>generate:routeCreated</code> (Rota gerada)</li>
+              </ul>
+            </li>
+            <li>
+              <p><code>generate:done</code> quando todos os arquivos HTML foram gerados</p>
+            </li>
+          </ul>
+        </section>
+        <section id="cliente" class="level3">
+          <h3>Cliente</h3>
+          <p>Esta parte do ciclo de vida é totalmente executada no navegador, não importa qual modo Nuxt você tenha escolhido.</p>
+          <ul>
+            <li>Recebe o HTML</li>
+            <li>Carrega os assets (por exemplo, JavaScript)</li>
+            <li>Módulos Nuxt do lado do cliente
+              <ul>
+                <li>em ordem conforme definido no <code>nuxt.config.js</code></li>
+              </ul>
+            </li>
+            <li>Hidratação do Vue</li>
+            <li>Middleware
+              <ul>
+                <li>Middleware Global</li>
+                <li>Middleware do Layout</li>
+                <li>Middleware de Rotas</li>
+              </ul>
+            </li>
+            <li>asyncData (bloqueio)</li>
+            <li>beforeCreate (Método do ciclo de vida do Vue)</li>
+            <li>created (Método do ciclo de vida do Vue)</li>
+            <li>Um novo fetch (de cima para baixo, em paralelo se forem vizinhos) (não bloqueio)</li>
+            <li>beforeMount (Método do ciclo de vida do Vue)</li>
+            <li>mounted (Método do ciclo de vida do Vue)</li>
+          </ul>
+        </section>
+        <section id="navegar-usando-o-componente-nuxtlink" class="level3">
+          <h3>Navegar usando o componente NuxtLink</h3>
+          <p>Da mesma forma que ocorre na parte do <em>cliente</em>, tudo acontece no navegador, mas somente quando se navega via <code>&#x3C;NuxtLink></code>. Além disso, nenhum conteúdo de página é exibido até que todas as tarefas <em>bloqueio</em> sejam cumpridas.</p>
+          <section id="info" class="level4">
+            <h4>Info</h4>
+            <p>Confira o capítulo de componentes para ver mais informações sobre o <a href="./features/nuxt-components#the-nuxtlink-component"><code>&#x3C;NuxtLink></code></a></p>
+            <ul>
+              <li>middleware (bloqueio)
+                <ul>
+                  <li>Middleware Global</li>
+                  <li>Middleware do Layout</li>
+                  <li>Middleware de Rotas</li>
+                </ul>
+              </li>
+              <li>asyncData (bloqueio) ou carga útil estática total</li>
+              <li>beforeCreate &#x26; created (Método do ciclo de vida do Vue)</li>
+              <li>fetch (não bloqueio)</li>
+              <li>beforeMount &#x26; mounted</li>
+            </ul>
+          </section>
+        </section>
+        <section id="o-que-vem-a-seguir" class="level3">
+          <h3>O que vem a seguir</h3>
+          <section id="next" class="level4">
+            <h4>Next</h4>
+            <p>Confira o <a href="./features/rendering-modes">livro de características</a></p>
+            <p><span style="float: footnote;"><a href="../index.html#toc">Go to TOC</a></span></p>
+          </section>
+        </section>
+      </section>
+    </section>
+  </body>
+</html>

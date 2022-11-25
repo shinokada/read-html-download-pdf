@@ -1,0 +1,236 @@
+<!doctype html>
+<html lang="pl">
+  <head>
+    <meta charset="utf-8">
+    <title>Kontekst</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="https://raw.githubusercontent.com/shinokada/prism-coy-theme/main/theme_common.css">
+  </head>
+  <body>
+    <section id="kontekst" class="level1">
+      <h1>Kontekst</h1>
+      <p>Kontekst umożliwia przekazywanie danych wewnątrz drzewa komponentów bez konieczności przekazywania ich przez właściwości każdego komponentu pośredniego.</p>
+      <p>W typowej aplikacji reactowej dane przekazywane są z góry w dół (od rodzica do dziecka) poprzez właściwości. Może się to jednak okazać zbyt uciążliwe w przypadku niektórych danych (np. preferencje językowe, schemat UI czy paleta kolorów), z których korzystają komponenty na wielu poziomach struktury. Konteksty umożliwiają współdzielenie pewnych wartości przez takie komponenty bez konieczności przekazywania ich jako właściwości na każdym poziomie drzewa.</p>
+      <ul>
+        <li><a href="#when-to-use-context">Kiedy należy użyć kontekstu?</a></li>
+        <li><a href="#before-you-use-context">Zanim użyjesz kontekstu</a></li>
+        <li><a href="#api">Interfejs API</a>
+          <ul>
+            <li><a href="#reactcreatecontext">React.createContext</a></li>
+            <li><a href="#contextprovider">Context.Provider</a></li>
+            <li><a href="#classcontexttype">Class.contextType</a></li>
+            <li><a href="#contextconsumer">Context.Consumer</a></li>
+            <li><a href="#contextdisplayname">Context.displayName</a></li>
+          </ul>
+        </li>
+        <li><a href="#examples">Przykłady</a>
+          <ul>
+            <li><a href="#dynamic-context">Kontekst dynamiczny</a></li>
+            <li><a href="#updating-context-from-a-nested-component">Aktualizacja kontekstu z komponentu zagnieżdżonego</a></li>
+            <li><a href="#consuming-multiple-contexts">Odczyt z kilku kontekstów jednocześnie</a></li>
+          </ul>
+        </li>
+        <li><a href="#caveats">Zastrzeżenia</a></li>
+        <li><a href="#legacy-api">Przestarzały interfejs API</a></li>
+      </ul>
+      <section id="when-to-use-context" class="level2">
+        <h2>Kiedy należy użyć kontekstu?</h2>
+        <p>Konteksty zaprojektowano do współdzielenia danych, które można uznać za "globalne" dla drzewa komponentów, takich jak informacje o zalogowanym użytkowniku, schemat kolorów czy preferowany język. W poniższym przykładzie wartość <code>theme</code>, potrzebną do ostylowania przycisku, przekazujemy ręcznie:</p>
+        <p><code>embed:context/motivation-problem.js</code></p>
+        <p>Z pomocą kontekstu moglibyśmy uniknąć przekazywania jej na każdym poziomie struktury:</p>
+        <p><code>embed:context/motivation-solution.js</code></p>
+      </section>
+      <section id="before-you-use-context" class="level2">
+        <h2>Zanim użyjesz kontekstu</h2>
+        <p>Zwykle kontekstu używa się w sytuacjach, w których pewne dane muszą być dostępne dla <em>wielu</em> komponentów na różnych poziomach zagnieżdżenia. Korzystaj jednak z tego mechanizmu z rozwagą, ponieważ utrudnia on wielokrotne używanie komponentów zależnych.</p>
+        <p><strong>Jeśli twoim celem jest wyłącznie uniknięcie przekazywania wartości przez kilka poziomów drzewa, zwykle łatwiejszym i lepszym rozwiązaniem okazuje się <a href="./composition-vs-inheritance.html">kompozycja komponentów</a>.</strong></p>
+        <p>Rozważmy komponent <code>Page</code>, który musi przekazać właściwości <code>user</code> oraz <code>avatarSize</code> kilka poziomów w dół, tak aby głęboko zagnieżdżone komponenty <code>Link</code> i <code>Avatar</code> mogły je odczytać:</p>
+        <pre class="language-js"><code class="language-js"><span class="token operator">&#x3C;</span><span class="token maybe-class-name">Page</span> user<span class="token operator">=</span><span class="token punctuation">{</span>user<span class="token punctuation">}</span> avatarSize<span class="token operator">=</span><span class="token punctuation">{</span>avatarSize<span class="token punctuation">}</span> <span class="token operator">/</span><span class="token operator">></span>
+<span class="token comment">// ... który renderuje...</span>
+<span class="token operator">&#x3C;</span><span class="token maybe-class-name">PageLayout</span> user<span class="token operator">=</span><span class="token punctuation">{</span>user<span class="token punctuation">}</span> avatarSize<span class="token operator">=</span><span class="token punctuation">{</span>avatarSize<span class="token punctuation">}</span> <span class="token operator">/</span><span class="token operator">></span>
+<span class="token comment">// ... który renderuje...</span>
+<span class="token operator">&#x3C;</span><span class="token maybe-class-name">NavigationBar</span> user<span class="token operator">=</span><span class="token punctuation">{</span>user<span class="token punctuation">}</span> avatarSize<span class="token operator">=</span><span class="token punctuation">{</span>avatarSize<span class="token punctuation">}</span> <span class="token operator">/</span><span class="token operator">></span>
+<span class="token comment">// ... który renderuje...</span>
+<span class="token operator">&#x3C;</span><span class="token maybe-class-name">Link</span> href<span class="token operator">=</span><span class="token punctuation">{</span>user<span class="token punctuation">.</span><span class="token property-access">permalink</span><span class="token punctuation">}</span><span class="token operator">></span>
+  <span class="token operator">&#x3C;</span><span class="token maybe-class-name">Avatar</span> user<span class="token operator">=</span><span class="token punctuation">{</span>user<span class="token punctuation">}</span> size<span class="token operator">=</span><span class="token punctuation">{</span>avatarSize<span class="token punctuation">}</span> <span class="token operator">/</span><span class="token operator">></span>
+<span class="token operator">&#x3C;</span><span class="token operator">/</span><span class="token maybe-class-name">Link</span><span class="token operator">></span></code></pre>
+        <p>Przekazywanie tych wartości przez tyle poziomów, tylko po to by mógł je odczytać <code>Avatar</code>, wydaje się lekką przesadą. Dodatkowo, gdyby <code>Avatar</code> w pewnym momencie zaczął wymagać jeszcze jednej wartości z góry, należałoby ją również przekazać przez te wszystkie poziomy.</p>
+        <p>Jednym z rozwiązań tego problemu <strong>bez używania kontekstów</strong> jest <a href="./composition-vs-inheritance.html#containment">przekazanie w dół samego komponentu <code>Avatar</code></a>, dzięki czemu komponenty pośrednie nie muszą niczego wiedzieć o właściwościach <code>user</code> czy <code>avatarSize</code>:</p>
+        <pre class="language-js"><code class="language-js"><span class="token keyword">function</span> <span class="token function"><span class="token maybe-class-name">Page</span></span><span class="token punctuation">(</span><span class="token parameter">props</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  <span class="token keyword">const</span> user <span class="token operator">=</span> props<span class="token punctuation">.</span><span class="token property-access">user</span><span class="token punctuation">;</span>
+  <span class="token keyword">const</span> userLink <span class="token operator">=</span> <span class="token punctuation">(</span>
+    <span class="token operator">&#x3C;</span><span class="token maybe-class-name">Link</span> href<span class="token operator">=</span><span class="token punctuation">{</span>user<span class="token punctuation">.</span><span class="token property-access">permalink</span><span class="token punctuation">}</span><span class="token operator">></span>
+      <span class="token operator">&#x3C;</span><span class="token maybe-class-name">Avatar</span> user<span class="token operator">=</span><span class="token punctuation">{</span>user<span class="token punctuation">}</span> size<span class="token operator">=</span><span class="token punctuation">{</span>props<span class="token punctuation">.</span><span class="token property-access">avatarSize</span><span class="token punctuation">}</span> <span class="token operator">/</span><span class="token operator">></span>
+    <span class="token operator">&#x3C;</span><span class="token operator">/</span><span class="token maybe-class-name">Link</span><span class="token operator">></span>
+  <span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token keyword control-flow">return</span> <span class="token operator">&#x3C;</span><span class="token maybe-class-name">PageLayout</span> userLink<span class="token operator">=</span><span class="token punctuation">{</span>userLink<span class="token punctuation">}</span> <span class="token operator">/</span><span class="token operator">></span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+
+<span class="token comment">// Teraz mamy:</span>
+<span class="token operator">&#x3C;</span><span class="token maybe-class-name">Page</span> user<span class="token operator">=</span><span class="token punctuation">{</span>user<span class="token punctuation">}</span> avatarSize<span class="token operator">=</span><span class="token punctuation">{</span>avatarSize<span class="token punctuation">}</span> <span class="token operator">/</span><span class="token operator">></span>
+<span class="token comment">// ... który renderuje...</span>
+<span class="token operator">&#x3C;</span><span class="token maybe-class-name">PageLayout</span> userLink<span class="token operator">=</span><span class="token punctuation">{</span><span class="token spread operator">...</span><span class="token punctuation">}</span> <span class="token operator">/</span><span class="token operator">></span>
+<span class="token comment">// ... który renderuje...</span>
+<span class="token operator">&#x3C;</span><span class="token maybe-class-name">NavigationBar</span> userLink<span class="token operator">=</span><span class="token punctuation">{</span><span class="token spread operator">...</span><span class="token punctuation">}</span> <span class="token operator">/</span><span class="token operator">></span>
+<span class="token comment">// ... który renderuje...</span>
+<span class="token punctuation">{</span>props<span class="token punctuation">.</span><span class="token property-access">userLink</span><span class="token punctuation">}</span></code></pre>
+        <p>Dzięki takiej zmianie tylko komponent <code>Page</code>, znajdujący się najwyżej w hierarchii, musi wiedzieć o tym, że <code>Link</code> i <code>Avatar</code> zależą od wartości <code>user</code> i <code>avatarSize</code>.</p>
+        <p>Takie "odwrócenie sterowania" (ang. <em>inversion of control</em>) sprawia, że kod staje się czytelniejszy poprzez zmniejszenie liczby wartości przeplecionych przez strukturę aplikacji, jak również daje większą kontrolę komponentom znajdującym się wysoko w hierarchii. Należy jednak pamiętać, że to podejście nie zawsze jest najlepszym rozwiązaniem. Przeniesienie złożoności w górę hierarchii sprawia, że komponenty na górze stają się bardziej złożone, a także wymusza często nadmierną elastyczność na komponentach poniżej.</p>
+        <p>Warto zwrócić uwagę, że dany komponent nie jest ograniczony do posiadania tylko jednego potomka. Poprzez właściwości do komponentu możemy przekazać wielu potomków naraz lub stworzyć kilka oddzielnych "slotów" dla poszczególnych potomków, <a href="./composition-vs-inheritance.html#containment">jak opisano to w tym rozdziale</a>:</p>
+        <pre class="language-js"><code class="language-js"><span class="token keyword">function</span> <span class="token function"><span class="token maybe-class-name">Page</span></span><span class="token punctuation">(</span><span class="token parameter">props</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  <span class="token keyword">const</span> user <span class="token operator">=</span> props<span class="token punctuation">.</span><span class="token property-access">user</span><span class="token punctuation">;</span>
+  <span class="token keyword">const</span> content <span class="token operator">=</span> <span class="token operator">&#x3C;</span><span class="token maybe-class-name">Feed</span> user<span class="token operator">=</span><span class="token punctuation">{</span>user<span class="token punctuation">}</span> <span class="token operator">/</span><span class="token operator">></span><span class="token punctuation">;</span>
+  <span class="token keyword">const</span> topBar <span class="token operator">=</span> <span class="token punctuation">(</span>
+    <span class="token operator">&#x3C;</span><span class="token maybe-class-name">NavigationBar</span><span class="token operator">></span>
+      <span class="token operator">&#x3C;</span><span class="token maybe-class-name">Link</span> href<span class="token operator">=</span><span class="token punctuation">{</span>user<span class="token punctuation">.</span><span class="token property-access">permalink</span><span class="token punctuation">}</span><span class="token operator">></span>
+        <span class="token operator">&#x3C;</span><span class="token maybe-class-name">Avatar</span> user<span class="token operator">=</span><span class="token punctuation">{</span>user<span class="token punctuation">}</span> size<span class="token operator">=</span><span class="token punctuation">{</span>props<span class="token punctuation">.</span><span class="token property-access">avatarSize</span><span class="token punctuation">}</span> <span class="token operator">/</span><span class="token operator">></span>
+      <span class="token operator">&#x3C;</span><span class="token operator">/</span><span class="token maybe-class-name">Link</span><span class="token operator">></span>
+    <span class="token operator">&#x3C;</span><span class="token operator">/</span><span class="token maybe-class-name">NavigationBar</span><span class="token operator">></span>
+  <span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token keyword control-flow">return</span> <span class="token punctuation">(</span>
+    <span class="token operator">&#x3C;</span><span class="token maybe-class-name">PageLayout</span>
+      topBar<span class="token operator">=</span><span class="token punctuation">{</span>topBar<span class="token punctuation">}</span>
+      content<span class="token operator">=</span><span class="token punctuation">{</span>content<span class="token punctuation">}</span>
+    <span class="token operator">/</span><span class="token operator">></span>
+  <span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span></code></pre>
+        <p>Takie podejście jest wystarczające w większości przypadków, gdy pojawia się konieczność oddzielenia potomka od jego bezpośrednich przodków. Można pójść jeszcze o krok dalej i skorzystać z wzorca <a href="./render-props.html">właściwości renderujących (ang. <em>render props</em>)</a>, jeśli chcemy, by potomek przed wyrenderowaniem mógł skomunikować się z rodzicem.</p>
+        <p>Czasami jednak te same dane muszą być dostępne dla wielu komponentów w drzewie, na wielu różnych poziomach struktury. Konteksty pozwalają na "rozgłoszenie" (ang. <em>broadcast</em>) zarówno samych danych, jak i wszelkich ich modyfikacji, do komponentów znajdujących się poniżej w hierarchii. Używanie kontekstów, zamiast pozostałych wzorców, zwykle sprawdza się przy zarządzaniu aktualnym językiem lub motywem, a także przy przechowywaniu danych we wspólnej pamięci podręcznej.</p>
+      </section>
+      <section id="api" class="level2">
+        <h2>Interfejs API</h2>
+        <section id="reactcreatecontext-reactcreatecontext" class="level3">
+          <h3><code>React.createContext</code> {#reactcreatecontext}</h3>
+          <pre class="language-js"><code class="language-js"><span class="token keyword">const</span> <span class="token maybe-class-name">MyContext</span> <span class="token operator">=</span> <span class="token maybe-class-name">React</span><span class="token punctuation">.</span><span class="token method function property-access">createContext</span><span class="token punctuation">(</span>defaultValue<span class="token punctuation">)</span><span class="token punctuation">;</span></code></pre>
+          <p>Tworzy obiekt kontekstu. Gdy React renderuje komponent, który zasubskrybował się do tego kontekstu, będzie przekazywać mu aktualną wartość z najbliższego "dostawcy" (<code>Provider</code>) powyżej w drzewie.</p>
+          <p>Argument <code>defaultValue</code> jest używany <strong>tylko</strong> gdy komponent odczytujący z kontekstu nie ma nad sobą żadnego dostawcy. Przydaje się on podczas testowania komponentów w izolacji, ponieważ nie ma konieczności opakowywania ich w sztucznych dostawców. Uwaga: przekazanie dostawcy wartości <code>undefined</code> nie spowoduje, że zasubskrybowane komponenty otrzymają wartość z argumentu <code>defaultValue</code>.</p>
+        </section>
+        <section id="contextprovider-contextprovider" class="level3">
+          <h3><code>Context.Provider</code> {#contextprovider}</h3>
+          <pre class="language-js"><code class="language-js"><span class="token operator">&#x3C;</span><span class="token maybe-class-name">MyContext</span><span class="token punctuation">.</span><span class="token property-access"><span class="token maybe-class-name">Provider</span></span> value<span class="token operator">=</span><span class="token punctuation">{</span><span class="token comment">/* jakaś wartość */</span><span class="token punctuation">}</span><span class="token operator">></span></code></pre>
+          <p>Każdy obiekt kontekstu posiada własny komponent dostawcy (ang. <em>provider</em>), który pozwala komponentom odczytującym na zasubskrybowanie się na zmiany w tym kontekście.</p>
+          <p>Wartość przekazana przez dostawcę we właściwości <code>value</code> będzie trafiała do "konsumentów" (ang. <em>consumer</em>) tego kontekstu znajdujących się poniżej w drzewie. Jeden dostawca może być połączony z wieloma konsumentami. Zagnieżdżanie dostawców jeden pod drugim powoduje nadpisanie wartości kontekstu w danym poddrzewie.</p>
+          <p>Wszyscy konsumenci znajdujący się poniżej dostawcy będą ponownie renderowani przy każdej zmianie właściwości <code>value</code>. Propagacja od dostawcy do jego podległych konsumentów (wliczając w to <a href="#classcontexttype"><code>.contextType</code></a> i <a href="./hooks-reference.html#usecontext"><code>useContext</code></a>) nie jest brana pod uwagę przez metodę <code>shouldComponentUpdate</code>, a co za tym idzie, konsumenci będą renderowani ponownie nawet jeśli ich przodkowie nie zostali przerenderowani.</p>
+          <p>Zmiany są wykrywane poprzez porównanie starej i nowej wartości przy użyciu algorytmu podobnego do <a href="//developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object/is#Description"><code>Object.is</code></a>.</p>
+          <blockquote>
+            <p>Uwaga</p>
+            <p>Sposób, w jaki wykrywane są zmiany, może powodować problemy przy przekazywaniu do <code>value</code> obiektów (zob. <a href="#caveats">"Zastrzeżenia"</a>).</p>
+          </blockquote>
+        </section>
+        <section id="classcontexttype-classcontexttype" class="level3">
+          <h3><code>Class.contextType</code> {#classcontexttype}</h3>
+          <pre class="language-js"><code class="language-js"><span class="token keyword">class</span> <span class="token class-name">MyClass</span> <span class="token keyword">extends</span> <span class="token class-name">React<span class="token punctuation">.</span>Component</span> <span class="token punctuation">{</span>
+  <span class="token function">componentDidMount</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token keyword">let</span> value <span class="token operator">=</span> <span class="token keyword">this</span><span class="token punctuation">.</span><span class="token property-access">context</span><span class="token punctuation">;</span>
+    <span class="token comment">/* wykonaj akcję podczas montowania z użyciem aktualnej wartości z MyContext */</span>
+  <span class="token punctuation">}</span>
+  <span class="token function">componentDidUpdate</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token keyword">let</span> value <span class="token operator">=</span> <span class="token keyword">this</span><span class="token punctuation">.</span><span class="token property-access">context</span><span class="token punctuation">;</span>
+    <span class="token comment">/* ... */</span>
+  <span class="token punctuation">}</span>
+  <span class="token function">componentWillUnmount</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token keyword">let</span> value <span class="token operator">=</span> <span class="token keyword">this</span><span class="token punctuation">.</span><span class="token property-access">context</span><span class="token punctuation">;</span>
+    <span class="token comment">/* ... */</span>
+  <span class="token punctuation">}</span>
+  <span class="token function">render</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token keyword">let</span> value <span class="token operator">=</span> <span class="token keyword">this</span><span class="token punctuation">.</span><span class="token property-access">context</span><span class="token punctuation">;</span>
+    <span class="token comment">/* wyrenderuj coś przy użyciu aktualnej wartości z MyContext */</span>
+  <span class="token punctuation">}</span>
+<span class="token punctuation">}</span>
+<span class="token maybe-class-name">MyClass</span><span class="token punctuation">.</span><span class="token property-access">contextType</span> <span class="token operator">=</span> <span class="token maybe-class-name">MyContext</span><span class="token punctuation">;</span></code></pre>
+          <p>Do właściwości <code>contextType</code> w komponencie klasowym można przypisać obiekt kontekstu utworzony przy pomocy funkcji <a href="#reactcreatecontext"><code>React.createContext()</code></a>. Dzięki niej wartość najbliższego kontekstu tego typu będzie dostępna pod zmienną <code>this.context</code>. Możesz odwoływać się do tej wartości w każdej z metod cyklu życia komponentu, łącznie z metodą renderującą.</p>
+          <blockquote>
+            <p>Uwaga:</p>
+            <p>Za pomocą tego interfejsu można zasubskrybować się tylko do jednego kontekstu. Jeśli chcesz połączyć się z wieloma kontekstami, zajrzyj do sekcji pt. <a href="#consuming-multiple-contexts">"Odczyt z kilku kontekstów jednocześnie"</a>.</p>
+            <p>Jeśli korzystasz z eksperymentalnej <a href="https://babeljs.io/docs/plugins/transform-class-properties/">składni publicznych pól klasy</a>, do inicjalizacji <code>contextType</code> możesz użyć pola statycznego, oznaczonego przez <strong>static</strong>.</p>
+          </blockquote>
+          <pre class="language-js"><code class="language-js"><span class="token keyword">class</span> <span class="token class-name">MyClass</span> <span class="token keyword">extends</span> <span class="token class-name">React<span class="token punctuation">.</span>Component</span> <span class="token punctuation">{</span>
+  <span class="token keyword">static</span> contextType <span class="token operator">=</span> <span class="token maybe-class-name">MyContext</span><span class="token punctuation">;</span>
+  <span class="token function">render</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token keyword">let</span> value <span class="token operator">=</span> <span class="token keyword">this</span><span class="token punctuation">.</span><span class="token property-access">context</span><span class="token punctuation">;</span>
+    <span class="token comment">/* wyrenderuj coś na podstawie aktualnej wartości */</span>
+  <span class="token punctuation">}</span>
+<span class="token punctuation">}</span></code></pre>
+        </section>
+        <section id="contextconsumer-contextconsumer" class="level3">
+          <h3><code>Context.Consumer</code> {#contextconsumer}</h3>
+          <pre class="language-js"><code class="language-js"><span class="token operator">&#x3C;</span><span class="token maybe-class-name">MyContext</span><span class="token punctuation">.</span><span class="token property-access"><span class="token maybe-class-name">Consumer</span></span><span class="token operator">></span>
+  <span class="token punctuation">{</span><span class="token parameter">value</span> <span class="token arrow operator">=></span> <span class="token comment">/* wyrenderuj coś na podstawie wartości z kontekstu */</span><span class="token punctuation">}</span>
+<span class="token operator">&#x3C;</span><span class="token operator">/</span><span class="token maybe-class-name">MyContext</span><span class="token punctuation">.</span><span class="token property-access"><span class="token maybe-class-name">Consumer</span></span><span class="token operator">></span></code></pre>
+          <p>Komponent reactowy, który subskrybuje się na zmiany w kontekście. Pozwala na nasłuchiwanie zmian z wnętrza <a href="./components-and-props.html#function-and-class-components">komponentu funkcyjnego</a>.</p>
+          <p>Jego <a href="./render-props.html#using-props-other-than-render">potomkiem musi być funkcja</a>. Funkcja ta otrzymuje aktualną wartość z kontekstu i zwraca węzeł reactowy. Argument <code>value</code> przekazany do tej funkcji będzie równy właściwości <code>value</code> najbliższego dostawcy tego kontekstu powyżej w drzewie. Jeśli ponad komponentem nie ma żadnego dostawcy, zostanie użyta wartość <code>defaultValue</code> przekazana do <code>createContext()</code>.</p>
+          <blockquote>
+            <p>Uwaga</p>
+            <p>Aby dowiedzieć się więcej na temat wzorca "funkcji przekazanej jako potomek", zajrzyj do rozdziału o <a href="./render-props.html">właściwościach renderujących</a>.</p>
+          </blockquote>
+        </section>
+        <section id="contextdisplayname-contextdisplayname" class="level3">
+          <h3><code>Context.displayName</code> {#contextdisplayname}</h3>
+          <p>Obiekt kontekstu przyjmuje atrybut tekstowy <code>displayName</code>. Jest on używany przez React DevTools do wyświetlenia nazwy kontekstu.</p>
+          <p>Na przykład, poniższy komponent wyświetli się w narzędziach deweloperskich jako "MyDisplayName":</p>
+          <pre class="language-js{2}"><code class="language-js{2}">const MyContext = React.createContext(/* jakaś wartość */);
+MyContext.displayName = 'MyDisplayName';
+
+&#x3C;MyContext.Provider> // "MyDisplayName.Provider" w DevTools
+&#x3C;MyContext.Consumer> // "MyDisplayName.Consumer" w DevTools</code></pre>
+        </section>
+      </section>
+      <section id="examples" class="level2">
+        <h2>Przykłady</h2>
+        <section id="dynamic-context" class="level3">
+          <h3>Kontekst dynamiczny</h3>
+          <p>Bardziej złożony przykład korzystający z dynamicznej wartości dla motywu:</p>
+          <p>
+            <strong>theme-context.js</strong>
+            <code>embed:context/theme-detailed-theme-context.js</code>
+          </p>
+          <p>
+            <strong>themed-button.js</strong>
+            <code>embed:context/theme-detailed-themed-button.js</code>
+          </p>
+          <p>
+            <strong>app.js</strong>
+            <code>embed:context/theme-detailed-app.js</code>
+          </p>
+        </section>
+        <section id="updating-context-from-a-nested-component" class="level3">
+          <h3>Aktualizacja kontekstu z komponentu zagnieżdżonego</h3>
+          <p>Często pojawia się potrzeba zaktualizowania kontekstu z komponentu znajdującego się gdzieś głęboko w drzewie. W takim wypadku należy przez kontekst przekazać funkcję, za pomocą której konsumenci będą mogli go aktualizować:</p>
+          <p>
+            <strong>theme-context.js</strong>
+            <code>embed:context/updating-nested-context-context.js</code>
+          </p>
+          <p>
+            <strong>theme-toggler-button.js</strong>
+            <code>embed:context/updating-nested-context-theme-toggler-button.js</code>
+          </p>
+          <p>
+            <strong>app.js</strong>
+            <code>embed:context/updating-nested-context-app.js</code>
+          </p>
+        </section>
+        <section id="consuming-multiple-contexts" class="level3">
+          <h3>Odczyt z kilku kontekstów jednocześnie</h3>
+          <p>Aby zapewnić szybkość ponownego renderowania kontekstu, React musi stworzyć w drzewie osobny węzeł dla każdego konsumenta.</p>
+          <p><code>embed:context/multiple-contexts.js</code></p>
+          <p>Jeśli często używasz dwóch lub więcej wartości z różnych kontekstów, sugerujemy stworzyć oddzielny komponent z właściwością renderującą (ang. <em>render prop</em>), który dostarcza je wszystkie.</p>
+        </section>
+      </section>
+      <section id="caveats" class="level2">
+        <h2>Zastrzeżenia</h2>
+        <p>Kontekst podczas decydowania, co należy ponownie wyrenderować, sprawdza tożsamość referencji. Z tego powodu w niektórych przypadkach ponowne wyrenderowanie rodzica dostawcy kontekstu może skutkować niechcianym powtórnym wyrenderowaniem wszystkich konsumentów danego kontekstu. W poniższym przykładzie dzieje się tak, ponieważ obiekt przekazywany do właściwości <code>value</code> dla dostawcy kontekstu jest za każdym razem tworzony na nowo:</p>
+        <p><code>embed:context/reference-caveats-problem.js</code></p>
+        <p>Aby temu zapobiec, wystarczy przenieść tę wartość do stanu rodzica:</p>
+        <p><code>embed:context/reference-caveats-solution.js</code></p>
+      </section>
+      <section id="legacy-api" class="level2">
+        <h2>Przestarzały interfejs API</h2>
+        <blockquote>
+          <p>Uwaga</p>
+          <p>React poprzednio był wyposażony w eksperymentalny interfejs API dla kontekstów. Mimo iż jest on przestarzały, będzie wspierany we wszystkich wersjach 16.x, jednak aplikacje powinny dążyć do migracji na nową wersję. Przestarzały interfejs zostanie usunięty w kolejnej głównej wersji Reacta. Aby dowiedzieć się więcej na ten temat, <a href="./legacy-context.html">przeczytaj dokumentację przestarzałego kontekstu</a>.</p>
+        </blockquote>
+        <p><span style="float: footnote;"><a href="./index.html#toc">Go to TOC</a></span></p>
+      </section>
+    </section>
+  </body>
+</html>

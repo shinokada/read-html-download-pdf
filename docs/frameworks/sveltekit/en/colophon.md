@@ -6,7 +6,7 @@ This book is created by using the following sources:
 
 - Sveltekit - English
 - GitHub source: sveltejs/kit/documentation
-- Created: 2022-11-25
+- Created: 2022-11-26
 - Bash v5.2.2
 - Vivliostyle, https://vivliostyle.org/
 - By: @shinokada

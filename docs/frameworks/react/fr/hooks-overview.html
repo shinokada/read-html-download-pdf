@@ -1,0 +1,227 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="utf-8">
+    <title>Aperçu des Hooks</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="https://raw.githubusercontent.com/shinokada/prism-coy-theme/main/theme_common.css">
+  </head>
+  <body>
+    <section id="aperçu-des-hooks" class="level1">
+      <h1>Aperçu des Hooks</h1>
+      <p>Les <em>Hooks</em> sont une nouveauté de React 16.8. Ils permettent de bénéficier d’un état local et d'autres fonctionnalités de React sans avoir à écrire de classes.</p>
+      <p>Les Hooks sont <a href="./hooks-intro.html#no-breaking-changes">rétro-compatibles</a>. Cette page fournit un survol des Hooks pour les utilisateurs expérimentés de React. C'est un tour d’horizon rapide. Si vous trouvez le contenu déroutant, cherchez un panneau jaune comme celui-ci :</p>
+      <blockquote>
+        <p>Explication détaillée</p>
+        <p>Lisez les <a href="./hooks-intro.html#motivation">raisons</a> qui nous ont fait ajouter les Hooks à React.</p>
+      </blockquote>
+      <p><strong>↑↑↑ Chaque section se termine par un panneau jaune comme celui ci.</strong> Ils pointent vers une documentation détaillée.</p>
+      <section id="state-hook" class="level2">
+        <h2>📌 Hook d’état</h2>
+        <p>Cet exemple affiche un compteur. Quand vous cliquez sur le bouton, la valeur augmente :</p>
+        <pre class="language-js{1,4,5}"><code class="language-js{1,4,5}">import React, { useState } from 'react';
+
+function Example() {
+  // Déclaration d'une nouvelle variable d'état, que l'on appellera “count”
+  const [count, setCount] = useState(0);
+
+  return (
+    &#x3C;div>
+      &#x3C;p>Vous avez cliqué {count} fois&#x3C;/p>
+      &#x3C;button onClick={() => setCount(count + 1)}>
+        Cliquez ici
+      &#x3C;/button>
+    &#x3C;/div>
+  );
+}</code></pre>
+        <p>Dans le code ci-dessus, <code>useState</code> est un <em>Hook</em> (nous verrons ce que ça veut dire dans un instant). Nous l'appelons au sein d’une fonction composant pour y ajouter un état local. React va préserver cet état d’un affichage à l’autre. <code>useState</code> retourne une paire : la valeur de l'état <em>actuel</em> et une fonction qui vous permet de la mettre à jour. Vous pouvez appeler cette fonction depuis un gestionnaire d'événements, par exemple. Elle est similaire à <code>this.setState</code> dans une classe, à ceci près qu’elle ne fusionne pas l'ancien état et le nouveau. (Nous verrons un exemple de comparaison entre <code>useState</code> et <code>this.state</code> dans <a href="./hooks-state.html">Utiliser le Hook d'état</a>.)</p>
+        <p>Le seul argument de <code>useState</code> est l'état initial. Dans l'exemple précédent, c'est <code>0</code> puisque notre compteur démarre à zéro. Remarquez que contrairement à <code>this.state</code>, ici l'état n'est pas nécessairement un objet, même si ça reste possible. L'argument d'état initial n’est utilisé que pour le premier affichage.</p>
+        <section id="declaring-multiple-state-variables" class="level4">
+          <h4>Déclarer plusieurs variables d’état</h4>
+          <p>Vous pouvez utiliser le Hook d'état plus d'une fois dans un seul composant :</p>
+          <pre class="language-js"><code class="language-js"><span class="token keyword">function</span> <span class="token function"><span class="token maybe-class-name">ExampleWithManyStates</span></span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  <span class="token comment">// Déclaration de multiples variables d'état !</span>
+  <span class="token keyword">const</span> <span class="token punctuation">[</span>age<span class="token punctuation">,</span> setAge<span class="token punctuation">]</span> <span class="token operator">=</span> <span class="token function">useState</span><span class="token punctuation">(</span><span class="token number">42</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token keyword">const</span> <span class="token punctuation">[</span>fruit<span class="token punctuation">,</span> setFruit<span class="token punctuation">]</span> <span class="token operator">=</span> <span class="token function">useState</span><span class="token punctuation">(</span><span class="token string">'banane'</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token keyword">const</span> <span class="token punctuation">[</span>todos<span class="token punctuation">,</span> setTodos<span class="token punctuation">]</span> <span class="token operator">=</span> <span class="token function">useState</span><span class="token punctuation">(</span><span class="token punctuation">[</span><span class="token punctuation">{</span> <span class="token literal-property property">text</span><span class="token operator">:</span> <span class="token string">'Apprendre les Hooks'</span> <span class="token punctuation">}</span><span class="token punctuation">]</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token comment">// ...</span>
+<span class="token punctuation">}</span></code></pre>
+          <p>La syntaxe de la <a href="https://developer.mozilla.org/fr/docs/Web/JavaScript/Reference/Op%C3%A9rateurs/Affecter_par_d%C3%A9composition#D%C3%A9composition_d&#x27;un_tableau">déstructuration positionnelle</a> nous permet de donner des noms distincts aux variables d'état que nous déclarons en appelant <code>useState</code>. Ces noms ne font pas partie de l'API <code>useState</code>. Au lieu de ça, React suppose que si vous appelez <code>useState</code> plusieurs fois, vous le faites dans le même ordre à chaque affichage. Nous reviendrons plus tard sur ce qui fait que ça fonctionne et les situations où c'est utile.</p>
+        </section>
+        <section id="but-what-is-a-hook" class="level4">
+          <h4>Mais qu'est ce qu'un Hook ?</h4>
+          <p>Les Hooks sont des fonctions qui permettent de « se brancher » sur la gestion d’état local et de cycle de vie de React depuis des fonctions composants. Les Hooks ne fonctionnent pas dans des classes : ils vous permettent d'utiliser React sans classes. (Nous <a href="./hooks-intro.html#gradual-adoption-strategy">ne recommandons pas</a> de ré-écrire vos composants existants du jour au lendemain, mais vous pouvez si vous le souhaitez commencer à utiliser les Hooks dans vos nouveaux composants.)</p>
+          <p>React fournit quelques Hooks prédéfinis comme <code>useState</code>. Vous pouvez aussi créer vos propres Hooks pour réutiliser un comportement à état dans différents composants. Dans un premier temps, nous allons aborder les Hooks prédéfinis.</p>
+          <blockquote>
+            <p>Explication détaillée</p>
+            <p>Vous pouvez en apprendre davantage sur le Hook d'état sur la page dédiée : <a href="./hooks-state.html">Utiliser le Hook d'état</a>.</p>
+          </blockquote>
+        </section>
+      </section>
+      <section id="effect-hook" class="level2">
+        <h2>⚡️ Hook d’effet</h2>
+        <p>Vous avez surement déjà réalisé un chargement de données distantes, des abonnements ou des modifications manuelles sur le DOM depuis un composant React. Nous appelons ces opérations « effets de bord » (ou effets pour faire court) parce qu'elles peuvent affecter d'autres composants et ne peuvent être réalisées pendant l'affichage.</p>
+        <p>Le Hook d'effet, <code>useEffect</code>, permet aux fonctions composants de gérer des effets de bord. Il joue le même rôle que <code>componentDidMount</code>, <code>componentDidUpdate</code>, et <code>componentWillUnmount</code> dans les classes React, mais au travers d’une API unique. (Nous verrons des exemples comparant <code>useEffect</code> à ces méthodes dans <a href="./hooks-effect.html">Utiliser le Hook d'effet </a>.)</p>
+        <p>Par exemple, ce composant change le titre du document après que React a mis à jour le DOM :</p>
+        <pre class="language-js{1,6-10}"><code class="language-js{1,6-10}">import React, { useState, useEffect } from 'react';
+
+function Example() {
+  const [count, setCount] = useState(0);
+
+  // Équivalent à componentDidMount plus componentDidUpdate :
+  useEffect(() => {
+    // Mettre à jour le titre du document en utilisant l'API du navigateur
+    document.title = `Vous avez cliqué ${count} fois`;
+  });
+
+  return (
+    &#x3C;div>
+      &#x3C;p>Vous avez cliqué {count} fois&#x3C;/p>
+      &#x3C;button onClick={() => setCount(count + 1)}>
+        Cliquez ici
+      &#x3C;/button>
+    &#x3C;/div>
+  );
+}</code></pre>
+        <p>Lorsque vous appelez <code>useEffect</code>, vous dites à React de lancer votre fonction d'« effet » après qu’il a mis à jour le DOM. Les effets étant déclarés au sein du composant, ils ont accès à ses props et son état. Par défaut, React exécute les effets après chaque affichage, <em>y compris</em> le premier. (Nous aborderons plus en détails la comparaison avec le cycle de vie des classes dans <a href="./hooks-effect.html">Utiliser le Hook d'effet</a>.)</p>
+        <p>Les effets peuvent aussi préciser comment les « nettoyer » en renvoyant une fonction. Par exemple, ce composant utilise un effet pour s’abonner au statut de connexion d'un ami, et se nettoie en résiliant l’abonnement :</p>
+        <pre class="language-js{10-16}"><code class="language-js{10-16}">import React, { useState, useEffect } from 'react';
+
+function FriendStatus(props) {
+  const [isOnline, setIsOnline] = useState(null);
+
+  function handleStatusChange(status) {
+    setIsOnline(status.isOnline);
+  }
+
+  useEffect(() => {
+    ChatAPI.subscribeToFriendStatus(props.friend.id, handleStatusChange);
+
+    return () => {
+      ChatAPI.unsubscribeFromFriendStatus(props.friend.id, handleStatusChange);
+    };
+  });
+
+  if (isOnline === null) {
+    return 'Chargement...';
+  }
+  return isOnline ? 'En ligne' : 'Hors-ligne';
+}</code></pre>
+        <p>Dans cet exemple, React nous désabonnerait de notre <code>ChatAPI</code> quand le composant est démonté, mais aussi juste avant de relancer l’effet suite à un nouvel affichage. (Le cas échéant, vous pouvez <a href="./hooks-effect.html#tip-optimizing-performance-by-skipping-effects">dire à React de sauter le ré-abonnement</a> si la <code>props.friend.id</code> passée à <code>ChatAPI</code> n'a pas changé.)</p>
+        <p>Tout comme avec <code>useState</code>, vous pouvez utiliser plus d'un seul effet dans un composant :</p>
+        <pre class="language-js{3,8}"><code class="language-js{3,8}">function FriendStatusWithCounter(props) {
+  const [count, setCount] = useState(0);
+  useEffect(() => {
+    document.title = `Vous avez cliqué ${count} fois`;
+  });
+
+  const [isOnline, setIsOnline] = useState(null);
+  useEffect(() => {
+    ChatAPI.subscribeToFriendStatus(props.friend.id, handleStatusChange);
+    return () => {
+      ChatAPI.unsubscribeFromFriendStatus(props.friend.id, handleStatusChange);
+    };
+  });
+
+  function handleStatusChange(status) {
+    setIsOnline(status.isOnline);
+  }
+  // ...</code></pre>
+        <p>Les Hooks vous permettent d'organiser les effets de bord dans un composant en rassemblant leurs parties (telles que l’abonnement et le désabonnement), plutôt que de vous forcer à les répartir dans les méthodes de cycle de vie.</p>
+        <blockquote>
+          <p>Explication détaillée</p>
+          <p>Vous pouvez en apprendre davantage sur <code>useEffect</code> sur la page dédiée : <a href="./hooks-effect.html">Utiliser le Hook d’effet</a>.</p>
+        </blockquote>
+      </section>
+      <section id="rules-of-hooks" class="level2">
+        <h2>✌️ Règles des Hooks</h2>
+        <p>Les Hooks sont des fonctions JavaScript, mais ils imposent deux règles supplémentaires :</p>
+        <ul>
+          <li>Appelez les Hooks uniquement <strong>au niveau racine</strong>. N'appelez pas de Hooks à l'intérieur de boucles, de code conditionnel ou de fonctions imbriquées.</li>
+          <li>Appelez les Hooks uniquement <strong>depuis des fonctions composants React</strong>. N'appelez pas les Hooks depuis des fonctions JavaScript classiques. (Il n'y a qu'un seul autre endroit où vous pouvez appeler des Hooks : vos propres Hook personnalisés. Nous en reparlerons dans un moment.)</li>
+        </ul>
+        <p>Nous fournissons un <a href="https://www.npmjs.com/package/eslint-plugin-react-hooks">plugin ESLint</a> qui assure le respect de ces deux règles. Nous comprenons que ces règles peuvent sembler limitantes ou déroutantes au premier abord, mais elles sont essentielles pour que les Hooks fonctionnent correctement.</p>
+        <blockquote>
+          <p>Explication détaillée</p>
+          <p>Vous pouvez en apprendre davantage sur ces règles sur la page dédiée : <a href="./hooks-rules.html">Règles des Hooks</a>.</p>
+        </blockquote>
+      </section>
+      <section id="building-your-own-hooks" class="level2">
+        <h2>💡 Construire vos propres Hooks</h2>
+        <p>Parfois, on veut réutiliser la même logique à état dans plusieurs composants. Traditionnellement, on avait deux solutions répandues à ce besoin : les <a href="./higher-order-components.html">composants d'ordre supérieur</a> et les <a href="./render-props.html">props de rendu</a>. Les Hooks personnalisés vous permettent de faire la même chose, mais sans ajouter de composants à votre arbre.</p>
+        <p>Un peu plus tôt sur cette page, nous avons présenté un composant <code>FriendStatus</code> qui appelle les Hooks <code>useState</code> et <code>useEffect</code> pour s‘abonner à l'état de connexion d'un ami. Disons que l'on veut réutiliser cette logique d’abonnement dans un autre composant.</p>
+        <p>Tout d'abord, nous allons extraire cette logique dans un Hook personnalisé appelé <code>useFriendStatus</code> :</p>
+        <pre class="language-js{3}"><code class="language-js{3}">import React, { useState, useEffect } from 'react';
+
+function useFriendStatus(friendID) {
+  const [isOnline, setIsOnline] = useState(null);
+
+  function handleStatusChange(status) {
+    setIsOnline(status.isOnline);
+  }
+
+  useEffect(() => {
+    ChatAPI.subscribeToFriendStatus(friendID, handleStatusChange);
+    return () => {
+      ChatAPI.unsubscribeFromFriendStatus(friendID, handleStatusChange);
+    };
+  });
+
+  return isOnline;
+}</code></pre>
+        <p>Il prend <code>friendID</code> comme argument, et renvoie l'état de connexion de notre ami.</p>
+        <p>Nous pouvons désormais l'utiliser dans les deux composants :</p>
+        <pre class="language-js{2}"><code class="language-js{2}">function FriendStatus(props) {
+  const isOnline = useFriendStatus(props.friend.id);
+
+  if (isOnline === null) {
+    return 'Chargement...';
+  }
+  return isOnline ? 'En ligne' : 'Hors-ligne';
+}</code></pre>
+        <pre class="language-js{2}"><code class="language-js{2}">function FriendListItem(props) {
+  const isOnline = useFriendStatus(props.friend.id);
+
+  return (
+    &#x3C;li style={{ color: isOnline ? 'green' : 'black' }}>
+      {props.friend.name}
+    &#x3C;/li>
+  );
+}</code></pre>
+        <p>Les états locaux de chaque composant sont complètement indépendants. Les Hooks permettent de réutiliser la <em>logique à état</em>, et non l'état lui-même. En fait, chaque <em>appel</em> à un Hook a un état complètement isolé ; vous pouvez même utiliser deux fois le même Hook personnalisé dans un même composant.</p>
+        <p>Les Hooks personnalisés sont plus une convention qu'une fonctionnalité. Si le nom d'une fonction commence par <code>use</code> et qu'elle appelle un autre Hook, nous dirons que c’est un Hook personnalisé. La convention de nommage <code>useSomething</code> permet à notre plugin ESLint de détecter les bugs dans un code utilisant les Hooks.</p>
+        <p>Vous pouvez écrire des Hooks personnalisés pour gérer un large éventail de cas d'usage tels que la gestion des formulaires, les animations, les abonnements déclaratifs, les horloges et probablement de nombreux autres auxquels nous n'avons pas pensé. Nous avons hâte de voir quels Hooks personnalisés la communauté React va inventer.</p>
+        <blockquote>
+          <p>Explication détaillée</p>
+          <p>Vous pouvez en apprendre davantage sur les Hooks personnalisés sur une page dédiée : <a href="./hooks-custom.html">Construire vos propres Hooks</a>.</p>
+        </blockquote>
+      </section>
+      <section id="other-hooks" class="level2">
+        <h2>🔌 Autres Hooks</h2>
+        <p>Il y a quelques Hooks prédéfinis plus rarement utilisés qui pourraient vous intéresser. Par exemple, <a href="./hooks-reference.html#usecontext"><code>useContext</code></a> vous permet d’utiliser les Contextes de React sans imbrication superflue :</p>
+        <pre class="language-js{2,3}"><code class="language-js{2,3}">function Example() {
+  const locale = useContext(LocaleContext);
+  const theme = useContext(ThemeContext);
+  // ...
+}</code></pre>
+        <p>Et <a href="./hooks-reference.html#usereducer"><code>useReducer</code></a> vous permet de gérer l'état local de composants complexes avec un réducteur :</p>
+        <pre class="language-js{2}"><code class="language-js{2}">function Todos() {
+  const [todos, dispatch] = useReducer(todosReducer);
+  // ...</code></pre>
+        <blockquote>
+          <p>Explication détaillée</p>
+          <p>Vous pouvez en apprendre davantage sur les Hooks prédéfinis sur une page dédiée : <a href="./hooks-reference.html">Référence de l'API des Hooks</a>.</p>
+        </blockquote>
+      </section>
+      <section id="next-steps" class="level2">
+        <h2>Prochaines étapes</h2>
+        <p>Eh bien, c’était rapide ! Si quelque chose n’était pas clair ou que vous souhaitez en savoir plus, vous pouvez consulter les prochaines pages, en débutant avec la documentation du <a href="./hooks-state.html">Hook d'état</a>.</p>
+        <p>Vous pouvez aussi consulter la <a href="./hooks-reference.html">référence de l'API des Hooks</a> et la <a href="./hooks-faq.html">FAQ des Hooks</a>.</p>
+        <p>
+          Pour finir, pensez à lire <a href="./hooks-intro.html">l’introduction aux Hooks</a>, qui explique <em>pourquoi</em> nous avons ajouté les Hooks et comment nous allons commencer à les utiliser en parallèle des classes—sans ré-écrire nos applis.
+          <span style="float: footnote;"><a href="./index.html#toc">Go to TOC</a></span>
+        </p>
+      </section>
+    </section>
+  </body>
+</html>

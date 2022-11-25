@@ -28,7 +28,7 @@ CDN を使って React の機能を提供する場合、[`crossorigin`](https://
 
 利用している CDN が `Access-Control-Allow-Origin: *` という HTTP ヘッダを設定していることを確認することもお勧めします。
 
-![Access-Control-Allow-Origin: *](../images/docs/cdn-cors-header.png)
+![Access-Control-Allow-Origin: *](./docs/cdn-cors-header.png)
 
 これにより React 16 以降でより優れた[エラーハンドリング](/blog/2017/07/26/error-handling-in-react-16.html)を利用できます。
 <span style="float: footnote;"><a href="./index.html#toc">Go to TOC</a></span>

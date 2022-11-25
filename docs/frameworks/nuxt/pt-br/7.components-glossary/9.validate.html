@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="pt-br">
+  <head>
+    <meta charset="utf-8">
+    <title>The validate Method</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="Nuxt lets you define a validator method inside your dynamic route component.">
+    <meta name="navigation.title" content="Validate Method">
+    <meta name="category" content="components-glossary">
+    <link rel="stylesheet" href="https://raw.githubusercontent.com/shinokada/prism-coy-theme/main/theme_common.css">
+  </head>
+  <body>
+    <section id="the-validate-method" class="level1">
+      <h1>The validate method</h1>
+      <p>Nuxt lets you define a validator method inside your dynamic route component.</p>
+      <hr>
+      <ul>
+        <li><strong>Type:</strong> <code>Function</code> or <code>Async Function</code></li>
+      </ul>
+      <p><code>validate</code> is called every time before navigating to a new route. It will be called server-side once (on the first request to the Nuxt app) and client-side when navigating to further routes. This method takes the <a href="./internals-glossary/context"><code>context</code></a> object as an argument.</p>
+      <pre class="language-js"><code class="language-js"><span class="token function">validate</span><span class="token punctuation">(</span><span class="token parameter"><span class="token punctuation">{</span> params<span class="token punctuation">,</span> query<span class="token punctuation">,</span> store <span class="token punctuation">}</span></span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  <span class="token keyword control-flow">return</span> <span class="token boolean">true</span> <span class="token comment">// if the params are valid</span>
+  <span class="token keyword control-flow">return</span> <span class="token boolean">false</span> <span class="token comment">// will stop Nuxt to render the route and display the error page</span>
+<span class="token punctuation">}</span></code></pre>
+      <pre class="language-js"><code class="language-js"><span class="token keyword">async</span> <span class="token function">validate</span><span class="token punctuation">(</span><span class="token parameter"><span class="token punctuation">{</span> params<span class="token punctuation">,</span> query<span class="token punctuation">,</span> store <span class="token punctuation">}</span></span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  <span class="token comment">// await operations</span>
+  <span class="token keyword control-flow">return</span> <span class="token boolean">true</span> <span class="token comment">// if the params are valid</span>
+  <span class="token keyword control-flow">return</span> <span class="token boolean">false</span> <span class="token comment">// will stop Nuxt to render the route and display the error page</span>
+<span class="token punctuation">}</span></code></pre>
+      <p>You can also return promises:</p>
+      <pre class="language-js"><code class="language-js"><span class="token function">validate</span><span class="token punctuation">(</span><span class="token parameter"><span class="token punctuation">{</span> params<span class="token punctuation">,</span> query<span class="token punctuation">,</span> store <span class="token punctuation">}</span></span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  <span class="token keyword control-flow">return</span> <span class="token keyword">new</span> <span class="token class-name">Promise</span><span class="token punctuation">(</span><span class="token punctuation">(</span><span class="token parameter">resolve</span><span class="token punctuation">)</span> <span class="token arrow operator">=></span> <span class="token function">setTimeout</span><span class="token punctuation">(</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token arrow operator">=></span> <span class="token function">resolve</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+<span class="token punctuation">}</span></code></pre>
+      <p>Nuxt lets you define a validator method inside your dynamic route component (In this example: <code>pages/users/_id.vue</code>).</p>
+      <p>If the validate method does not return <code>true</code>, Nuxt will automatically load the 404 error page.</p>
+      <pre class="language-js"><code class="language-js"><span class="token keyword module">export</span> <span class="token keyword module">default</span> <span class="token punctuation">{</span>
+  <span class="token function">validate</span><span class="token punctuation">(</span><span class="token parameter"><span class="token punctuation">{</span> params <span class="token punctuation">}</span></span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token comment">// Must be a number</span>
+    <span class="token keyword control-flow">return</span> <span class="token regex"><span class="token regex-delimiter">/</span><span class="token regex-source language-regex">^\d+$</span><span class="token regex-delimiter">/</span></span><span class="token punctuation">.</span><span class="token method function property-access">test</span><span class="token punctuation">(</span>params<span class="token punctuation">.</span><span class="token property-access">id</span><span class="token punctuation">)</span>
+  <span class="token punctuation">}</span>
+<span class="token punctuation">}</span></code></pre>
+      <p>You can also check some data in your <a href="./directory-structure/store">store</a> for example (filled by <a href="./directory-structure/store#the-nuxtserverinit-action"><code>nuxtServerInit</code></a> before action):</p>
+      <pre class="language-js"><code class="language-js"><span class="token keyword module">export</span> <span class="token keyword module">default</span> <span class="token punctuation">{</span>
+  <span class="token function">validate</span><span class="token punctuation">(</span><span class="token parameter"><span class="token punctuation">{</span> params<span class="token punctuation">,</span> store <span class="token punctuation">}</span></span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token comment">// Check if `params.id` is an existing category</span>
+    <span class="token keyword control-flow">return</span> store<span class="token punctuation">.</span><span class="token property-access">state</span><span class="token punctuation">.</span><span class="token property-access">categories</span><span class="token punctuation">.</span><span class="token method function property-access">some</span><span class="token punctuation">(</span><span class="token parameter">category</span> <span class="token arrow operator">=></span> category<span class="token punctuation">.</span><span class="token property-access">id</span> <span class="token operator">===</span> params<span class="token punctuation">.</span><span class="token property-access">id</span><span class="token punctuation">)</span>
+  <span class="token punctuation">}</span>
+<span class="token punctuation">}</span></code></pre>
+      <p>You can also throw expected or unexpected errors during validate function execution:</p>
+      <pre class="language-js"><code class="language-js"><span class="token keyword module">export</span> <span class="token keyword module">default</span> <span class="token punctuation">{</span>
+  <span class="token keyword">async</span> <span class="token function">validate</span><span class="token punctuation">(</span><span class="token parameter"><span class="token punctuation">{</span> params<span class="token punctuation">,</span> store <span class="token punctuation">}</span></span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token comment">// Throws a 500 internal server error with custom message</span>
+    <span class="token keyword control-flow">throw</span> <span class="token keyword">new</span> <span class="token class-name">Error</span><span class="token punctuation">(</span><span class="token string">'Under Construction!'</span><span class="token punctuation">)</span>
+  <span class="token punctuation">}</span>
+<span class="token punctuation">}</span></code></pre>
+      <p><span style="float: footnote;"><a href="../index.html#toc">Go to TOC</a></span></p>
+    </section>
+  </body>
+</html>

@@ -1,0 +1,116 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="utf-8">
+    <title>Conteneur de module</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="navigation.title" content="Module Container">
+    <meta name="description" content="Conteneur de module Nuxt">
+    <meta name="category" content="internals-glossary">
+    <link rel="stylesheet" href="https://raw.githubusercontent.com/shinokada/prism-coy-theme/main/theme_common.css">
+  </head>
+  <body>
+    <section id="conteneur-de-module" class="level1">
+      <h1>Conteneur de module</h1>
+      <p>Conteneur de module Nuxt</p>
+      <hr>
+      <ul>
+        <li>Source: <strong><a href="https://github.com/nuxt/nuxt.js/blob/dev/packages/core/src/module.js">core/module.js</a></strong></li>
+      </ul>
+      <p>Tous les <a href="./directory-structure/modules">modules</a> seront appelés dans le contexte de l'instance <code>ModuleContainer</code>.</p>
+      <section id="plugins-à-usage-unique" class="level2">
+        <h2>Plugins à usage unique</h2>
+        <p>Nous pouvons enregistrer des hooks sur certains événements du cycle de vie.</p>
+        <pre class="language-js"><code class="language-js">nuxt<span class="token punctuation">.</span><span class="token property-access">moduleContainer</span><span class="token punctuation">.</span><span class="token method function property-access">plugin</span><span class="token punctuation">(</span><span class="token string">'ready'</span><span class="token punctuation">,</span> <span class="token keyword">async</span> <span class="token parameter">moduleContainer</span> <span class="token arrow operator">=></span> <span class="token punctuation">{</span>
+  <span class="token comment">// Faites-le après que tous les modules soient prêts</span>
+<span class="token punctuation">}</span><span class="token punctuation">)</span></code></pre>
+        <p>Dans le contexte des <a href="./directory-structure/modules">modules</a>, nous pouvons utiliser cette méthode à la place :</p>
+        <pre class="language-js"><code class="language-js"><span class="token keyword">this</span><span class="token punctuation">.</span><span class="token method function property-access">plugin</span><span class="token punctuation">(</span><span class="token string">'ready'</span><span class="token punctuation">,</span> <span class="token keyword">async</span> <span class="token parameter">moduleContainer</span> <span class="token arrow operator">=></span> <span class="token punctuation">{</span>
+  <span class="token comment">// Faites-le après que tous les modules soient prêts</span>
+<span class="token punctuation">}</span><span class="token punctuation">)</span></code></pre>
+        <p>
+          | Plugin | Arguments | Quand |
+          | |
+          | <code>ready</code> | moduleContainer | Tous les modules dans <code>nuxt.config.js</code> ont été initialisés |
+        </p>
+      </section>
+      <section id="méthodes" class="level2">
+        <h2>Méthodes</h2>
+        <section id="addvendor-vendor" class="level3">
+          <h3>addVendor (vendor)</h3>
+          <p><strong>Déprécié car le terme <code>vendor</code> n'est plus utilisé</strong></p>
+          <p>Ajoute à <code>options.build.vendor</code> et applique un filtre unique.</p>
+        </section>
+        <section id="addtemplate-template" class="level3">
+          <h3>addTemplate (template)</h3>
+          <ul>
+            <li><strong>template</strong>: <code>String</code> or <code>Object</code>
+              <ul>
+                <li><code>src</code></li>
+                <li><code>options</code></li>
+                <li><code>fileName</code></li>
+              </ul>
+            </li>
+          </ul>
+          <p>Affiche le modèle en utilisant <a href="https://lodash.com/docs/4.17.4#template">lodash template</a> pendant l'intégration au projet <code>buildDir</code> (<code>.nuxt</code>).</p>
+          <p>Si <code>fileName</code> n'est pas fourni ou si <code>template</code> est une chaîne de caractères, le nom du fichier cible est par défaut <code>[dirName].[fileName].[pathHash].[ext]</code>.</p>
+          <p>Cette méthode renvoie l'objet final <code>{ dst, src, options }</code>.</p>
+        </section>
+        <section id="addplugin-template" class="level3">
+          <h3>addPlugin (template)</h3>
+          <ul>
+            <li><strong>template</strong>: Object à propriétés (<code>src</code>, <code>options</code>, <code>fileName</code>, <code>mode</code>).</li>
+          </ul>
+          <p>Enregistre un plugin en utilisant <code>addTemplate</code> et l'ajoute à la première ligne des options <code>plugins[]</code>.</p>
+          <p>Vous pouvez utiliser <code>template.ssr : false</code> pour désactiver le plugin y compris dans le bundle SSR.</p>
+          <pre class="language-js"><code class="language-js"><span class="token keyword">this</span><span class="token punctuation">.</span><span class="token method function property-access">addPlugin</span><span class="token punctuation">(</span><span class="token punctuation">{</span>
+  <span class="token literal-property property">src</span><span class="token operator">:</span> path<span class="token punctuation">.</span><span class="token method function property-access">resolve</span><span class="token punctuation">(</span>__dirname<span class="token punctuation">,</span> <span class="token string">'templates/foo.js'</span><span class="token punctuation">)</span><span class="token punctuation">,</span>
+  <span class="token literal-property property">fileName</span><span class="token operator">:</span> <span class="token string">'foo.server.js'</span> <span class="token comment">// [optionnel] inclus seulement dans un serveur bundle</span>
+  <span class="token literal-property property">options</span><span class="token operator">:</span> moduleOptions
+<span class="token punctuation">}</span><span class="token punctuation">)</span></code></pre>
+          <p>
+            <strong>Note:</strong> Vous pouvez utiliser <code>mode</code> ou <code>.client</code> et <code>.server</code> modificateur avec <code>fileName</code>
+            option pour utiliser le plugin uniquement côté client ou côté serveur. (Voir <a href="./directory-structure/plugins#name-conventional-plugin">plugins</a> pour toutes les options valides)
+          </p>
+          <p>Si vous choisissez de spécifier un <code>fileName</code>, vous pouvez également configurer un chemin personnalisé pour le <code>fileName</code>, afin que vous puissiez choisir la structure des dossiers dans le dossier <code>.nuxt</code> afin d'éviter les conflits de noms :</p>
+          <pre class="language-js"><code class="language-js"><span class="token punctuation">{</span>
+  <span class="token literal-property property">fileName</span><span class="token operator">:</span> path<span class="token punctuation">.</span><span class="token method function property-access">join</span><span class="token punctuation">(</span><span class="token string">'folder'</span><span class="token punctuation">,</span> <span class="token string">'foo.client.js'</span><span class="token punctuation">)</span><span class="token punctuation">,</span> <span class="token comment">// will result in `.nuxt/folder/foo.client.js`</span>
+<span class="token punctuation">}</span></code></pre>
+        </section>
+        <section id="addservermiddleware-middleware" class="level3">
+          <h3>addServerMiddleware (middleware)</h3>
+          <p>Pousse le middleware dans <a href="./configuration-glossary/configuration-servermiddleware">options.serverMiddleware</a>.</p>
+        </section>
+        <section id="extendbuild-fn" class="level3">
+          <h3>extendBuild (fn)</h3>
+          <p>Permet d'étendre facilement la configuration du webpack par chaînage dans la fonction <a href="./configuration-glossary/configuration-build#extend">options.build.extend</a>.</p>
+        </section>
+        <section id="extendroutes-fn" class="level3">
+          <h3>extendRoutes (fn)</h3>
+          <p>Permet d'étendre facilement les routes dans la fonction <a href="./configuration-glossary/configuration-router#extendroutes">options.build.extendRoutes</a>.</p>
+        </section>
+        <section id="addmodule-moduleopts-requireonce" class="level3">
+          <h3>addModule (moduleOpts, requireOnce)</h3>
+          <p><em>Async function</em></p>
+          <p>Enregistre un module. Les <code>moduleOpts</code> peuvent être une chaîne de caractères ou un tableau (<code>[src, options]</code>). Si <code>requireOnce</code> est <code>true</code> et que le module est résolu dans les <code>meta</code>, cela empêchera d'enregistrer deux fois le même module.</p>
+        </section>
+        <section id="requiremodule-moduleopts" class="level3">
+          <h3>requireModule (moduleOpts)</h3>
+          <p><em>Async function</em></p>
+          <p>Est un raccourci pour <code>addModule(moduleOpts, true)</code></p>
+        </section>
+      </section>
+      <section id="hooks" class="level2">
+        <h2>Hooks</h2>
+        <p>Nous pouvons enregistrer des hooks sur certains événements du cycle de vie.</p>
+        <p>
+          | Hook | Arguments | Quand |
+          | |
+          | <code>modules:before</code> | (moduleContainer, options) | Appelé avant la création de la classe ModuleContainer, utile pour surcharger les méthodes et les options. |
+          | <code>modules:done</code> | (moduleContainer) | Appelé lorsque tous les modules ont été chargés. |
+          <span style="float: footnote;"><a href="../index.html#toc">Go to TOC</a></span>
+        </p>
+      </section>
+    </section>
+  </body>
+</html>

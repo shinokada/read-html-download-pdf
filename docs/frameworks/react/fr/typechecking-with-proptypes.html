@@ -1,0 +1,190 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="utf-8">
+    <title>Validation de types avec PropTypes</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="https://raw.githubusercontent.com/shinokada/prism-coy-theme/main/theme_common.css">
+  </head>
+  <body>
+    <section id="validation-de-types-avec-proptypes" class="level1">
+      <h1>Validation de types avec PropTypes</h1>
+      <blockquote>
+        <p>Remarque</p>
+        <p><code>React.PropTypes</code> a été déplacé dans un autre module depuis React v15.5. Merci de plutôt utiliser <a href="https://www.npmjs.com/package/prop-types">le module <code>prop-types</code></a>.</p>
+        <p>Nous fournissons <a href="/blog/2017/04/07/react-v15.5.0.html#migrating-from-reactproptypes">un script codemod</a> pour automatiser cette transition.</p>
+      </blockquote>
+      <p>Au fur et à mesure que votre application grandit, vous pouvez détecter un grand nombre de bugs grâce à la validation de types. Dans certains cas, vous pouvez utiliser des extensions JavaScript comme <a href="https://flow.org/">Flow</a> ou <a href="https://www.typescriptlang.org/">TypeScript</a> pour valider les types de toute votre application. Mais même si vous ne les utilisez pas, React possède ses propres fonctionnalités de validation de types. Pour lancer la validation de types des props d'un composant, vous pouvez ajouter la propriété spéciale <code>propTypes</code> :</p>
+      <pre class="language-javascript{11-13}"><code class="language-javascript{11-13}">import PropTypes from 'prop-types';
+
+class Greeting extends React.Component {
+  render() {
+    return (
+      &#x3C;h1>Bonjour, {this.props.name}&#x3C;/h1>
+    );
+  }
+}
+
+Greeting.propTypes = {
+  name: PropTypes.string
+};</code></pre>
+      <p>Dans cet exemple nous utilisons un composant à base de classe, mais ça reste vrai pour les fonctions composants et les composants créés avec <a href="https://reactjs.org/docs/react-api.html#reactmemo"><code>React.memo</code></a> ou <a href="https://reactjs.org/docs/react-api.html#reactforwardref"><code>React.forwardRef</code></a>.</p>
+      <p><code>PropTypes</code> exporte un ensemble de validateurs qui peuvent être utilisés pour s'assurer que la donnée que vous recevez est valide. Dans cet exemple, nous utilisons <code>PropTypes.string</code>. Quand une valeur non valide est fournie à une prop, un message d'avertissement apparaîtra dans la console JavaScript. Pour des raisons de performances, <code>propTypes</code> n'est vérifiée qu'en mode développement.</p>
+      <section id="proptypes" class="level3">
+        <h3>PropTypes</h3>
+        <p>Voici un exemple qui détaille les différents validateurs fournis :</p>
+        <pre class="language-javascript"><code class="language-javascript"><span class="token keyword module">import</span> <span class="token imports"><span class="token maybe-class-name">PropTypes</span></span> <span class="token keyword module">from</span> <span class="token string">'prop-types'</span><span class="token punctuation">;</span>
+
+<span class="token maybe-class-name">MyComponent</span><span class="token punctuation">.</span><span class="token property-access">propTypes</span> <span class="token operator">=</span> <span class="token punctuation">{</span>
+  <span class="token comment">// Vous pouvez déclarer qu'une prop est d'un certain type JS. Par défaut,</span>
+  <span class="token comment">// elles sont toutes optionnelles.</span>
+  <span class="token literal-property property">optionalArray</span><span class="token operator">:</span> <span class="token maybe-class-name">PropTypes</span><span class="token punctuation">.</span><span class="token property-access">array</span><span class="token punctuation">,</span>
+  <span class="token literal-property property">optionalBool</span><span class="token operator">:</span> <span class="token maybe-class-name">PropTypes</span><span class="token punctuation">.</span><span class="token property-access">bool</span><span class="token punctuation">,</span>
+  <span class="token literal-property property">optionalFunc</span><span class="token operator">:</span> <span class="token maybe-class-name">PropTypes</span><span class="token punctuation">.</span><span class="token property-access">func</span><span class="token punctuation">,</span>
+  <span class="token literal-property property">optionalNumber</span><span class="token operator">:</span> <span class="token maybe-class-name">PropTypes</span><span class="token punctuation">.</span><span class="token property-access">number</span><span class="token punctuation">,</span>
+  <span class="token literal-property property">optionalObject</span><span class="token operator">:</span> <span class="token maybe-class-name">PropTypes</span><span class="token punctuation">.</span><span class="token property-access">object</span><span class="token punctuation">,</span>
+  <span class="token literal-property property">optionalString</span><span class="token operator">:</span> <span class="token maybe-class-name">PropTypes</span><span class="token punctuation">.</span><span class="token property-access">string</span><span class="token punctuation">,</span>
+  <span class="token literal-property property">optionalSymbol</span><span class="token operator">:</span> <span class="token maybe-class-name">PropTypes</span><span class="token punctuation">.</span><span class="token property-access">symbol</span><span class="token punctuation">,</span>
+
+  <span class="token comment">// Tout ce qui peut apparaître dans le rendu : des nombres, des chaînes de</span>
+  <span class="token comment">//  caractères, des éléments ou des tableaux (ou fragments) contenant ces types.</span>
+  <span class="token literal-property property">optionalNode</span><span class="token operator">:</span> <span class="token maybe-class-name">PropTypes</span><span class="token punctuation">.</span><span class="token property-access">node</span><span class="token punctuation">,</span>
+
+  <span class="token comment">// Un élément React.</span>
+  <span class="token literal-property property">optionalElement</span><span class="token operator">:</span> <span class="token maybe-class-name">PropTypes</span><span class="token punctuation">.</span><span class="token property-access">element</span><span class="token punctuation">,</span>
+
+  <span class="token comment">// Un type d’élément React (ex. MyComponent).</span>
+  <span class="token literal-property property">optionalElementType</span><span class="token operator">:</span> <span class="token maybe-class-name">PropTypes</span><span class="token punctuation">.</span><span class="token property-access">elementType</span><span class="token punctuation">,</span>
+
+  <span class="token comment">// Vous pouvez aussi déclarer qu'une prop est une instance d'une classe.</span>
+  <span class="token comment">// On utilise pour ça l'opérateur JS instanceof.</span>
+  <span class="token literal-property property">optionalMessage</span><span class="token operator">:</span> <span class="token maybe-class-name">PropTypes</span><span class="token punctuation">.</span><span class="token method function property-access">instanceOf</span><span class="token punctuation">(</span><span class="token maybe-class-name">Message</span><span class="token punctuation">)</span><span class="token punctuation">,</span>
+
+  <span class="token comment">// Vous pouvez vous assurer que votre prop est limitée à certaines</span>
+  <span class="token comment">// valeurs spécifiques en la traitant comme une enumération.</span>
+  <span class="token literal-property property">optionalEnum</span><span class="token operator">:</span> <span class="token maybe-class-name">PropTypes</span><span class="token punctuation">.</span><span class="token method function property-access">oneOf</span><span class="token punctuation">(</span><span class="token punctuation">[</span><span class="token string">'News'</span><span class="token punctuation">,</span> <span class="token string">'Photos'</span><span class="token punctuation">]</span><span class="token punctuation">)</span><span class="token punctuation">,</span>
+
+  <span class="token comment">// Cette prop peut être de n'importe lequel de ces trois types</span>
+  <span class="token literal-property property">optionalUnion</span><span class="token operator">:</span> <span class="token maybe-class-name">PropTypes</span><span class="token punctuation">.</span><span class="token method function property-access">oneOfType</span><span class="token punctuation">(</span><span class="token punctuation">[</span>
+    <span class="token maybe-class-name">PropTypes</span><span class="token punctuation">.</span><span class="token property-access">string</span><span class="token punctuation">,</span>
+    <span class="token maybe-class-name">PropTypes</span><span class="token punctuation">.</span><span class="token property-access">number</span><span class="token punctuation">,</span>
+    <span class="token maybe-class-name">PropTypes</span><span class="token punctuation">.</span><span class="token method function property-access">instanceOf</span><span class="token punctuation">(</span><span class="token maybe-class-name">Message</span><span class="token punctuation">)</span>
+  <span class="token punctuation">]</span><span class="token punctuation">)</span><span class="token punctuation">,</span>
+
+  <span class="token comment">// Un tableau avec des valeurs d'un certain type</span>
+  <span class="token literal-property property">optionalArrayOf</span><span class="token operator">:</span> <span class="token maybe-class-name">PropTypes</span><span class="token punctuation">.</span><span class="token method function property-access">arrayOf</span><span class="token punctuation">(</span><span class="token maybe-class-name">PropTypes</span><span class="token punctuation">.</span><span class="token property-access">number</span><span class="token punctuation">)</span><span class="token punctuation">,</span>
+
+  <span class="token comment">// Un objet avec des valeurs d'un certain type</span>
+  <span class="token literal-property property">optionalObjectOf</span><span class="token operator">:</span> <span class="token maybe-class-name">PropTypes</span><span class="token punctuation">.</span><span class="token method function property-access">objectOf</span><span class="token punctuation">(</span><span class="token maybe-class-name">PropTypes</span><span class="token punctuation">.</span><span class="token property-access">number</span><span class="token punctuation">)</span><span class="token punctuation">,</span>
+
+  <span class="token comment">// Un objet avec une forme spécifique</span>
+  <span class="token literal-property property">optionalObjectWithShape</span><span class="token operator">:</span> <span class="token maybe-class-name">PropTypes</span><span class="token punctuation">.</span><span class="token method function property-access">shape</span><span class="token punctuation">(</span><span class="token punctuation">{</span>
+    <span class="token literal-property property">color</span><span class="token operator">:</span> <span class="token maybe-class-name">PropTypes</span><span class="token punctuation">.</span><span class="token property-access">string</span><span class="token punctuation">,</span>
+    <span class="token literal-property property">fontSize</span><span class="token operator">:</span> <span class="token maybe-class-name">PropTypes</span><span class="token punctuation">.</span><span class="token property-access">number</span>
+  <span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">,</span>
+
+  <span class="token comment">// An object with warnings on extra properties</span>
+  <span class="token literal-property property">optionalObjectWithStrictShape</span><span class="token operator">:</span> <span class="token maybe-class-name">PropTypes</span><span class="token punctuation">.</span><span class="token method function property-access">exact</span><span class="token punctuation">(</span><span class="token punctuation">{</span>
+    <span class="token literal-property property">name</span><span class="token operator">:</span> <span class="token maybe-class-name">PropTypes</span><span class="token punctuation">.</span><span class="token property-access">string</span><span class="token punctuation">,</span>
+    <span class="token literal-property property">quantity</span><span class="token operator">:</span> <span class="token maybe-class-name">PropTypes</span><span class="token punctuation">.</span><span class="token property-access">number</span>
+  <span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">,</span>
+
+  <span class="token comment">// Vous pouvez ajouter `isRequired` à la fin de n'importe lequel des validateurs</span>
+  <span class="token comment">// ci-dessus pour vous assurer qu'un message d'avertissement s'affiche lorsque</span>
+  <span class="token comment">// la prop n'est pas fournie.</span>
+  <span class="token literal-property property">requiredFunc</span><span class="token operator">:</span> <span class="token maybe-class-name">PropTypes</span><span class="token punctuation">.</span><span class="token property-access">func</span><span class="token punctuation">.</span><span class="token property-access">isRequired</span><span class="token punctuation">,</span>
+
+  <span class="token comment">// Cette prop est requise et peut être de n'importe quel type</span>
+  <span class="token literal-property property">requiredAny</span><span class="token operator">:</span> <span class="token maybe-class-name">PropTypes</span><span class="token punctuation">.</span><span class="token property-access">any</span><span class="token punctuation">.</span><span class="token property-access">isRequired</span><span class="token punctuation">,</span>
+
+  <span class="token comment">// Vous pouvez aussi spécifier un validateur personnalisé. Il devra renvoyer</span>
+  <span class="token comment">// un objet Error si la validation échoue. N'utilisez pas de `console.warn`</span>
+  <span class="token comment">// ou `throw`, car ça ne fonctionnera pas dans `oneOfType`.</span>
+  <span class="token function-variable function">customProp</span><span class="token operator">:</span> <span class="token keyword">function</span><span class="token punctuation">(</span><span class="token parameter">props<span class="token punctuation">,</span> propName<span class="token punctuation">,</span> componentName</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token keyword control-flow">if</span> <span class="token punctuation">(</span><span class="token operator">!</span><span class="token regex"><span class="token regex-delimiter">/</span><span class="token regex-source language-regex">matchme</span><span class="token regex-delimiter">/</span></span><span class="token punctuation">.</span><span class="token method function property-access">test</span><span class="token punctuation">(</span>props<span class="token punctuation">[</span>propName<span class="token punctuation">]</span><span class="token punctuation">)</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+      <span class="token keyword control-flow">return</span> <span class="token keyword">new</span> <span class="token class-name">Error</span><span class="token punctuation">(</span>
+        <span class="token string">'Invalid prop `'</span> <span class="token operator">+</span> propName <span class="token operator">+</span> <span class="token string">'` supplied to'</span> <span class="token operator">+</span>
+        <span class="token string">' `'</span> <span class="token operator">+</span> componentName <span class="token operator">+</span> <span class="token string">'`. Validation failed.'</span>
+      <span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+  <span class="token punctuation">}</span><span class="token punctuation">,</span>
+
+  <span class="token comment">// Vous pouvez aussi fournir un validateur personnalisé à `arrayOf` et `objectOf`.</span>
+  <span class="token comment">// Il faudra renvoyer un objet Error si la validation échoue. Le validateur</span>
+  <span class="token comment">// sera appelé pour chaque clé du tableau ou de l'objet. Les deux premiers</span>
+  <span class="token comment">// arguments du validateur sont le tableau ou l'objet lui-même, et la clé</span>
+  <span class="token comment">// de la valeur actuelle.</span>
+  <span class="token literal-property property">customArrayProp</span><span class="token operator">:</span> <span class="token maybe-class-name">PropTypes</span><span class="token punctuation">.</span><span class="token method function property-access">arrayOf</span><span class="token punctuation">(</span>
+    <span class="token keyword">function</span><span class="token punctuation">(</span><span class="token parameter">propValue<span class="token punctuation">,</span> key<span class="token punctuation">,</span> componentName<span class="token punctuation">,</span> <span class="token dom variable">location</span><span class="token punctuation">,</span> propFullName</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+      <span class="token keyword control-flow">if</span> <span class="token punctuation">(</span><span class="token operator">!</span><span class="token regex"><span class="token regex-delimiter">/</span><span class="token regex-source language-regex">matchme</span><span class="token regex-delimiter">/</span></span><span class="token punctuation">.</span><span class="token method function property-access">test</span><span class="token punctuation">(</span>propValue<span class="token punctuation">[</span>key<span class="token punctuation">]</span><span class="token punctuation">)</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token keyword control-flow">return</span> <span class="token keyword">new</span> <span class="token class-name">Error</span><span class="token punctuation">(</span>
+          <span class="token string">'Invalid prop `'</span> <span class="token operator">+</span> propFullName <span class="token operator">+</span> <span class="token string">'` supplied to'</span> <span class="token operator">+</span>
+          <span class="token string">' `'</span> <span class="token operator">+</span> componentName <span class="token operator">+</span> <span class="token string">'`. Validation failed.'</span>
+        <span class="token punctuation">)</span><span class="token punctuation">;</span>
+      <span class="token punctuation">}</span>
+    <span class="token punctuation">}</span>
+  <span class="token punctuation">)</span>
+<span class="token punctuation">}</span><span class="token punctuation">;</span></code></pre>
+      </section>
+      <section id="requiring-single-child" class="level3">
+        <h3>Exiger un seul enfant</h3>
+        <p>Avec <code>PropTypes.element</code>, vous pouvez spécifier qu'un seul enfant peut être passé à un composant.</p>
+        <pre class="language-javascript"><code class="language-javascript"><span class="token keyword module">import</span> <span class="token imports"><span class="token maybe-class-name">PropTypes</span></span> <span class="token keyword module">from</span> <span class="token string">'prop-types'</span><span class="token punctuation">;</span>
+
+<span class="token keyword">class</span> <span class="token class-name">MyComponent</span> <span class="token keyword">extends</span> <span class="token class-name">React<span class="token punctuation">.</span>Component</span> <span class="token punctuation">{</span>
+  <span class="token function">render</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token comment">// Ça doit être un élément unique ou un avertissement sera affiché.</span>
+    <span class="token keyword">const</span> children <span class="token operator">=</span> <span class="token keyword">this</span><span class="token punctuation">.</span><span class="token property-access">props</span><span class="token punctuation">.</span><span class="token property-access">children</span><span class="token punctuation">;</span>
+    <span class="token keyword control-flow">return</span> <span class="token punctuation">(</span>
+      <span class="token operator">&#x3C;</span>div<span class="token operator">></span>
+        <span class="token punctuation">{</span>children<span class="token punctuation">}</span>
+      <span class="token operator">&#x3C;</span><span class="token operator">/</span>div<span class="token operator">></span>
+    <span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token punctuation">}</span>
+<span class="token punctuation">}</span>
+
+<span class="token maybe-class-name">MyComponent</span><span class="token punctuation">.</span><span class="token property-access">propTypes</span> <span class="token operator">=</span> <span class="token punctuation">{</span>
+  <span class="token literal-property property">children</span><span class="token operator">:</span> <span class="token maybe-class-name">PropTypes</span><span class="token punctuation">.</span><span class="token property-access">element</span><span class="token punctuation">.</span><span class="token property-access">isRequired</span>
+<span class="token punctuation">}</span><span class="token punctuation">;</span></code></pre>
+      </section>
+      <section id="default-prop-values" class="level3">
+        <h3>Valeurs par défaut des props</h3>
+        <p>Vous pouvez définir des valeurs par défaut pour vos <code>props</code> en utilisant la propriété spéciale <code>defaultProps</code> :</p>
+        <pre class="language-javascript"><code class="language-javascript"><span class="token keyword">class</span> <span class="token class-name">Greeting</span> <span class="token keyword">extends</span> <span class="token class-name">React<span class="token punctuation">.</span>Component</span> <span class="token punctuation">{</span>
+  <span class="token function">render</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token keyword control-flow">return</span> <span class="token punctuation">(</span>
+      <span class="token operator">&#x3C;</span>h1<span class="token operator">></span><span class="token maybe-class-name">Bonjour</span><span class="token punctuation">,</span> <span class="token punctuation">{</span><span class="token keyword">this</span><span class="token punctuation">.</span><span class="token property-access">props</span><span class="token punctuation">.</span><span class="token property-access">name</span><span class="token punctuation">}</span><span class="token operator">&#x3C;</span><span class="token operator">/</span>h1<span class="token operator">></span>
+    <span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token punctuation">}</span>
+<span class="token punctuation">}</span>
+
+<span class="token comment">// Spécifie les valeurs par défaut des props :</span>
+<span class="token maybe-class-name">Greeting</span><span class="token punctuation">.</span><span class="token property-access">defaultProps</span> <span class="token operator">=</span> <span class="token punctuation">{</span>
+  <span class="token literal-property property">name</span><span class="token operator">:</span> <span class="token string">'bel inconnu'</span>
+<span class="token punctuation">}</span><span class="token punctuation">;</span>
+
+<span class="token comment">// Affiche « Bonjour, bel inconnu » :</span>
+<span class="token maybe-class-name">ReactDOM</span><span class="token punctuation">.</span><span class="token method function property-access">render</span><span class="token punctuation">(</span>
+  <span class="token operator">&#x3C;</span><span class="token maybe-class-name">Greeting</span> <span class="token operator">/</span><span class="token operator">></span><span class="token punctuation">,</span>
+  <span class="token dom variable">document</span><span class="token punctuation">.</span><span class="token method function property-access">getElementById</span><span class="token punctuation">(</span><span class="token string">'example'</span><span class="token punctuation">)</span>
+<span class="token punctuation">)</span><span class="token punctuation">;</span></code></pre>
+        <p>Si vous utilisez une transformation Babel telle que <a href="https://babeljs.io/docs/plugins/transform-class-properties/">transform-class-properties</a> , vous pouvez aussi déclarer <code>defaultProps</code> comme propriété statique dans une classe de composant React. Cependant, cette syntaxe n'a pas encore été finalisée et requiert une étape de compilation supplémentaire pour fonctionner dans un navigateur. Pour plus d'informations, voir la <a href="https://github.com/tc39/proposal-static-class-features/">proposition des aspects statiques de classe</a>.</p>
+        <pre class="language-javascript"><code class="language-javascript"><span class="token keyword">class</span> <span class="token class-name">Greeting</span> <span class="token keyword">extends</span> <span class="token class-name">React<span class="token punctuation">.</span>Component</span> <span class="token punctuation">{</span>
+  <span class="token keyword">static</span> defaultProps <span class="token operator">=</span> <span class="token punctuation">{</span>
+    <span class="token literal-property property">name</span><span class="token operator">:</span> <span class="token string">'bel inconnu'</span>
+  <span class="token punctuation">}</span>
+
+  <span class="token function">render</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token keyword control-flow">return</span> <span class="token punctuation">(</span>
+      <span class="token operator">&#x3C;</span>div<span class="token operator">></span><span class="token maybe-class-name">Bonjour</span><span class="token punctuation">,</span> <span class="token punctuation">{</span><span class="token keyword">this</span><span class="token punctuation">.</span><span class="token property-access">props</span><span class="token punctuation">.</span><span class="token property-access">name</span><span class="token punctuation">}</span><span class="token operator">&#x3C;</span><span class="token operator">/</span>div<span class="token operator">></span>
+    <span class="token punctuation">)</span>
+  <span class="token punctuation">}</span>
+<span class="token punctuation">}</span></code></pre>
+        <p>
+          Les <code>defaultProps</code> seront utilisées pour s'assurer que <code>this.props.name</code> aura une valeur si elle n'était pas spécifiée par le composant parent. La validation de types des <code>propTypes</code> aura lieu après que <code>defaultProps</code> est résolu, la validation de types s'applique donc également aux <code>defaultProps</code>.
+          <span style="float: footnote;"><a href="./index.html#toc">Go to TOC</a></span>
+        </p>
+      </section>
+    </section>
+  </body>
+</html>

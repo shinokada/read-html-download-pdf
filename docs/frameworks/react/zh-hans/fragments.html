@@ -1,0 +1,121 @@
+<!doctype html>
+<html lang="zh-hans">
+  <head>
+    <meta charset="utf-8">
+    <title>Fragments</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="https://raw.githubusercontent.com/shinokada/prism-coy-theme/main/theme_common.css">
+  </head>
+  <body>
+    <section id="fragments" class="level1">
+      <h1>Fragments</h1>
+      <p>React 中的一个常见模式是一个组件返回多个元素。Fragments 允许你将子列表分组，而无需向 DOM 添加额外节点。</p>
+      <pre class="language-js"><code class="language-js"><span class="token function">render</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  <span class="token keyword control-flow">return</span> <span class="token punctuation">(</span>
+    <span class="token operator">&#x3C;</span><span class="token maybe-class-name">React</span><span class="token punctuation">.</span><span class="token property-access"><span class="token maybe-class-name">Fragment</span></span><span class="token operator">></span>
+      <span class="token operator">&#x3C;</span><span class="token maybe-class-name">ChildA</span> <span class="token operator">/</span><span class="token operator">></span>
+      <span class="token operator">&#x3C;</span><span class="token maybe-class-name">ChildB</span> <span class="token operator">/</span><span class="token operator">></span>
+      <span class="token operator">&#x3C;</span><span class="token maybe-class-name">ChildC</span> <span class="token operator">/</span><span class="token operator">></span>
+    <span class="token operator">&#x3C;</span><span class="token operator">/</span><span class="token maybe-class-name">React</span><span class="token punctuation">.</span><span class="token property-access"><span class="token maybe-class-name">Fragment</span></span><span class="token operator">></span>
+  <span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span></code></pre>
+      <p>还有一种新的<a href="#short-syntax">短语法</a>可用于声明它们。</p>
+      <section id="motivation" class="level2">
+        <h2>动机</h2>
+        <p>一种常见模式是组件返回一个子元素列表。以此 React 代码片段为例：</p>
+        <pre class="language-jsx"><code class="language-jsx"><span class="token keyword">class</span> <span class="token class-name">Table</span> <span class="token keyword">extends</span> <span class="token class-name">React<span class="token punctuation">.</span>Component</span> <span class="token punctuation">{</span>
+  <span class="token function">render</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token keyword control-flow">return</span> <span class="token punctuation">(</span>
+      <span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;</span>table</span><span class="token punctuation">></span></span><span class="token plain-text">
+        </span><span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;</span>tr</span><span class="token punctuation">></span></span><span class="token plain-text">
+          </span><span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;</span><span class="token class-name">Columns</span></span> <span class="token punctuation">/></span></span><span class="token plain-text">
+        </span><span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;/</span>tr</span><span class="token punctuation">></span></span><span class="token plain-text">
+      </span><span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;/</span>table</span><span class="token punctuation">></span></span>
+    <span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token punctuation">}</span>
+<span class="token punctuation">}</span></code></pre>
+        <p><code>&#x3C;Columns /></code> 需要返回多个 <code>&#x3C;td></code> 元素以使渲染的 HTML 有效。如果在 <code>&#x3C;Columns /></code> 的 <code>render()</code> 中使用了父 div，则生成的 HTML 将无效。</p>
+        <pre class="language-jsx"><code class="language-jsx"><span class="token keyword">class</span> <span class="token class-name">Columns</span> <span class="token keyword">extends</span> <span class="token class-name">React<span class="token punctuation">.</span>Component</span> <span class="token punctuation">{</span>
+  <span class="token function">render</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token keyword control-flow">return</span> <span class="token punctuation">(</span>
+      <span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;</span>div</span><span class="token punctuation">></span></span><span class="token plain-text">
+        </span><span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;</span>td</span><span class="token punctuation">></span></span><span class="token plain-text">Hello</span><span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;/</span>td</span><span class="token punctuation">></span></span><span class="token plain-text">
+        </span><span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;</span>td</span><span class="token punctuation">></span></span><span class="token plain-text">World</span><span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;/</span>td</span><span class="token punctuation">></span></span><span class="token plain-text">
+      </span><span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;/</span>div</span><span class="token punctuation">></span></span>
+    <span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token punctuation">}</span>
+<span class="token punctuation">}</span></code></pre>
+        <p>得到一个 <code>&#x3C;Table /></code> 输出：</p>
+        <pre class="language-jsx"><code class="language-jsx"><span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;</span>table</span><span class="token punctuation">></span></span><span class="token plain-text">
+  </span><span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;</span>tr</span><span class="token punctuation">></span></span><span class="token plain-text">
+    </span><span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;</span>div</span><span class="token punctuation">></span></span><span class="token plain-text">
+      </span><span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;</span>td</span><span class="token punctuation">></span></span><span class="token plain-text">Hello</span><span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;/</span>td</span><span class="token punctuation">></span></span><span class="token plain-text">
+      </span><span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;</span>td</span><span class="token punctuation">></span></span><span class="token plain-text">World</span><span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;/</span>td</span><span class="token punctuation">></span></span><span class="token plain-text">
+    </span><span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;/</span>div</span><span class="token punctuation">></span></span><span class="token plain-text">
+  </span><span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;/</span>tr</span><span class="token punctuation">></span></span><span class="token plain-text">
+</span><span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;/</span>table</span><span class="token punctuation">></span></span></code></pre>
+        <p>Fragments 解决了这个问题。</p>
+      </section>
+      <section id="usage" class="level2">
+        <h2>用法</h2>
+        <pre class="language-jsx{4,7}"><code class="language-jsx{4,7}">class Columns extends React.Component {
+  render() {
+    return (
+      &#x3C;React.Fragment>
+        &#x3C;td>Hello&#x3C;/td>
+        &#x3C;td>World&#x3C;/td>
+      &#x3C;/React.Fragment>
+    );
+  }
+}</code></pre>
+        <p>这样可以正确的输出 <code>&#x3C;Table /></code>：</p>
+        <pre class="language-jsx"><code class="language-jsx"><span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;</span>table</span><span class="token punctuation">></span></span><span class="token plain-text">
+  </span><span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;</span>tr</span><span class="token punctuation">></span></span><span class="token plain-text">
+    </span><span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;</span>td</span><span class="token punctuation">></span></span><span class="token plain-text">Hello</span><span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;/</span>td</span><span class="token punctuation">></span></span><span class="token plain-text">
+    </span><span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;</span>td</span><span class="token punctuation">></span></span><span class="token plain-text">World</span><span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;/</span>td</span><span class="token punctuation">></span></span><span class="token plain-text">
+  </span><span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;/</span>tr</span><span class="token punctuation">></span></span><span class="token plain-text">
+</span><span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;/</span>table</span><span class="token punctuation">></span></span></code></pre>
+        <section id="short-syntax" class="level3">
+          <h3>短语法</h3>
+          <p>你可以使用一种新的，且更简短的语法来声明 Fragments。它看起来像空标签：</p>
+          <pre class="language-jsx{4,7}"><code class="language-jsx{4,7}">class Columns extends React.Component {
+  render() {
+    return (
+      &#x3C;>
+        &#x3C;td>Hello&#x3C;/td>
+        &#x3C;td>World&#x3C;/td>
+      &#x3C;/>
+    );
+  }
+}</code></pre>
+          <p>你可以像使用其他任意元素一样使用 <code>&#x3C;> &#x3C;/></code>，但它并不支持 key 或属性。</p>
+        </section>
+        <section id="keyed-fragments" class="level3">
+          <h3>带 key 的 Fragments</h3>
+          <p>使用显式 <code>&#x3C;React.Fragment></code> 语法声明的片段可能具有 key。一个使用场景是将一个集合映射到一个 Fragments 数组 - 举个例子，创建一个描述列表：</p>
+          <pre class="language-jsx"><code class="language-jsx"><span class="token keyword">function</span> <span class="token function"><span class="token maybe-class-name">Glossary</span></span><span class="token punctuation">(</span><span class="token parameter">props</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  <span class="token keyword control-flow">return</span> <span class="token punctuation">(</span>
+    <span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;</span>dl</span><span class="token punctuation">></span></span><span class="token plain-text">
+      </span><span class="token punctuation">{</span>props<span class="token punctuation">.</span><span class="token property-access">items</span><span class="token punctuation">.</span><span class="token method function property-access">map</span><span class="token punctuation">(</span><span class="token parameter">item</span> <span class="token arrow operator">=></span> <span class="token punctuation">(</span>
+        <span class="token comment">// 没有`key`，React 会发出一个关键警告</span>
+        <span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;</span><span class="token class-name">React.Fragment</span></span> <span class="token attr-name">key</span><span class="token script language-javascript"><span class="token script-punctuation punctuation">=</span><span class="token punctuation">{</span>item<span class="token punctuation">.</span><span class="token property-access">id</span><span class="token punctuation">}</span></span><span class="token punctuation">></span></span><span class="token plain-text">
+          </span><span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;</span>dt</span><span class="token punctuation">></span></span><span class="token punctuation">{</span>item<span class="token punctuation">.</span><span class="token property-access">term</span><span class="token punctuation">}</span><span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;/</span>dt</span><span class="token punctuation">></span></span><span class="token plain-text">
+          </span><span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;</span>dd</span><span class="token punctuation">></span></span><span class="token punctuation">{</span>item<span class="token punctuation">.</span><span class="token property-access">description</span><span class="token punctuation">}</span><span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;/</span>dd</span><span class="token punctuation">></span></span><span class="token plain-text">
+        </span><span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;/</span><span class="token class-name">React.Fragment</span></span><span class="token punctuation">></span></span>
+      <span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">}</span><span class="token plain-text">
+    </span><span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;/</span>dl</span><span class="token punctuation">></span></span>
+  <span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span></code></pre>
+          <p><code>key</code> 是唯一可以传递给 <code>Fragment</code> 的属性。未来我们可能会添加对其他属性的支持，例如事件。</p>
+        </section>
+        <section id="live-demo" class="level3">
+          <h3>在线 Demo</h3>
+          <p>
+            你可以在 <a href="https://codepen.io/reactjs/pen/VrEbjE?editors=1000">CodePen</a> 中尝试这个新的 JSX Fragment 语法。
+            <span style="float: footnote;"><a href="./index.html#toc">Go to TOC</a></span>
+          </p>
+        </section>
+      </section>
+    </section>
+  </body>
+</html>

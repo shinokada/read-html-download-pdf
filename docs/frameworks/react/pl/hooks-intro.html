@@ -1,0 +1,104 @@
+<!doctype html>
+<html lang="pl">
+  <head>
+    <meta charset="utf-8">
+    <title>Wprowadzenie do hooków</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="https://raw.githubusercontent.com/shinokada/prism-coy-theme/main/theme_common.css">
+  </head>
+  <body>
+    <section id="wprowadzenie-do-hooków" class="level1">
+      <h1>Wprowadzenie do hooków</h1>
+      <p><em>Hooki</em> są nowym dodatkiem w Reakcie 16.8. Pozwalają one używać stanu i innych funkcjonalności Reacta, bez użycia klas.</p>
+      <pre class="language-js{4,5}"><code class="language-js{4,5}">import React, { useState } from 'react';
+
+function Example() {
+  // Zadeklaruj nową zmienną stanu, którą nazwiemy „count”
+  const [count, setCount] = useState(0);
+
+  return (
+    &#x3C;div>
+      &#x3C;p>Naciśnięto {count} razy&#x3C;/p>
+      &#x3C;button onClick={() => setCount(count + 1)}>
+        Naciśnij mnie
+      &#x3C;/button>
+    &#x3C;/div>
+  );
+}</code></pre>
+      <p>Funkcja <code>useState</code> jest pierwszym „hookiem”, o którym będziemy się uczyć. Przykład ten jest jednak zaledwie zwiastunem. Nie przejmuj się, jeżeli nie ma to jeszcze większego sensu!</p>
+      <p><strong><a href="./hooks-overview.html">W kolejnym rozdziale</a> możesz rozpocząć naukę o hookach.</strong> Tutaj wyjaśnimy, dlaczego dodaliśmy hooki do Reacta i w jaki sposób pomogą ci one w pisaniu wspaniałych aplikacji.</p>
+      <blockquote>
+        <p>Uwaga</p>
+        <p>
+          React 16.8.0 jest pierwszą wersją, która wspiera hooki. Podczas aktualizacji nie zapomnij zaktualizować wszystkich paczek, w tym React DOM.
+          React Native wspiera hooki <a href="https://reactnative.dev/blog/2019/03/12/releasing-react-native-059">od wersji 0.59</a>.
+        </p>
+      </blockquote>
+      <section id="video-introduction" class="level2">
+        <h2>Wprowadzenie wideo</h2>
+        <p>Podczas konferencji „React Conf 2018” Sophie Alpert i Dan Abramov zaprezentowali po raz pierwszy hooki. Następnie Ryan Florence zademonstrował, jak przepisać swoją aplikację, by móc ich używać. Wideo z konferencji zamieściliśmy poniżej:</p><br>
+        <iframe width="650" height="366" src="//www.youtube.com/embed/dpw9EHDh2bM" frameborder="0" allowfullscreen></iframe>
+      </section>
+      <section id="no-breaking-changes" class="level2">
+        <h2>Bez krytycznych zmian</h2>
+        <p>Zanim przejdziemy dalej, zauważ że hooki są:</p>
+        <ul>
+          <li><strong>Całkowicie opcjonalne.</strong> Możesz wypróbować hooki w kilku komponentach, bez przepisywania istniejącego kodu. Jeżeli jednak nie masz ochoty, nie musisz ich jeszcze stosować ani uczyć się o nich.</li>
+          <li><strong>100% kompatybilne wstecznie.</strong> Hooki nie zawierają żadnych zmian, które mogłyby zepsuć istniejący kod.</li>
+          <li><strong>Dostępne już teraz.</strong> Hooki są dostępne od wersji 16.8.0.</li>
+        </ul>
+        <p><strong>Nie ma planów na usunięcie klas z Reacta.</strong> Możesz przeczytać o strategii stopniowego wdrażania hooków w <a href="#gradual-adoption-strategy">kolejnym podrozdziale</a> tej strony.</p>
+        <p><strong>Hooki nie zastępują twojej wiedzy na temat Reacta.</strong> Zamiast tego wprowadzają bardziej bezpośredni interfejs API dla mechanizmów Reacta, które już znasz: właściwości (ang. <em>props</em>), stanu, kontekstu, referencji (ang. <em>refs</em>) i cyklu życia (ang. <em>lifecycle</em>). Jak pokażemy dalej, hooki pozwalają też na łączenie ich w nowy, niezwykle skuteczny sposób.</p>
+        <p><strong>Jeżeli chcesz rozpocząć naukę o hookach, <a href="./hooks-overview.html">przejdź od razu do kolejnego rozdziału!</a></strong> Możesz też kontynuować lekturę tego, aby dowiedzieć się, dlaczego w ogóle dodaliśmy hooki, a także w jaki sposób będziemy je teraz stosować, bez potrzeby przepisywania naszych aplikacji.</p>
+      </section>
+      <section id="motivation" class="level2">
+        <h2>Motywacja</h2>
+        <p>Hooki rozwiązują wiele, pozornie niepowiązanych ze sobą, problemów Reacta, na które natknęliśmy się podczas ponad pięciu lat pisania i utrzymywania dziesiątek tysięcy komponentów. Nie ważne, czy dopiero uczysz się Reacta, używasz go na co dzień, czy nawet preferujesz inną bibliotekę (o podobnym, komponentowym modelu działania) - możliwe, że natknąłeś się na część tych problemów.</p>
+        <section id="its-hard-to-reuse-stateful-logic-between-components" class="level3">
+          <h3>Współdzielenie logiki związanej ze stanem pomiędzy komponentami jest trudne</h3>
+          <p>React nie oferuje sposobu na „dołączenie” powtarzalnego zachowania do komponentu (na przykład, połączenie go z magazynem (ang. <em>store</em>)). Jeżeli pracujesz z Reactem już jakiś czas, najprawdopodobniej znasz wzorce, takie jak <a href="./render-props.html">właściwości renderujące (ang. <em>render props</em>)</a> i <a href="./higher-order-components.html">komponenty wyższego rzędu (ang. <em>higher-order components</em>)</a>, które próbują rozwiązać ten problem. Wzorce te wymagają jednak modyfikacji komponentów w momencie ich użycia, co może być niewygodne i powodować, że kod jest trudniejszy w odbiorze. Jeśli spojrzysz na typową aplikację napisaną w Reakcie przy pomocy narzędzia React DevTools, najprawdopodobniej ujrzysz tam „piekło” komponentów opakowujących (ang. <em>wrapper component</em>), dostawców (ang. <em>providers</em>), konsumentów (ang. <em>consumers</em>), komponentów wyższego rzędu, właściwości renderujących i innych abstrakcji. Moglibyśmy, co prawda, <a href="https://github.com/facebook/react-devtools/pull/503">filtrować je w DevToolsach</a>, ale to tylko wskazuje na głębszy problem: React potrzebuje lepszego podstawowego mechanizmu do współdzielenia logiki związanej ze stanem.</p>
+          <p>Korzystając z hooków, możesz wydzielić logikę związaną ze stanem z komponentu. Dzięki czemu, nie wymaga on zależności przy testowaniu i jest łatwy w ponownym wykorzystaniu. <strong>Hooki pozwalają na ponowne użycie logiki związanej ze stanem, bez konieczności zmiany hierarchii komponentów.</strong> Sprawia to, że dzielenie się hookami pomiędzy wieloma komponentami lub ze społecznością jest proste.</p>
+          <p>Omówimy ten temat szerzej w rozdziale pt. <a href="./hooks-custom.html">„Tworzenie własnych hooków”</a>.</p>
+        </section>
+        <section id="complex-components-become-hard-to-understand" class="level3">
+          <h3>Złożone komponenty stają się trudne do zrozumienia</h3>
+          <p>Często musieliśmy utrzymywać komponenty, które z początku proste, urosły do rangi niemożliwego do utrzymania bałaganu logiki związanej ze stanem i efektów ubocznych (ang. <em>side effects</em>). Każda metoda cyklu życia zawiera zwykle mieszankę niepowiązanej ze sobą logiki. Na przykład, komponenty mogą pobierać dane w <code>componentDidMount</code> i <code>componentDidUpdate</code>. Jednakże metoda <code>componentDidMount</code> może też zawierać logikę, która tworzy obserwatory zdarzeń (ang. <em>event listeners</em>). Następnie są one czyszczone w <code>componentWillUnmount</code>. Wzajemnie powiązany kod zostaje podzielony pomiędzy różne metody, a z kolei zupełnie niezwiązany ze sobą kod trafia do jednej. Sprzyja to niekonsekwencji i popełnianiu błędów.</p>
+          <p>Wielokrotnie zdarza się, że nie ma możliwości rozbicia tych komponentów na mniejsze części, ponieważ logika związana ze stanem jest już wszędzie. Trudno jest też je testować. Jest to jeden z powodów, dla których wielu woli połączyć Reacta z zewnętrzną biblioteką do zarządzania stanem. To jednak często wprowadza zbyt wiele abstrakcji, zmusza do skakania pomiędzy plikami i utrudnia ponowne wykorzystanie komponentów.</p>
+          <p>Aby rozwiązać ten problem, <strong>hooki pozwalają podzielić komponent na mniejsze funkcje, bazując na powiązanych ze sobą częściach (takich jak tworzenie subskrypcji czy pobieranie danych)</strong>, zamiast wymuszać sztuczny podział, związany z metodami cyklu życia. Ewentualnie, aby uczynić zachowanie komponentu bardziej przewidywalnym, możesz też dzięki hookom oddelegować zarządzanie lokalnym stanem komponentu do reduktora (ang. <em>reducer</em>).</p>
+          <p>Szerzej omówimy to w rozdziale <a href="./hooks-effect.html#tip-use-multiple-effects-to-separate-concerns">Używanie hooka efektów</a>.</p>
+        </section>
+        <section id="classes-confuse-both-people-and-machines" class="level3">
+          <h3>Klasy dezorientują zarówno ludzi, jak i maszyny</h3>
+          <p>Oprócz tego, że przez klasy trudniej jest ponownie wykorzystać i organizować kod, odkryliśmy, że mogą one również stanowić dużą przeszkodę w nauce Reacta. Trzeba przecież rozumieć, jak działa <code>this</code> w JavaScripcie - a działa on tu zupełnie inaczej niż w większości języków programowania. Trzeba pamiętać o wiązaniu (ang. <em>bind</em>) funkcji obsługi zdarzeń (ang. <em>event handler</em>). Bez <a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Classes/Public_class_fields#public_instance_fields">publicznych pól klas w ES2022</a> kod jest bardzo rozwlekły. Ludzie generalnie nie mają problemu ze zrozumieniem właściwości, stanu i kierunku przepływu danych z góry do dołu, a jednak klasy wciąż stanowią pewne wyzwanie. Wybór pomiędzy funkcyjnymi a klasowymi komponentami jest często przyczyną sporów, nawet pomiędzy doświadczonymi programistami Reacta.</p>
+          <p>Ponadto, React jest dostępny od około pięciu lat i chcielibyśmy mieć pewność, że pozostanie on tak samo istotny przez kolejne pięć. Jak pokazały biblioteki: <a href="https://svelte.dev/">Svelte</a>, <a href="https://angular.io/">Angular</a>, <a href="https://glimmerjs.com/">Glimmer</a> i inne, <a href="https://en.wikipedia.org/wiki/Ahead-of-time_compilation">kompilacja komponentów z wyprzedzeniem (ang. <em>ahead-of-time</em>)</a> ma ogromny potencjał. Szczególnie jeśli nie jest ograniczona tylko do szablonów. Niedawno eksperymentowaliśmy z <a href="https://github.com/facebook/react/issues/7323">wyliczaniem wartości komponentów</a> z użyciem <a href="https://prepack.io/">Prepacka</a> i wstępnie zaobserwowaliśmy obiecujące rezultaty. Odkryliśmy jednak, że komponenty klasowe mogą zachęcić do nieumyślnego stosowania pewnych wzorców, które spowodują spowolnienie tych optymalizacji. Klasy już teraz stanowią problem dla naszych narzędzi programistycznych. Na przykład, nie za dobrze się minifikują i często zawodzi przez nie „gorące przeładowanie” (ang. hot reloading). Chcemy przedstawić interfejs API, który zwiększy prawdopodobieństwo tego, że kod będzie optymalizowany.</p>
+          <p>Aby rozwiązać te problemy, <strong>Hooki pozwalają na korzystanie z większej liczby funkcjonalności Reacta, bez użycia klas.</strong> Koncepcyjnie, komponentom reactowym zawsze bliżej było do funkcji. Hooki zapewniają dostęp do funkcji bez poświęcania praktycznej natury Reacta. Hooki zapewniają dostęp do imperatywnych „furtek” i nie wymagają nauki skomplikowanych technik programowania funkcjonalnego lub reaktywnego.</p>
+          <blockquote>
+            <p>Przykłady</p>
+            <p>Rozdział pt. <a href="./hooks-overview.html">„Hooki w pigułce”</a> jest dobrym miejscem, by zacząć naukę o hookach</p>
+          </blockquote>
+        </section>
+      </section>
+      <section id="gradual-adoption-strategy" class="level2">
+        <h2>Strategia Stopniowego Wdrażania</h2>
+        <blockquote>
+          <p><strong>TLDR: Nie ma planów na usunięcie klas z Reacta.</strong></p>
+        </blockquote>
+        <p>Zdajemy sobie sprawę, że programiści Reacta są skupieni na dostarczaniu produktów i nie mają czasu przyglądać się każdemu nowemu interfejsowi API, który jest wypuszczany. Hooki są wielką nowością i być może lepiej będzie zaczekać na więcej przykładów i poradników, zanim rozważysz ich naukę lub wdrożenie.</p>
+        <p>Rozumiemy też, że przy dodawaniu do Reacta nowego, podstawowego mechanizmu poprzeczka została postawiona niezwykle wysoko. Dla zainteresowanych przygotowaliśmy <a href="https://github.com/reactjs/rfcs/pull/68">szczegółowy RFC</a>, który dokładnie zgłębia nasze motywy oraz rzuca dodatkowe światło na konkretne decyzje projektowe i obecny stan techniki.</p>
+        <p><strong>Co najważniejsze, hooki działają równolegle z istniejącym kodem, więc możesz wdrażać je stopniowo.</strong> Nie ma pośpiechu, aby migrować kod do hooków. Zalecamy unikanie „wielkiego przepisywania”, szczególnie dla istniejących, skomplikowanych komponentów klasowych. Potrzeba delikatnie przestawić myślenie, aby zacząć „myśleć hookami”. Z naszego doświadczenia wynika, że najlepiej poćwiczyć używanie hooków na nowych, niekrytycznych komponentach i upewnić się, że wszyscy członkowie zespołu czują się z nimi komfortowo. Po wypróbowaniu hooków, prosimy - <a href="https://github.com/facebook/react/issues/new">prześlij nam opinię</a>. Zarówno pozytywną, jak i negatywną.</p>
+        <p>Chcielibyśmy, żeby hooki objęły wszystkie możliwe przypadki użycia klas, ale <strong>w możliwej do przewidzenia przyszłości, będziemy kontynuować wsparcie komponentów klasowych.</strong> W Facebooku mamy dziesiątki tysięcy komponentów napisanych jako klasy i zdecydowanie nie planujemy ich przepisywania. Zamiast tego zaczynamy używać hooków w nowym kodzie, równolegle do klas.</p>
+      </section>
+      <section id="frequently-asked-questions" class="level2">
+        <h2>Najczęściej zadawane pytania</h2>
+        <p>Przygotowaliśmy rozdział pt. <a href="./hooks-faq.html">„Hooki - FAQ”</a>, w którym odpowiedzieliśmy na najczęściej zadawane pytania.</p>
+      </section>
+      <section id="next-steps" class="level2">
+        <h2>Kolejne kroki</h2>
+        <p>
+          Po przeczytaniu tego rozdziału powinien ukształtować ci się obraz tego, jakie problemy rozwiązują hooki, ale wiele szczegółów jest jeszcze prawdopodobnie niejasnych. Nie martw się! <strong>Przejdźmy do <a href="./hooks-overview.html">następnego rozdziału</a>, gdzie zaczniemy naukę o hookach na przykładach.</strong>
+          <span style="float: footnote;"><a href="./index.html#toc">Go to TOC</a></span>
+        </p>
+      </section>
+    </section>
+  </body>
+</html>

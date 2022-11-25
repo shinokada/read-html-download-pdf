@@ -1,0 +1,117 @@
+<!doctype html>
+<html lang="de">
+  <head>
+    <meta charset="utf-8">
+    <title>Regeln von Hooks</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="https://raw.githubusercontent.com/shinokada/prism-coy-theme/main/theme_common.css">
+  </head>
+  <body>
+    <section id="regeln-von-hooks" class="level1">
+      <h1>Regeln von Hooks</h1>
+      <p><em>Hooks</em> sind ein neues Feature in React 16.8. Damit lassen sich State und andere React-Features verwenden, ohne dass eine Klasse benutzt werden muss.</p>
+      <p>Hooks sind zwar JavaScript Funtionen, allerdings müssen dabei zwei Regeln beachtet werden. Es gibt ein <a href="https://www.npmjs.com/package/eslint-plugin-react-hooks">Linter-Plugin</a>, das die folgenden Regeln erzwingt:</p>
+      <section id="only-call-hooks-at-the-top-level" class="level3">
+        <h3>Verwende Hooks nur auf dem Top-Level</h3>
+        <p><strong>Rufe Hooks nicht innerhalb von Schleifen, Bedingungen oder in verschachtelten Funktionen auf.</strong> Sie sollen ausschließlich auf dem Top-Level der React-Komponenten verwendet werden. Dadurch wird sichergestellt, dass die Hooks bei jedem Rendering der Komponente in der gleichen Reihenfolge ausgeführt werden. Das ist notwendig, damit zwischen mehreren Aufrufen von <code>useState</code> und <code>useEffect</code> der State korrekt erhalten bleibt. (Für Neugierige gibt es <a href="#explanation">unten</a> eine ausführliche Erklärung.)</p>
+      </section>
+      <section id="only-call-hooks-from-react-functions" class="level3">
+        <h3>Verwende Hooks nur innerhalb von React-Funktionen</h3>
+        <p><strong>Rufe Hooks nicht in normalen JavaScript-Funktionen auf.</strong> Stattdessen kannst du:</p>
+        <ul>
+          <li>✅ Hooks in React-Funktions-Komponenten aufrufen.</li>
+          <li>✅ Hooks in eigenen Hooks aufrufen (Mehr dazu auf der <a href="./hooks-custom.html">nächsten Seite</a>).</li>
+        </ul>
+        <p>Durch das Befolgen dieser Regeln stellst du sicher, dass die State-behaftete Logik einer Komponente aus dem Quellcode auf Anhieb erkennbar ist.</p>
+      </section>
+      <section id="eslint-plugin" class="level2">
+        <h2>ESLint Plugin</h2>
+        <p>Wir haben das ESLint-Plugin <a href="https://www.npmjs.com/package/eslint-plugin-react-hooks"><code>eslint-plugin-react-hooks</code></a> veröffentlicht, das diese Regeln durchsetzt. Du kannst dieses Plugin folgendermaßen zu deinem Projekt hinzufügen, falls du es ausprobieren möchtest:</p>
+        <p>This plugin is included by default in <a href="./create-a-new-react-app.html#create-react-app">Create React App</a>.</p>
+        <pre class="language-bash"><code class="language-bash"><span class="token function">npm</span> <span class="token function">install</span> eslint-plugin-react-hooks --save-dev</code></pre>
+        <pre class="language-js"><code class="language-js"><span class="token comment">// ESLint Konfiguration</span>
+<span class="token punctuation">{</span>
+  <span class="token string-property property">"plugins"</span><span class="token operator">:</span> <span class="token punctuation">[</span>
+    <span class="token comment">// ...</span>
+    <span class="token string">"react-hooks"</span>
+  <span class="token punctuation">]</span><span class="token punctuation">,</span>
+  <span class="token string-property property">"rules"</span><span class="token operator">:</span> <span class="token punctuation">{</span>
+    <span class="token comment">// ...</span>
+    <span class="token string-property property">"react-hooks/rules-of-hooks"</span><span class="token operator">:</span> <span class="token string">"error"</span><span class="token punctuation">,</span> <span class="token comment">// Checks rules of Hooks</span>
+    <span class="token string-property property">"react-hooks/exhaustive-deps"</span><span class="token operator">:</span> <span class="token string">"warn"</span> <span class="token comment">// Checks effect dependencies</span>
+  <span class="token punctuation">}</span>
+<span class="token punctuation">}</span></code></pre>
+        <p><strong>Du kannst den den Rest überspringen, wenn du direkt lernen möchtest wie man <a href="./hooks-custom.html">seine eigenen Hooks</a> schreibt.</strong> Im Folgenden werden die Gründe für die oben genannten Regeln noch genauer erläutert.</p>
+      </section>
+      <section id="explanation" class="level2">
+        <h2>Erklärung</h2>
+        <p>Wie <a href="./hooks-state.html#tip-using-multiple-state-variables">zuvor erklärt</a>, können mehrere State- oder Effect-Hooks in einer Komponente verwendet werden.</p>
+        <pre class="language-js"><code class="language-js"><span class="token keyword">function</span> <span class="token function"><span class="token maybe-class-name">Form</span></span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  <span class="token comment">// 1. State-Variable name</span>
+  <span class="token keyword">const</span> <span class="token punctuation">[</span>name<span class="token punctuation">,</span> setName<span class="token punctuation">]</span> <span class="token operator">=</span> <span class="token function">useState</span><span class="token punctuation">(</span><span class="token string">'Mary'</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+  <span class="token comment">// 2. Effect damit formData erhalten bleibt</span>
+  <span class="token function">useEffect</span><span class="token punctuation">(</span><span class="token keyword">function</span> <span class="token function">persistForm</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token dom variable">localStorage</span><span class="token punctuation">.</span><span class="token method function property-access">setItem</span><span class="token punctuation">(</span><span class="token string">'formData'</span><span class="token punctuation">,</span> name<span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+  <span class="token comment">// 3. State-Variable surname</span>
+  <span class="token keyword">const</span> <span class="token punctuation">[</span>surname<span class="token punctuation">,</span> setSurname<span class="token punctuation">]</span> <span class="token operator">=</span> <span class="token function">useState</span><span class="token punctuation">(</span><span class="token string">'Poppins'</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+  <span class="token comment">// 4. Effect um den Titel zu aktualisieren</span>
+  <span class="token function">useEffect</span><span class="token punctuation">(</span><span class="token keyword">function</span> <span class="token function">updateTitle</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token dom variable">document</span><span class="token punctuation">.</span><span class="token property-access">title</span> <span class="token operator">=</span> name <span class="token operator">+</span> <span class="token string">' '</span> <span class="token operator">+</span> surname<span class="token punctuation">;</span>
+  <span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+  <span class="token comment">// ...</span>
+<span class="token punctuation">}</span></code></pre>
+        <p>Aber warum funktioniert es, dass immer genau der richtige State bei <code>useState</code> benutzt wird? Die Antwort darauf lautet, dass <strong>React die Reihenfolge, in der Hooks aufgerufen werden, nutzt</strong>. Das Beispiel funktioniert, da bei jedem Rendering die Hooks in der gleichen Reihenfolge aufgerufen werden.</p>
+        <pre class="language-js"><code class="language-js"><span class="token comment">// ---------</span>
+<span class="token comment">// Erstes Rendering</span>
+<span class="token comment">// ---------</span>
+<span class="token function">useState</span><span class="token punctuation">(</span><span class="token string">'Mary'</span><span class="token punctuation">)</span>           <span class="token comment">// 1. Die State-Variable name mit 'Mary' initialisieren</span>
+<span class="token function">useEffect</span><span class="token punctuation">(</span>persistForm<span class="token punctuation">)</span>     <span class="token comment">// 2. Effect hinzufügen, um das Formular persistent zu halten</span>
+<span class="token function">useState</span><span class="token punctuation">(</span><span class="token string">'Poppins'</span><span class="token punctuation">)</span>        <span class="token comment">// 3. Die State-Variable surname mit 'Poppins' initialisieren</span>
+<span class="token function">useEffect</span><span class="token punctuation">(</span>updateTitle<span class="token punctuation">)</span>     <span class="token comment">// 4. Effect hinzufügen, um den Titel zu aktualisieren</span>
+
+<span class="token comment">// ----------</span>
+<span class="token comment">// Zweites Rendering</span>
+<span class="token comment">// ----------</span>
+<span class="token function">useState</span><span class="token punctuation">(</span><span class="token string">'Mary'</span><span class="token punctuation">)</span>           <span class="token comment">// 1. Die State-Variable name auslesen (Das Argument wird ignoriert)</span>
+<span class="token function">useEffect</span><span class="token punctuation">(</span>persistForm<span class="token punctuation">)</span>     <span class="token comment">// 2. Den Effect ersetzen, der das Formular persistent hält</span>
+<span class="token function">useState</span><span class="token punctuation">(</span><span class="token string">'Poppins'</span><span class="token punctuation">)</span>        <span class="token comment">// 3. Die State-Variable surname auslesen (Das Argument wird ignoriert)</span>
+<span class="token function">useEffect</span><span class="token punctuation">(</span>updateTitle<span class="token punctuation">)</span>     <span class="token comment">// 4. Den Effect ersetzen, der den Titel aktualisiert</span>
+
+<span class="token comment">// ...</span></code></pre>
+        <p>Solange die Reihenfolge der Hooks-Aufrufe zwischen den Rendering's gleich bleibt, kann React den richtigen lokalen State mit dem entsprechenden Hook assoziieren. Aber was passiert nun, wenn ein Hook (zum Beispiel der <code>persistForm</code> Effect) innerhalb einer bedingten Anweisung aufgerufen wird?</p>
+        <pre class="language-js"><code class="language-js">  <span class="token comment">// 🔴 Die erste Regel wird gebrochen, indem wir ein Hook innerhalb einer bedingten Anweisung benutzt wird.</span>
+  <span class="token keyword control-flow">if</span> <span class="token punctuation">(</span>name <span class="token operator">!==</span> <span class="token string">''</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token function">useEffect</span><span class="token punctuation">(</span><span class="token keyword">function</span> <span class="token function">persistForm</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+      <span class="token dom variable">localStorage</span><span class="token punctuation">.</span><span class="token method function property-access">setItem</span><span class="token punctuation">(</span><span class="token string">'formData'</span><span class="token punctuation">,</span> name<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token punctuation">}</span></code></pre>
+        <p>Bei dem ersten Rendering ist die Bedingung <code>name !== ''</code> <code>true</code>, also führen wir diesen Hook aus. Im nächsten Rendering könnte der Nutzer das Formular löschen, damit wäre die Bedingung <code>false</code>. Folglich würde im nächsten Rendering der Hook übersprungen, und die Reihenfolge würde sich ändern:</p>
+        <pre class="language-js"><code class="language-js"><span class="token function">useState</span><span class="token punctuation">(</span><span class="token string">'Mary'</span><span class="token punctuation">)</span>           <span class="token comment">// 1. Die State-Variable name auslesen (Das Argument wird ignoriert)</span>
+<span class="token comment">// useEffect(persistForm)  // 🔴 Dieser Hook wurde ausgelassen.</span>
+<span class="token function">useState</span><span class="token punctuation">(</span><span class="token string">'Poppins'</span><span class="token punctuation">)</span>        <span class="token comment">// 🔴 2 (vorher 3). State-Variable surname kann nicht ausgelesen werden</span>
+<span class="token function">useEffect</span><span class="token punctuation">(</span>updateTitle<span class="token punctuation">)</span>     <span class="token comment">// 🔴 3 (vorher 4). Der Effect kann nicht ersetzt werden</span></code></pre>
+        <p>React erwartet hier, dass der zweite Hook <code>persistForm</code> entspricht. Ist das nicht der Fall, kann React nicht den korrekten State zurückgeben. Für alle Rendering's nach dem ausgelassenen Hook, verschiebt sich der Hook-Aufruf und führt zu Fehlern.</p>
+        <p><strong>Das ist der Grund, weshalb Hooks nur auf dem Top-Level der Komponenten aufgerufen werden sollen</strong>. Ein Hook kann bedingt ausgeführt werden, indem die Bedingung <em>innerhalb</em> des Hooks ausgeführt wird.</p>
+        <pre class="language-js"><code class="language-js">  <span class="token function">useEffect</span><span class="token punctuation">(</span><span class="token keyword">function</span> <span class="token function">persistForm</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token comment">// 👍 Die erste Regel wird so nicht mehr gebrochen.</span>
+    <span class="token keyword control-flow">if</span> <span class="token punctuation">(</span>name <span class="token operator">!==</span> <span class="token string">''</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+      <span class="token dom variable">localStorage</span><span class="token punctuation">.</span><span class="token method function property-access">setItem</span><span class="token punctuation">(</span><span class="token string">'formData'</span><span class="token punctuation">,</span> name<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+  <span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">;</span></code></pre>
+        <p><strong>Das Problem muss nicht beachtet werden, wenn die [ESLint-Regeln] integriert werden (<a href="https://www.npmjs.com/package/eslint-plugin-react-hooks">https://www.npmjs.com/package/eslint-plugin-react-hooks</a>).</strong> Jetzt weißt du aber auch <em>warum</em> es so funktioniert und welche Probleme durch diese Regel vermieden werden.</p>
+      </section>
+      <section id="next-steps" class="level2">
+        <h2>Nächste Schritte</h2>
+        <p>
+          Nun ist es Zeit zu lernen wie man <a href="./hooks-custom.html">seine eigenen Hooks</a> schreibt. Das ist nützlich um State-behaftete Logik zwischen Komponenten zu teilen, wobei eigene Abstraktionen mit den von React bereitgestellten Hooks kombiniert werden können.
+          <span style="float: footnote;"><a href="./index.html#toc">Go to TOC</a></span>
+        </p>
+      </section>
+    </section>
+  </body>
+</html>

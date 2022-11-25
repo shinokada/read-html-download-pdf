@@ -1,0 +1,140 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="utf-8">
+    <title>Aperçu du code source</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="https://raw.githubusercontent.com/shinokada/prism-coy-theme/main/theme_common.css">
+  </head>
+  <body>
+    <section id="aperçu-du-code-source" class="level1">
+      <h1>Aperçu du code source</h1>
+      <p>Cette section vous donne un aperçu de l’organisation du code source de React, de ses conventions et de son implémentation.</p>
+      <p>Si vous souhaitez <a href="./how-to-contribute.html">contribuer à React</a>, nous espérons que ce guide vous aidera à vous sentir plus à l'aise pour apporter des modifications.</p>
+      <p>Nous ne recommandons pas nécessairement ces conventions dans les applications React. Nombre d'entre elles existent pour des raisons historiques et sont susceptibles d’évoluer avec le temps.</p>
+      <section id="top-level-folders" class="level3">
+        <h3>Dossiers racines</h3>
+        <p>Après avoir cloné le <a href="https://github.com/facebook/react">dépôt React</a>, vous verrez quelques dossiers racines :</p>
+        <ul>
+          <li><a href="https://github.com/facebook/react/tree/master/packages"><code>packages</code></a> contient des métadonnées (telles que <code>package.json</code>) et le code source (sous-répertoire <code>src</code>) de tous les paquets du dépôt React. <strong>Si votre modification est liée au code, vous passerez le plus clair de votre temps dans le sous-répertoire <code>src</code> des différents paquets.</strong></li>
+          <li><a href="https://github.com/facebook/react/tree/master/fixtures"><code>fixtures</code></a> contient quelques petites applications React de test pour les contributeurs.</li>
+          <li><code>build</code> est la sortie de construction de React. Il ne figure pas dans le dépôt, mais il apparaîtra dans votre clone de React après que vous <a href="./how-to-contribute.html#development-workflow">l'aurez construit</a> pour la première fois.</li>
+        </ul>
+        <p>La documentation est hébergée <a href="https://github.com/reactjs/fr.reactjs.org">dans un dépôt distinct de React</a>.</p>
+        <p>Il existe quelques autres dossiers racines, mais ils sont principalement utilisés par l’outillage et vous n’aurez probablement jamais affaire à eux lorsque vous contribuerez.</p>
+      </section>
+      <section id="colocated-tests" class="level3">
+        <h3>Tests colocalisés</h3>
+        <p>Nous n'avons pas de répertoire racine pour les tests unitaires. Nous les plaçons plutôt dans un répertoire appelé <code>__tests__</code> situé à côté des fichiers qu’ils testent.</p>
+        <p>Par exemple, un test pour <a href="https://github.com/facebook/react/blob/87724bd87506325fcaf2648c70fc1f43411a87be/src/renderers/dom/client/utils/setInnerHTML.js"><code>setInnerHTML.js</code></a> sera placé juste à côté, dans <a href="https://github.com/facebook/react/blob/87724bd87506325fcaf2648c70fc1f43411a87be/src/renderers/dom/client/utils/__tests__/setInnerHTML-test.js"><code>__tests__/setInnerHTML-test.js</code></a>.</p>
+      </section>
+      <section id="warnings-and-invariants" class="level3">
+        <h3>Avertissements et invariants</h3>
+        <p>Le code source de React utilise <code>console.error</code> pour afficher les avertissements :</p>
+        <pre class="language-js"><code class="language-js"><span class="token keyword control-flow">if</span> <span class="token punctuation">(</span>__DEV__<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  <span class="token console class-name">console</span><span class="token punctuation">.</span><span class="token method function property-access">error</span><span class="token punctuation">(</span><span class="token string">'Il y a un souci.'</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span></code></pre>
+        <p>Les avertissements ne sont activés que dans la phase de développement. En production, ils sont complètement retirés du code. Si vous avez besoin d'interdire l'exécution d'une partie de code, utilisez plutôt le module <code>invariant</code> :</p>
+        <pre class="language-js"><code class="language-js"><span class="token keyword">var</span> invariant <span class="token operator">=</span> <span class="token function">require</span><span class="token punctuation">(</span><span class="token string">'invariant'</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+<span class="token function">invariant</span><span class="token punctuation">(</span>
+  <span class="token number">2</span> <span class="token operator">+</span> <span class="token number">2</span> <span class="token operator">===</span> <span class="token number">4</span><span class="token punctuation">,</span>
+  <span class="token string">'Vous ne passerez pas !'</span>
+<span class="token punctuation">)</span><span class="token punctuation">;</span></code></pre>
+        <p><strong>L'invariant est levé lorsque la condition de <code>invariant</code> est <code>false</code>.</strong></p>
+        <p>Le terme « invariant » signifie simplement « cette condition est toujours vraie ». Vous pouvez voir ça comme une affirmation.</p>
+        <p>Pour les invariants, il est important d’avoir un comportement similaire en développement et en production, afin qu’ils soient levés dans les deux cas. Les messages d'erreur sont automatiquement remplacés par des codes d'erreur en production afin d'éviter toute incidence négative sur la taille (en octets) du fichier.</p>
+      </section>
+      <section id="development-and-production" class="level3">
+        <h3>Développement et production</h3>
+        <p>Vous pouvez utiliser la variable pseudo-globale <code>__DEV__</code> dans le code source pour délimiter les blocs de code réservés au développement.</p>
+        <p>La variable est remplacée lors de la compilation et se transforme en contrôles <code>process.env.NODE_ENV !== 'production'</code> dans les <em>builds</em> CommonJS.</p>
+        <p>Pour les versions autonomes, la variable devient <code>true</code> dans la version non-minifiée du fichier produit, alors qu'elle est complètement effacée, ainsi que les blocs <code>if</code> qu'elle contrôle, dans la version minifiée.</p>
+        <pre class="language-js"><code class="language-js"><span class="token keyword control-flow">if</span> <span class="token punctuation">(</span>__DEV__<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  <span class="token comment">// Ce code va uniquement s’appliquer pendant le développement.</span>
+<span class="token punctuation">}</span></code></pre>
+      </section>
+      <section id="flow" class="level3">
+        <h3>Flow</h3>
+        <p>Nous avons récemment commencé à introduire des contrôles <a href="https://flow.org/">Flow</a> dans le code source. Les fichiers marqués avec l'annotation <code>@flow</code> dans le commentaire d'en-tête de licence sont soumis à vérification.</p>
+        <p>Nous acceptons les <em>pull requests</em> <a href="https://github.com/facebook/react/pull/7600/files">qui ajoutent des annotations Flow au code existant</a>. Les annotations Flow ressemblent à ceci :</p>
+        <pre class="language-js"><code class="language-js"><span class="token maybe-class-name">ReactRef</span><span class="token punctuation">.</span><span class="token method-variable function-variable method function property-access">detachRefs</span> <span class="token operator">=</span> <span class="token keyword">function</span><span class="token punctuation">(</span>
+  <span class="token parameter"><span class="token literal-property property">instance</span><span class="token operator">:</span> <span class="token maybe-class-name">ReactInstance</span><span class="token punctuation">,</span>
+  <span class="token literal-property property">element</span><span class="token operator">:</span> <span class="token maybe-class-name">ReactElement</span> <span class="token operator">|</span> string <span class="token operator">|</span> number <span class="token operator">|</span> <span class="token keyword null nil">null</span> <span class="token operator">|</span> <span class="token boolean">false</span><span class="token punctuation">,</span></span>
+<span class="token punctuation">)</span><span class="token operator">:</span> <span class="token keyword">void</span> <span class="token punctuation">{</span>
+  <span class="token comment">// ...</span>
+<span class="token punctuation">}</span></code></pre>
+        <p>
+          Dans la mesure du possible, le nouveau code devrait utiliser des annotations Flow.
+          Vous pouvez exécuter <code>yarn flow</code> localement pour vérifier votre code avec Flow.
+        </p>
+      </section>
+      <section id="multiple-packages" class="level3">
+        <h3>Plusieurs paquets</h3>
+        <p>React est un <a href="https://danluu.com/monorepo/">monorepo</a>. Son dépôt contient plusieurs paquets distincts afin que leurs modifications puissent être coordonnées et que les problèmes puissent être signalés dans un seul et même endroit.</p>
+      </section>
+      <section id="react-core" class="level3">
+        <h3>Le noyau de React</h3>
+        <p>Le « noyau » de React inclut toutes les <a href="./top-level-api.html#react">API <code>React</code> de niveau racine</a>, par exemple :</p>
+        <ul>
+          <li><code>React.createElement()</code></li>
+          <li><code>React.Component</code></li>
+          <li><code>React.Children</code></li>
+        </ul>
+        <p><strong>Le noyau React n'inclut que les API nécessaires à la définition des composants.</strong> Il n'inclut pas l'algorithme de <a href="./reconciliation.html">réconciliation</a> ni aucun code spécifique à une plate-forme. Il est utilisé à la fois par les composants de React DOM et de React Native.</p>
+        <p>Le code pour le noyau React se trouve dans <a href="https://github.com/facebook/react/tree/master/packages/react"><code>packages/react</code></a> au sein de l'arborescence source. Il est disponible sur npm via le module <a href="https://www.npmjs.com/package/react"><code>react</code></a>. La version autonome correspondante pour l’utilisation à même le navigateur est appelée <code>react.js</code>, et exporte une variable globale appelée <code>React</code>.</p>
+      </section>
+      <section id="renderers" class="level3">
+        <h3>Moteurs de rendu</h3>
+        <p>React a été créé à l'origine pour le DOM, mais il a ensuite été adapté pour prendre également en charge les plates-formes natives avec <a href="https://react-native.dev/">React Native</a>. C’est ainsi qu’est né le concept de « moteurs de rendu » <em>(renderers, terme que nous utiliserons sans italiques dans la suite de ce texte, NdT)</em> au sein de React.</p>
+        <p><strong>Les renderers gèrent la transformation d'une arborescence React en appels à la plate-forme sous-jacente.</strong></p>
+        <p>Les renderers sont également situés dans <a href="https://github.com/facebook/react/tree/master/packages/"><code>packages/</code></a> :</p>
+        <ul>
+          <li><a href="https://github.com/facebook/react/tree/master/packages/react-dom">Le renderer de React DOM</a> retranscrit les composants React dans le DOM. Il implémente <a href="./react-dom.html">les API <code>ReactDOM</code> racines</a> et est disponible via le module npm <a href="https://www.npmjs.com/package/react-dom"><code>react-dom</code></a>. Il peut aussi être utilisé en tant que <em>bundle</em> autonome dans le navigateur, lequel est nommé <code>react-dom.js</code> et exporte une variable globale <code>ReactDOM</code>.</li>
+          <li><a href="https://github.com/facebook/react/tree/master/packages/react-native-renderer">Le renderer de React Native</a> retranscrit les composants React sous forme de vues natives. Il est utilisé en interne par React Native.</li>
+          <li><a href="https://github.com/facebook/react/tree/master/packages/react-test-renderer">Le renderer de test de React</a> retranscrit les composants React sous forme d’arbres JSON. Il est utilisé par la fonctionnalité d’<a href="https://facebook.github.io/jest/blog/2016/07/27/jest-14.html">instantanés</a> <em>(snapshots, NdT)</em> de <a href="https://facebook.github.io/jest">Jest</a> et est disponible via le module npm <a href="https://www.npmjs.com/package/react-test-renderer">react-test-renderer</a>.</li>
+        </ul>
+        <p>Le seul autre moteur de rendu officiellement pris en charge est <a href="https://github.com/facebook/react/tree/master/packages/react-art"><code>react-art</code></a>. Auparavant, il se trouvait dans un <a href="https://github.com/reactjs/react-art">dépôt GitHub</a> séparé, mais nous l'avons déplacé dans l'arborescence source principale pour le moment.</p>
+        <blockquote>
+          <p>Remarque</p>
+          <p>Techniquement, le <a href="https://github.com/facebook/react/tree/master/packages/react-native-renderer"><code>react-native-renderer</code></a> est une couche très mince qui apprend à React à interagir avec l’implémentation de React Native. Le véritable code spécifique à la plate-forme, qui gère les vues natives et fournit les composants, réside quant à lui dans le <a href="https://github.com/facebook/react-native">dépôt React Native</a>.</p>
+        </blockquote>
+      </section>
+      <section id="reconcilers" class="level3">
+        <h3>Réconciliateurs</h3>
+        <p>Même des moteurs de rendu très différents comme React DOM et React Native doivent partager beaucoup de logique. En particulier, l'algorithme de <a href="./reconciliation.html">réconciliation</a> doit être aussi similaire que possible afin que le rendu déclaratif, les composants personnalisés, l'état local, les méthodes de cycle de vie et les refs fonctionnent de manière cohérente sur toutes les plates-formes prises en charge.</p>
+        <p>Pour résoudre ce problème, différents moteurs de rendu partagent du code entre eux. Nous appelons cette partie de React un « réconciliateur ». Lorsqu'une mise à jour telle que <code>setState()</code> est planifiée, le réconciliateur appelle <code>render()</code> sur les composants de l'arborescence et les monte, les met à jour ou les démonte.</p>
+        <p>Les réconciliateurs ne font pas l’objet de modules séparés, car ils ne disposent actuellement d'aucune API publique. Ils sont exclusivement utilisés par les moteurs de rendu tels que React DOM et React Native.</p>
+      </section>
+      <section id="stack-reconciler" class="level3">
+        <h3>Réconciliateur Stack</h3>
+        <p>Le réconciliateur <em>“stack”</em> est l'implémentation qui sous-tend React 15 et les versions antérieures. Nous avons depuis cessé de l'utiliser, mais il reste décrit en détail dans la <a href="./implementation-notes.html">prochaine page</a>.</p>
+      </section>
+      <section id="fiber-reconciler" class="level3">
+        <h3>Réconciliateur Fiber</h3>
+        <p>Le réconciliateur <em>“fiber”</em> représente une nouvelle tentative de résoudre les problèmes inhérents au réconciliateur “stack” en plus de quelques problèmes anciens. C’est le réconciliateur par défaut depuis React 16.</p>
+        <p>Ses objectifs principaux sont :</p>
+        <ul>
+          <li>la capacité à diviser un travail interruptible en segments ;</li>
+          <li>la capacité à hiérarchiser, déplacer et réutiliser des travaux en cours ;</li>
+          <li>la capacité à jongler entre parents et enfants pour exécuter une mise en page avec React ;</li>
+          <li>la capacité à renvoyer plusieurs éléments depuis <code>render()</code> ;</li>
+          <li>une meilleure prise en charge des périmètres d'erreur.</li>
+        </ul>
+        <p>Vous pouvez en apprendre davantage sur l’architecture React Fiber <a href="https://github.com/acdlite/react-fiber-architecture">ici</a> et <a href="https://blog.ag-grid.com/inside-fiber-an-in-depth-overview-of-the-new-reconciliation-algorithm-in-react">ici</a>. Bien qu’elles soient livrées avec React 16, les fonctionnalités asynchrones ne sont pas encore activées par défaut.</p>
+        <p>Son code source est situé dans <a href="https://github.com/facebook/react/tree/master/packages/react-reconciler"><code>packages/react-reconciler</code></a>.</p>
+      </section>
+      <section id="event-system" class="level3">
+        <h3>Système d'événements</h3>
+        <p>React implémente une abstraction par-dessus les événements natifs afin de lisser les disparités d’un navigateur à l’autre. Son code source se trouve dans <a href="https://github.com/facebook/react/tree/master/packages/react-dom/src/events"><code>packages/react-dom/src/events</code></a>.</p>
+      </section>
+      <section id="what-next" class="level3">
+        <h3>Et maintenant ?</h3>
+        <p>
+          Lisez la <a href="./implementation-notes.html">prochaine page</a> pour en apprendre davantage sur l’implémentation du réconciliateur utilisé avant React 16. Nous n'avons pas encore documenté les détails internes d’implémentation du nouveau réconciliateur.
+          <span style="float: footnote;"><a href="./index.html#toc">Go to TOC</a></span>
+        </p>
+      </section>
+    </section>
+  </body>
+</html>

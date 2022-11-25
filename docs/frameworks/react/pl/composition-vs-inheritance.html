@@ -1,0 +1,150 @@
+<!doctype html>
+<html lang="pl">
+  <head>
+    <meta charset="utf-8">
+    <title>Kompozycja a dziedziczenie</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="https://raw.githubusercontent.com/shinokada/prism-coy-theme/main/theme_common.css">
+  </head>
+  <body>
+    <section id="kompozycja-a-dziedziczenie" class="level1">
+      <h1>Kompozycja a dziedziczenie</h1>
+      <p>React posiada potężny model kompozycyjny, z którego zalecamy korzystać zamiast dziedziczenia, aby komponentów można było używać wielokrotnie.</p>
+      <p>W tej sekcji rozważymy kilka problemów, przy okazji których początkujący użytkownicy Reacta sięgają po dziedziczenie, a następnie pokażemy, jak rozwiązać je za pomocą kompozycji.</p>
+      <section id="containment" class="level2">
+        <h2>Zawieranie</h2>
+        <p>Niektóre komponenty nie wiedzą z góry, co będzie ich "dziećmi". Najczęściej dotyczy to komponentów takich jak <code>Sidebar</code> czy <code>Dialog</code>, które reprezentują "pojemniki" ogólnego użytku.</p>
+        <p>Zalecamy, aby komponenty tego typu korzystały ze specjalnego atrybutu <code>children</code> i przekazywały go bezpośrednio do renderowanej struktury:</p>
+        <pre class="language-js{4}"><code class="language-js{4}">function FancyBorder(props) {
+  return (
+    &#x3C;div className={'FancyBorder FancyBorder-' + props.color}>
+      {props.children}
+    &#x3C;/div>
+  );
+}</code></pre>
+        <p>Pozwala to innym komponentom przekazywać dowolnych potomków poprzez zagnieżdżanie elementów JSX-owych:</p>
+        <pre class="language-js{4-9}"><code class="language-js{4-9}">function WelcomeDialog() {
+  return (
+    &#x3C;FancyBorder color="blue">
+      &#x3C;h1 className="Dialog-title">
+        Witaj
+      &#x3C;/h1>
+      &#x3C;p className="Dialog-message">
+        Dziękujemy za wizytę na naszym statku kosmicznym!
+      &#x3C;/p>
+    &#x3C;/FancyBorder>
+  );
+}</code></pre>
+        <p><strong><a href="https://codepen.io/gaearon/pen/ozqNOV?editors=0010">Przetestuj kod na CodePen</a></strong></p>
+        <p>Wszystko, co znajdzie się w JSX-owym znaczniku <code>&#x3C;FancyBorder></code> zostanie przekazane do komponentu <code>FancyBorder</code> poprzez atrybut <code>children</code>. Jako że <code>FancyBorder</code> renderuje <code>{props.children}</code> wewnątrz elementu <code>&#x3C;div></code>, właśnie w takim elemencie pojawią się ostatecznie przekazane komponenty.</p>
+        <p>Mimo że zdarza się to rzadziej, czasami trzeba wstawić do komponentu wiele takich "dziur". W takich przypadkach można wymyślić własną konwencję i używać jej zamiast <code>children</code>:</p>
+        <pre class="language-js{5,8,18,21}"><code class="language-js{5,8,18,21}">function SplitPane(props) {
+  return (
+    &#x3C;div className="SplitPane">
+      &#x3C;div className="SplitPane-left">
+        {props.left}
+      &#x3C;/div>
+      &#x3C;div className="SplitPane-right">
+        {props.right}
+      &#x3C;/div>
+    &#x3C;/div>
+  );
+}
+
+function App() {
+  return (
+    &#x3C;SplitPane
+      left={
+        &#x3C;Contacts />
+      }
+      right={
+        &#x3C;Chat />
+      } />
+  );
+}</code></pre>
+        <p><a href="https://codepen.io/gaearon/pen/gwZOJp?editors=0010"><strong>Przetestuj kod na CodePen</strong></a></p>
+        <p>Elementy reactowe, takie jak <code>&#x3C;Contacts /></code> czy <code>&#x3C;Chat /></code>, są zwykłymi obiektami, dlatego możesz przekazywać je poprzez atrybuty jak każdą inną wartość. To podejście może przypominać koncepcję "slotów" z innych bibliotek, lecz w Reakcie nie ma żadnych ograniczeń co do typu wartości przekazywanych w atrybutach.</p>
+      </section>
+      <section id="specialization" class="level2">
+        <h2>Specjalizacja</h2>
+        <p>Czasami wyobrażamy sobie, że niektóre komponenty są "specjalnymi przypadkami użycia" innych komponentów. Na przykład, można by powiedzieć, że <code>WelcomeDialog</code> jest specjalnym przypadkiem komponentu <code>Dialog</code>.</p>
+        <p>W Reakcie taką relację również można osiągnąć poprzez kompozycję, gdzie "wyspecjalizowany" komponent renderuje inny, bardziej ogólny komponent i konfiguruje go za pomocą odpowiednich atrybutów:</p>
+        <pre class="language-js{5,8,16-18}"><code class="language-js{5,8,16-18}">function Dialog(props) {
+  return (
+    &#x3C;FancyBorder color="blue">
+      &#x3C;h1 className="Dialog-title">
+        {props.title}
+      &#x3C;/h1>
+      &#x3C;p className="Dialog-message">
+        {props.message}
+      &#x3C;/p>
+    &#x3C;/FancyBorder>
+  );
+}
+
+function WelcomeDialog() {
+  return (
+    &#x3C;Dialog
+      title="Witaj"
+      message="Dziękujemy za wizytę na naszym statku kosmicznym!" />
+  );
+}</code></pre>
+        <p><a href="https://codepen.io/gaearon/pen/kkEaOZ?editors=0010"><strong>Przetestuj kod na CodePen</strong></a></p>
+        <p>Kompozycja działa równie dobrze z komponentami klasowymi:</p>
+        <pre class="language-js{10,27-31}"><code class="language-js{10,27-31}">function Dialog(props) {
+  return (
+    &#x3C;FancyBorder color="blue">
+      &#x3C;h1 className="Dialog-title">
+        {props.title}
+      &#x3C;/h1>
+      &#x3C;p className="Dialog-message">
+        {props.message}
+      &#x3C;/p>
+      {props.children}
+    &#x3C;/FancyBorder>
+  );
+}
+
+class SignUpDialog extends React.Component {
+  constructor(props) {
+    super(props);
+    this.handleChange = this.handleChange.bind(this);
+    this.handleSignUp = this.handleSignUp.bind(this);
+    this.state = {login: ''};
+  }
+
+  render() {
+    return (
+      &#x3C;Dialog title="Program Eksploracji Marsa"
+              message="Jak powinniśmy się do Ciebie zwracać?">
+        &#x3C;input value={this.state.login}
+               onChange={this.handleChange} />
+        &#x3C;button onClick={this.handleSignUp}>
+          Zapisz mnie!
+        &#x3C;/button>
+      &#x3C;/Dialog>
+    );
+  }
+
+  handleChange(e) {
+    this.setState({login: e.target.value});
+  }
+
+  handleSignUp() {
+    alert(`Witaj na pokładzie, ${this.state.login}!`);
+  }
+}</code></pre>
+        <p><a href="https://codepen.io/gaearon/pen/gwZbYa?editors=0010"><strong>Przetestuj kod na CodePen</strong></a></p>
+      </section>
+      <section id="so-what-about-inheritance" class="level2">
+        <h2>A co z dziedziczeniem?</h2>
+        <p>W Facebooku korzystamy z Reacta w tysiącach komponentów i nie znaleźliśmy jak dotąd żadnego przypadku użycia, w którym lepszym rozwiązaniem byłoby stworzenie hierarchii dziedziczenia.</p>
+        <p>Atrybuty i kompozycja dają wystarczającą dowolność w dostosowaniu zarówno wyglądu, jak i zachowania komponentu, w sposób jawny i bezpieczny. Pamiętaj, że komponenty mogą przyjmować atrybuty dowolnego rodzaju: typy podstawowe, elementy reactowe czy funkcje.</p>
+        <p>
+          Jeśli planujesz wielokrotnie używać w różnych komponentach funkcjonalności niezwiązanej z renderowaniem, sugerujemy wydzielić ją do osobnego modułu javascriptowego. Wtedy komponenty będą mogły ją zaimportować bez rozszerzania, bez względu na to, czy to funkcja, obiekt czy klasa.
+          <span style="float: footnote;"><a href="./index.html#toc">Go to TOC</a></span>
+        </p>
+      </section>
+    </section>
+  </body>
+</html>

@@ -1,0 +1,200 @@
+<!doctype html>
+<html lang="he">
+  <head>
+    <meta charset="utf-8">
+    <title>בניית Hooks משלך</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="https://raw.githubusercontent.com/shinokada/prism-coy-theme/main/theme_common.css">
+  </head>
+  <body>
+    <section id="בניית-hooks-משלך" class="level1">
+      <h1>בניית Hooks משלך</h1>
+      <p><em>Hooks</em> הם תוספת חדשה ב-React 16.8. הם נותנים לנו להשתמש ב-state ופיצ'רים אחרים של React מבלי לכתוב מחלקה.</p>
+      <p>בניית Hooks משלך נותנת לך לחלץ לוגיקת קומפוננטות לפונקציות שניתן לעשות בהן שימוש חוזר.</p>
+      <p>כשלמדנו על <a href="./hooks-effect.html#example-using-hooks-1">שימוש ב-Effect Hook</a>,ראינו את קומפוננטה זו מיישום צ'אט שמציג הודעה שמציינת האם חבר מחובר או מנותק:</p>
+      <pre class="language-js{4-15}"><code class="language-js{4-15}">import React, { useState, useEffect } from 'react';
+
+function FriendStatus(props) {
+  const [isOnline, setIsOnline] = useState(null);
+
+  useEffect(() => {
+    function handleStatusChange(status) {
+      setIsOnline(status.isOnline);
+    }
+
+    ChatAPI.subscribeToFriendStatus(props.friend.id, handleStatusChange);
+    return () => {
+      ChatAPI.unsubscribeFromFriendStatus(props.friend.id, handleStatusChange);
+    };
+  });
+
+  if (isOnline === null) {
+    return 'טוען...';
+  }
+  return isOnline ? 'מחובר' : 'מנותק';
+}</code></pre>
+      <p>עכשיו נגיד שיישום הצ'אט שלנו מכיל רשימת אנשי קשר, ואנו רוצים לרנדר שמות של משתמשים מחוברים עם צבע ירוק. נוכל להעתיק ולהדביק לוגיקה דומה לעיל לתוך הקומפוננטה <code>FriendListItem</code> אבל זה לא יהיה אידיאלי:</p>
+      <pre class="language-js{4-15}"><code class="language-js{4-15}">import React, { useState, useEffect } from 'react';
+
+function FriendListItem(props) {
+  const [isOnline, setIsOnline] = useState(null);
+
+  useEffect(() => {
+    function handleStatusChange(status) {
+      setIsOnline(status.isOnline);
+    }
+
+    ChatAPI.subscribeToFriendStatus(props.friend.id, handleStatusChange);
+    return () => {
+      ChatAPI.unsubscribeFromFriendStatus(props.friend.id, handleStatusChange);
+    };
+  });
+
+  return (
+    &#x3C;li style={{ color: isOnline ? 'green' : 'black' }}>
+      {props.friend.name}
+    &#x3C;/li>
+  );
+}</code></pre>
+      <p>במקום, נרצה לשתף את לוגיקה זו בין <code>FriendStatus</code> ו-<code>FriendListItem</code>.</p>
+      <p>באופן מסורתי ב-React, היו לנו שתי דרכים פופולריות לשתף לוגיקה שהיא stateful בין קומפוננטות: <a href="./render-props.html">render props</a> <a href="./higher-order-components.html">וקומפוננטות מסדר גבוה יותר</a>. כעת נסתכל על איך Hooks פותרים הרבה מאותן בעיות מבלי להכריח אותנו להוסיף עוד קומפוננטות לעץ.</p>
+      <section id="extracting-a-custom-hook" class="level2">
+        <h2>חילוץ Hook מותאם אישית</h2>
+        <p>כשאנו רוצים לשתף לוגיקה בין שתי פונקציות JavaScript, אנו מחלצים אותה לפונקציה שלישית. שתי הקומפוננטות וה-Hooks הם פונקציות, אז זה עובד גם בשבילם!</p>
+        <p><strong>Hook מותאם אישית הוא פונקציית JavaScript ששמה מתחיל עם "use" והיא יכולה לקרוא ל-Hooks אחרים.</strong> לדוגמה, <code>useFriendStatus</code> היא ה-Hook המותאם אישית הראשון שלנו:</p>
+        <pre class="language-js{3}"><code class="language-js{3}">import { useState, useEffect } from 'react';
+
+function useFriendStatus(friendID) {
+  const [isOnline, setIsOnline] = useState(null);
+
+  useEffect(() => {
+    function handleStatusChange(status) {
+      setIsOnline(status.isOnline);
+    }
+
+    ChatAPI.subscribeToFriendStatus(friendID, handleStatusChange);
+    return () => {
+      ChatAPI.unsubscribeFromFriendStatus(friendID, handleStatusChange);
+    };
+  });
+
+  return isOnline;
+}</code></pre>
+        <p>אין שום דבר חדש בתוכו – הלוגיקה מועתקת מהקומפוננטות לעיל. בדיוק כמו בתוך קומפוננטה, תוודא שאתה קורא ל-Hooks אחרים ללא תנאי ברמה העליונה של ה-Hook המותאם אישית שלך.</p>
+        <p>בשונה מקומפוננטת React, Hook מותאם אישית לא צריך שתהיה לו חתימה ספציפית. אנחנו יכולים להחליט מה הוא לוקח כארגומנטים, ומה, אם בכלל, הוא אמור להחזיר. במילים אחרות, זה בדיוק כמו פונקציה רגילה. השם שלה צריך להתחיל תמיד עם <code>use</code> כך שתמיד נוכל לדעת <a href="./hooks-rules.html">שחוקי Hooks</a> תקפים לגביה.</p>
+        <p>המטרה של ה-Hook <code>useFriendStatus</code> היא לעשות לנו subscribe לסטטוס של חבר. זאת הסיבה שהוא מקבל את <code>friendID</code> כארגומנט, ומחזיר האם החבר מחובר או לא:</p>
+        <pre class="language-js"><code class="language-js"><span class="token keyword">function</span> <span class="token function">useFriendStatus</span><span class="token punctuation">(</span><span class="token parameter">friendID</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  <span class="token keyword">const</span> <span class="token punctuation">[</span>isOnline<span class="token punctuation">,</span> setIsOnline<span class="token punctuation">]</span> <span class="token operator">=</span> <span class="token function">useState</span><span class="token punctuation">(</span><span class="token keyword null nil">null</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+  <span class="token comment">// ...</span>
+
+  <span class="token keyword control-flow">return</span> isOnline<span class="token punctuation">;</span>
+<span class="token punctuation">}</span></code></pre>
+        <p>עכשיו נראה כיצד נוכל להשתמש ב-Hook המותאם אישית.</p>
+      </section>
+      <section id="using-a-custom-hook" class="level2">
+        <h2>שימוש ב-Hook מותאם אישית</h2>
+        <p>בהתחלה, המטרה המוצהרת שלנו הייתה להסיר את הלוגיקה הכפולה מהקומפוננטות <code>FriendStatus</code> ו-<code>FriendListItem</code>. שניהם רצו לדעת האם חבר מחובר.</p>
+        <p>עכשיו כשחילצנו את הלוגיקה הזו ל-Hook <code>useFriendStatus</code>, אנחנו יכולים <em>פשוט להשתמש בה:</em></p>
+        <pre class="language-js{2}"><code class="language-js{2}">function FriendStatus(props) {
+  const isOnline = useFriendStatus(props.friend.id);
+
+  if (isOnline === null) {
+    return 'טוען...';
+  }
+  return isOnline ? 'מנותק' : 'מחובר';
+}</code></pre>
+        <pre class="language-js{2}"><code class="language-js{2}">function FriendListItem(props) {
+  const isOnline = useFriendStatus(props.friend.id);
+
+  return (
+    &#x3C;li style={{ color: isOnline ? 'green' : 'black' }}>
+      {props.friend.name}
+    &#x3C;/li>
+  );
+}</code></pre>
+        <p><strong>האם קוד זה שווה ערך לדוגמאות המקוריות?</strong> כן, הוא עובד בדיוק באותה דרך. אם נסתכל קרוב יותר, נראה שלא ביצענו שינויים להתנהגות. כל מה שעשינו הוא לחלץ קוד נפוץ בין שני פונקציות לתוך פונקציה נפרדת. **Hooks מותאמים אישית הם מוסכמה שנובעת מהעיצוב של Hooks, מאשר פיצ'ר של React.</p>
+        <p><strong>האם אני צריך להוסיף לשם של ה-Hooks המותאמים אישית "use" בהתחלה?</strong> בבקשה עשה זאת. המוסכמה הזו היא חשובה מאוד. בלעדיה, לא נוכל לבדוק באופן אוטומטי הפרות של <a href="./hooks-rules.html">חוקי Hooks</a> בגלל שלא נוכל לדעת אם פונקציה מסוימת מכילה קריאות ל-Hooks בתוכה.</p>
+        <p><strong>האם שני קומפוננטות שמשתמשות באותו Hook חולקות state?</strong> לא. Hooks מותאמים אישית הם מנגנון לשימוש חוזר <em>בלוגיקה שהיא stateful</em> (כמו הגדרת subscription ולזכור את הערך הנוכחי), אבל בכל פעם שאתה משתמש ב-Hook מותאם אישית, כל ה-state וה-effects בתוכן הם מבודדים לגמרי.</p>
+        <p><strong>איך Hook מותאם אישית מקבל state מבודד?</strong> כל <em>קריאה</em> ל-Hook מקבל state מבודד. בגלל שאנו קוראים ל-<code>useFriendStatus</code> ישירות, מנקודת המבט של React הקומפוננטה שלנו קוראת ל-<code>useState</code> ו-<code>useEffect</code>. וכמו <a href="./hooks-state.html#tip-using-multiple-state-variables">שלמדנו</a> <a href="./hooks-effect.html#tip-use-multiple-effects-to-separate-concerns">קודם</a>, אנו יכולים לקרוא ל-<code>useState</code> ו-<code>useEffect</code> פעמים רבות בקומפוננטה אחת, והם יהיו עצמאים לגמרי.</p>
+        <section id="tip-pass-information-between-hooks" class="level3">
+          <h3>טיפ: העבר מידע בין Hooks</h3>
+          <p>מכיוון ש-Hooks הם פונקציות, ניתן להעביר מידע ביניהם.</p>
+          <p>להדגים זאת, נשתמש בקומפוננטה אחת מדוגמת הצ'אט ההיפותטית שלנו. זה בורר נמען של הודעות צ'אט שמציג האם החבר הנבחר הוא מחובר:</p>
+          <pre class="language-js{8-9,13}"><code class="language-js{8-9,13}">const friendList = [
+];
+
+function ChatRecipientPicker() {
+  const [recipientID, setRecipientID] = useState(1);
+  const isRecipientOnline = useFriendStatus(recipientID);
+
+  return (
+    &#x3C;>
+      &#x3C;Circle color={isRecipientOnline ? 'green' : 'red'} />
+      &#x3C;select
+        value={recipientID}
+        onChange={e => setRecipientID(Number(e.target.value))}
+      >
+        {friendList.map(friend => (
+          &#x3C;option key={friend.id} value={friend.id}>
+            {friend.name}
+          &#x3C;/option>
+        ))}
+      &#x3C;/select>
+    &#x3C;/>
+  );
+}</code></pre>
+          <p>אנחנו שומרים את ה-ID חבר הנבחר במשתנה state <code>recipientID</code>, ומעדכנים אותו אם המשתמש בוחר חבר אחר ב-<code>&#x3C;select></code>.</p>
+          <p>בגלל שהקריאה ל-Hook <code>useState</code> נותנת לנו את הערך האחרון של המשתנה state <code>recipientID</code>, אנחנו יכולים להעביר את זה ל-Hook המותאם אישית שלנו <code>useFriendStatus</code> כארגומנט:</p>
+          <pre class="language-js"><code class="language-js">  <span class="token keyword">const</span> <span class="token punctuation">[</span>recipientID<span class="token punctuation">,</span> setRecipientID<span class="token punctuation">]</span> <span class="token operator">=</span> <span class="token function">useState</span><span class="token punctuation">(</span><span class="token number">1</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token keyword">const</span> isRecipientOnline <span class="token operator">=</span> <span class="token function">useFriendStatus</span><span class="token punctuation">(</span>recipientID<span class="token punctuation">)</span><span class="token punctuation">;</span></code></pre>
+          <p>זה נותן לנו לדעת האם החבר <em>שכרגע נבחר</em> הוא מחובר. אם אנחנו בוחרים חבר אחר ומעדכנים את המשתנה <code>recipientID</code>, ה-Hook <code>useFriendStatus</code> שלנו יבצע unsubscribe מהחבר שנבחר קודם לכן, ויעשה subscribe לסטטוס של הנבחר החדש.</p>
+        </section>
+      </section>
+      <section id="useyourimagination-useyourimagination" class="level2">
+        <h2><code>useYourImagination()</code> {#useyourimagination}</h2>
+        <p>Hooks מותאמים אישית מציעים את הגמישות של שיתוף לוגיקה שלא היה אפשרי בקומפוננטות React בעבר. אתה יכול לכתוב Hooks מותאמים אישית שמכסים מגוון רחב של מקרי שימוש כמו טיפול בטפסים, אנימציה, declarative subscriptions, טיימרים, וכנראה הרבה עוד שלא שקלנו עדיין. ובנוסף, אתה יכול לבנות Hooks שהם קלים לשימוש כמו פיצ'רים של React.</p>
+        <p>נסה לא להוסיף הפשטות מוקדם מדי. עכשיו שקומפוננטות פונקציה יכולות לעשות יותר, סביר להניח שקומפוננטת הפונקציה הממוצעת בקוד שלך תהפוך לארוכה יותר. זה נורמלי – אל תרגיש שאתה <em>חייב</em> ישר לפצל אותה ל-Hooks. אבל אנחנו גם מעודדים אותך להתחיל לאתר מקרים שבהם Hook מותאם אישית יוכל להסתיר לוגיקה מורכבת מאחורי ממשק פשוט, או לעזור לפרום קומפוננטה בעייתית.</p>
+        <p>לדוגמה, אולי יש לך קומפוננטה מורכבת שמכילה הרבה local state שמנוהל בדרך של גופו של עניין. <code>useState</code> אינו מרכז את לוגיקת העדכון בקלות כך שיכול להיות שתעדיף לכתוב את זה בתור <a href="https://redux.js.org/">Redux</a> reducer:</p>
+        <pre class="language-js"><code class="language-js"><span class="token keyword">function</span> <span class="token function">todosReducer</span><span class="token punctuation">(</span><span class="token parameter">state<span class="token punctuation">,</span> action</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  <span class="token keyword control-flow">switch</span> <span class="token punctuation">(</span>action<span class="token punctuation">.</span><span class="token property-access">type</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token keyword">case</span> <span class="token string">'add'</span><span class="token operator">:</span>
+      <span class="token keyword control-flow">return</span> <span class="token punctuation">[</span><span class="token spread operator">...</span>state<span class="token punctuation">,</span> <span class="token punctuation">{</span>
+        <span class="token literal-property property">text</span><span class="token operator">:</span> action<span class="token punctuation">.</span><span class="token property-access">text</span><span class="token punctuation">,</span>
+        <span class="token literal-property property">completed</span><span class="token operator">:</span> <span class="token boolean">false</span>
+      <span class="token punctuation">}</span><span class="token punctuation">]</span><span class="token punctuation">;</span>
+    <span class="token comment">// ... פעולות אחרות ...</span>
+    <span class="token keyword module">default</span><span class="token operator">:</span>
+      <span class="token keyword control-flow">return</span> state<span class="token punctuation">;</span>
+  <span class="token punctuation">}</span>
+<span class="token punctuation">}</span></code></pre>
+        <p>Reducers הם נוחים לבדיקה בבידוד, ובקנה מידה כדי לבטא לוגיקת עדכון מורכבת. ניתן לפרק אותם ל-reducers קטנים יותר במידת הצורך. למרות זאת, תוכל גם ליהנות מהיתרונות של שימוש ב-local state ב-React, או שלא תרצה להתקין ספרייה נוספת.</p>
+        <p>אז מה אם נוכל לכתוב <code>useReducer</code> Hook שמאפשר לנו לנהל <em>local state</em> של הקומפוננטה שלנו עם reducer? גרסה מופשטת של זה יכולה להיראות כמו זה:</p>
+        <pre class="language-js"><code class="language-js"><span class="token keyword">function</span> <span class="token function">useReducer</span><span class="token punctuation">(</span><span class="token parameter">reducer<span class="token punctuation">,</span> initialState</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  <span class="token keyword">const</span> <span class="token punctuation">[</span>state<span class="token punctuation">,</span> setState<span class="token punctuation">]</span> <span class="token operator">=</span> <span class="token function">useState</span><span class="token punctuation">(</span>initialState<span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+  <span class="token keyword">function</span> <span class="token function">dispatch</span><span class="token punctuation">(</span><span class="token parameter">action</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token keyword">const</span> nextState <span class="token operator">=</span> <span class="token function">reducer</span><span class="token punctuation">(</span>state<span class="token punctuation">,</span> action<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token function">setState</span><span class="token punctuation">(</span>nextState<span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token punctuation">}</span>
+
+  <span class="token keyword control-flow">return</span> <span class="token punctuation">[</span>state<span class="token punctuation">,</span> dispatch<span class="token punctuation">]</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span></code></pre>
+        <p>עכשיו נוכל להשתמש בזה בתוך הקומפוננטה שלנו, ולתת ל-reducer לטפל בניהול state:</p>
+        <pre class="language-js{2}"><code class="language-js{2}">function Todos() {
+  const [todos, dispatch] = useReducer(todosReducer, []);
+
+  function handleAddClick(text) {
+    dispatch({ type: 'add', text });
+  }
+
+  // ...
+}</code></pre>
+        <p>
+          הצורך לנהל local state עם reducer בקומפוננטה מורכבת הוא נפוץ מספיק כך שבנינו את <code>useReducer</code> Hook לתוך React. תוכל למצוא אותו עם Hooks מובנים אחרים <a href="./hooks-reference.html">בתיעוד של Hooks API</a>.
+          <span style="float: footnote;"><a href="./index.html#toc">Go to TOC</a></span>
+        </p>
+      </section>
+    </section>
+  </body>
+</html>

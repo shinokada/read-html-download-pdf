@@ -1,0 +1,335 @@
+<!doctype html>
+<html lang="pl">
+  <head>
+    <meta charset="utf-8">
+    <title>JSX w szczegółach</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="https://raw.githubusercontent.com/shinokada/prism-coy-theme/main/theme_common.css">
+  </head>
+  <body>
+    <section id="jsx-w-szczegółach" class="level1">
+      <h1>JSX w szczegółach</h1>
+      <p>Zasadniczo, JSX dostarcza lukier składniowy dla funkcji <code>React.createElement(component, props, ...children)</code>. Kod JSX:</p>
+      <pre class="language-js"><code class="language-js"><span class="token operator">&#x3C;</span><span class="token maybe-class-name">MyButton</span> color<span class="token operator">=</span><span class="token string">"blue"</span> shadowSize<span class="token operator">=</span><span class="token punctuation">{</span><span class="token number">2</span><span class="token punctuation">}</span><span class="token operator">></span>
+  <span class="token maybe-class-name">Kliknij</span> mnie
+<span class="token operator">&#x3C;</span><span class="token operator">/</span><span class="token maybe-class-name">MyButton</span><span class="token operator">></span></code></pre>
+      <p>jest kompilowany do:</p>
+      <pre class="language-js"><code class="language-js"><span class="token maybe-class-name">React</span><span class="token punctuation">.</span><span class="token method function property-access">createElement</span><span class="token punctuation">(</span>
+  <span class="token maybe-class-name">MyButton</span><span class="token punctuation">,</span>
+  <span class="token punctuation">{</span><span class="token literal-property property">color</span><span class="token operator">:</span> <span class="token string">'blue'</span><span class="token punctuation">,</span> <span class="token literal-property property">shadowSize</span><span class="token operator">:</span> <span class="token number">2</span><span class="token punctuation">}</span><span class="token punctuation">,</span>
+  <span class="token string">'Kliknij mnie'</span>
+<span class="token punctuation">)</span></code></pre>
+      <p>Jeżeli element nie posiada zagnieżdżonych tagów, możesz użyć tagu samozamykającego się. Wtedy kod:</p>
+      <pre class="language-js"><code class="language-js"><span class="token operator">&#x3C;</span>div className<span class="token operator">=</span><span class="token string">"sidebar"</span> <span class="token operator">/</span><span class="token operator">></span></code></pre>
+      <p>jest kompilowany do:</p>
+      <pre class="language-js"><code class="language-js"><span class="token maybe-class-name">React</span><span class="token punctuation">.</span><span class="token method function property-access">createElement</span><span class="token punctuation">(</span>
+  <span class="token string">'div'</span><span class="token punctuation">,</span>
+  <span class="token punctuation">{</span><span class="token literal-property property">className</span><span class="token operator">:</span> <span class="token string">'sidebar'</span><span class="token punctuation">}</span>
+<span class="token punctuation">)</span></code></pre>
+      <p>Aby przetestować, jak JSX jest zamieniany na JavaScript, możesz wypróbować <a href="babel://jsx-simple-example">kompilator Babel online</a>.</p>
+      <section id="specifying-the-react-element-type" class="level2">
+        <h2>Określanie typu elementu</h2>
+        <p>Pierwsza część tagu JSX określa typ elementu reactowego.</p>
+        <p>Wielka litera w tagu JSX oznacza, że jest on komponentem reactowym. Takie tagi są bezpośrednio kompilowane na referencję do zmiennej, więc jeżeli używasz w swoim kodzie JSX wyrażenia <code>&#x3C;Foo /></code>, to <code>Foo</code> musi znajdować się w zakresie.</p>
+        <section id="react-must-be-in-scope" class="level3">
+          <h3>React musi znajdować się w zakresie</h3>
+          <p>Jako że JSX kompilowany jest do wywołania <code>React.createElement</code>, biblioteka <code>React</code> musi być w zakresie, w którym znajduje się twój kod JSX.</p>
+          <p>W przykładzie poniżej oba importy są konieczne, nawet jeżeli <code>React</code> i <code>CustomButton</code> nie mają żadnych bezpośrednich odniesień z kodu JavaScript:</p>
+          <pre class="language-js{1,2,5}"><code class="language-js{1,2,5}">import React from 'react';
+import CustomButton from './CustomButton';
+
+function WarningButton() {
+  // return React.createElement(CustomButton, {color: 'red'}, null);
+  return &#x3C;CustomButton color="red" />;
+}</code></pre>
+          <p>Jeżeli nie używasz rozwiązania budującego paczkę z kodem JavaScript i ładujesz Reacta za pomocą tagu <code>&#x3C;script></code>, jest on dostępny jako globalna zmienna <code>React</code>.</p>
+        </section>
+        <section id="using-dot-notation-for-jsx-type" class="level3">
+          <h3>Używanie notacji kropkowej w JSX</h3>
+          <p>Możesz odnosić się do reactowych komponentów za pomocą notacji kropkowej. Jest to wygodne rozwiązanie w sytuacji, gdy z jednego modułu eksportujesz wiele komponentów. Przykładowo, jeżeli <code>MyComponents.DatePicker</code> jest komponentem, możesz użyć go bezpośrednio w JSX w następujący sposób:</p>
+          <pre class="language-js{10}"><code class="language-js{10}">import React from 'react';
+
+const MyComponents = {
+  DatePicker: function DatePicker(props) {
+    return &#x3C;div>Wyobraź sobie, że jest tutaj kalendarz w kolorze {props.color}.&#x3C;/div>;
+  }
+}
+
+function BlueDatePicker() {
+  return &#x3C;MyComponents.DatePicker color="blue" />;
+}</code></pre>
+        </section>
+        <section id="user-defined-components-must-be-capitalized" class="level3">
+          <h3>Komponenty zdefiniowane przez użytkownika muszą być pisane wielką literą</h3>
+          <p>Jeżeli nazwa elementu zaczyna się od małej litery, oznacza to odniesienie do wbudowanego komponentu, takiego jak na przykład: <code>&#x3C;div></code> lub <code>&#x3C;span></code>, i skutkuje przekazaniem ciągu znaków <code>'div'</code> lub <code>'span'</code> do funkcji <code>React.createElement</code>. Nazwy typów, które zaczynają się od wielkiej litery, na przykład: <code>&#x3C;Foo /></code>, są kompilowane do wywołania <code>React.createElement(Foo)</code> i odnoszą się do komponentów zdefiniowanych lub zaimportowanych do twoich plików zawierających kod JavaScript.</p>
+          <p>Rekomendujemy używanie wielkich liter w nazwach komponentów. Jeżeli twój komponent ma nazwę rozpoczynającą się od małej litery, przypisz ją do zmiennej, której nazwa zaczyna się od wielkiej litery, zanim użyjesz go w JSX.</p>
+          <p>Na przykład, poniższy kod nie zachowa się tak, jak można by tego oczekiwać:</p>
+          <pre class="language-js{3,4,10,11}"><code class="language-js{3,4,10,11}">import React from 'react';
+
+// Źle! To jest komponent i jego nazwa powinna zaczynać się wielką literą:
+function hello(props) {
+  // Dobrze! To użycie &#x3C;div> jest w porządku, bo jest on poprawnym, wbudowanym tagiem HTML:
+  return &#x3C;div>Witaj, {props.toWhat}&#x3C;/div>;
+}
+
+function HelloWorld() {
+  // Źle! React traktuje &#x3C;hello /> jak element wbudowany HTML, bo jego nazwa nie zaczyna się od wielkiej litery:
+  return &#x3C;hello toWhat="Świecie" />;
+}</code></pre>
+          <p>Aby to naprawić, zmienimy nazwę z <code>hello</code> na <code>Hello</code>, a w miejscu użycia napiszemy <code>&#x3C;Hello /></code>:</p>
+          <pre class="language-js{3,4,10,11}"><code class="language-js{3,4,10,11}">import React from 'react';
+
+// Dobrze! To jest komponent, więc powinien mieć nazwę pisaną wielką literą:
+function Hello(props) {
+  // Dobrze! To użycie &#x3C;div> jest w porządku, bo div jest poprawnym elementem HTML:
+  return &#x3C;div>Witaj, {props.toWhat}&#x3C;/div>;
+}
+
+function HelloWorld() {
+  // Dobrze! React traktuje &#x3C;Hello /> jak komponent, bo jego nazwa zaczyna się od wielkiej litery:
+  return &#x3C;Hello toWhat="Świecie" />;
+}</code></pre>
+        </section>
+        <section id="choosing-the-type-at-runtime" class="level3">
+          <h3>Określanie typu w trakcie działania kodu</h3>
+          <p>Używanie wyrażeń jako elementów w Reakcie jest zabronione. Aby użyć wyrażenia do wskazania komponentu, należy przypisać je do zmiennej o nazwie pisanej z wielkiej litery. To rozwiązanie jest użyteczne w przypadku wyświetlania komponentu w zależności od przekazanego atrybutu:</p>
+          <pre class="language-js{10,11}"><code class="language-js{10,11}">import React from 'react';
+import { PhotoStory, VideoStory } from './stories';
+
+const components = {
+  photo: PhotoStory,
+  video: VideoStory
+};
+
+function Story(props) {
+  // Źle! Komponent w JSX nie może być wyrażeniem.
+  return &#x3C;components[props.storyType] story={props.story} />;
+}</code></pre>
+          <p>Aby to naprawić, przypisujemy najpierw wyrażenie do zmiennej z nazwą zaczynającą się od wielkiej litery:</p>
+          <pre class="language-js{10-12}"><code class="language-js{10-12}">import React from 'react';
+import { PhotoStory, VideoStory } from './stories';
+
+const components = {
+  photo: PhotoStory,
+  video: VideoStory
+};
+
+function Story(props) {
+  // Dobrze! Komponenty w JSX mogą być przypisywane i przechowywane w zmiennych pisanych wielką literą.
+  const SpecificStory = components[props.storyType];
+  return &#x3C;SpecificStory story={props.story} />;
+}</code></pre>
+        </section>
+      </section>
+      <section id="props-in-jsx" class="level2">
+        <h2>Właściwości w JSX</h2>
+        <p>Istnieje kilka sposobów na przekazanie właściwości (ang. <em>props</em>) w JSX.</p>
+        <section id="javascript-expressions-as-props" class="level3">
+          <h3>Wyrażenie javascriptowe jako właściwość</h3>
+          <p>Możesz przekazać dowolne wyrażenie javascriptowe jako właściwość, jeżeli otoczysz je klamrami <code>{}</code>. Przykładowo:</p>
+          <pre class="language-js"><code class="language-js"><span class="token operator">&#x3C;</span><span class="token maybe-class-name">MyComponent</span> foo<span class="token operator">=</span><span class="token punctuation">{</span><span class="token number">1</span> <span class="token operator">+</span> <span class="token number">2</span> <span class="token operator">+</span> <span class="token number">3</span> <span class="token operator">+</span> <span class="token number">4</span><span class="token punctuation">}</span> <span class="token operator">/</span><span class="token operator">></span></code></pre>
+          <p>Dla komponentu <code>MyComponent</code>, wartość <code>props.foo</code> będzie równa <code>10</code>, ponieważ wyrażenie <code>1 + 2 + 3 + 4</code> zostanie wykonane.</p>
+          <p><code>if</code> i <code>for</code> nie są wyrażeniami w JavaScripcie. Z tego powodu nie mogą być bezpośrednio przekazywane jako właściwość. Zamiast tego, można użyć ich do warunkowego przypisania wartości wyrażenia do zmiennej i zmienną przekazać jako właściwość. Na przykład tak, jak poniżej:</p>
+          <pre class="language-js{3-7}"><code class="language-js{3-7}">function NumberDescriber(props) {
+  let description;
+  if (props.number % 2 == 0) {
+    description = &#x3C;strong>parzystą&#x3C;/strong>;
+  } else {
+    description = &#x3C;i>nieparzystą&#x3C;/i>;
+  }
+  return &#x3C;div>{props.number} jest liczbą {description}&#x3C;/div>;
+}</code></pre>
+          <p>Możesz dowiedzieć się więcej na temat <a href="./conditional-rendering.html">warunkowego renderowania</a> i <a href="./lists-and-keys.html">pętli</a> na odpowiednich stronach.</p>
+        </section>
+        <section id="string-literals" class="level3">
+          <h3>Literały tekstowe</h3>
+          <p>Literały tekstowe można przekazywać jako wartość właściwości. Poniższe przykłady są równoważne:</p>
+          <pre class="language-js"><code class="language-js"><span class="token operator">&#x3C;</span><span class="token maybe-class-name">MyComponent</span> message<span class="token operator">=</span><span class="token string">"hello world"</span> <span class="token operator">/</span><span class="token operator">></span>
+
+<span class="token operator">&#x3C;</span><span class="token maybe-class-name">MyComponent</span> message<span class="token operator">=</span><span class="token punctuation">{</span><span class="token string">'hello world'</span><span class="token punctuation">}</span> <span class="token operator">/</span><span class="token operator">></span></code></pre>
+          <p>Gdy przekazujesz literał tekstowy, w jego treści zakodowywany jest HTML. Dlatego poniższe wyrażenia będą miały ten sam wynik:</p>
+          <pre class="language-js"><code class="language-js"><span class="token operator">&#x3C;</span><span class="token maybe-class-name">MyComponent</span> message<span class="token operator">=</span><span class="token string">"&#x26;lt;3"</span> <span class="token operator">/</span><span class="token operator">></span>
+
+<span class="token operator">&#x3C;</span><span class="token maybe-class-name">MyComponent</span> message<span class="token operator">=</span><span class="token punctuation">{</span><span class="token string">'&#x3C;3'</span><span class="token punctuation">}</span> <span class="token operator">/</span><span class="token operator">></span></code></pre>
+          <p>Zwykle jednak konsekwencje tego zachowania nie są istotne, ale zostały wspomniane dla kompletności dokumentacji.</p>
+        </section>
+        <section id="props-default-to-true" class="level3">
+          <h3>Przekazane właściwości domyślnie mają wartość "true"</h3>
+          <p>Gdy przekażesz atrybut bez jawnego podawania wartości, domyślnie przyjmie on wartość <code>true</code>. Poniższe wyrażenia JSX są równoważne:</p>
+          <pre class="language-js"><code class="language-js"><span class="token operator">&#x3C;</span><span class="token maybe-class-name">MyTextBox</span> autocomplete <span class="token operator">/</span><span class="token operator">></span>
+
+<span class="token operator">&#x3C;</span><span class="token maybe-class-name">MyTextBox</span> autocomplete<span class="token operator">=</span><span class="token punctuation">{</span><span class="token boolean">true</span><span class="token punctuation">}</span> <span class="token operator">/</span><span class="token operator">></span></code></pre>
+          <p>Nie zalecamy jednak <em>nie</em> przekazywania żadnej wartości, ponieważ może być to pomylone ze <a href="https://developer.mozilla.org/en/docs/Web/JavaScript/Reference/Operators/Object_initializer#New_notations_in_ECMAScript_2015">skrótowym zapisem definicji obiektu w ES6</a> <code>{foo}</code>, który jest równoznaczny z <code>{foo: foo}</code>, a nie <code>{foo: true}</code>. To zachowanie w składni JSX zostało zaimplementowane, żeby odwzorować sposób działania atrybutów HTML.</p>
+        </section>
+        <section id="spread-attributes" class="level3">
+          <h3>Właściwości rozszczepione (ang. <em>spread</em>)</h3>
+          <p>Jeżeli zmienna <code>props</code> jest obiektem, a chcesz przekazać ją w JSX, możesz użyć operatora rozszczepienia (<code>...</code>). Poniższe implementacje komponentów są równoznaczne:</p>
+          <pre class="language-js{7}"><code class="language-js{7}">function App1() {
+  return &#x3C;Greeting firstName="Ben" lastName="Hector" />;
+}
+
+function App2() {
+  const props = {firstName: 'Ben', lastName: 'Hector'};
+  return &#x3C;Greeting {...props} />;
+}</code></pre>
+          <p>Możesz również wybrać poszczególne atrybuty, których będzie potrzebował twój komponent, a pozostałe przekazać do jego dzieci używając operatora rozszczepienia.</p>
+          <pre class="language-js{2}"><code class="language-js{2}">const Button = props => {
+  const { kind, ...other } = props;
+  const className = kind === "primary" ? "PrimaryButton" : "SecondaryButton";
+  return &#x3C;button className={className} {...other} />;
+};
+
+const App = () => {
+  return (
+    &#x3C;div>
+      &#x3C;Button kind="primary" onClick={() => console.log("kliknięto!")}>
+        Witaj, świecie!
+      &#x3C;/Button>
+    &#x3C;/div>
+  );
+};</code></pre>
+          <p>
+            W powyższym przykładzie właściwość <code>kind</code> jest używana w komponencie i nie jest przekazywana do elementu DOM <code>&#x3C;button></code>.
+            Wszystkie pozostałe właściwości są przekazywane poprzez rozszczepiony obiekt <code>...other</code>, co powoduje, że komponent jest elastyczny pod względem przyjmowanych właściwości. W tym przykładzie przekazane zostały atrybuty: <code>onClick</code> i <code>children</code>.
+          </p>
+          <p>Operator rozszczepienia może być bardzo pomocny, lecz używając go, łatwo jest stracić kontrolę nad przekazywanymi właściwościami. Może się zdarzyć, że przekażesz niepoprawny atrybut HTML lub nadmiarową właściwość do komponentu, który wcale go nie potrzebuje. Dlatego zalecamy ostrożność w używaniu tego rozwiązania.</p>
+        </section>
+      </section>
+      <section id="children-in-jsx" class="level2">
+        <h2>Elementy potomne w JSX</h2>
+        <p>W JSX, jeżeli wyrażenie posiada zarówno tag otwierający, jak i zamykający, to jego elementy potomne są przekazywane jako specjalna właściwość: <code>props.children</code>. Istnieje kilka sposobów na przekazanie właściwości <code>children</code>:</p>
+        <section id="string-literals-1" class="level3">
+          <h3>Literały tekstowe</h3>
+          <p>Możesz umieścić łańcuch znaków pomiędzy tagiem otwierającym a zamykającym. Wtedy wartość <code>props.children</code> będzie równa przekazanemu łańcuchowi znaków. Jest to szczególnie przydatne w użyciu z niektórymi wbudowanymi elementami HTML. Na przykład:</p>
+          <pre class="language-js"><code class="language-js"><span class="token operator">&#x3C;</span><span class="token maybe-class-name">MyComponent</span><span class="token operator">></span><span class="token maybe-class-name">Witaj</span><span class="token punctuation">,</span> świecie<span class="token operator">!</span><span class="token operator">&#x3C;</span><span class="token operator">/</span><span class="token maybe-class-name">MyComponent</span><span class="token operator">></span></code></pre>
+          <p>Powyższy kod jest poprawnym wyrażeniem JSX, a wartość <code>props.children</code> w komponencie <code>MyComponent</code> będzie równa przekazanemu łańcuchowi znaków `"Witaj, świecie!". HTML zostanie odkodowany, więc możesz pisać w JSX tak, jak w zwykłym HTML-u:</p>
+          <pre class="language-html"><code class="language-html"><span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;</span>div</span><span class="token punctuation">></span></span>To jest poprawny kod HTML <span class="token entity named-entity" title="—">&#x26;mdash;</span> ale też JSX.<span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;/</span>div</span><span class="token punctuation">></span></span></code></pre>
+          <p>JSX usuwa białe znaki na początku i końcu linii, a także: puste linie, puste linie przylegające do elementów, puste linie wewnątrz łańcuchów znaków. Białe znaki w łańcuchach znaków są zamieniane na pojedyncze spacje. Z tego powodu wszystkie poniższe przykłady są renderowane w ten sam sposób:</p>
+          <pre class="language-js"><code class="language-js"><span class="token operator">&#x3C;</span>div<span class="token operator">></span><span class="token maybe-class-name">Witaj</span><span class="token punctuation">,</span> świecie<span class="token operator">&#x3C;</span><span class="token operator">/</span>div<span class="token operator">></span>
+
+<span class="token operator">&#x3C;</span>div<span class="token operator">></span>
+  <span class="token maybe-class-name">Hello</span> <span class="token maybe-class-name">World</span>
+<span class="token operator">&#x3C;</span><span class="token operator">/</span>div<span class="token operator">></span>
+
+<span class="token operator">&#x3C;</span>div<span class="token operator">></span>
+  <span class="token maybe-class-name">Hello</span>
+  <span class="token maybe-class-name">World</span>
+<span class="token operator">&#x3C;</span><span class="token operator">/</span>div<span class="token operator">></span>
+
+<span class="token operator">&#x3C;</span>div<span class="token operator">></span>
+
+  <span class="token maybe-class-name">Hello</span> <span class="token maybe-class-name">World</span>
+<span class="token operator">&#x3C;</span><span class="token operator">/</span>div<span class="token operator">></span></code></pre>
+        </section>
+        <section id="jsx-children" class="level3">
+          <h3>Elementy potomne w JSX</h3>
+          <p>W JSX możesz przekazywać więcej niż jeden element jako potomny. Przydaje się to przy wyświetlaniu zagnieżdżonych komponentów:</p>
+          <pre class="language-js"><code class="language-js"><span class="token operator">&#x3C;</span><span class="token maybe-class-name">MyContainer</span><span class="token operator">></span>
+  <span class="token operator">&#x3C;</span><span class="token maybe-class-name">MyFirstComponent</span> <span class="token operator">/</span><span class="token operator">></span>
+  <span class="token operator">&#x3C;</span><span class="token maybe-class-name">MySecondComponent</span> <span class="token operator">/</span><span class="token operator">></span>
+<span class="token operator">&#x3C;</span><span class="token operator">/</span><span class="token maybe-class-name">MyContainer</span><span class="token operator">></span></code></pre>
+          <p>Przekazywane elementy mogą być różnego typu, a więc możesz używać łańcuchów znaków wraz z innymi rodzajami elementów potomnych. Jest to kolejne podobieńswo do HTML-a. Poniższy kod jest zarówno poprawnym JSX, jak i HTML:</p>
+          <pre class="language-html"><code class="language-html"><span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;</span>div</span><span class="token punctuation">></span></span>
+  Oto lista:
+  <span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;</span>ul</span><span class="token punctuation">></span></span>
+    <span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;</span>li</span><span class="token punctuation">></span></span>Element 1<span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;/</span>li</span><span class="token punctuation">></span></span>
+    <span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;</span>li</span><span class="token punctuation">></span></span>Element 2<span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;/</span>li</span><span class="token punctuation">></span></span>
+  <span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;/</span>ul</span><span class="token punctuation">></span></span>
+<span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;/</span>div</span><span class="token punctuation">></span></span></code></pre>
+          <p>Komponenty mogą również zwracać tablicę elementów::</p>
+          <pre class="language-js"><code class="language-js"><span class="token function">render</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  <span class="token comment">// Nie ma potrzeby otaczać elementów listy dodatkowym elementem JSX!</span>
+  <span class="token keyword control-flow">return</span> <span class="token punctuation">[</span>
+    <span class="token comment">// Pamiętaj o kluczach :)</span>
+    <span class="token operator">&#x3C;</span>li key<span class="token operator">=</span><span class="token string">"A"</span><span class="token operator">></span><span class="token maybe-class-name">Pierwszy</span><span class="token operator">&#x3C;</span><span class="token operator">/</span>li<span class="token operator">></span><span class="token punctuation">,</span>
+    <span class="token operator">&#x3C;</span>li key<span class="token operator">=</span><span class="token string">"B"</span><span class="token operator">></span><span class="token maybe-class-name">Drugi</span><span class="token operator">&#x3C;</span><span class="token operator">/</span>li<span class="token operator">></span><span class="token punctuation">,</span>
+    <span class="token operator">&#x3C;</span>li key<span class="token operator">=</span><span class="token string">"C"</span><span class="token operator">></span><span class="token maybe-class-name">Trzeci</span><span class="token operator">&#x3C;</span><span class="token operator">/</span>li<span class="token operator">></span><span class="token punctuation">,</span>
+  <span class="token punctuation">]</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span></code></pre>
+        </section>
+        <section id="javascript-expressions-as-children" class="level3">
+          <h3>Wyrażenia javascriptowe jako komponenty potomne</h3>
+          <p>Możesz przekazać dowolne wyrażenie javascriptowe, obejmując je klamrami <code>{}</code>. Poniższe wyrażenia są równoważne:</p>
+          <pre class="language-js"><code class="language-js"><span class="token operator">&#x3C;</span><span class="token maybe-class-name">MyComponent</span><span class="token operator">></span>foo<span class="token operator">&#x3C;</span><span class="token operator">/</span><span class="token maybe-class-name">MyComponent</span><span class="token operator">></span>
+
+<span class="token operator">&#x3C;</span><span class="token maybe-class-name">MyComponent</span><span class="token operator">></span><span class="token punctuation">{</span><span class="token string">'foo'</span><span class="token punctuation">}</span><span class="token operator">&#x3C;</span><span class="token operator">/</span><span class="token maybe-class-name">MyComponent</span><span class="token operator">></span></code></pre>
+          <p>To rozwiązanie jest często przydatne przy renderowaniu list. Na przykład, poniższy kod renderuje listę elementów HTML:</p>
+          <pre class="language-js{2,9}"><code class="language-js{2,9}">function Item(props) {
+  return &#x3C;li>{props.message}&#x3C;/li>;
+}
+
+function TodoList() {
+  const todos = ['dokończyć dokumentację', 'wystawić PR-a', 'namówić Dana na review'];
+  return (
+    &#x3C;ul>
+      {todos.map((message) => &#x3C;Item key={message} message={message} />)}
+    &#x3C;/ul>
+  );
+}</code></pre>
+          <p>Wyrażenia javascriptowe można również używać razem z innymi typami danych:</p>
+          <pre class="language-js{2}"><code class="language-js{2}">function Hello(props) {
+  return &#x3C;div>Cześć, {props.addressee}!&#x3C;/div>;
+}</code></pre>
+        </section>
+        <section id="functions-as-children" class="level3">
+          <h3>Funkcje jako komponenty potomne</h3>
+          <p>Zwykle wyrażenia javascriptowe przekazywane w JSX są przekształcane na łańcuchy znaków, elementy reactowe lub listy tych rzeczy. Jednakże właściwość <code>props.children</code> działa jak każda inna i może przekazać dowolny rodzaj danych, nie tylko takie, które React wie, jak wyświetlić. Na przykład, twój komponent może przyjmować poprzez <code>props.children</code> funkcję zwrotną:</p>
+          <pre class="language-js{4,13}"><code class="language-js{4,13}">// Wywołuje potomną funkcję zwrotną numTimes, aby powtórzyć wyświetlenie elementów
+function Repeat(props) {
+  let items = [];
+  for (let i = 0; i &#x3C; props.numTimes; i++) {
+    items.push(props.children(i));
+  }
+  return &#x3C;div>{items}&#x3C;/div>;
+}
+
+function ListOfTenThings() {
+  return (
+    &#x3C;Repeat numTimes={10}>
+      {(index) => &#x3C;div key={index}>To jest {index}. element listy&#x3C;/div>}
+    &#x3C;/Repeat>
+  );
+}</code></pre>
+          <p>Elementy potomne przekazane do własnych komponentów mogą mieć dowolny typ, pod warunkiem, że React będzie w stanie zamienić je na zrozumiały dla siebie typ danych przed wyświetleniem. To podejście nie jest zbyt popularne w składni JSX, ale można w ten sposób rozszerzać jej możliwości.</p>
+        </section>
+        <section id="booleans-null-and-undefined-are-ignored" class="level3">
+          <h3>Wartości logiczne, Null, i Undefined są ignorowane</h3>
+          <p><code>false</code>, <code>null</code>, <code>undefined</code> i <code>true</code> są poprawnymi potomkami, ale nie są renderowane. Wszystkie poniższe wyrażenia JSX będą miały ten sam efekt:</p>
+          <pre class="language-js"><code class="language-js"><span class="token operator">&#x3C;</span>div <span class="token operator">/</span><span class="token operator">></span>
+
+<span class="token operator">&#x3C;</span>div<span class="token operator">></span><span class="token operator">&#x3C;</span><span class="token operator">/</span>div<span class="token operator">></span>
+
+<span class="token operator">&#x3C;</span>div<span class="token operator">></span><span class="token punctuation">{</span><span class="token boolean">false</span><span class="token punctuation">}</span><span class="token operator">&#x3C;</span><span class="token operator">/</span>div<span class="token operator">></span>
+
+<span class="token operator">&#x3C;</span>div<span class="token operator">></span><span class="token punctuation">{</span><span class="token keyword null nil">null</span><span class="token punctuation">}</span><span class="token operator">&#x3C;</span><span class="token operator">/</span>div<span class="token operator">></span>
+
+<span class="token operator">&#x3C;</span>div<span class="token operator">></span><span class="token punctuation">{</span><span class="token keyword nil">undefined</span><span class="token punctuation">}</span><span class="token operator">&#x3C;</span><span class="token operator">/</span>div<span class="token operator">></span>
+
+<span class="token operator">&#x3C;</span>div<span class="token operator">></span><span class="token punctuation">{</span><span class="token boolean">true</span><span class="token punctuation">}</span><span class="token operator">&#x3C;</span><span class="token operator">/</span>div<span class="token operator">></span></code></pre>
+          <p>Może się to okazać przydatne przy warunkowym renderowaniu elementów. Na przykład, poniższy kod wyrenderuje komponent <code>&#x3C;Header /></code> tylko, gdy wartość zmiennej <code>showHeader</code> jest równa <code>true</code>:</p>
+          <pre class="language-js{2}"><code class="language-js{2}">&#x3C;div>
+  {showHeader &#x26;&#x26; &#x3C;Header />}
+  &#x3C;Content />
+&#x3C;/div></code></pre>
+          <p>Warto pamiętać o tym, że niektóre <a href="https://developer.mozilla.org/en-US/docs/Glossary/Falsy">fałszopodobne wartości (ang. <em>falsy values</em>)</a>, takie jak <code>0</code>, będą renderowane przez Reacta. Przykładowo, poniższy kod nie zachowa się tak, jak można by na pierwszy rzut oka pomyśleć, ponieważ gdy atrybut <code>props.messages</code> będzie pustą tablicą, wyświetlona zostanie wartość <code>0</code>:</p>
+          <pre class="language-js{2}"><code class="language-js{2}">&#x3C;div>
+  {props.messages.length &#x26;&#x26;
+    &#x3C;MessageList messages={props.messages} />
+  }
+&#x3C;/div></code></pre>
+          <p>Aby to naprawić, należy upewnić się, że wyrażenie przed <code>&#x26;&#x26;</code> zawsze jest wartością logiczną:</p>
+          <pre class="language-js{2}"><code class="language-js{2}">&#x3C;div>
+  {props.messages.length > 0 &#x26;&#x26;
+    &#x3C;MessageList messages={props.messages} />
+  }
+&#x3C;/div></code></pre>
+          <p>Jeżeli chcesz, aby wartość taka jak: <code>false</code>, <code>true</code>, <code>null</code> lub <code>undefined</code> została wyświetlona, w pierwszej kolejności należy <a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String#String_conversion">przekonwertować ją na łańcuch znaków</a>:</p>
+          <pre class="language-js{2}"><code class="language-js{2}">&#x3C;div>
+  Moja javascriptowa zmienna to {String(myVariable)}.
+&#x3C;/div></code></pre>
+          <p><span style="float: footnote;"><a href="./index.html#toc">Go to TOC</a></span></p>
+        </section>
+      </section>
+    </section>
+  </body>
+</html>

@@ -1,0 +1,337 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="utf-8">
+    <title>render プロパティ</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="navigation.title" content="render">
+    <meta name="description" content="Nuxt はページレンダリング用のランタイムオプションをカスタマイズできます。">
+    <meta name="menu" content="render">
+    <meta name="category" content="configuration-glossary">
+    <link rel="stylesheet" href="https://raw.githubusercontent.com/shinokada/prism-coy-theme/main/theme_common.css">
+  </head>
+  <body>
+    <section id="render-プロパティ" class="level1">
+      <h1>render プロパティ</h1>
+      <p>Nuxt はページレンダリング用のランタイムオプションをカスタマイズできます。</p>
+      <hr>
+      <section id="bundlerenderer" class="level2">
+        <h2>bundleRenderer</h2>
+        <ul>
+          <li>型: <code>Object</code></li>
+        </ul>
+        <blockquote>
+          <p>このオプションを使って Vue SSR のバンドルレンダラーをカスタマイズします。<code>ssr: false</code> が設定されている場合このオプションはスキップされます。</p>
+        </blockquote>
+        <pre class="language-js{}[nuxt.config.js]"><code class="language-js{}[nuxt.config.js]">export default {
+  render: {
+    bundleRenderer: {
+      directives: {
+        custom1(el, dir) {
+          // 何かの処理 ...
+        }
+      }
+    }
+  }
+}</code></pre>
+        <p>利用可能なオプションについての詳細は <a href="https://ssr.vuejs.org/en/api.html#renderer-option">Vue SSR API リファレンス</a> を参照してください。Nuxt はすでに最高の SSR のデフォルト設定を提供しており誤った設定は SSR の問題を引き起こすので、このオプションは使用しないことをおすすめします。</p>
+      </section>
+      <section id="etag" class="level2">
+        <h2>etag</h2>
+        <ul>
+          <li>型: <code>Object</code>
+            <ul>
+              <li>デフォルト: <code>{ weak: true }</code></li>
+            </ul>
+          </li>
+        </ul>
+        <p>ページの etag を無効にするには <code>etag: false</code> を設定してください。</p>
+        <p>利用可能なオプションは <a href="https://www.npmjs.com/package/etag">etag</a> のドキュメントを参照してください。</p>
+        <p><code>etag.hash</code> を指定することで、独自のハッシュ関数を使用することができます：</p>
+        <pre class="language-js{}[nuxt.config.js]"><code class="language-js{}[nuxt.config.js]">import { murmurHash128 } from 'murmurhash-native'
+
+export default {
+  render: {
+    etag: {
+      hash: html => murmurHash128(html)
+    }
+  }
+}</code></pre>
+        <p>この場合、大きい HTML の body サイズに対して高速な <a href="https://github.com/royaltm/node-murmurhash-native">murmurhash-native</a> を使います。独自のハッシュ関数を指定する場合、<code>weak</code> オプションは無視されることに注意してください。</p>
+      </section>
+      <section id="compressor" class="level2">
+        <h2>compressor</h2>
+        <ul>
+          <li>型: <code>Object</code>
+            <ul>
+              <li>デフォルト: <code>{ threshold: 0 }</code></li>
+            </ul>
+          </li>
+        </ul>
+        <p>オブジェクトを提供する場合、<a href="https://www.npmjs.com/package/compression">compression</a> ミドルウェアがそれぞれのオプションと共に使われます。</p>
+        <p>独自の圧縮ミドルウェアを使用したい場合は、直接参照することができます（例: <code>otherComp({ myOptions: 'example' })</code>）。</p>
+        <p>圧縮を無効にするには <code>compressor: false</code> を設定します。</p>
+      </section>
+      <section id="fallback" class="level2">
+        <h2>fallback</h2>
+        <ul>
+          <li>型: <code>Object</code>
+            <ul>
+              <li>デフォルト: <code>{ dist: {}, static: { skipUnknown: true } }</code></li>
+              <li><code>dist</code> キーは <a href="./configuration-glossary/configuration-build#publicpath">publicPath</a> に一致するルート用です（例: <code>/_nuxt/*</code>）</li>
+              <li><code>static</code> キーは <code>/*</code> に一致するルートに一致するルート用です</li>
+            </ul>
+          </li>
+        </ul>
+        <blockquote>
+          <p><code>dist</code> と <code>static</code> の値は <a href="https://github.com/nuxt-contrib/serve-placeholder">serve-placeholder</a> ミドルウェアに転送されます。</p>
+        </blockquote>
+        <p>もしこれらのうち 1 つか両方を無効にする場合は、偽をとり得る値を渡すことができます。</p>
+        <p>ルーティングに <code>.js</code> 拡張子を許可する例（例: <code>/repos/nuxt.js</code>）：</p>
+        <pre class="language-js"><code class="language-js"><span class="token keyword module">export</span> <span class="token keyword module">default</span> <span class="token punctuation">{</span>
+  <span class="token literal-property property">render</span><span class="token operator">:</span> <span class="token punctuation">{</span>
+    <span class="token literal-property property">fallback</span><span class="token operator">:</span> <span class="token punctuation">{</span>
+      <span class="token keyword">static</span><span class="token operator">:</span> <span class="token punctuation">{</span>
+        <span class="token comment">// これらの拡張子に対し 404 の送信を避けます</span>
+        <span class="token literal-property property">handlers</span><span class="token operator">:</span> <span class="token punctuation">{</span>
+          <span class="token string-property property">'.js'</span><span class="token operator">:</span> <span class="token boolean">false</span>
+        <span class="token punctuation">}</span>
+      <span class="token punctuation">}</span>
+    <span class="token punctuation">}</span>
+  <span class="token punctuation">}</span>
+<span class="token punctuation">}</span></code></pre>
+      </section>
+      <section id="http2" class="level2">
+        <h2>http2</h2>
+        <ul>
+          <li>型: <code>Object</code>
+            <ul>
+              <li>デフォルト: <code>{ push: false, pushAssets: null }</code></li>
+            </ul>
+          </li>
+        </ul>
+        <blockquote>
+          <p>HTTP2 プッシュヘッダーを有効にします。</p>
+        </blockquote>
+        <p><code>pushAssets</code> 関数を使ってプッシュするリンクを制御できます。</p>
+        <p>例：</p>
+        <pre class="language-js"><code class="language-js"><span class="token function-variable function">pushAssets</span><span class="token operator">:</span> <span class="token punctuation">(</span><span class="token parameter">req<span class="token punctuation">,</span> res<span class="token punctuation">,</span> publicPath<span class="token punctuation">,</span> preloadFiles</span><span class="token punctuation">)</span> <span class="token arrow operator">=></span>
+  preloadFiles
+    <span class="token punctuation">.</span><span class="token method function property-access">filter</span><span class="token punctuation">(</span><span class="token parameter">f</span> <span class="token arrow operator">=></span> f<span class="token punctuation">.</span><span class="token property-access">asType</span> <span class="token operator">===</span> <span class="token string">'script'</span> <span class="token operator">&#x26;&#x26;</span> f<span class="token punctuation">.</span><span class="token property-access">file</span> <span class="token operator">===</span> <span class="token string">'runtime.js'</span><span class="token punctuation">)</span>
+    <span class="token punctuation">.</span><span class="token method function property-access">map</span><span class="token punctuation">(</span><span class="token parameter">f</span> <span class="token arrow operator">=></span> <span class="token template-string"><span class="token template-punctuation string">`</span><span class="token string">&#x3C;</span><span class="token interpolation"><span class="token interpolation-punctuation punctuation">${</span>publicPath<span class="token interpolation-punctuation punctuation">}</span></span><span class="token interpolation"><span class="token interpolation-punctuation punctuation">${</span>f<span class="token punctuation">.</span><span class="token property-access">file</span><span class="token interpolation-punctuation punctuation">}</span></span><span class="token string">>; rel=preload; as=</span><span class="token interpolation"><span class="token interpolation-punctuation punctuation">${</span>f<span class="token punctuation">.</span><span class="token property-access">asType</span><span class="token interpolation-punctuation punctuation">}</span></span><span class="token template-punctuation string">`</span></span><span class="token punctuation">)</span></code></pre>
+        <p>独自のアセットを配列に追加することもできます。<code>req</code> と <code>res</code> を使ってリクエストヘッダーを元にプッシュするリンクを決めることができます。例えばアプリケーションのバージョンでクッキーを使います。</p>
+        <p>アセットは <code>,</code> で結合され、1 つの <code>Link</code> ヘッダーとして渡されます。</p>
+      </section>
+      <section id="asyncscripts" class="level2">
+        <h2>asyncScripts</h2>
+        <ul>
+          <li>型: <code>Boolean</code>
+            <ul>
+              <li>デフォルト: <code>false</code></li>
+            </ul>
+          </li>
+        </ul>
+        <blockquote>
+          <p>Nuxt バンドル用に <code>&#x3C;script></code> タグに <code>async</code> 属性を追加し、パースと並行してフェッチできるようにします（<code>v2.14.8 以上</code>から利用可能）。<a href="https://developer.mozilla.org/en-US/docs/Web/HTML/Element/script">詳細はこちら</a>を参照してください。</p>
+        </blockquote>
+      </section>
+      <section id="injectscripts" class="level2">
+        <h2>injectScripts</h2>
+        <ul>
+          <li>型: <code>Boolean</code>
+            <ul>
+              <li>デフォルト: <code>true</code></li>
+            </ul>
+          </li>
+        </ul>
+        <blockquote>
+          <p>Nuxt のバンドルに <code>&#x3C;script></code> を追加します（<code>v2.8.0 以降</code>で利用可能）。JS を除く純粋な HTML を表示する場合は <code>false</code> に設定してください。</p>
+        </blockquote>
+      </section>
+      <section id="resourcehints" class="level2">
+        <h2>resourceHints</h2>
+        <ul>
+          <li>型: <code>Boolean</code>
+            <ul>
+              <li>デフォルト: <code>true</code></li>
+            </ul>
+          </li>
+        </ul>
+        <blockquote>
+          <p>初期ページの読み込み時間をより早くするために <code>prefetch</code> と <code>preload</code> リンクを追加します。</p>
+        </blockquote>
+        <p>ページとルートが多い場合にのみ、このオプションを無効にすることをおすすめします。</p>
+      </section>
+      <section id="ssr" class="level2">
+        <h2>ssr</h2>
+        <ul>
+          <li>型: <code>Boolean</code>
+            <ul>
+              <li>デフォルト: <code>true</code></li>
+              <li>クライアントサイドのレンダリングの場合のみ <code>false</code></li>
+            </ul>
+          </li>
+        </ul>
+        <blockquote>
+          <p>SSR レンダリングを有効にします。</p>
+        </blockquote>
+        <p>このオプションが指定されていない場合、グローバルな <code>ssr</code> の値に基づいて自動的に設定されます。これは（例えば Docker で）イメージビルド後にランタイムで SSR を動的に有効/無効にするのに便利です。</p>
+      </section>
+      <section id="crossorigin" class="level2">
+        <h2>crossorigin</h2>
+        <ul>
+          <li>
+            <p>型: <code>String</code></p>
+            <ul>
+              <li>デフォルト: <code>undefined</code></li>
+            </ul>
+            <p>生成された HTML の <code>&#x3C;link rel="stylesheet"></code> と <code>&#x3C;script></code> タグに <code>crossorigin</code> 属性を設定します。</p>
+            <p>詳細: <a href="https://developer.mozilla.org/en-US/docs/Web/HTML/CORS_settings_attributes">CORS 属性</a></p>
+          </li>
+        </ul>
+      </section>
+      <section id="ssrlog" class="level2">
+        <h2>ssrLog</h2>
+        <ul>
+          <li>型: <code>Boolean</code> | <code>String</code>
+            <ul>
+              <li>デフォルト: 開発モードでは <code>true</code>、本番では <code>false</code></li>
+            </ul>
+          </li>
+        </ul>
+        <blockquote>
+          <p>デバックしやすいように、サーバーサイドのログをブラウザに転送します（開発モードのみ利用可能）。</p>
+        </blockquote>
+        <p>ログを折りたたむには <code>'collapsed'</code> を設定します。</p>
+      </section>
+      <section id="static" class="level2">
+        <h2>static</h2>
+        <ul>
+          <li>型: <code>Object</code>
+            <ul>
+              <li>デフォルト: <code>{}</code></li>
+            </ul>
+          </li>
+        </ul>
+        <blockquote>
+          <p><code>static/</code> ディレクトリの振る舞いを設定します</p>
+        </blockquote>
+        <p>利用可能なオプションは <a href="https://www.npmjs.com/package/serve-static">serve-static</a> のドキュメントを参照してください。</p>
+        <p>それらに加えて、デフォルト <code>true</code> の <code>prefix</code> オプションを導入しました。静的なアセットに router base を追加します。</p>
+        <p><strong>例s:</strong></p>
+        <ul>
+          <li>アセット: <code>favicon.ico</code></li>
+          <li>Router base: <code>/t</code></li>
+          <li><code>prefix: true</code> の場合（）デフォルト: <code>/t/favicon.ico</code></li>
+          <li><code>prefix: false</code> の場合: <code>/favicon.ico</code></li>
+        </ul>
+        <p><strong>警告:</strong></p>
+        <p>一部の URL の書き換えではプレフィックスが守られないかもしれません。</p>
+      </section>
+      <section id="dist" class="level2">
+        <h2>dist</h2>
+        <ul>
+          <li>型: <code>Object</code>
+            <ul>
+              <li>デフォルト: <code>{ maxAge: '1y', index: false }</code></li>
+            </ul>
+          </li>
+        </ul>
+        <blockquote>
+          <p>配布ファイルのデプロイに使用されるオプションです。本番でのみ適用されます。</p>
+        </blockquote>
+        <p>利用可能なオプションは <a href="https://www.npmjs.com/package/serve-static">serve-static</a> のドキュメントを参照してください。</p>
+      </section>
+      <section id="csp" class="level2">
+        <h2>csp</h2>
+        <ul>
+          <li>型: <code>Boolean</code> または <code>Object</code>
+            <ul>
+              <li>デフォルト: <code>false</code></li>
+            </ul>
+          </li>
+        </ul>
+        <blockquote>
+          <p>これを使用して、外部リソースを読み込むように Content-Security-Policy を構成します</p>
+        </blockquote>
+        <p><strong>前提条件:</strong></p>
+        <p>これらの CSP 設定は、Nuxt に <code>target: 'server'</code> を設定して SSR アプリケーションを提供する場合にのみ有効です。<code>csp.policy</code> で定義されたポリシーはレスポンスの <code>Content-Security-Policy</code> HTTP ヘッダーに追加されます。</p>
+        <p><strong>設定の更新:</strong></p>
+        <p>これらの設定は Nuxt サーバーが <code>nuxt.config.js</code> から直接読み込みます。つまり、これらの設定の変更にはサーバー再起動時に有効になります。CSP 設定を更新するためにアプリケーションをリビルドする必要はありません。</p>
+        <p><strong>HTML メタタグ:</strong></p>
+        <p><a href="https://developer.mozilla.org/en-US/docs/Web/HTTP/CSP"><code>&#x3C;meta http-equiv="Content-Security-Policy"/></code></a> を <code>&#x3C;head></code> に追加するには、<code>csp.addMeta</code> を <code>true</code> に設定する必要があります。この機能は <code>csp.policies</code> の設定とは無関係であることに注意してください:</p>
+        <ul>
+          <li><code>script-src</code> タイプのポリシーを追加するだけで</li>
+          <li><code>script-src</code> ポリシーにはインラインの <code>&#x3C;script></code> タグのハッシュのみが含まれます。</li>
+        </ul>
+        <p><code>csp.addMeta</code> を <code>true</code> に設定した場合でも、定義されたポリシーの完全なセットが HTTP レスポンスヘッダーに追加されます。</p>
+        <p><code>script-src</code> ポリシーに <code>'unsafe-inline'</code> が含まれている場合、CSP ハッシュは <code>&#x3C;meta></code> として追加されないことに注意してください。これはハッシュが存在する場合、ブラウザが <code>'unsafe-inline'</code> を無視するためです。CSPv1 との互換性のために <code>'unsafe-inline'</code> とハッシュの両方が必要な場合は <code>unsafeInlineCompatibility</code> オプションを <code>true</code> に設定してください。その場合 <code>&#x3C;meta></code> タグにはインラインの <code>&#x3C;script></code> タグのハッシュのみが含まれ、<code>csp.policies</code> で定義されたポリシーは <code>Content-Security-Policy</code> HTTP レスポンスヘッダーで使用されます。</p>
+        <pre class="language-js{}[nuxt.config.js]"><code class="language-js{}[nuxt.config.js]">export default {
+  render: {
+    csp: true
+  }
+}
+
+// または
+
+export default {
+  render: {
+    csp: {
+      hashAlgorithm: 'sha256',
+      policies: {
+        'script-src': [
+          'https://www.google-analytics.com',
+          'https://name.example.com'
+        ],
+        'report-uri': ['https://report.example.com/report-csp-violations']
+      },
+      addMeta: true
+    }
+  }
+}
+
+// または
+/*
+  次の例では、Google Analytics、LogRocket.io、および Sentry.io で
+  ロギング、トラッキングの分析が行えます。
+
+  どのトラッキングリンクを使用すべきか学ぶためにSentry.io のブログを確認してください
+  https://blog.sentry.io/2018/09/04/how-sentry-captures-csp-violations
+*/
+const PRIMARY_HOSTS = `loc.example-website.com`
+export default {
+  render: {
+    csp: {
+      reportOnly: true,
+      hashAlgorithm: 'sha256',
+      policies: {
+        'default-src': ["'self'"],
+        'img-src': ['https:', '*.google-analytics.com'],
+        'worker-src': ["'self'", `blob:`, PRIMARY_HOSTS, '*.logrocket.io'],
+        'style-src': ["'self'", "'unsafe-inline'", PRIMARY_HOSTS],
+        'script-src': [
+          "'self'",
+          "'unsafe-inline'",
+          PRIMARY_HOSTS,
+          'sentry.io',
+          '*.sentry-cdn.com',
+          '*.google-analytics.com',
+          '*.logrocket.io'
+        ],
+        'connect-src': [PRIMARY_HOSTS, 'sentry.io', '*.google-analytics.com'],
+        'form-action': ["'self'"],
+        'frame-ancestors': ["'none'"],
+        'object-src': ["'none'"],
+        'base-uri': [PRIMARY_HOSTS],
+        'report-uri': [
+          `https://sentry.io/api/&#x3C;project>/security/?sentry_key=&#x3C;key>`
+        ]
+      }
+    }
+  }
+}</code></pre>
+        <p><span style="float: footnote;"><a href="../index.html#toc">Go to TOC</a></span></p>
+      </section>
+    </section>
+  </body>
+</html>

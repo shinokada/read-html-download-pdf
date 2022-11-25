@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="pt">
+  <head>
+    <meta charset="utf-8">
+    <title>A propriedade env</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="navigation.title" content="env">
+    <meta name="description" content="Partilhe variáveis de ambiente entre o cliente e o servidor.">
+    <meta name="menu" content="env">
+    <meta name="category" content="configuration-glossary">
+    <link rel="stylesheet" href="https://raw.githubusercontent.com/shinokada/prism-coy-theme/main/theme_common.css">
+  </head>
+  <body>
+    <section id="a-propriedade-env" class="level1">
+      <h1>A propriedade env</h1>
+      <p>Partilhe variáveis de ambiente entre o cliente e o servidor.</p>
+      <hr>
+      <ul>
+        <li>Tipo: <code>Object</code></li>
+      </ul>
+      <blockquote>
+        <p>O Nuxt permite você criar variáveis de ambiente do lado do cliente, e também serem partilhadas a partir do lado do servidor.</p>
+      </blockquote>
+      <p>A propriedade env define variáveis de ambiente que devem estar disponível no lado do cliente. Eles podem ser atribuídos usando variáveis de ambiente do lado do servidor, com o <a href="https://github.com/nuxt-community/dotenv-module">módulo dotenv</a> ou similares.</p>
+      <p>
+        alert
+        Para versões do Nuxt > 2.12+, nos casos onde variáveis de ambiente forem exigidas em tempo de execução (não em tempo de construção) é recomendado para substituir a propriedade <code>env</code> com as <a href="./configuration-glossary/configuration-runtime-config">propriedades do runtimeConfig</a>: <code>publicRuntimeOptions</code> e <code>privateRuntimeOptions</code>.
+      </p>
+      <p>Aprenda mais com o nosso tutorial sobre o <a href="/tutorials/moving-from-nuxtjs-dotenv-to-runtime-config/">movendo do @nuxtjs/dotenv para configuração do tempo de execução</a>.</p>
+      <p><strong>Certifique-se de ler sobre o <code>process.env</code> e o <code>process.env == {}</code> abaixo para melhor resolução de problemas.</strong></p>
+      <pre class="language-js{}[nuxt.config.js]"><code class="language-js{}[nuxt.config.js]">export default {
+  env: {
+    baseUrl: process.env.BASE_URL || 'http://localhost:3000'
+  }
+}</code></pre>
+      <p>Isto permite você criar uma propriedade <code>baseUrl</code> que será equal a variável de ambiente <code>BASE_URL</code> do lado do servidor se estiver disponível ou definida. Se não, O <code>baseUrl</code> no lado do cliente será igual a <code>'http://localhost:3000'</code>. A variável <code>BASE_URL</code> do lado do cliente é então copiada para o lado do cliente através da propriedade <code>env</code> dentro do ficheiro <code>nuxt.config.js</code>. Alternativamente, o outro valor é definido (<code>http://localhost:3000</code>).</p>
+      <p>Depois, Eu posso acessar minha variável <code>baseUrl</code> em duas maneiras:</p>
+      <ol>
+        <li>Através do <code>process.env.baseUrl</code>.</li>
+        <li>Através do <code>context.env.baseUrl</code>, consulte a <a href="./internals-glossary/context">API de contexto</a>.</li>
+      </ol>
+      <p>Você pode usar a propriedade <code>env</code> para atribuir uma chave pública por exemplo.</p>
+      <p>Para o exemplo acima, nós podemos usar ele para configurar o <a href="https://github.com/mzabriskie/axios">axios</a>.</p>
+      <pre class="language-js{}[plugins/axios.js]"><code class="language-js{}[plugins/axios.js]">import axios from 'axios'
+
+export default axios.create({
+  baseURL: process.env.baseUrl
+})</code></pre>
+      <p>Então, dentro da suas páginas, você pode importar o <code>axios</code> desse jeito: <code>import axios from '~/plugins/axios'</code></p>
+      <section id="injeção-automática-de-variáveis-de-ambiente" class="level2">
+        <h2>Injeção automática de variáveis de ambiente</h2>
+        <p>Se você definir variáveis de ambiente começando com o <code>NUXT_ENV_</code> na fase de construção (por exemplo, <code>NUXT_ENV_COOL_WORD=freezing nuxt build</code> ou <code>SET NUXT_ENV_COOL_WORD=freezing &#x26; nuxt build</code> para a consola do Windows, eles serão automaticamente injetados dentro do ambiente de processo). Esteja ciente que eles irão potencialmente ter precedência sobre variáveis definidas dentro do seu ficheiro <code>nuxt.config.js</code> com o mesmo nome.</p>
+      </section>
+      <section id="processenv-" class="level2">
+        <h2>process.env ==</h2>
+        <p>Nota que o Nuxt usa o <code>definePlugin</code> do webpack para definir a variável de ambiente. Isto significa que o atual <code>process</code> ou <code>process.env</code> do Node.js não está nem disponível nem definido. Cada propriedade de <code>env</code> definida dentro do ficheiro <code>nuxt.config.js</code> é individualmente mapeado para <code>process.env.xxxx</code> e convertido durante a compilação.</p>
+        <p>Querendo dizer que, o <code>console.log(process.env)</code> imprimirá <code>{}</code> mas o <code>console.log(process.env.your_var)</code> continuará a imprimir seu valor. Quando o webpack compila o seu código, ele substitui todas instâncias de <code>process.env.your_var</code> com o valor que você tem definido, por exemplo: <code>env.test = 'testing123'</code>. Se você usar <code>process.env.test</code> em algum lugar do seu código, ele é de fato traduzido para <code>'testing123'</code>.</p>
+        <p>antes</p>
+        <pre class="language-js"><code class="language-js"><span class="token keyword control-flow">if</span> <span class="token punctuation">(</span>process<span class="token punctuation">.</span><span class="token property-access">env</span><span class="token punctuation">.</span><span class="token property-access">test</span> <span class="token operator">==</span> <span class="token string">'testing123'</span><span class="token punctuation">)</span></code></pre>
+        <p>depois</p>
+        <pre class="language-js"><code class="language-js"><span class="token keyword control-flow">if</span> <span class="token punctuation">(</span><span class="token string">'testing123'</span> <span class="token operator">==</span> <span class="token string">'testing123'</span><span class="token punctuation">)</span></code></pre>
+      </section>
+      <section id="a-propriedade-servermiddleware" class="level2">
+        <h2>A propriedade serverMiddleware</h2>
+        <p>
+          Visto que a propriedade <a href="./configuration-glossary/configuration-servermiddleware">serverMiddleware</a> é desligada da construção principal do Nuxt, variáveis de <code>env</code> definidas dentro do ficheiro <code>nuxt.config.js</code> não estão disponíveis lá.
+          <span style="float: footnote;"><a href="../index.html#toc">Go to TOC</a></span>
+        </p>
+      </section>
+    </section>
+  </body>
+</html>

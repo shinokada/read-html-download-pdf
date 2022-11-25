@@ -1,0 +1,735 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="utf-8">
+    <title>Approches pour une UI concurrente (expérimental)</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="https://raw.githubusercontent.com/shinokada/prism-coy-theme/main/theme_common.css">
+  </head>
+  <body>
+    <section id="approches-pour-une-ui-concurrente-expérimental" class="level1">
+      <h1>Approches pour une UI concurrente (expérimental)</h1>
+      <style>.scary > blockquote {
+background-color: rgba(237, 51, 21, 0.2);
+border-left-color: #ed3315;
+}</style>
+      <div class="scary">
+        <blockquote>
+          <p>Attention</p>
+          <p>Cette page décrit <strong>des fonctionnalités expérimentales qui <a href="./concurrent-mode-adoption.html">ne sont pas encore disponibles</a> dans une version stable</strong>. Ne vous basez pas sur les builds expérimentaux de React pour vos applis en production. Ces fonctionnalités sont susceptibles d’évoluer de façon significative et sans avertissement avant d’intégrer officiellement React.</p>
+          <p>Cette documentation est destinée aux personnes curieuses ou habituées à adopter les nouvelles technologies très tôt. <strong>Si vous débutez en React, ne vous préoccupez pas de ces fonctionnalités</strong> : vous n’avez pas besoin de les apprendre pour le moment. Par exemple, si vous cherchez un tutoriel sur le chargement de données qui fonctionne dès maintenant, lisez plutôt <a href="https://www.robinwieruch.de/react-hooks-fetch-data/">cet article</a>.</p>
+        </blockquote>
+      </div>
+      <p>D’habitude, quand nous mettons à jour l’état, nous nous attendons à ce que nos changements se manifestent immédiatement à l’écran. C’est logique, dans la mesure où nous voulons que notre appli réagisse rapidement aux saisies utilisateurs. Néanmoins, il existe des cas dans lesquels nous pourrions préférer <strong>différer l’apparition d’une mise à jour à l’écran</strong>.</p>
+      <p>Par exemple, si nous passons d’une page à une autre et que ni le code ni les données pour ce prochain écran ne sont encore chargés, on pourrait trouver frustrant de voir immédiatement s’afficher une page vierge avec un indicateur de chargement. Nous préférerions peut-être rester un peu plus longtemps sur l’écran précédent. Historiquement, implémenter cette approche en React n’était pas chose aisée. Le mode concurrent offre un nouveau jeu d’outils pour y arriver.</p>
+      <ul>
+        <li><a href="#transitions">Transitions</a>
+          <ul>
+            <li><a href="#wrapping-setstate-in-a-transition">Enrober <code>setState</code> dans une transition</a></li>
+            <li><a href="#adding-a-pending-indicator">Ajouter un indicateur d’attente</a></li>
+            <li><a href="#reviewing-the-changes">Le point sur les changements</a></li>
+            <li><a href="#where-does-the-update-happen">Où survient la mise à jour ?</a></li>
+            <li><a href="#transitions-are-everywhere">Les transitions sont partout</a></li>
+            <li><a href="#baking-transitions-into-the-design-system">Intégrer les transitions au système de conception</a></li>
+          </ul>
+        </li>
+        <li><a href="#the-three-steps">Les trois étapes</a>
+          <ul>
+            <li><a href="#default-receded-skeleton-complete">Par défaut : En retrait → Squelette → Terminé</a></li>
+            <li><a href="#preferred-pending-skeleton-complete">Préférable : En attente → Squelette → Terminé</a></li>
+            <li><a href="#wrap-lazy-features-in-suspense">Enrobez les fonctionnalités paresseuses avec <code>&#x3C;Suspense></code></a></li>
+            <li><a href="#suspense-reveal-train">Le « train » de révélations de Suspense</a></li>
+            <li><a href="#delaying-a-pending-indicator">Différer un indicateur d’attente</a></li>
+            <li><a href="#recap">En résumé</a></li>
+          </ul>
+        </li>
+        <li><a href="#other-patterns">Autres approches</a>
+          <ul>
+            <li><a href="#splitting-high-and-low-priority-state">Dissocier les états à forte et faible priorité</a></li>
+            <li><a href="#deferring-a-value">Différer une valeur</a></li>
+            <li><a href="#suspenselist"><code>SuspenseList</code></a></li>
+          </ul>
+        </li>
+        <li><a href="#next-steps">Prochaines étapes</a></li>
+      </ul>
+      <section id="transitions" class="level2">
+        <h2>Transitions</h2>
+        <p>Reprenons <a href="https://codesandbox.io/s/infallible-feather-xjtbu">cette démo</a> de la page précédente sur <a href="./concurrent-mode-suspense.html">Suspense pour le chargement de données</a>.</p>
+        <p>Lorsqu’on clique sur le bouton « Suivant » pour basculer le profil actif, les données de la page existante disparaissent immédiatement, et nous avons à nouveau un indicateur de chargement pour la page entière. On pourrait qualifier cet état de chargement « d’indésirable ». <strong>Ce serait sympa si nous pouvions « sauter » cet état et attendre qu’un peu de contenu arrive avant de transiter vers le nouvel écran.</strong></p>
+        <p>React offre un nouveau Hook intégré <code>useTransition()</code> pour nous y aider.</p>
+        <p>On peut l’utiliser en trois temps.</p>
+        <p>Tout d’abord, nous devons nous assurer d’utiliser effectivement le mode concurrent. Nous en reparlerons plus tard dans <a href="./concurrent-mode-adoption.html">Adopter le mode concurrent</a>, mais pour l’instant il suffit de vérifier qu’on utilise bien <code>ReactDOM.createRoot()</code> au lieu de <code>ReactDOM.render()</code> afin que ce mode fonctionne :</p>
+        <pre class="language-js"><code class="language-js"><span class="token keyword">const</span> rootElement <span class="token operator">=</span> <span class="token dom variable">document</span><span class="token punctuation">.</span><span class="token method function property-access">getElementById</span><span class="token punctuation">(</span><span class="token string">"root"</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token comment">// Activation explicite du mode concurrent</span>
+<span class="token maybe-class-name">ReactDOM</span><span class="token punctuation">.</span><span class="token method function property-access">createRoot</span><span class="token punctuation">(</span>rootElement<span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token method function property-access">render</span><span class="token punctuation">(</span><span class="token operator">&#x3C;</span><span class="token maybe-class-name">App</span> <span class="token operator">/</span><span class="token operator">></span><span class="token punctuation">)</span><span class="token punctuation">;</span></code></pre>
+        <p>Ensuite, nous ajouterons un import du Hook <code>useTransition</code> de React :</p>
+        <pre class="language-js"><code class="language-js"><span class="token keyword module">import</span> <span class="token imports"><span class="token maybe-class-name">React</span><span class="token punctuation">,</span> <span class="token punctuation">{</span> useState<span class="token punctuation">,</span> useTransition<span class="token punctuation">,</span> <span class="token maybe-class-name">Suspense</span> <span class="token punctuation">}</span></span> <span class="token keyword module">from</span> <span class="token string">"react"</span><span class="token punctuation">;</span></code></pre>
+        <p>Enfin, nous l’utiliserons au sein de notre composant <code>App</code> :</p>
+        <pre class="language-js{3-5}"><code class="language-js{3-5}">function App() {
+  const [resource, setResource] = useState(initialResource);
+  const [startTransition, isPending] = useTransition({
+    timeoutMs: 3000
+  });
+  // ...</code></pre>
+        <p><strong>Pour le moment, par lui-même, ce code ne fait rien.</strong> Nous allons devoir utiliser les valeurs renvoyées par ce Hook pour mettre en place notre transition d’état. Voici les deux valeurs que renvoie <code>useTransition</code> :</p>
+        <ul>
+          <li><code>startTransition</code> est une fonction. Nous l’utiliserons pour indiquer à React <em>quelle</em> mise à jour d’état nous souhaitons différer.</li>
+          <li><code>isPending</code> est un booléen, grâce auquel React nous indique si nous sommes actuellement en train d’attendre la fin de la transition.</li>
+        </ul>
+        <p>Nous allons les utiliser dans un instant.</p>
+        <p>Remarquez que nous passons un objet de configuration à <code>useTransition</code>. Sa propriété <code>timeoutMs</code> indique <strong>combien de temps nous acceptons d’attendre que la transition se termine</strong>. En passant <code>{ timeoutMs: 3000 }</code>, nous disons « si le prochain profil prend plus de 3 secondes à charger, affiche le gros <em>spinner</em>—mais d’ici là, tu peux rester sur l’écran précédent ».</p>
+        <section id="wrapping-setstate-in-a-transition" class="level3">
+          <h3>Enrober <code>setState</code> dans une transition</h3>
+          <p>Notre gestionnaire de clic pour le bouton « Suivant » déclenche la bascule du profil courant dans notre état local :</p>
+          <pre class="language-js{4}"><code class="language-js{4}">&#x3C;button
+  onClick={() => {
+    const nextUserId = getNextId(resource.userId);
+    setResource(fetchProfileData(nextUserId));
+  }}
+></code></pre>
+          <p>Nous allons enrober cette mise à jour de l’état dans un appel à <code>startTransition</code>. C’est ainsi que nous indiquons à React que <strong>ça ne nous dérange pas que React diffère cette mise à jour de l’état</strong> si elle entraînait un état de chargement indésirable :</p>
+          <pre class="language-js{3,6}"><code class="language-js{3,6}">&#x3C;button
+  onClick={() => {
+    startTransition(() => {
+      const nextUserId = getNextId(resource.userId);
+      setResource(fetchProfileData(nextUserId));
+    });
+  }}
+></code></pre>
+          <p><strong><a href="https://codesandbox.io/s/musing-driscoll-6nkie">Essayez sur CodeSandbox</a></strong></p>
+          <p>Cliquez sur « Suivant » plusieurs fois. Remarquez comme une différence se fait déjà bien sentir. <strong>Au lieu de voir immédiatement un écran vide suite au clic, nous continuons à voir l’écran précédent pendant un instant.</strong> Une fois les données chargées, React transite sur le nouvel écran.</p>
+          <p>Si nous ajustons nos API pour mettre 5 secondes à répondre, <a href="https://codesandbox.io/s/relaxed-greider-suewh">nous pouvons confirmer</a> que React décide alors « d’abandonner » en transitant vers le prochain écran au bout de 3 secondes. C’est dû à notre argument <code>{ timeoutMs: 3000 }</code> dans <code>useTransition()</code>. À titre d’exemple, si nous avions plutôt passé <code>{ timeoutMs: 60000 }</code>, il aurait attendu une minute entière.</p>
+        </section>
+        <section id="adding-a-pending-indicator" class="level3">
+          <h3>Ajouter un indicateur d’attente</h3>
+          <p>Il reste quelque chose qui semble cassé dans <a href="https://codesandbox.io/s/musing-driscoll-6nkie">notre dernier exemple</a>. Bien sûr, c’est sympa de ne pas voir un « mauvais » état de chargement. <strong>Mais n’avoir aucun indicateur de progression est quelque part encore pire !</strong> Quand on clique sur « Suivant », rien ne se passe et on dirait que l’appli est cassée.</p>
+          <p>Notre appel à <code>useTransition()</code> renvoie deux valeurs : <code>startTransition</code> et <code>isPending</code>.</p>
+          <pre class="language-js"><code class="language-js">  <span class="token keyword">const</span> <span class="token punctuation">[</span>startTransition<span class="token punctuation">,</span> isPending<span class="token punctuation">]</span> <span class="token operator">=</span> <span class="token function">useTransition</span><span class="token punctuation">(</span><span class="token punctuation">{</span> <span class="token literal-property property">timeoutMs</span><span class="token operator">:</span> <span class="token number">3000</span> <span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">;</span></code></pre>
+          <p>Nous avons déjà utilisé <code>startTransition</code> pour enrober la mise à jour de l’état. Nous allons maintenant utiliser <code>isPending</code> en prime. React nous fournit ce booléen pour nous indiquer que <strong>nous sommes en train d’attendre la fin d’une transition.</strong> Nous l’utiliserons pour indiquer que quelque chose se passe :</p>
+          <pre class="language-js{4,14}"><code class="language-js{4,14}">return (
+  &#x3C;>
+    &#x3C;button
+      disabled={isPending}
+      onClick={() => {
+        startTransition(() => {
+          const nextUserId = getNextId(resource.userId);
+          setResource(fetchProfileData(nextUserId));
+        });
+      }}
+    >
+      Suivant
+    &#x3C;/button>
+    {isPending ? " Chargement..." : null}
+    &#x3C;ProfilePage resource={resource} />
+  &#x3C;/>
+);</code></pre>
+          <p><strong><a href="https://codesandbox.io/s/jovial-lalande-26yep">Essayez sur CodeSandbox</a></strong></p>
+          <p>Voilà qui rend beaucoup mieux ! Quand nous cliquons sur « Suivant », le bouton est désactivé puisque cliquer dessus plusieurs fois n’aurait pas de sens. Et le nouveau texte « Chargement... » indique à l’utilisateur que l’appli n’a pas gelé.</p>
+        </section>
+        <section id="reviewing-the-changes" class="level3">
+          <h3>Le point sur les changements</h3>
+          <p>Revoyons l’ensemble des modifications apportées à notre <a href="https://codesandbox.io/s/infallible-feather-xjtbu">exemple d’origine</a> :</p>
+          <pre class="language-js{3-5,9,11,14,19}"><code class="language-js{3-5,9,11,14,19}">function App() {
+  const [resource, setResource] = useState(initialResource);
+  const [startTransition, isPending] = useTransition({
+    timeoutMs: 3000
+  });
+  return (
+    &#x3C;>
+      &#x3C;button
+        disabled={isPending}
+        onClick={() => {
+          startTransition(() => {
+            const nextUserId = getNextId(resource.userId);
+            setResource(fetchProfileData(nextUserId));
+          });
+        }}
+      >
+        Suivant
+      &#x3C;/button>
+      {isPending ? " Chargement..." : null}
+      &#x3C;ProfilePage resource={resource} />
+    &#x3C;/>
+  );
+}</code></pre>
+          <p><strong><a href="https://codesandbox.io/s/jovial-lalande-26yep">Essayez sur CodeSandbox</a></strong></p>
+          <p>Il ne nous aura fallu que sept lignes de code pour ajouter cette transition :</p>
+          <ul>
+            <li>Nous avons importé le Hook <code>useTransition</code> et l’avons utilisé dans le composant pour mettre à jour l’état.</li>
+            <li>Nous avons passé <code>{ timeoutMs: 3000 }</code> pour rester sur l’écran précédent à raison de 3 secondes maximum.</li>
+            <li>Nous avons enrobé la mise à jour de l’état par un <code>startTransition</code> pour indiquer à React qu’il pouvait choisir de la différer.</li>
+            <li>Nous utilisons <code>isPending</code> pour communiquer la notion d’une transition d’état en cours à l’utilisateur et désactiver le bouton.</li>
+          </ul>
+          <p>Résultat : cliquer sur « Suivant » n’entraîne pas une transition d’état immédiate vers un état de chargement « indésirable » mais reste plutôt sur l’écran précédent pour y communiquer une progression.</p>
+        </section>
+        <section id="where-does-the-update-happen" class="level3">
+          <h3>Où survient la mise à jour ?</h3>
+          <p>Voilà qui n’était pas très difficile à implémenter. Cependant, si vous commencez à réfléchir sur les mécanismes qui rendent ce résultat possible, ça risque de vous faire quelques nœuds au cerveau. Si nous définissons l’état, comment se fait-il que nous n’en constations pas le résultat immédiatement ? <em>Où</em> a lieu le prochain rendu de <code>&#x3C;ProfilePage></code> ?</p>
+          <p>Clairement, les deux « versions » de <code>&#x3C;ProfilePage></code> existent en même temps. On sait que l’ancienne existe parce qu’on la voit à l’écran et qu’on y affiche même un indicateur de progression. Et on sait que la nouvelle version existe aussi <em>quelque part</em>, parce que c’est celle qu’on attend !</p>
+          <p><strong>Mais comment peut-on avoir en même temps deux versions du même composant ?</strong></p>
+          <p>On touche là à l’essence-même du mode concurrent. Nous avons <a href="./concurrent-mode-intro.html#intentional-loading-sequences">dit précédemment</a> que c’était un peu comme si React travaillait sur la mise à jour de l’état sur une « branche ». Une autre façon de conceptualiser ça consiste à se dire qu’enrober une mise à jour de l’état avec <code>startTransition</code> déclenche son rendu <em>« dans un univers parallèle »</em>, comme dans les films de science-fiction. Nous ne « voyons » pas cet univers directement—mais nous pouvons en détecter des signaux qui nous informent que quelque chose s’y passe (<code>isPending</code>). Quand la mise à jour est enfin prête, nos « univers » fusionnent, et nous voyons le résultat à l’écran !</p>
+          <p>Jouez un peu plus avec la <a href="https://codesandbox.io/s/jovial-lalande-26yep">démo</a>, et tentez d’imaginez ce comportement derrière elle.</p>
+          <p>Bien entendu, ces deux versions de l’arbre effectuant leur rendu <em>en même temps</em> ne sont qu’une illusion, tout comme l’idée que tous les programmes tournent sur votre ordinateur en même temps est une illusion. Un système d’exploitation bascule entre les différentes applications très rapidement. De façon similaire, React peut basculer entre la version de votre arbre affichée à l’écran et celle « en préparation » pour l’affichage suivant.</p>
+          <p>Une API comme <code>useTransition</code> vous permet de vous concentrer sur l’expérience utilisateur souhaitée, sans avoir à vous encombrer l’esprit avec les détails techniques de son implémentation. Néanmoins, imaginer que les mises à jour enrobées par <code>useTransition</code> surviennent « sur une branche » ou dans un « monde parallèle » reste une métaphore utile.</p>
+        </section>
+        <section id="transitions-are-everywhere" class="level3">
+          <h3>Les transitions sont partout</h3>
+          <p>Comme nous l’avons appris dans <a href="./concurrent-mode-suspense.html">Suspense pour le chargement de données</a>, tout composant peut « se suspendre » à tout moment s’il a besoin de données qui ne sont pas encore disponibles. Nous pouvons positionner stratégiquement des périmètres <code>&#x3C;Suspense></code> dans différentes parties de l’arbre pour gérer ça, mais ça ne sera pas toujours suffisant.</p>
+          <p>Reprenons notre <a href="https://codesandbox.io/s/frosty-hermann-bztrp">première démo de Suspense</a> qui ne se préoccupait que d’un profil. Pour le moment, elle ne récupère les données qu’une seule fois. Ajoutons un bouton « Rafraîchir » qui vérifiera si le serveur a des mises à jour à proposer.</p>
+          <p>Notre premier essai pourrait ressembler à ceci :</p>
+          <pre class="language-js{6-8,13-15}"><code class="language-js{6-8,13-15}">const initialResource = fetchUserAndPosts();
+
+function ProfilePage() {
+  const [resource, setResource] = useState(initialResource);
+
+  function handleRefreshClick() {
+    setResource(fetchUserAndPosts());
+  }
+
+  return (
+    &#x3C;Suspense fallback={&#x3C;h1>Chargement du profil...&#x3C;/h1>}>
+      &#x3C;ProfileDetails resource={resource} />
+      &#x3C;button onClick={handleRefreshClick}>
+        Rafraîchir
+      &#x3C;/button>
+      &#x3C;Suspense fallback={&#x3C;h1>Chargement des publications...&#x3C;/h1>}>
+        &#x3C;ProfileTimeline resource={resource} />
+      &#x3C;/Suspense>
+    &#x3C;/Suspense>
+  );
+}</code></pre>
+          <p><strong><a href="https://codesandbox.io/s/boring-shadow-100tf">Essayez sur CodeSandbox</a></strong></p>
+          <p>Dans cet exemple, nous commençons à charger les données lorsque le composant se charge <em>et</em> à chaque fois que nous activons « Rafraîchir ». Nous plaçons le résultat de l’appel à <code>fetchUserAndPosts()</code> dans l’état pour que les composants plus bas dans l’arbre puissent commencer à lire les nouvelles données de la requête que nous venons de déclencher.</p>
+          <p>On peut voir dans <a href="https://codesandbox.io/s/boring-shadow-100tf">cet exemple</a> qu’activer « Rafraîchir » fonctionne bien. Les composants <code>&#x3C;ProfileDetails></code> et <code>&#x3C;ProfileTimeline></code> reçoivent une nouvelle prop <code>resource</code> qui représente les données à jour, ils « se suspendent » parce que la réponse n’est pas encore là, et nous en voyons les UI de repli. Une fois la réponse chargée, nous voyons les publications mises à jour (notre API factice en ajoute toutes les 3 secondes).</p>
+          <p>Cependant, l’expérience obtenue est très saccadée. Nous étions en train de consulter une page, mais celle-ci a été remplacée par un état de chargement alors même que nous étions en train d’interagir avec. C’est déroutant. <strong>Tout comme précédemment, pour éviter d’afficher un état de chargement indésirable, nous pouvons enrober la mise à jour de l’état par une transition :</strong></p>
+          <pre class="language-js{2-5,9-11,21}"><code class="language-js{2-5,9-11,21}">function ProfilePage() {
+  const [startTransition, isPending] = useTransition({
+    // Attendre 10 secondes avant d’afficher l’UI de repli
+    timeoutMs: 10000
+  });
+  const [resource, setResource] = useState(initialResource);
+
+  function handleRefreshClick() {
+    startTransition(() => {
+      setResource(fetchProfileData());
+    });
+  }
+
+  return (
+    &#x3C;Suspense fallback={&#x3C;h1>Chargement du profil...&#x3C;/h1>}>
+      &#x3C;ProfileDetails resource={resource} />
+      &#x3C;button
+        onClick={handleRefreshClick}
+        disabled={isPending}
+      >
+        {isPending ? "Rafraîchissement..." : "Rafraîchir"}
+      &#x3C;/button>
+      &#x3C;Suspense fallback={&#x3C;h1>Chargement des publications...&#x3C;/h1>}>
+        &#x3C;ProfileTimeline resource={resource} />
+      &#x3C;/Suspense>
+    &#x3C;/Suspense>
+  );
+}</code></pre>
+          <p><strong><a href="https://codesandbox.io/s/sleepy-field-mohzb">Essayez sur CodeSandbox</a></strong></p>
+          <p>Voilà qui est beaucoup plus agréable ! Cliquer sur « Rafraîchir » ne nous vire plus de la page que nous étions en train de consulter. Nous voyons que quelque chose est en train de charger « en place » dans le contenu, et lorsque les données sont enfin prêtes, elles sont automatiquement affichées.</p>
+        </section>
+        <section id="baking-transitions-into-the-design-system" class="level3">
+          <h3>Intégrer les transitions au système de conception</h3>
+          <p>Nous voyons désormais qu’il est <em>très</em> courant d’avoir besoin de <code>useTransition</code>. Presque chaque clic sur un bouton ou autre interaction qui pourrait entraîner la suspension d’un composant bénéficierait d’un enrobage dans <code>useTransition</code> pour éviter de masquer accidentellement du contenu avec lequel l’utilisateur interagit.</p>
+          <p>Ça peut vite entraîner beaucoup de code répétitif d’un composant à l’autre. C’est pourquoi <strong>nous conseillons généralement d’intégrer <code>useTransition</code> dans le <em>système de conception</em> des composants de votre appli</strong>. On pourrait par exemple extraire la logique de transition dans notre propre composant <code>&#x3C;Button></code> :</p>
+          <pre class="language-js{7-9,20,24}"><code class="language-js{7-9,20,24}">function Button({ children, onClick }) {
+  const [startTransition, isPending] = useTransition({
+    timeoutMs: 10000
+  });
+
+  function handleClick() {
+    startTransition(() => {
+      onClick();
+    });
+  }
+
+  const spinner = (
+    // ...
+  );
+
+  return (
+    &#x3C;>
+      &#x3C;button
+        onClick={handleClick}
+        disabled={isPending}
+      >
+        {children}
+      &#x3C;/button>
+      {isPending ? spinner : null}
+    &#x3C;/>
+  );
+}</code></pre>
+          <p><strong><a href="https://codesandbox.io/s/modest-ritchie-iufrh">Essayez sur CodeSandbox</a></strong></p>
+          <p>Remarquez que le bouton ne se soucie pas de savoir <em>quel</em> état vous mettez à jour. Il enrobe dans une transition <em>n’importe quelle</em> mise à jour d’état qui survient au sein du gestionnaire <code>onClick</code>. À présent que notre <code>&#x3C;Button></code> s’occupe tout seul de mettre la transition en place, le composant <code>&#x3C;ProfilePage></code> n’a plus besoin de s’en occuper lui-même :</p>
+          <pre class="language-js{4-6,11-13}"><code class="language-js{4-6,11-13}">function ProfilePage() {
+  const [resource, setResource] = useState(initialResource);
+
+  function handleRefreshClick() {
+    setResource(fetchProfileData());
+  }
+
+  return (
+    &#x3C;Suspense fallback={&#x3C;h1>Chargement du profil...&#x3C;/h1>}>
+      &#x3C;ProfileDetails resource={resource} />
+      &#x3C;Button onClick={handleRefreshClick}>
+        Rafraîchir
+      &#x3C;/Button>
+      &#x3C;Suspense fallback={&#x3C;h1>Chargement des publications...&#x3C;/h1>}>
+        &#x3C;ProfileTimeline resource={resource} />
+      &#x3C;/Suspense>
+    &#x3C;/Suspense>
+  );
+}</code></pre>
+          <p><strong><a href="https://codesandbox.io/s/modest-ritchie-iufrh">Essayez sur CodeSandbox</a></strong></p>
+          <p>Quand on clique sur un bouton, celui-ci démarre une transition et appelle <code>props.onClick()</code> à l’intérieur—ce qui déclenche <code>handleRefreshClick</code> dans le composant <code>&#x3C;ProfilePage></code>. On commence à charger les données à jour, mais ça n’active pas l’UI de repli car nous sommes au sein d’une transition, et que l’expiration de 10 secondes spécifiée dans l’appel à <code>useTransition</code> n’est pas encore atteinte. Pendant que la transition est active, le bouton affiche un indicateur de chargement intégré.</p>
+          <p>On voit maintenant comment le mode concurrent nous aide à obtenir une bonne expérience utilisateur sans pour autant sacrifier l’isolation et la modularité des composants. React coordonne la transition.</p>
+        </section>
+      </section>
+      <section id="the-three-steps" class="level2">
+        <h2>Les trois étapes</h2>
+        <p>À ce stade, nous avons exploré tous les états visuels distincts à travers lesquels passe une mise à jour. Dans cette section, nous allons leur donner des noms et discuter de la progression de l’un à l’autre.</p><br>
+        <img src="./docs/cm-steps-simple.png" alt="Trois étapes">
+        <p>Tout au bout, nous avons l’état <strong>Terminé</strong>. C’est là que nous voulons arriver au final. Il représente le moment où le prochain écran est pleinement affiché et ne charge plus de données supplémentaires.</p>
+        <p>Mais avant que notre écran soit Terminé, nous aurons peut-être besoin de charger des données ou du code. Lorsque nous serons sur le prochain écran, mais que certaines parties seront encore en train de charger, nous appellerons ça l’état <strong>Squelette</strong>.</p>
+        <p>Pour finir, il y a deux principales façons d’arriver à l’état Squelette. Nous illustrerons la différence entre les deux à l’aide d’un exemple concret.</p>
+        <section id="default-receded-skeleton-complete" class="level3">
+          <h3>Par défaut : En retrait → Squelette → Terminé</h3>
+          <p>Ouvrez <a href="https://codesandbox.io/s/prod-grass-g1lh5">cet exemple</a> et cliquez sur « Ouvrir le profil ». Vous verrez plusieurs états visuels l’un après l’autre :</p>
+          <ul>
+            <li><strong>En retrait</strong> : pendant une seconde, vous verrez l’UI de repli <code>&#x3C;h1>Chargement de l’appli...&#x3C;/h1></code>.</li>
+            <li><strong>Squelette</strong> : vous verrez le composant <code>&#x3C;ProfilePage></code> avec à l’intérieur <code>&#x3C;h2>Chargement des publications...&#x3C;/h2></code>.</li>
+            <li><strong>Terminé</strong> : vous verrez le composant <code>&#x3C;ProfilePage></code> sans UI de repli à l’intérieur. Tout aura été chargé.</li>
+          </ul>
+          <p>Comment sépare-t-on les états En retrait et Squelette ? La différence tient au fait que l’état <strong>En retrait</strong> donne plus l’impression de « faire un pas en arrière » pour l’utilisateur, alors que l’état <strong>Squelette</strong> donne le sentiment de « faire un pas en avant » dans notre progression vers davantage de contenu.</p>
+          <p>Dans cet exemple, nous avons commencé notre parcours sur la <code>&#x3C;HomePage></code> :</p>
+          <pre class="language-js"><code class="language-js"><span class="token operator">&#x3C;</span><span class="token maybe-class-name">Suspense</span> fallback<span class="token operator">=</span><span class="token punctuation">{</span><span class="token spread operator">...</span><span class="token punctuation">}</span><span class="token operator">></span>
+  <span class="token punctuation">{</span><span class="token comment">/* écran précédent */</span><span class="token punctuation">}</span>
+  <span class="token operator">&#x3C;</span><span class="token maybe-class-name">HomePage</span> <span class="token operator">/</span><span class="token operator">></span>
+<span class="token operator">&#x3C;</span><span class="token operator">/</span><span class="token maybe-class-name">Suspense</span><span class="token operator">></span></code></pre>
+          <p>Après le clic, React a commencé à afficher l’écran suivant :</p>
+          <pre class="language-js"><code class="language-js"><span class="token operator">&#x3C;</span><span class="token maybe-class-name">Suspense</span> fallback<span class="token operator">=</span><span class="token punctuation">{</span><span class="token spread operator">...</span><span class="token punctuation">}</span><span class="token operator">></span>
+  <span class="token punctuation">{</span><span class="token comment">/* prochain écran */</span><span class="token punctuation">}</span>
+  <span class="token operator">&#x3C;</span><span class="token maybe-class-name">ProfilePage</span><span class="token operator">></span>
+    <span class="token operator">&#x3C;</span><span class="token maybe-class-name">ProfileDetails</span> <span class="token operator">/</span><span class="token operator">></span>
+    <span class="token operator">&#x3C;</span><span class="token maybe-class-name">Suspense</span> fallback<span class="token operator">=</span><span class="token punctuation">{</span><span class="token spread operator">...</span><span class="token punctuation">}</span><span class="token operator">></span>
+      <span class="token operator">&#x3C;</span><span class="token maybe-class-name">ProfileTimeline</span> <span class="token operator">/</span><span class="token operator">></span>
+    <span class="token operator">&#x3C;</span><span class="token operator">/</span><span class="token maybe-class-name">Suspense</span><span class="token operator">></span>
+  <span class="token operator">&#x3C;</span><span class="token operator">/</span><span class="token maybe-class-name">ProfilePage</span><span class="token operator">></span>
+<span class="token operator">&#x3C;</span><span class="token operator">/</span><span class="token maybe-class-name">Suspense</span><span class="token operator">></span></code></pre>
+          <p>Tant <code>&#x3C;ProfileDetails></code> que <code>&#x3C;ProfileTimeline></code> ont besoin de données pour s’afficher, alors ils se suspendent :</p>
+          <pre class="language-js{4,6}"><code class="language-js{4,6}">&#x3C;Suspense fallback={...}>
+  {/* prochain écran */}
+  &#x3C;ProfilePage>
+    &#x3C;ProfileDetails /> {/* se suspend ! */}
+    &#x3C;Suspense fallback={&#x3C;h2>Chargement des publications...&#x3C;/h2>}>
+      &#x3C;ProfileTimeline /> {/* se suspend ! */}
+    &#x3C;/Suspense>
+  &#x3C;/ProfilePage>
+&#x3C;/Suspense></code></pre>
+          <p>Quand un composant se suspend, React a besoin d’afficher l’UI de repli la plus proche. Mais dans le cas de <code>&#x3C;ProfileDetails></code> celle-ci est au niveau racine :</p>
+          <pre class="language-js{2,3,7}"><code class="language-js{2,3,7}">&#x3C;Suspense fallback={
+  // On voit cette UI de repli à cause de de &#x3C;ProfileDetails>
+  &#x3C;h1>Chargement de l’appli...&#x3C;/h1>
+}>
+  {/* prochain écran */}
+  &#x3C;ProfilePage>
+    &#x3C;ProfileDetails /> {/* se suspend ! */}
+    &#x3C;Suspense fallback={...}>
+      &#x3C;ProfileTimeline />
+    &#x3C;/Suspense>
+  &#x3C;/ProfilePage>
+&#x3C;/Suspense></code></pre>
+          <p>C’est pourquoi lorsque nous cliquons sur un bouton, on a l’impression de « faire un pas en arrière ». Le périmètre <code>&#x3C;Suspense></code> qui affichait jusque-là du contenu utile (<code>&#x3C;HomePage /></code>) a dû « se mettre en retrait » pour afficher l’UI de repli (<code>&#x3C;h1>Chargement de l’appli...&#x3C;/h1></code>). On appelle ça l’état <strong>En retrait</strong>.</p>
+          <p>Au fil du chargement des données, React retentera l’affichage, et <code>&#x3C;ProfileDetails></code> pourra s’afficher correctement. Nous aboutirons alors à l’état <strong>Squelette</strong>. On voit la nouvelle page avec des parties manquantes :</p>
+          <pre class="language-js{6,7,9}"><code class="language-js{6,7,9}">&#x3C;Suspense fallback={...}>
+  {/* prochain écran */}
+  &#x3C;ProfilePage>
+    &#x3C;ProfileDetails />
+    &#x3C;Suspense fallback={
+      // On voit cette UI de repli à cause de &#x3C;ProfileTimeline>
+      &#x3C;h2>Chargement des publications...&#x3C;/h2>
+    }>
+      &#x3C;ProfileTimeline /> {/* se suspend ! */}
+    &#x3C;/Suspense>
+  &#x3C;/ProfilePage>
+&#x3C;/Suspense></code></pre>
+          <p>Là aussi, au final, nous atteindrons l’état <strong>Terminé</strong>.</p>
+          <p>Ce scénario (En retrait → Squelette → Terminé) est celui par défaut. Cependant, l’état En retrait est désagréable parce qu’il « masque » des informations existantes. C’est pourquoi React nous permet de choisir une séquence différente (<strong>En attente</strong> → Squelette → Terminé) avec <code>useTransition</code>.</p>
+        </section>
+        <section id="preferred-pending-skeleton-complete" class="level3">
+          <h3>Préférable : En attente → Squelette → Terminé</h3>
+          <p>Quand nous utilisons <code>useTransition</code>, React nous permet de « rester » sur l’écran précédent—et d’y placer un indicateur d’attente. Nous appelons ça l’état <strong>En attente</strong>. Le ressenti est nettement meilleur que pour l’état En retrait, car aucun contenu existant ne disparaît, et la page reste interactive.</p>
+          <p>Vous pouvez comparer ces deux exemples pour ressentir la différence :</p>
+          <ul>
+            <li>Défaut : <a href="https://codesandbox.io/s/prod-grass-g1lh5">En retrait → Squelette → Terminé</a></li>
+            <li><strong>Préférable : <a href="https://codesandbox.io/s/focused-snow-xbkvl">En attente → Squelette → Terminé</a></strong></li>
+          </ul>
+          <p>La seule différence entre ces deux exemples tient à ce que le premier utilise des <code>&#x3C;button></code> classiques, alors que le second utilise notre composant personnalisé <code>&#x3C;Button></code>, qui intègre un <code>useTransition</code>.</p>
+        </section>
+        <section id="enrobez-les-fonctionnalités-paresseuses-avec-suspense-wrap-lazy-features-in-suspense" class="level3">
+          <h3>Enrobez les fonctionnalités paresseuses avec <code>&#x3C;Suspense></code> {#wrap-lazy-features-in-suspense}</h3>
+          <p>Ouvrez <a href="https://codesandbox.io/s/nameless-butterfly-fkw5q">cet exemple</a>. Quand vous activez un bouton, vous voyez l’état En attente pendant une seconde avant de passer à la suite. Cette transition est agréable et fluide.</p>
+          <p>Nous allons maintenant ajouter une fonctionnalité toute neuve à la page de profil : une liste de faits amusants relatifs à la personne :</p>
+          <pre class="language-js{8,13-25}"><code class="language-js{8,13-25}">function ProfilePage({ resource }) {
+  return (
+    &#x3C;>
+      &#x3C;ProfileDetails resource={resource} />
+      &#x3C;Suspense fallback={&#x3C;h2>Chargement des publications...&#x3C;/h2>}>
+        &#x3C;ProfileTimeline resource={resource} />
+      &#x3C;/Suspense>
+      &#x3C;ProfileTrivia resource={resource} />
+    &#x3C;/>
+  );
+}
+
+function ProfileTrivia({ resource }) {
+  const trivia = resource.trivia.read();
+  return (
+    &#x3C;>
+      &#x3C;h2>Faits amusants&#x3C;/h2>
+      &#x3C;ul>
+        {trivia.map(fact => (
+          &#x3C;li key={fact.id}>{fact.text}&#x3C;/li>
+        ))}
+      &#x3C;/ul>
+    &#x3C;/>
+  );
+}</code></pre>
+          <p><strong><a href="https://codesandbox.io/s/focused-mountain-uhkzg">Essayez sur CodeSandbox</a></strong></p>
+          <p>Si à présent vous activez « Ouvrir le profil », vous verrez que quelque chose cloche. Ça prend désormais sept bonnes secondes pour effectuer la transition ! C’est parce que notre API de faits amusants est trop lente. Imaginons que nous ne puissions pas l’accélérer : comment alors améliorer l’expérience utilisateur malgré cette contrainte ?</p>
+          <p>Si nous ne voulons pas rester à l’état En attente trop longtemps, notre premier instinct pourrait être d’ajuster le <code>timeoutMs</code> dans <code>useTransition</code> pour le réduire, par exemple à <code>3000</code>. Vous pouvez essayer ça <a href="https://codesandbox.io/s/practical-kowalevski-kpjg4">ici</a>. Ça nous permet d’échapper à un état En attente prolongé, mais ça ne nous donne pas pour autant des contenus utiles à afficher !</p>
+          <p>Il y a un moyen plus simple de résoudre ça. <strong>Plutôt que d’abréger la transition, nous pouvons « déconnecter » le composant lent de celle-ci</strong> en l’enrobant dans son propre périmètre <code>&#x3C;Suspense></code> :</p>
+          <pre class="language-js{8,10}"><code class="language-js{8,10}">function ProfilePage({ resource }) {
+  return (
+    &#x3C;>
+      &#x3C;ProfileDetails resource={resource} />
+      &#x3C;Suspense fallback={&#x3C;h2>Chargement des publications...&#x3C;/h2>}>
+        &#x3C;ProfileTimeline resource={resource} />
+      &#x3C;/Suspense>
+      &#x3C;Suspense fallback={&#x3C;h2>Chargement des faits amusants...&#x3C;/h2>}>
+        &#x3C;ProfileTrivia resource={resource} />
+      &#x3C;/Suspense>
+    &#x3C;/>
+  );
+}</code></pre>
+          <p><strong><a href="https://codesandbox.io/s/condescending-shape-s6694">Essayez sur CodeSandbox</a></strong></p>
+          <p>Voilà qui met en lumière un point important. React préfèrera toujours arriver à l’état Squelette le plus tôt possible. Même si nous utilisons partout des transitions à expiration longue, React ne restera pas dans l’état En attente plus longtemps que le strict nécessaire pour éviter l’état En retrait.</p>
+          <p><strong>Si une fonctionnalité ne constitue pas une partie vitale du prochain écran, enrobez-la dans un <code>&#x3C;Suspense></code> pour la laisser se charger paresseusement.</strong> Vous garantissez ainsi que le reste du contenu sera visible le plus tôt possible. Réciproquement, si un écran <em>n’a aucun intérêt à être affiché</em> sans un composant donné, tel que <code>&#x3C;ProfileDetails></code> dans notre exemple, ne <em>l’enrobez pas</em> dans un <code>&#x3C;Suspense></code>. Ainsi les transitions « attendront » que ce composant soit disponible.</p>
+        </section>
+        <section id="suspense-reveal-train" class="level3">
+          <h3>Le « train » de révélations de Suspense</h3>
+          <p>Lorsque nous sommes déjà sur le prochain écran, il peut arriver que les données nécessaires pour « déverrouiller » des périmètres <code>&#x3C;Suspense></code> distincts arrivent en succession rapide. Par exemple, deux réponses distinctes pourraient arriver respectivement après 1 000 et 1 050 ms. Si vous avez déjà attendu une seconde, vous ne percevrez pas l’attente supplémentaire de 50 ms. C’est pourquoi React ne révèle les périmètres <code>&#x3C;Suspense></code> que selon un horaire déterminé, comme un « train » qui arriverait périodiquement. Il échange un court délai contre une réduction des modifications majeures à la mise en page et du nombre de changements visuels présentés à l’utilisateur.</p>
+          <p>Vous pouvez voir une démo de ça <a href="https://codesandbox.io/s/admiring-mendeleev-y54mk">ici</a>. Les réponses « publications » et « faits amusants » arrivent à 100 ms l’une de l’autre. Mais React les regroupe pour « révéler » leurs périmètres en une seule passe.</p>
+        </section>
+        <section id="delaying-a-pending-indicator" class="level3">
+          <h3>Différer un indicateur d’attente</h3>
+          <p>Notre composant <code>Button</code> affichera immédiatement l’indicateur d’attente une fois cliqué :</p>
+          <pre class="language-js{2,13}"><code class="language-js{2,13}">function Button({ children, onClick }) {
+  const [startTransition, isPending] = useTransition({
+    timeoutMs: 10000
+  });
+
+  // ...
+
+  return (
+    &#x3C;>
+      &#x3C;button onClick={handleClick} disabled={isPending}>
+        {children}
+      &#x3C;/button>
+      {isPending ? spinner : null}
+    &#x3C;/>
+  );
+}</code></pre>
+          <p><strong><a href="https://codesandbox.io/s/floral-thunder-iy826">Essayez sur CodeSandbox</a></strong></p>
+          <p>Ça signale à l’utilisateur qu’un travail a lieu. Toutefois, si cette transition est relativement courte (disons, moins de 500 ms), cet affichage est plus une distraction qu’autre chose et peut faire que la transition elle-même semble <em>plus lente</em>.</p>
+          <p>Une solution possible à ça consiste à <em>différer l’affichage du <em>spinner</em> lui-même</em> :</p>
+          <pre class="language-css"><code class="language-css"><span class="token selector"><span class="token class">.DelayedSpinner</span></span> <span class="token punctuation">{</span>
+  <span class="token property">animation</span><span class="token punctuation">:</span> <span class="token number">0</span><span class="token unit">s</span> linear <span class="token number">0.5</span><span class="token unit">s</span> forwards makeVisible<span class="token punctuation">;</span>
+  <span class="token property">visibility</span><span class="token punctuation">:</span> hidden<span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+
+<span class="token atrule"><span class="token rule">@keyframes</span> makeVisible</span> <span class="token punctuation">{</span>
+  <span class="token selector">to</span> <span class="token punctuation">{</span>
+    <span class="token property">visibility</span><span class="token punctuation">:</span> visible<span class="token punctuation">;</span>
+  <span class="token punctuation">}</span>
+<span class="token punctuation">}</span></code></pre>
+          <pre class="language-js{2-4,10}"><code class="language-js{2-4,10}">const spinner = (
+  &#x3C;span className="DelayedSpinner">
+    {/* ... */}
+  &#x3C;/span>
+);
+
+return (
+  &#x3C;>
+    &#x3C;button onClick={handleClick}>{children}&#x3C;/button>
+    {isPending ? spinner : null}
+  &#x3C;/>
+);</code></pre>
+          <p><strong><a href="https://codesandbox.io/s/gallant-spence-l6wbk">Essayez sur CodeSandbox</a></strong></p>
+          <p>Avec cette modification, même si nous sommes dans l’état En attente, nous n’affichons aucune indication à l’utilisateur jusqu’à ce que 500 ms se soient écoulés. Ça peut sembler une amélioration superflue quand les réponses API sont lentes. Mais comparez le ressenti <a href="https://codesandbox.io/s/thirsty-liskov-1ygph">avant</a> et <a href="https://codesandbox.io/s/hardcore-http-s18xr">après</a> lorsque l’appel API est rapide. Même si le reste du code n’a pas changé, supprimer un état de chargement « trop rapide » améliore les performances perçues en évitant d’attirer l’attention de l’utilisateur.</p>
+        </section>
+        <section id="recap" class="level3">
+          <h3>En résumé</h3>
+          <p>Les points les plus importants que nous avons appris jusqu’à présent sont :</p>
+          <ul>
+            <li>Par défaut, notre séquence de chargement est En retrait → Squelette → Terminé.</li>
+            <li>L’état En retrait n’est pas très agréable parce qu’il masque du contenu existant.</li>
+            <li>Avec <code>useTransition</code>, nous pouvons choisir de commencer plutôt par un état En attente. Ça nous gardera sur l’écran précédent pendant que le prochain se prépare.</li>
+            <li>Si nous ne voulons pas qu’un composant ralentisse une transition, nous pouvons l’enrober dans son propre périmètre <code>&#x3C;Suspense></code>.</li>
+            <li>Plutôt que de faire un <code>useTransition</code> au sein de tous nos composants, nous pouvons l’intégrer à notre système de conception.</li>
+          </ul>
+        </section>
+      </section>
+      <section id="other-patterns" class="level2">
+        <h2>Autres approches</h2>
+        <p>Les transitions sont probablement l’approche pour une UI concurrente que vous rencontrerez le plus fréquemment, mais il existe d’autres approches que vous pourriez trouver utiles.</p>
+        <section id="splitting-high-and-low-priority-state" class="level3">
+          <h3>Dissocier les états à forte et faible priorité</h3>
+          <p>Quand vous concevez des composants React, vous cherchez dans l’idéal à déterminer la « représentation minimale » de l’état. Par exemple, au lieu de conserver dans l’état <code>firstName</code>, <code>lastName</code> et <code>fullName</code>, il est généralement préférable de n’y stocker que <code>firstName</code> et <code>lastName</code>, et de calculer <code>fullName</code> lors du rendu. Ça nous permet d’éviter les erreurs dues à une mise à jour partielle de l’état.</p>
+          <p>En revanche, le mode concurrent recèle des cas où vous pourriez <em>vouloir</em> « dupliquer » des données dans des variables d’état distinctes. Prenez cette minuscule appli de traduction :</p>
+          <pre class="language-js"><code class="language-js"><span class="token keyword">const</span> initialQuery <span class="token operator">=</span> <span class="token string">"Bonjour, monde"</span><span class="token punctuation">;</span>
+<span class="token keyword">const</span> initialResource <span class="token operator">=</span> <span class="token function">fetchTranslation</span><span class="token punctuation">(</span>initialQuery<span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+<span class="token keyword">function</span> <span class="token function"><span class="token maybe-class-name">App</span></span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  <span class="token keyword">const</span> <span class="token punctuation">[</span>query<span class="token punctuation">,</span> setQuery<span class="token punctuation">]</span> <span class="token operator">=</span> <span class="token function">useState</span><span class="token punctuation">(</span>initialQuery<span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token keyword">const</span> <span class="token punctuation">[</span>resource<span class="token punctuation">,</span> setResource<span class="token punctuation">]</span> <span class="token operator">=</span> <span class="token function">useState</span><span class="token punctuation">(</span>initialResource<span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+  <span class="token keyword">function</span> <span class="token function">handleChange</span><span class="token punctuation">(</span><span class="token parameter">e</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token keyword">const</span> value <span class="token operator">=</span> e<span class="token punctuation">.</span><span class="token property-access">target</span><span class="token punctuation">.</span><span class="token property-access">value</span><span class="token punctuation">;</span>
+    <span class="token function">setQuery</span><span class="token punctuation">(</span>value<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token function">setResource</span><span class="token punctuation">(</span><span class="token function">fetchTranslation</span><span class="token punctuation">(</span>value<span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token punctuation">}</span>
+
+  <span class="token keyword control-flow">return</span> <span class="token punctuation">(</span>
+    <span class="token operator">&#x3C;</span><span class="token operator">></span>
+      <span class="token operator">&#x3C;</span>input
+        value<span class="token operator">=</span><span class="token punctuation">{</span>query<span class="token punctuation">}</span>
+        onChange<span class="token operator">=</span><span class="token punctuation">{</span>handleChange<span class="token punctuation">}</span>
+      <span class="token operator">/</span><span class="token operator">></span>
+      <span class="token operator">&#x3C;</span><span class="token maybe-class-name">Suspense</span> fallback<span class="token operator">=</span><span class="token punctuation">{</span><span class="token operator">&#x3C;</span>p<span class="token operator">></span><span class="token maybe-class-name">Chargement</span><span class="token spread operator">...</span><span class="token operator">&#x3C;</span><span class="token operator">/</span>p<span class="token operator">></span><span class="token punctuation">}</span><span class="token operator">></span>
+        <span class="token operator">&#x3C;</span><span class="token maybe-class-name">Translation</span> resource<span class="token operator">=</span><span class="token punctuation">{</span>resource<span class="token punctuation">}</span> <span class="token operator">/</span><span class="token operator">></span>
+      <span class="token operator">&#x3C;</span><span class="token operator">/</span><span class="token maybe-class-name">Suspense</span><span class="token operator">></span>
+    <span class="token operator">&#x3C;</span><span class="token operator">/</span><span class="token operator">></span>
+  <span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+
+<span class="token keyword">function</span> <span class="token function"><span class="token maybe-class-name">Translation</span></span><span class="token punctuation">(</span><span class="token parameter"><span class="token punctuation">{</span> resource <span class="token punctuation">}</span></span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  <span class="token keyword control-flow">return</span> <span class="token punctuation">(</span>
+    <span class="token operator">&#x3C;</span>p<span class="token operator">></span>
+      <span class="token operator">&#x3C;</span>b<span class="token operator">></span><span class="token punctuation">{</span>resource<span class="token punctuation">.</span><span class="token method function property-access">read</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">}</span><span class="token operator">&#x3C;</span><span class="token operator">/</span>b<span class="token operator">></span>
+    <span class="token operator">&#x3C;</span><span class="token operator">/</span>p<span class="token operator">></span>
+  <span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span></code></pre>
+          <p><strong><a href="https://codesandbox.io/s/brave-villani-ypxvf">Essayez sur CodeSandbox</a></strong></p>
+          <p>Remarquez comme, lorsque vous tapez dans le champ de saisie, le composant <code>&#x3C;Translation></code> se suspend, vous affichant l’UI de repli <code>&#x3C;p>Chargement...&#x3C;/p></code> jusqu’à obtenir des résultats à jour. Ce n’est pas idéal. Il serait préférable que vous puissiez brièvement voir la <em>précédente</em> traduction, tandis que nous chargeons la prochaine.</p>
+          <p>D’ailleurs, si vous ouvrez la console, vous y verrez cet avertissement :</p>
+          <pre class="language-text"><code class="language-text">Warning: App triggered a user-blocking update that suspended.
+
+The fix is to split the update into multiple parts: a user-blocking update to provide immediate feedback, and another update that triggers the bulk of the changes.
+
+Refer to the documentation for useTransition to learn how to implement this pattern.</code></pre>
+          <p><em>Avertissement : l’appli a déclenché une mise à jour suspensive, bloquante pour l’utilisateur.</em></p>
+          <p><em>Pour corriger ça, découpez la mise à jour en plusieurs parties : une bloquante qui fournit un retour visuel immédiat, et une qui déclenche l’essentiel des modifications.</em></p>
+          <p><em>Consultez la documentation de useTransition pour en apprendre davantage sur la façon d’implémenter cette approche.</em></p>
+          <p>Comme nous l’avons vu auparavant, si une mise à jour d’état entraîne la suspension d’un composant, cette mise à jour devrait être enrobée dans une transition. Essayons d’ajouter <code>useTransition</code> à notre composant :</p>
+          <pre class="language-js{4-6,10,13}"><code class="language-js{4-6,10,13}">function App() {
+  const [query, setQuery] = useState(initialQuery);
+  const [resource, setResource] = useState(initialResource);
+  const [startTransition, isPending] = useTransition({
+    timeoutMs: 5000
+  });
+
+  function handleChange(e) {
+    const value = e.target.value;
+    startTransition(() => {
+      setQuery(value);
+      setResource(fetchTranslation(value));
+    });
+  }
+
+  // ...
+
+}</code></pre>
+          <p><strong><a href="https://codesandbox.io/s/zen-keldysh-rifos">Essayez sur CodeSandbox</a></strong></p>
+          <p>Essayez de saisir une valeur à présent. Quelque chose cloche ! Le champ n’est mis à jour que très lentement.</p>
+          <p>Nous avons corrigé le premier problème (la suspension hors d’une transition). Mais maintenant, à cause de la transition, notre état n’est pas mis à jour immédiatement : il ne peut donc pas « piloter » le champ contrôlé !</p>
+          <p>La solution <strong>consiste à découper l’état en deux parties :</strong> une partie à « forte priorité » qui est mise à jour tout de suite, et une à « faible priorité » qui peut se permettre d’attendre la transition.</p>
+          <p>Dans notre exemple, on a déjà deux variables d’état. Le texte saisi est dans <code>query</code> et la traduction est lue depuis <code>resource</code>. Nous voulons que les modifications apportées à <code>query</code> soient traitées immédiatement, mais que celles de <code>resource</code> (c’est-à-dire le chargement d’une nouvelle traduction) déclenchent une transition.</p>
+          <p>Du coup le bon correctif consiste à mettre <code>setQuery</code> (qui ne suspend rien) <em>hors</em> de la transition, mais de placer <code>setResource</code> (qui suspendra) <em>à l’intérieur</em> de celle-ci.</p>
+          <pre class="language-js{4,5}"><code class="language-js{4,5}">function handleChange(e) {
+  const value = e.target.value;
+
+  // Hors de la transition (urgent)
+  setQuery(value);
+
+  startTransition(() => {
+    // Dans la transition (peut être différé)
+    setResource(fetchTranslation(value));
+  });
+}</code></pre>
+          <p><strong><a href="https://codesandbox.io/s/lively-smoke-fdf93">Essayez sur CodeSandbox</a></strong></p>
+          <p>Avec cet ajustement, tout fonctionne comme on le souhaite. On peut taper une valeur et la voir immédiatement, quant à la traduction, elle « rattrape » ce qu’on a saisi un peu plus tard.</p>
+        </section>
+        <section id="deferring-a-value" class="level3">
+          <h3>Différer une valeur</h3>
+          <p>Par défaut, React assurera toujours un rendu cohérent de l'UI. Prenez le code suivant :</p>
+          <pre class="language-js"><code class="language-js"><span class="token operator">&#x3C;</span><span class="token operator">></span>
+  <span class="token operator">&#x3C;</span><span class="token maybe-class-name">ProfileDetails</span> user<span class="token operator">=</span><span class="token punctuation">{</span>user<span class="token punctuation">}</span> <span class="token operator">/</span><span class="token operator">></span>
+  <span class="token operator">&#x3C;</span><span class="token maybe-class-name">ProfileTimeline</span> user<span class="token operator">=</span><span class="token punctuation">{</span>user<span class="token punctuation">}</span> <span class="token operator">/</span><span class="token operator">></span>
+<span class="token operator">&#x3C;</span><span class="token operator">/</span><span class="token operator">></span></code></pre>
+          <p>React garantit qu’à tout moment, quand nous regardons ces composants à l’écran, ils reflèteront les données issues du même <code>user</code>. Si un <code>user</code> différent nous est passé suite à une mise à jour d’état, vous verrez les deux composants se mettre à jour d’un bloc. Il serait impossible d’enregistrer une vidéo de l’écran et de trouver ensuite un seul <em>frame</em> où ces composants afficheraient des données issues d’objets <code>user</code> différents. (Et si vous y arrivez un jour, ouvrez un ticket, c’est un bug !)</p>
+          <p>Cette approche a du sens dans la vaste majorité des cas. Une UI incohérente est déroutante voire dangereuse pour les utilisateurs. (Par exemple, vous imaginez bien que ce serait l’enfer si le bouton Envoyer de Messenger et le panneau de conversation n’étaient « pas d’accord » sur la conversation en cours.)</p>
+          <p>Ceci dit, il peut parfois être utile d’introduire volontairement un décalage. On pourrait le faire manuellement en « découpant » l’état comme on l’a fait ci-dessus, mais React nous offre un Hook prédéfini pour ça :</p>
+          <pre class="language-js"><code class="language-js"><span class="token keyword module">import</span> <span class="token imports"><span class="token punctuation">{</span> useDeferredValue <span class="token punctuation">}</span></span> <span class="token keyword module">from</span> <span class="token string">'react'</span><span class="token punctuation">;</span>
+
+<span class="token keyword">const</span> deferredValue <span class="token operator">=</span> <span class="token function">useDeferredValue</span><span class="token punctuation">(</span>value<span class="token punctuation">,</span> <span class="token punctuation">{</span>
+  <span class="token literal-property property">timeoutMs</span><span class="token operator">:</span> <span class="token number">5000</span>
+<span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">;</span></code></pre>
+          <p>Pour illustrer cette fonctionnalité, nous allons utiliser <a href="https://codesandbox.io/s/musing-ramanujan-bgw2o">l’exemple de la bascule de profil</a>. Cliquez sur le bouton « Suivant » et remarquez que ça prend une seconde pour achever la transition.</p>
+          <p>Disons que la récupération des détails utilisateurs est très rapide et ne prend que 300 millisecondes. Pour le moment, nous attendons une seconde entière parce que nous avons besoin tant des détails de l’utilisateur que de ses publications pour afficher une page de profil cohérente. Mais qu’en serait-il si nous voulions afficher les détails plus tôt ?</p>
+          <p>Si nous acceptons de sacrifier la cohérence, nous pouvons <strong>passer des données potentiellement obsolètes aux composants qui retardent notre transition</strong>. C’est précisément ce que <code>useDeferredValue()</code> nous permet de faire :</p>
+          <pre class="language-js{2-4,10,11,21}"><code class="language-js{2-4,10,11,21}">function ProfilePage({ resource }) {
+  const deferredResource = useDeferredValue(resource, {
+    timeoutMs: 1000
+  });
+  return (
+    &#x3C;Suspense fallback={&#x3C;h1>Chargement du profil...&#x3C;/h1>}>
+      &#x3C;ProfileDetails resource={resource} />
+      &#x3C;Suspense fallback={&#x3C;h1>Chargement des publications...&#x3C;/h1>}>
+        &#x3C;ProfileTimeline
+          resource={deferredResource}
+          isStale={deferredResource !== resource}
+        />
+      &#x3C;/Suspense>
+    &#x3C;/Suspense>
+  );
+}
+
+function ProfileTimeline({ isStale, resource }) {
+  const posts = resource.posts.read();
+  return (
+    &#x3C;ul style={{ opacity: isStale ? 0.7 : 1 }}>
+      {posts.map(post => (
+        &#x3C;li key={post.id}>{post.text}&#x3C;/li>
+      ))}
+    &#x3C;/ul>
+  );
+}</code></pre>
+          <p><strong><a href="https://codesandbox.io/s/vigorous-keller-3ed2b">Essayez sur CodeSandbox</a></strong></p>
+          <p>Le compromis que nous faisons ici tient à ce que <code>&#x3C;ProfileTimeline></code> sera incohérente vis-à-vis des autres composants et affichera potentiellement un élément plus ancien. En cliquant sur « Suivant » plusieurs fois, vous allez le remarquer. Mais grâce à ça, nous pouvons raccourcir le temps de la transition de 1 000 ms à 300 ms.</p>
+          <p>La pertinence d’un tel compromis dépend de votre situation. Mais ça reste un outil bien pratique, surtout quand le contenu ne change pas de façon très prononcée d’un élement à l’autre, et que l’utilisateur est susceptible de ne même pas remarquer qu’ils ont des données obsolètes pendant une seconde.</p>
+          <p>Notez bien que <code>useDeferredValue</code> n’est pas <em>seulement</em> utile pour le chargement de données. Elle nous aide aussi lorsqu’une arborescence de composants lourde ralentit une interaction (par ex. la saisie dans un champ). Tout comme nous pouvons « différer » une valeur qui prend trop longtemps à se charger (et afficher l’ancienne valeur en dépit des mises à jour d’autres composants), nous pouvons faire la même chose à des arbres qui prennent trop de temps pour leur rendu.</p>
+          <p>Par exemple, prenez une liste filtrable comme celle-ci :</p>
+          <pre class="language-js"><code class="language-js"><span class="token keyword">function</span> <span class="token function"><span class="token maybe-class-name">App</span></span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  <span class="token keyword">const</span> <span class="token punctuation">[</span>text<span class="token punctuation">,</span> setText<span class="token punctuation">]</span> <span class="token operator">=</span> <span class="token function">useState</span><span class="token punctuation">(</span><span class="token string">"bonjour"</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+  <span class="token keyword">function</span> <span class="token function">handleChange</span><span class="token punctuation">(</span><span class="token parameter">e</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token function">setText</span><span class="token punctuation">(</span>e<span class="token punctuation">.</span><span class="token property-access">target</span><span class="token punctuation">.</span><span class="token property-access">value</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token punctuation">}</span>
+
+  <span class="token keyword control-flow">return</span> <span class="token punctuation">(</span>
+    <span class="token operator">&#x3C;</span>div className<span class="token operator">=</span><span class="token string">"App"</span><span class="token operator">></span>
+      <span class="token operator">&#x3C;</span>label<span class="token operator">></span>
+        <span class="token maybe-class-name">Tapez</span> une valeur dans le champ <span class="token operator">:</span><span class="token punctuation">{</span><span class="token string">" "</span><span class="token punctuation">}</span>
+        <span class="token operator">&#x3C;</span>input value<span class="token operator">=</span><span class="token punctuation">{</span>text<span class="token punctuation">}</span> onChange<span class="token operator">=</span><span class="token punctuation">{</span>handleChange<span class="token punctuation">}</span> <span class="token operator">/</span><span class="token operator">></span>
+      <span class="token operator">&#x3C;</span><span class="token operator">/</span>label<span class="token operator">></span>
+      <span class="token spread operator">...</span>
+      <span class="token operator">&#x3C;</span><span class="token maybe-class-name">MySlowList</span> text<span class="token operator">=</span><span class="token punctuation">{</span>text<span class="token punctuation">}</span> <span class="token operator">/</span><span class="token operator">></span>
+    <span class="token operator">&#x3C;</span><span class="token operator">/</span>div<span class="token operator">></span>
+  <span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span></code></pre>
+          <p><strong><a href="https://codesandbox.io/s/pensive-shirley-wkp46">Essayez sur CodeSandbox</a></strong></p>
+          <p>Dans cet exemple, <strong>chaque élément dans <code>&#x3C;MySlowList></code> est artificiellement ralenti : chacun d’eux bloque le thread pour quelques millisecondes</strong>. On ne ferait jamais ça dans une véritable appli, mais ça nous aide à simuler ce qui pourrait se passer dans une arborescence de composants profonde qui ne contiendrait pas pour autant d’endroits évidents à optimiser.</p>
+          <p>On peut voir comme la saisie dans le champ cause une expérience saccadée. Ajoutons maintenant <code>useDeferredValue</code> :</p>
+          <pre class="language-js{3-5,18}"><code class="language-js{3-5,18}">function App() {
+  const [text, setText] = useState("bonjour");
+  const deferredText = useDeferredValue(text, {
+    timeoutMs: 5000
+  });
+
+  function handleChange(e) {
+    setText(e.target.value);
+  }
+
+  return (
+    &#x3C;div className="App">
+      &#x3C;label>
+        Tapez une valeur dans le champ :{" "}
+        &#x3C;input value={text} onChange={handleChange} />
+      &#x3C;/label>
+      ...
+      &#x3C;MySlowList text={deferredText} />
+    &#x3C;/div>
+  );
+}</code></pre>
+          <p><strong><a href="https://codesandbox.io/s/infallible-dewdney-9fkv9">Essayez sur CodeSandbox</a></strong></p>
+          <p>À présent la frappe cause beaucoup moins de saccade, mais au prix d’un affichage différé des résultats.</p>
+          <p>En quoi est-ce différent du <em>debouncing</em> ? Notre exemple avait un délai artificiel fixe (3 ms pour chacun des 80 élements), donc il y aura toujours un délai, peu importe la vitesse de notre ordinateur. En revanche, la valeur de <code>useDeferredValue</code> n’est « à la traîne » que si le rendu prend du temps. React n’impose aucun retard minimum. Avec une charge de travail plus réaliste, vous pouvez vous attendre à ce que le retard s’adapte à l’appareil de l’utilisateur. Sur des machines rapides, le retard sera plus court voire inexistant, et sur des machines lentes, il se fera davantage sentir. Dans les deux cas, l’appli restera réactive. C’est l’avantage de ce mécanisme par rapport au <em>debouncing</em> ou au <em>throttling</em>, qui imposent toujours un délai minimum et par ailleurs ne permettent pas d’éviter de bloquer le thread pendant le rendu.</p>
+          <p>Même si on améliore bien ici la réactivité, cet exemple n’est pas encore engageant parce que le mode concurrent manque de certaines optimisations cruciales pour ce cas d’usage. Quoi qu’il en soit, il reste intéressant de voir que des fonctionnalités comme <code>useDeferredValue</code> (ou <code>useTransition</code>) sont utiles lorsqu’on attend après aussi bien une réponse réseau qu’un travail de calcul pur.</p>
+        </section>
+        <section id="suspenselist-suspenselist" class="level3">
+          <h3><code>SuspenseList</code> {#suspenselist}</h3>
+          <p><code>&#x3C;SuspenseList></code> est la dernière approche liée à l’orchestration des états de chargement.</p>
+          <p>Prenez cet exemple :</p>
+          <pre class="language-js{5-10}"><code class="language-js{5-10}">function ProfilePage({ resource }) {
+  return (
+    &#x3C;>
+      &#x3C;ProfileDetails resource={resource} />
+      &#x3C;Suspense fallback={&#x3C;h2>Chargement des publications...&#x3C;/h2>}>
+        &#x3C;ProfileTimeline resource={resource} />
+      &#x3C;/Suspense>
+      &#x3C;Suspense fallback={&#x3C;h2>Chargement des faits amusants...&#x3C;/h2>}>
+        &#x3C;ProfileTrivia resource={resource} />
+      &#x3C;/Suspense>
+    &#x3C;/>
+  );
+}</code></pre>
+          <p><strong><a href="https://codesandbox.io/s/proud-tree-exg5t">Essayez sur CodeSandbox</a></strong></p>
+          <p>La durée de l’appel API dans cet exemple est aléatoire. Si vous rafraîchissez encore et encore, vous remarquerez que parfois les publications arrivent en premier, alors que d’autres fois ce sont les « faits amusants ».</p>
+          <p>C’est un problème. Si la réponse des faits amusants arrive en premier, on verra les faits amusants sous l’UI de repli <code>&#x3C;h2>Chargement des publications...&#x3C;/h2></code> des publications. On pourrait alors commencer à les lire, sauf que soudainement la réponse des <em>publications</em> arrive, et décale nos faits vers le bas. C’est très désagréable.</p>
+          <p>Une manière de corriger ça consiste à les placer tous deux dans le même périmètre :</p>
+          <pre class="language-js"><code class="language-js"><span class="token operator">&#x3C;</span><span class="token maybe-class-name">Suspense</span> fallback<span class="token operator">=</span><span class="token punctuation">{</span><span class="token operator">&#x3C;</span>h2<span class="token operator">></span><span class="token maybe-class-name">Chargement</span> des publications et des faits amusants<span class="token spread operator">...</span><span class="token operator">&#x3C;</span><span class="token operator">/</span>h2<span class="token operator">></span><span class="token punctuation">}</span><span class="token operator">></span>
+  <span class="token operator">&#x3C;</span><span class="token maybe-class-name">ProfileTimeline</span> resource<span class="token operator">=</span><span class="token punctuation">{</span>resource<span class="token punctuation">}</span> <span class="token operator">/</span><span class="token operator">></span>
+  <span class="token operator">&#x3C;</span><span class="token maybe-class-name">ProfileTrivia</span> resource<span class="token operator">=</span><span class="token punctuation">{</span>resource<span class="token punctuation">}</span> <span class="token operator">/</span><span class="token operator">></span>
+<span class="token operator">&#x3C;</span><span class="token operator">/</span><span class="token maybe-class-name">Suspense</span><span class="token operator">></span></code></pre>
+          <p><strong><a href="https://codesandbox.io/s/currying-violet-5jsiy">Essayez sur CodeSandbox</a></strong></p>
+          <p>Le souci avec ce correctif est qu’à présent nous devons <em>toujours</em> attendre que les deux contenus soient chargés. Et pourtant, si ce sont les <em>publications</em> qui répondent en premier, il n’y a pas de raison d’attendre pour les afficher. Quand les faits amusants arriveront plus tard, ils ne décaleront pas la mise en page parce qu’ils seront situés sous les publications.</p>
+          <p>D’autres voies de correction, telles que la composition sur-mesure de promesses, deviennent vite délicates à mettre en œuvre lorsque les états de chargement sont situés dans des composants distincts plus bas dans l’arbre.</p>
+          <p>Pour résoudre ça, nous allons importer <code>SuspenseList</code> :</p>
+          <pre class="language-js"><code class="language-js"><span class="token keyword module">import</span> <span class="token imports"><span class="token punctuation">{</span> <span class="token maybe-class-name">SuspenseList</span> <span class="token punctuation">}</span></span> <span class="token keyword module">from</span> <span class="token string">'react'</span><span class="token punctuation">;</span></code></pre>
+          <p><code>&#x3C;SuspenseList></code> coordonne « l’ordre de révélation » des nœuds descendants <code>&#x3C;Suspense></code> les plus proches à l’intérieur de lui :</p>
+          <pre class="language-js{3,11}"><code class="language-js{3,11}">function ProfilePage({ resource }) {
+  return (
+    &#x3C;SuspenseList revealOrder="forwards">
+      &#x3C;ProfileDetails resource={resource} />
+      &#x3C;Suspense fallback={&#x3C;h2>Chargement des publications...&#x3C;/h2>}>
+        &#x3C;ProfileTimeline resource={resource} />
+      &#x3C;/Suspense>
+      &#x3C;Suspense fallback={&#x3C;h2>Chargement des faits amusants...&#x3C;/h2>}>
+        &#x3C;ProfileTrivia resource={resource} />
+      &#x3C;/Suspense>
+    &#x3C;/SuspenseList>
+  );
+}</code></pre>
+          <p><strong><a href="https://codesandbox.io/s/black-wind-byilt">Essayez sur CodeSandbox</a></strong></p>
+          <p>L’option <code>revealOrder="forwards"</code> signifie que les nœuds <code>&#x3C;Suspense></code> les plus proches dans la liste <strong>ne « révèleront » leur contenu que dans l’ordre de leur apparition dans l’arbre, même si leurs données arrivent dans un ordre différent.</strong> <code>&#x3C;SuspenseList></code> a d’autres modes intéressants : essayez de remplacer <code>"forwards"</code> par <code>"backwards"</code> ou <code>"together"</code> et regardez ce que ça donne.</p>
+          <p>Vous pouvez contrôler combien d’états de chargement sont visibles à un instant donné grâce à la prop <code>tail</code>. Si nous précisons <code>tail="collapsed"</code>, nous verrons <em>au maximum une</em> UI de repli à la fois. Vous pouvez jouer avec <a href="https://codesandbox.io/s/adoring-almeida-1zzjh">ici</a>.</p>
+          <p>Gardez à l’esprit que <code>&#x3C;SuspenseList></code> est composable, comme tout dans React. Par exemple, vous pouvez créer une grille en plaçant plusieurs lignes <code>&#x3C;SuspenseList></code> au sein d’un tableau <code>&#x3C;SuspenseList></code>.</p>
+        </section>
+      </section>
+      <section id="next-steps" class="level2">
+        <h2>Prochaines étapes</h2>
+        <p>Le mode concurrent offre un puissant modèle de programmation d’UI et un jeu de nouvelles primitives composables pour vous aider à orchestrer de délicieuses expériences utilisateurs.</p>
+        <p>
+          C’est le résultat de plusieurs années de recherche et développement, et il n’est pas terminé. Dans la section sur <a href="./concurrent-mode-adoption.html">l’adoption du mode concurrent</a>, nous vous expliquerons comment vous pouvez l’essayer et ce que vous pouvez en attendre.
+          <span style="float: footnote;"><a href="./index.html#toc">Go to TOC</a></span>
+        </p>
+      </section>
+    </section>
+  </body>
+</html>

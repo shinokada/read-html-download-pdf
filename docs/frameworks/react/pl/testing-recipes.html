@@ -1,0 +1,560 @@
+<!doctype html>
+<html lang="pl">
+  <head>
+    <meta charset="utf-8">
+    <title>Przykłady i dobre praktyki</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="https://raw.githubusercontent.com/shinokada/prism-coy-theme/main/theme_common.css">
+  </head>
+  <body>
+    <section id="przykłady-i-dobre-praktyki" class="level1">
+      <h1>Przykłady i dobre praktyki</h1>
+      <p>Wzorce często używane przy testowaniu komponentów reactowych.</p>
+      <blockquote>
+        <p>Uwaga:</p>
+        <p>Ten rozdział zakłada, że do uruchamiania testów używasz <a href="https://jestjs.io/">Jesta</a>. Jeśli używasz innego narzędzia, konieczne będzie dostosowanie kodu do jego interfejsu API, jednak ogólny schemat rozwiązania powinien być taki sam. Aby dowiedzieć się więcej na temat konfiguracji środowiska testowego, przeczytaj rozdział pt. <a href="./testing-environments.html">"Środowiska testowe"</a>.</p>
+      </blockquote>
+      <p>W tym rozdziale będziemy głównie używać komponentów funkcyjnych. Mimo to z powodzeniem możesz zastąpić je komponentami klasowymi, ponieważ opisane tu rozwiązania nie zależą od sposobu implementacji.</p>
+      <ul>
+        <li><a href="#setup--teardown">Setup/Teardown (pol. <em>Ustawienie/Zniszczenie</em>)</a></li>
+        <li><a href="#act"><code>act()</code></a></li>
+        <li><a href="#rendering">Renderowanie</a></li>
+        <li><a href="#data-fetching">Pobieranie danych</a></li>
+        <li><a href="#mocking-modules">Mockowanie modułów</a></li>
+        <li><a href="#events">Zdarzenia</a></li>
+        <li><a href="#timers">Timery</a></li>
+        <li><a href="#snapshot-testing">Testowanie snapshotowe</a></li>
+        <li><a href="#multiple-renderers">Wiele silników renderujących</a></li>
+        <li><a href="#something-missing">Brakuje czegoś?</a></li>
+      </ul>
+      <section id="setup--teardown" class="level3">
+        <h3>Setup/Teardown (pol. <em>Ustawienie/Zniszczenie</em>)</h3>
+        <p>Zwykle w każdym teście chcemy wyrenderować nasze drzewo reactowe do elementu DOM umieszczonego w globalnym obiekcie <code>document</code>. Tylko wtedy nasze komponenty będą otrzymywać zdarzenia DOM. Po zakończonym teście musimy "posprzątać", odmontowując drzewo od obiektu <code>document</code>.</p>
+        <p>Popularnym sposobem na to jest użycie pary bloków <code>beforeEach</code> (pol. <em>przed każdym</em>) oraz <code>afterEach</code> (pol. <em>po każdym</em>) uruchamianych przy każdym teście, które gwarantują pełną izolację wszelkich efektów ubocznych w naszych testach:</p>
+        <pre class="language-jsx"><code class="language-jsx"><span class="token keyword module">import</span> <span class="token imports"><span class="token punctuation">{</span> unmountComponentAtNode <span class="token punctuation">}</span></span> <span class="token keyword module">from</span> <span class="token string">"react-dom"</span><span class="token punctuation">;</span>
+
+<span class="token keyword">let</span> container <span class="token operator">=</span> <span class="token keyword null nil">null</span><span class="token punctuation">;</span>
+<span class="token function">beforeEach</span><span class="token punctuation">(</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token arrow operator">=></span> <span class="token punctuation">{</span>
+  <span class="token comment">// ustaw element DOM jako cel renderowania</span>
+  container <span class="token operator">=</span> <span class="token dom variable">document</span><span class="token punctuation">.</span><span class="token method function property-access">createElement</span><span class="token punctuation">(</span><span class="token string">"div"</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token dom variable">document</span><span class="token punctuation">.</span><span class="token property-access">body</span><span class="token punctuation">.</span><span class="token method function property-access">appendChild</span><span class="token punctuation">(</span>container<span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+<span class="token function">afterEach</span><span class="token punctuation">(</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token arrow operator">=></span> <span class="token punctuation">{</span>
+  <span class="token comment">// posprzątaj po zakończeniu</span>
+  <span class="token function">unmountComponentAtNode</span><span class="token punctuation">(</span>container<span class="token punctuation">)</span><span class="token punctuation">;</span>
+  container<span class="token punctuation">.</span><span class="token method function property-access">remove</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  container <span class="token operator">=</span> <span class="token keyword null nil">null</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">;</span></code></pre>
+        <p>Możesz skorzystać z innego podejście. Pamiętaj jednak, że należy posprzątać, <em>nawet jeśli test nie przejdzie pomyślnie</em>. W przeciwnym wypadku testy staną się "dziurawe" i będą mogły wpływać na działanie innych testów. Znacznie utrudni to szukanie błędów.</p>
+      </section>
+      <section id="act-act" class="level3">
+        <h3><code>act()</code> {#act}</h3>
+        <p>Podczas pisania testów interfejsu UI, zadania takie jak: renderowanie, obsługa zdarzeń czy pobieranie danych można traktować jako "jednostki" interakcji z interfejsem użytkownika. Moduł <code>react-dom/test-utils</code> dostarcza funkcję pomocniczą <a href="./test-utils.html#act"><code>act()</code></a>, która upewnia się, że przed wykonaniem asercji zostają przetworzone wszelkie zmiany dotyczące tych "jednostek", a drzewo DOM jest aktualne.</p>
+        <pre class="language-js"><code class="language-js"><span class="token function">act</span><span class="token punctuation">(</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token arrow operator">=></span> <span class="token punctuation">{</span>
+  <span class="token comment">// wyrenderuj komponenty</span>
+<span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token comment">// wykonaj sprawdzenia</span></code></pre>
+        <p>Pozwala to na uruchamianie testów w sposób zbliżony do faktycznego zachowania podczas interakcji użytkownika z aplikacją. Pozostałe przykłady w tym rozdziale używają funkcji <code>act()</code>, aby to zagwarantować.</p>
+        <p>Używanie <code>act()</code> bezpośrednio może wydawać się jednak zbyt rozwlekłe. Aby uniknąć pisania wciąż tego samego kodu, możesz użyć biblioteki takiej jak <a href="https://testing-library.com/react">React Testing Library</a>, której to funkcje pomocnicze są "opakowane" w <code>act()</code>.</p>
+        <blockquote>
+          <p>Uwaga:</p>
+          <p>Nazwa <code>act</code> pochodzi od zasady <a href="http://wiki.c2.com/?ArrangeActAssert">Arrange-Act-Assert</a> (pol. <em>Przygotuj-Wykonaj-Sprawdź</em>).</p>
+        </blockquote>
+      </section>
+      <section id="rendering" class="level3">
+        <h3>Renderowanie</h3>
+        <p>Komponenty zazwyczaj testuje się poprzez sprawdzenie, czy renderują się one poprawnie dla konkretnych danych wejściowych. Rozważmy następujący komponent wyświetlający wiadomość:</p>
+        <pre class="language-jsx"><code class="language-jsx"><span class="token comment">// hello.js</span>
+
+<span class="token keyword module">import</span> <span class="token imports"><span class="token maybe-class-name">React</span></span> <span class="token keyword module">from</span> <span class="token string">"react"</span><span class="token punctuation">;</span>
+
+<span class="token keyword module">export</span> <span class="token keyword module">default</span> <span class="token keyword">function</span> <span class="token function"><span class="token maybe-class-name">Hello</span></span><span class="token punctuation">(</span><span class="token parameter">props</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  <span class="token keyword control-flow">if</span> <span class="token punctuation">(</span>props<span class="token punctuation">.</span><span class="token property-access">name</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token keyword control-flow">return</span> <span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;</span>h1</span><span class="token punctuation">></span></span><span class="token plain-text">Witaj, </span><span class="token punctuation">{</span>props<span class="token punctuation">.</span><span class="token property-access">name</span><span class="token punctuation">}</span><span class="token plain-text">!</span><span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;/</span>h1</span><span class="token punctuation">></span></span><span class="token punctuation">;</span>
+  <span class="token punctuation">}</span> <span class="token keyword control-flow">else</span> <span class="token punctuation">{</span>
+    <span class="token keyword control-flow">return</span> <span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;</span>span</span><span class="token punctuation">></span></span><span class="token plain-text">Cześć, nieznajomy</span><span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;/</span>span</span><span class="token punctuation">></span></span><span class="token punctuation">;</span>
+  <span class="token punctuation">}</span>
+<span class="token punctuation">}</span></code></pre>
+        <p>Test dla takiego komponentu może wygląda tak:</p>
+        <pre class="language-jsx{24-27}"><code class="language-jsx{24-27}">// hello.test.js
+
+import React from "react";
+import { render, unmountComponentAtNode } from "react-dom";
+import { act } from "react-dom/test-utils";
+
+import Hello from "./hello";
+
+let container = null;
+beforeEach(() => {
+  // ustaw element DOM jako cel renderowania
+  container = document.createElement("div");
+  document.body.appendChild(container);
+});
+
+afterEach(() => {
+  // posprzątaj po zakończeniu
+  unmountComponentAtNode(container);
+  container.remove();
+  container = null;
+});
+
+it("renders with or without a name", () => {
+  act(() => {
+    render(&#x3C;Hello />, container);
+  });
+  expect(container.textContent).toBe("Cześć, nieznajomy");
+
+  act(() => {
+    render(&#x3C;Hello name="Janusz" />, container);
+  });
+  expect(container.textContent).toBe("Witaj, Janusz!");
+
+  act(() => {
+    render(&#x3C;Hello name="Grażyna" />, container);
+  });
+  expect(container.textContent).toBe("Witaj, Grażyna!");
+});</code></pre>
+      </section>
+      <section id="data-fetching" class="level3">
+        <h3>Pobieranie danych</h3>
+        <p>Zamiast odpytywania prawdziwego API w każdym z testów, możesz zamockować żądania przy użyciu sztucznych danych. Dzięki temu testy będą odporne na czasową niedostępność backendu, a także będą wykonywały się szybciej. Uwaga: mimo wszystko warto wydzielić kilka testów do frameworka testującego <a href="./testing-environments.html#end-to-end-tests-aka-e2e-tests">"end-to-end"</a>, który sprawdzi, czy cała aplikacja działa poprawnie.</p>
+        <pre class="language-jsx"><code class="language-jsx"><span class="token comment">// user.js</span>
+
+<span class="token keyword module">import</span> <span class="token imports"><span class="token maybe-class-name">React</span><span class="token punctuation">,</span> <span class="token punctuation">{</span> useState<span class="token punctuation">,</span> useEffect <span class="token punctuation">}</span></span> <span class="token keyword module">from</span> <span class="token string">"react"</span><span class="token punctuation">;</span>
+
+<span class="token keyword module">export</span> <span class="token keyword module">default</span> <span class="token keyword">function</span> <span class="token function"><span class="token maybe-class-name">User</span></span><span class="token punctuation">(</span><span class="token parameter">props</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  <span class="token keyword">const</span> <span class="token punctuation">[</span>user<span class="token punctuation">,</span> setUser<span class="token punctuation">]</span> <span class="token operator">=</span> <span class="token function">useState</span><span class="token punctuation">(</span><span class="token keyword null nil">null</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+  <span class="token keyword">async</span> <span class="token keyword">function</span> <span class="token function">fetchUserData</span><span class="token punctuation">(</span><span class="token parameter">id</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token keyword">const</span> response <span class="token operator">=</span> <span class="token keyword control-flow">await</span> <span class="token function">fetch</span><span class="token punctuation">(</span><span class="token string">"/"</span> <span class="token operator">+</span> id<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token function">setUser</span><span class="token punctuation">(</span><span class="token keyword control-flow">await</span> response<span class="token punctuation">.</span><span class="token method function property-access">json</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token punctuation">}</span>
+
+  <span class="token function">useEffect</span><span class="token punctuation">(</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token arrow operator">=></span> <span class="token punctuation">{</span>
+    <span class="token function">fetchUserData</span><span class="token punctuation">(</span>props<span class="token punctuation">.</span><span class="token property-access">id</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token punctuation">}</span><span class="token punctuation">,</span> <span class="token punctuation">[</span>props<span class="token punctuation">.</span><span class="token property-access">id</span><span class="token punctuation">]</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+  <span class="token keyword control-flow">if</span> <span class="token punctuation">(</span><span class="token operator">!</span>user<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token keyword control-flow">return</span> <span class="token string">"Wczytywanie..."</span><span class="token punctuation">;</span>
+  <span class="token punctuation">}</span>
+
+  <span class="token keyword control-flow">return</span> <span class="token punctuation">(</span>
+    <span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;</span>details</span><span class="token punctuation">></span></span><span class="token plain-text">
+      </span><span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;</span>summary</span><span class="token punctuation">></span></span><span class="token punctuation">{</span>user<span class="token punctuation">.</span><span class="token property-access">name</span><span class="token punctuation">}</span><span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;/</span>summary</span><span class="token punctuation">></span></span><span class="token plain-text">
+      </span><span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;</span>strong</span><span class="token punctuation">></span></span><span class="token punctuation">{</span>user<span class="token punctuation">.</span><span class="token property-access">age</span><span class="token punctuation">}</span><span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;/</span>strong</span><span class="token punctuation">></span></span><span class="token plain-text"> lat
+      </span><span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;</span>br</span> <span class="token punctuation">/></span></span><span class="token plain-text">
+      adres: </span><span class="token punctuation">{</span>user<span class="token punctuation">.</span><span class="token property-access">address</span><span class="token punctuation">}</span><span class="token plain-text">
+    </span><span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;/</span>details</span><span class="token punctuation">></span></span>
+  <span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span></code></pre>
+        <p>Testy dla takiego komponentu mogłyby wyglądać następująco:</p>
+        <pre class="language-jsx{23-33,44-45}"><code class="language-jsx{23-33,44-45}">// user.test.js
+
+import React from "react";
+import { render, unmountComponentAtNode } from "react-dom";
+import { act } from "react-dom/test-utils";
+import User from "./user";
+
+let container = null;
+beforeEach(() => {
+  // ustaw element DOM jako cel renderowania
+  container = document.createElement("div");
+  document.body.appendChild(container);
+});
+
+afterEach(() => {
+  // posprzątaj po zakończeniu
+  unmountComponentAtNode(container);
+  container.remove();
+  container = null;
+});
+
+it("wyświetla dane użytkownika", async () => {
+  const fakeUser = {
+    name: "Jan Kowalski",
+    age: "32",
+    address: "ul. Zimna 12, Pcim Dolny"
+  };
+
+  jest.spyOn(global, "fetch").mockImplementation(() =>
+    Promise.resolve({
+      json: () => Promise.resolve(fakeUser)
+    })
+  );
+
+  // Użyj asynchronicznej wersji funkcji act, aby poczekać na zakończenie efektu
+  await act(async () => {
+    render(&#x3C;User id="123" />, container);
+  });
+
+  expect(container.querySelector("summary").textContent).toBe(fakeUser.name);
+  expect(container.querySelector("strong").textContent).toBe(fakeUser.age);
+  expect(container.textContent).toContain(fakeUser.address);
+
+  // usuń mock, aby zapewnić izolację testu
+  global.fetch.mockRestore();
+});</code></pre>
+      </section>
+      <section id="mocking-modules" class="level3">
+        <h3>Mockowanie modułów</h3>
+        <p>Niektóre moduły mogą nie działać poprawnie w środowisku testowym lub mogą być nieistotne z perspektywy danego testu. Mockowanie takich modułów przy użyciu "udawanych" (ang. <em>dummy</em>) modułów może znacznie ułatwić pisanie testów do własnego kodu.</p>
+        <p>Rozważmy komponent <code>Contact</code>, który zawiera w sobie komponent <code>GoogleMap</code> z biblioteki zewnętrznej:</p>
+        <pre class="language-jsx"><code class="language-jsx"><span class="token comment">// map.js</span>
+
+<span class="token keyword module">import</span> <span class="token imports"><span class="token maybe-class-name">React</span></span> <span class="token keyword module">from</span> <span class="token string">"react"</span><span class="token punctuation">;</span>
+
+<span class="token keyword module">import</span> <span class="token imports"><span class="token punctuation">{</span> <span class="token maybe-class-name">LoadScript</span><span class="token punctuation">,</span> <span class="token maybe-class-name">GoogleMap</span> <span class="token punctuation">}</span></span> <span class="token keyword module">from</span> <span class="token string">"react-google-maps"</span><span class="token punctuation">;</span>
+<span class="token keyword module">export</span> <span class="token keyword module">default</span> <span class="token keyword">function</span> <span class="token known-class-name class-name">Map</span><span class="token punctuation">(</span><span class="token parameter">props</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  <span class="token keyword control-flow">return</span> <span class="token punctuation">(</span>
+    <span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;</span><span class="token class-name">LoadScript</span></span> <span class="token attr-name">id</span><span class="token attr-value"><span class="token punctuation attr-equals">=</span><span class="token punctuation">"</span>script-loader<span class="token punctuation">"</span></span> <span class="token attr-name">googleMapsApiKey</span><span class="token attr-value"><span class="token punctuation attr-equals">=</span><span class="token punctuation">"</span>TWOJ_KLUCZ_API<span class="token punctuation">"</span></span><span class="token punctuation">></span></span><span class="token plain-text">
+      </span><span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;</span><span class="token class-name">GoogleMap</span></span> <span class="token attr-name">id</span><span class="token attr-value"><span class="token punctuation attr-equals">=</span><span class="token punctuation">"</span>example-map<span class="token punctuation">"</span></span> <span class="token attr-name">center</span><span class="token script language-javascript"><span class="token script-punctuation punctuation">=</span><span class="token punctuation">{</span>props<span class="token punctuation">.</span><span class="token property-access">center</span><span class="token punctuation">}</span></span> <span class="token punctuation">/></span></span><span class="token plain-text">
+    </span><span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;/</span><span class="token class-name">LoadScript</span></span><span class="token punctuation">></span></span>
+  <span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+
+<span class="token comment">// contact.js</span>
+
+<span class="token keyword module">import</span> <span class="token imports"><span class="token maybe-class-name">React</span></span> <span class="token keyword module">from</span> <span class="token string">"react"</span><span class="token punctuation">;</span>
+<span class="token keyword module">import</span> <span class="token known-class-name class-name">Map</span> <span class="token keyword module">from</span> <span class="token string">"./map"</span><span class="token punctuation">;</span>
+
+<span class="token keyword module">export</span> <span class="token keyword module">default</span> <span class="token keyword">function</span> <span class="token function"><span class="token maybe-class-name">Contact</span></span><span class="token punctuation">(</span><span class="token parameter">props</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  <span class="token keyword control-flow">return</span> <span class="token punctuation">(</span>
+    <span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;</span>div</span><span class="token punctuation">></span></span><span class="token plain-text">
+      </span><span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;</span>address</span><span class="token punctuation">></span></span><span class="token plain-text">
+        Skontaktuj się z </span><span class="token punctuation">{</span>props<span class="token punctuation">.</span><span class="token property-access">name</span><span class="token punctuation">}</span><span class="token plain-text"> za pomocą</span><span class="token punctuation">{</span><span class="token string">" "</span><span class="token punctuation">}</span><span class="token plain-text">
+        </span><span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;</span>a</span> <span class="token attr-name">data-testid</span><span class="token attr-value"><span class="token punctuation attr-equals">=</span><span class="token punctuation">"</span>email<span class="token punctuation">"</span></span> <span class="token attr-name">href</span><span class="token script language-javascript"><span class="token script-punctuation punctuation">=</span><span class="token punctuation">{</span><span class="token string">"mailto:"</span> <span class="token operator">+</span> props<span class="token punctuation">.</span><span class="token property-access">email</span><span class="token punctuation">}</span></span><span class="token punctuation">></span></span><span class="token plain-text">
+          e-maila
+        </span><span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;/</span>a</span><span class="token punctuation">></span></span><span class="token plain-text">
+        lub </span><span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;</span>a</span> <span class="token attr-name">data-testid</span><span class="token attr-value"><span class="token punctuation attr-equals">=</span><span class="token punctuation">"</span>site<span class="token punctuation">"</span></span> <span class="token attr-name">href</span><span class="token script language-javascript"><span class="token script-punctuation punctuation">=</span><span class="token punctuation">{</span>props<span class="token punctuation">.</span><span class="token property-access">site</span><span class="token punctuation">}</span></span><span class="token punctuation">></span></span><span class="token plain-text">
+          strony internetowej
+        </span><span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;/</span>a</span><span class="token punctuation">></span></span><span class="token plain-text">.
+      </span><span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;/</span>address</span><span class="token punctuation">></span></span><span class="token plain-text">
+      </span><span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;</span><span class="token class-name">Map</span></span> <span class="token attr-name">center</span><span class="token script language-javascript"><span class="token script-punctuation punctuation">=</span><span class="token punctuation">{</span>props<span class="token punctuation">.</span><span class="token property-access">center</span><span class="token punctuation">}</span></span> <span class="token punctuation">/></span></span><span class="token plain-text">
+    </span><span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;/</span>div</span><span class="token punctuation">></span></span>
+  <span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span></code></pre>
+        <p>Jeśli nie chcemy ładować tego komponentu w ramach naszych testów, możemy go zamockować przy użyciu udawanego komponentu:</p>
+        <pre class="language-jsx{10-18}"><code class="language-jsx{10-18}">// contact.test.js
+
+import React from "react";
+import { render, unmountComponentAtNode } from "react-dom";
+import { act } from "react-dom/test-utils";
+
+import Contact from "./contact";
+import MockedMap from "./map";
+
+jest.mock("./map", () => {
+  return function DummyMap(props) {
+    return (
+      &#x3C;div data-testid="map">
+        {props.center.lat}:{props.center.long}
+      &#x3C;/div>
+    );
+  };
+});
+
+let container = null;
+beforeEach(() => {
+  // ustaw element DOM jako cel renderowania
+  container = document.createElement("div");
+  document.body.appendChild(container);
+});
+
+afterEach(() => {
+  // posprzątaj po zakończeniu
+  unmountComponentAtNode(container);
+  container.remove();
+  container = null;
+});
+
+it("wyświetla informacje kontaktowe", () => {
+  const center = { lat: 0, long: 0 };
+  act(() => {
+    render(
+      &#x3C;Contact
+        name="Jan Kowalski"
+        email="test@example.com"
+        site="http://test.com"
+        center={center}
+      />,
+      container
+    );
+  });
+
+  expect(
+    container.querySelector("[data-testid='email']").getAttribute("href")
+  ).toEqual("mailto:test@example.com");
+
+  expect(
+    container.querySelector('[data-testid="site"]').getAttribute("href")
+  ).toEqual("http://test.com");
+
+  expect(container.querySelector('[data-testid="map"]').textContent).toEqual(
+    "0:0"
+  );
+});</code></pre>
+      </section>
+      <section id="events" class="level3">
+        <h3>Zdarzenia</h3>
+        <p>Sugerujemy, aby do elementów DOM przesyłać prawdziwe zdarzenia DOM, a następnie sprawdzać wynik ich działania. Rozważmy następujący komponent <code>Toggle</code>:</p>
+        <pre class="language-jsx"><code class="language-jsx"><span class="token comment">// toggle.js</span>
+
+<span class="token keyword module">import</span> <span class="token imports"><span class="token maybe-class-name">React</span><span class="token punctuation">,</span> <span class="token punctuation">{</span> useState <span class="token punctuation">}</span></span> <span class="token keyword module">from</span> <span class="token string">"react"</span><span class="token punctuation">;</span>
+
+<span class="token keyword module">export</span> <span class="token keyword module">default</span> <span class="token keyword">function</span> <span class="token function"><span class="token maybe-class-name">Toggle</span></span><span class="token punctuation">(</span><span class="token parameter">props</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  <span class="token keyword">const</span> <span class="token punctuation">[</span>state<span class="token punctuation">,</span> setState<span class="token punctuation">]</span> <span class="token operator">=</span> <span class="token function">useState</span><span class="token punctuation">(</span><span class="token boolean">false</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token keyword control-flow">return</span> <span class="token punctuation">(</span>
+    <span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;</span>button</span>
+      <span class="token attr-name">onClick</span><span class="token script language-javascript"><span class="token script-punctuation punctuation">=</span><span class="token punctuation">{</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token arrow operator">=></span> <span class="token punctuation">{</span>
+        <span class="token function">setState</span><span class="token punctuation">(</span><span class="token parameter">previousState</span> <span class="token arrow operator">=></span> <span class="token operator">!</span>previousState<span class="token punctuation">)</span><span class="token punctuation">;</span>
+        props<span class="token punctuation">.</span><span class="token method function property-access">onChange</span><span class="token punctuation">(</span><span class="token operator">!</span>state<span class="token punctuation">)</span><span class="token punctuation">;</span>
+      <span class="token punctuation">}</span><span class="token punctuation">}</span></span>
+      <span class="token attr-name">data-testid</span><span class="token attr-value"><span class="token punctuation attr-equals">=</span><span class="token punctuation">"</span>toggle<span class="token punctuation">"</span></span>
+    <span class="token punctuation">></span></span><span class="token plain-text">
+      </span><span class="token punctuation">{</span>state <span class="token operator">===</span> <span class="token boolean">true</span> <span class="token operator">?</span> <span class="token string">"Wyłącz"</span> <span class="token operator">:</span> <span class="token string">"Włącz"</span><span class="token punctuation">}</span><span class="token plain-text">
+    </span><span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;/</span>button</span><span class="token punctuation">></span></span>
+  <span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span></code></pre>
+        <p>Testy dla niego mogłyby wyglądać następująco:</p>
+        <pre class="language-jsx{13-14,35,43}"><code class="language-jsx{13-14,35,43}">// toggle.test.js
+
+import React from "react";
+import { render, unmountComponentAtNode } from "react-dom";
+import { act } from "react-dom/test-utils";
+
+import Toggle from "./toggle";
+
+let container = null;
+beforeEach(() => {
+  // ustaw element DOM jako cel renderowania
+  container = document.createElement("div");
+  document.body.appendChild(container);
+});
+
+afterEach(() => {
+  // posprzątaj po zakończeniu
+  unmountComponentAtNode(container);
+  container.remove();
+  container = null;
+});
+
+it("zmienia wartość po kliknięciu", () => {
+  const onChange = jest.fn();
+  act(() => {
+    render(&#x3C;Toggle onChange={onChange} />, container);
+  });
+
+  // zlokalizuj przycisk i wywołaj na nim zdarzenie kliknięcia
+  const button = document.querySelector("[data-testid=toggle]");
+  expect(button.innerHTML).toBe("Włącz");
+
+  act(() => {
+    button.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+  });
+
+  expect(onChange).toHaveBeenCalledTimes(1);
+  expect(button.innerHTML).toBe("Wyłącz");
+
+  act(() => {
+    for (let i = 0; i &#x3C; 5; i++) {
+      button.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    }
+  });
+
+  expect(onChange).toHaveBeenCalledTimes(6);
+  expect(button.innerHTML).toBe("Włącz");
+});</code></pre>
+        <p>Poszczególne zdarzenia DOM wraz z ich właściwościami zostały opisane na <a href="https://developer.mozilla.org/en-US/docs/Web/API/MouseEvent">MDN</a>. Zwróć uwagę, że do każdego zdarzenia musisz przekazać <code>{ bubbles: true }</code>, aby mogło ono dotrzeć do Reacta, który z kolei przekaże je do komponentu głównego całej struktury.</p>
+        <blockquote>
+          <p>Uwaga:</p>
+          <p><a href="https://testing-library.com/docs/dom-testing-library/api-events">Funkcje pomocnicze w React Testing Library</a> umożliwiają przesyłanie zdarzeń w sposób bardziej zwięzły.</p>
+        </blockquote>
+      </section>
+      <section id="timers" class="level3">
+        <h3>Timery</h3>
+        <p>Twój kod może korzystać z funkcji opartych na timerach, np. <code>setTimeout</code> w celu zaplanowania wykonania jakiejś akcji w przyszłości. W tym przykładzie stworzyliśmy panel wielokrotnego wyboru, który czyści zaznaczenie, jeśli użytkownik nie wybierze niczego w ciągu 5 sekund:</p>
+        <pre class="language-jsx"><code class="language-jsx"><span class="token comment">// card.js</span>
+
+<span class="token keyword module">import</span> <span class="token imports"><span class="token maybe-class-name">React</span><span class="token punctuation">,</span> <span class="token punctuation">{</span> useEffect <span class="token punctuation">}</span></span> <span class="token keyword module">from</span> <span class="token string">"react"</span><span class="token punctuation">;</span>
+
+<span class="token keyword module">export</span> <span class="token keyword module">default</span> <span class="token keyword">function</span> <span class="token function"><span class="token maybe-class-name">Card</span></span><span class="token punctuation">(</span><span class="token parameter">props</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  <span class="token function">useEffect</span><span class="token punctuation">(</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token arrow operator">=></span> <span class="token punctuation">{</span>
+    <span class="token keyword">const</span> timeoutID <span class="token operator">=</span> <span class="token function">setTimeout</span><span class="token punctuation">(</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token arrow operator">=></span> <span class="token punctuation">{</span>
+      props<span class="token punctuation">.</span><span class="token method function property-access">onSelect</span><span class="token punctuation">(</span><span class="token keyword null nil">null</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span><span class="token punctuation">,</span> <span class="token number">5000</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token keyword control-flow">return</span> <span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token arrow operator">=></span> <span class="token punctuation">{</span>
+      <span class="token function">clearTimeout</span><span class="token punctuation">(</span>timeoutID<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span><span class="token punctuation">;</span>
+  <span class="token punctuation">}</span><span class="token punctuation">,</span> <span class="token punctuation">[</span>props<span class="token punctuation">.</span><span class="token property-access">onSelect</span><span class="token punctuation">]</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+  <span class="token keyword control-flow">return</span> <span class="token punctuation">[</span><span class="token number">1</span><span class="token punctuation">,</span> <span class="token number">2</span><span class="token punctuation">,</span> <span class="token number">3</span><span class="token punctuation">,</span> <span class="token number">4</span><span class="token punctuation">]</span><span class="token punctuation">.</span><span class="token method function property-access">map</span><span class="token punctuation">(</span><span class="token parameter">choice</span> <span class="token arrow operator">=></span> <span class="token punctuation">(</span>
+    <span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;</span>button</span>
+      <span class="token attr-name">key</span><span class="token script language-javascript"><span class="token script-punctuation punctuation">=</span><span class="token punctuation">{</span>choice<span class="token punctuation">}</span></span>
+      <span class="token attr-name">data-testid</span><span class="token script language-javascript"><span class="token script-punctuation punctuation">=</span><span class="token punctuation">{</span>choice<span class="token punctuation">}</span></span>
+      <span class="token attr-name">onClick</span><span class="token script language-javascript"><span class="token script-punctuation punctuation">=</span><span class="token punctuation">{</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token arrow operator">=></span> props<span class="token punctuation">.</span><span class="token method function property-access">onSelect</span><span class="token punctuation">(</span>choice<span class="token punctuation">)</span><span class="token punctuation">}</span></span>
+    <span class="token punctuation">></span></span><span class="token plain-text">
+      </span><span class="token punctuation">{</span>choice<span class="token punctuation">}</span><span class="token plain-text">
+    </span><span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;/</span>button</span><span class="token punctuation">></span></span>
+  <span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span></code></pre>
+        <p>W pisaniu testów do tego komponentu pomocne mogą okazać się <a href="https://jestjs.io/docs/en/timer-mocks">sztuczne timery z biblioteki Jest</a>. Umożliwiają sprawdzenie stanu komponentu w różnych punktach w czasie.</p>
+        <pre class="language-jsx{7,31,37,49,59}"><code class="language-jsx{7,31,37,49,59}">// card.test.js
+
+import React from "react";
+import { render, unmountComponentAtNode } from "react-dom";
+import { act } from "react-dom/test-utils";
+
+import Card from "./card";
+
+let container = null;
+beforeEach(() => {
+  // ustaw element DOM jako cel renderowania
+  container = document.createElement("div");
+  document.body.appendChild(container);
+  jest.useFakeTimers();
+});
+
+afterEach(() => {
+  // posprzątaj po zakończeniu
+  unmountComponentAtNode(container);
+  container.remove();
+  container = null;
+  jest.useRealTimers();
+});
+
+it("powinien zaznaczyć 'null' po upływie czasu", () => {
+  const onSelect = jest.fn();
+  act(() => {
+    render(&#x3C;Card onSelect={onSelect} />, container);
+  });
+
+  // przesuń timer o 100 milisekund
+  act(() => {
+    jest.advanceTimersByTime(100);
+  });
+  expect(onSelect).not.toHaveBeenCalled();
+
+  // a teraz dodaj kolejne 5 sekund
+  act(() => {
+    jest.advanceTimersByTime(5000);
+  });
+  expect(onSelect).toHaveBeenCalledWith(null);
+});
+
+it("powinien posprzątać po sobie po usunięciu", () => {
+  const onSelect = jest.fn();
+  act(() => {
+    render(&#x3C;Card onSelect={onSelect} />, container);
+  });
+
+  act(() => {
+    jest.advanceTimersByTime(100);
+  });
+  expect(onSelect).not.toHaveBeenCalled();
+
+  // odmontuj aplikację
+  act(() => {
+    render(null, container);
+  });
+
+  act(() => {
+    jest.advanceTimersByTime(5000);
+  });
+  expect(onSelect).not.toHaveBeenCalled();
+});
+
+it("powinien umożliwiać zaznacznie", () => {
+  const onSelect = jest.fn();
+  act(() => {
+    render(&#x3C;Card onSelect={onSelect} />, container);
+  });
+
+  act(() => {
+    container
+      .querySelector("[data-testid='2']")
+      .dispatchEvent(new MouseEvent("click", { bubbles: true }));
+  });
+
+  expect(onSelect).toHaveBeenCalledWith(2);
+});</code></pre>
+        <p>Możesz używać sztucznych timerów w wybranych przez siebie testach. Na powyższym przykładzie aktywowaliśmy je poprzez wywołanie <code>jest.useFakeTimers()</code>. Główną ich zaletą jest brak konieczności czekania 5 sekund na wykonanie się testu. Ponadto, nie trzeba było wprowadzać na potrzeby testu zawiłych zmian w kodzie komponentu.</p>
+      </section>
+      <section id="snapshot-testing" class="level3">
+        <h3>Testowanie snapshotowe</h3>
+        <p>Frameworki takie jak Jest pozwalają również na zapisywanie "snapshotów" (pol. <em>zrzutów</em>) danych przy użyciu funkcji <a href="https://jestjs.io/docs/en/snapshot-testing"><code>toMatchSnapshot</code> / <code>toMatchInlineSnapshot</code></a>. Z ich pomocą możemy zapisać wynik renderowania komponentu i zagwarantować, że dowolna jego zmiana będzie musiała być każdorazowo potwierdzana podczas generowania snapshota.</p>
+        <p>W poniższym przykładzie renderujemy komponent i formatujemy powstały w ten sposób kod HTML za pomocą paczki <a href="https://www.npmjs.com/package/pretty"><code>pretty</code></a>, zanim ostatecznie wynik trafi do snapshota:</p>
+        <pre class="language-jsx{29-31}"><code class="language-jsx{29-31}">// ponownie hello.test.js
+
+import React from "react";
+import { render, unmountComponentAtNode } from "react-dom";
+import { act } from "react-dom/test-utils";
+import pretty from "pretty";
+
+import Hello from "./hello";
+
+let container = null;
+beforeEach(() => {
+  // ustaw element DOM jako cel renderowania
+  container = document.createElement("div");
+  document.body.appendChild(container);
+});
+
+afterEach(() => {
+  // posprzątaj po zakończeniu
+  unmountComponentAtNode(container);
+  container.remove();
+  container = null;
+});
+
+it("powinien wyrenderować powitanie", () => {
+  act(() => {
+    render(&#x3C;Hello />, container);
+  });
+
+  expect(
+    pretty(container.innerHTML)
+  ).toMatchInlineSnapshot(); /* ... zostanie automatycznie zastąpione przez Jesta ... */
+
+  act(() => {
+    render(&#x3C;Hello name="Janusz" />, container);
+  });
+
+  expect(
+    pretty(container.innerHTML)
+  ).toMatchInlineSnapshot(); /* ... zostanie automatycznie zastąpione przez Jesta ... */
+
+  act(() => {
+    render(&#x3C;Hello name="Grażyna" />, container);
+  });
+
+  expect(
+    pretty(container.innerHTML)
+  ).toMatchInlineSnapshot(); /* ... zostanie automatycznie zastąpione przez Jesta ... */
+});</code></pre>
+        <p>Zazwyczaj jednak, zamiast porównywać snapshoty, zaleca się wykonywać bardziej szczegółowe sprawdzenia. Tego typu testy zawierają zbyt wiele szczegółów implementacyjnych, więc łatwo się psują. Ponadto usypiają czujność zespołu na błędy w snapshotach. Wybiórcze <a href="#mocking-modules">mockowanie niektórych komponentów potomnych</a> może pomóc zredukować rozmiar snapshotów, a co za tym idzie zwiększyć ich czytelność dla osoby sprawdzającej kod.</p>
+      </section>
+      <section id="multiple-renderers" class="level3">
+        <h3>Wiele silników renderujących</h3>
+        <p>W rzadkich przypadkach możesz natknąć się test komponentu, który korzysta z wielu silników renderujących. Na przykład, test snapshotowy może używać paczki <code>react-test-renderer</code>, która wewnętrznie korzysta z <code>render</code> z pakietu <code>react-dom</code> dla komponentu potomnego w celu wyrenderowania jakiejś treści. W takim przypadku możesz opakować aktualizacje drzewa komponentów w funkcje <code>act()</code> właściwe odpowiednim silnikom renderującym.</p>
+        <pre class="language-jsx"><code class="language-jsx"><span class="token keyword module">import</span> <span class="token imports"><span class="token punctuation">{</span> act <span class="token keyword module">as</span> domAct <span class="token punctuation">}</span></span> <span class="token keyword module">from</span> <span class="token string">"react-dom/test-utils"</span><span class="token punctuation">;</span>
+<span class="token keyword module">import</span> <span class="token imports"><span class="token punctuation">{</span> act <span class="token keyword module">as</span> testAct<span class="token punctuation">,</span> create <span class="token punctuation">}</span></span> <span class="token keyword module">from</span> <span class="token string">"react-test-renderer"</span><span class="token punctuation">;</span>
+<span class="token comment">// ...</span>
+<span class="token keyword">let</span> root<span class="token punctuation">;</span>
+<span class="token function">domAct</span><span class="token punctuation">(</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token arrow operator">=></span> <span class="token punctuation">{</span>
+  <span class="token function">testAct</span><span class="token punctuation">(</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token arrow operator">=></span> <span class="token punctuation">{</span>
+    root <span class="token operator">=</span> <span class="token function">create</span><span class="token punctuation">(</span><span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;</span><span class="token class-name">App</span></span> <span class="token punctuation">/></span></span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token function">expect</span><span class="token punctuation">(</span>root<span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token method function property-access">toMatchSnapshot</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span></code></pre>
+      </section>
+      <section id="something-missing" class="level3">
+        <h3>Czegoś brakuje?</h3>
+        <p>
+          Jeśli nie opisaliśmy tu jakiegoś przypadku, <a href="https://github.com/reactjs/reactjs.org/issues">daj nam o tym znać poprzez zgłoszenie</a> dotyczące strony z dokumentacją.
+          <span style="float: footnote;"><a href="./index.html#toc">Go to TOC</a></span>
+        </p>
+      </section>
+    </section>
+  </body>
+</html>

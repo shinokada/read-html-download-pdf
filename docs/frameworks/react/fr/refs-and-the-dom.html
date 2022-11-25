@@ -1,0 +1,251 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="utf-8">
+    <title>Les refs et le DOM</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="https://raw.githubusercontent.com/shinokada/prism-coy-theme/main/theme_common.css">
+  </head>
+  <body>
+    <section id="les-refs-et-le-dom" class="level1">
+      <h1>Les refs et le DOM</h1>
+      <p>Les refs fournissent un moyen d’accéder aux nœuds du DOM ou éléments React créés dans la méthode de rendu.</p>
+      <p>Dans le flux de données habituel de React, les <a href="./components-and-props.html">props</a> constituent le seul moyen pour des composants parents d'interagir avec leurs enfants. Pour modifier un enfant, vous le rafraîchissez avec de nouvelles props. Ceci dit, dans certains cas vous aurez besoin de modifier un enfant de façon impérative, hors du flux de données normal. L’enfant à modifier pourrait être une instance d'un composant React ou un élément DOM. Dans les deux cas, React vous fournit une échappatoire.</p>
+      <section id="when-to-use-refs" class="level3">
+        <h3>Quand utiliser les refs</h3>
+        <p>Voici quelques cas d'usages tout trouvés pour les refs :</p>
+        <ul>
+          <li>Gérer le focus, la sélection du texte, ou la lecture de média.</li>
+          <li>Lancer des animations impératives.</li>
+          <li>S'interfacer avec des bibliothèques DOM tierces.</li>
+        </ul>
+        <p>Evitez d'utiliser les refs pour tout ce qui peut être fait déclarativement.</p>
+        <p>Par exemple, au lieu d'exposer les méthodes <code>open()</code> et <code>close()</code>dans un composant <code>Dialog</code>, vous pouvez lui passer une prop <code>isOpen</code>.</p>
+      </section>
+      <section id="dont-overuse-refs" class="level3">
+        <h3>N'abusez pas des refs</h3>
+        <p>Vous serez peut-être enclin·e à toujours commencer par une ref pour « faire le boulot » dans votre appli. Si tel est le cas, examinez d'un œil critique votre hiérarchie de composants pour déterminer lesquels sont censés posséder l'état. Vous remarquerez souvent que l’état serait mieux géré plus haut dans la hiérarchie. Voyez le guide <a href="./lifting-state-up.html">Faire remonter l'état</a> pour des exemples.</p>
+        <blockquote>
+          <p>Remarque</p>
+          <p>Les exemples ci-dessous ont été mis à jour pour utiliser l'API <code>React.createRef()</code> introduite dans React 16.3. Si vous utilisez une version précédente de React, nous recommandons d'utiliser <a href="#callback-refs">les refs avec fonctions de rappel</a> à la place.</p>
+        </blockquote>
+      </section>
+      <section id="creating-refs" class="level3">
+        <h3>Créer des refs</h3>
+        <p>Les refs sont créées en utilisant <code>React.createRef()</code> et attachées aux éléments React via l'attribut <code>ref</code>. Les refs sont souvent affectées à une propriété d'instance quand un composant est construit et peuvent donc être référencées à travers le composant.</p>
+        <pre class="language-javascript{4,7}"><code class="language-javascript{4,7}">class MyComponent extends React.Component {
+  constructor(props) {
+    super(props);
+    this.myRef = React.createRef();
+  }
+  render() {
+    return &#x3C;div ref={this.myRef} />;
+  }
+}</code></pre>
+      </section>
+      <section id="accessing-refs" class="level3">
+        <h3>Accéder aux refs</h3>
+        <p>Quand une ref est passée à un élément dans <code>render</code>, une référence au nœud devient accessible via l'attribut <code>current</code> de la ref.</p>
+        <pre class="language-javascript"><code class="language-javascript"><span class="token keyword">const</span> node <span class="token operator">=</span> <span class="token keyword">this</span><span class="token punctuation">.</span><span class="token property-access">myRef</span><span class="token punctuation">.</span><span class="token property-access">current</span><span class="token punctuation">;</span></code></pre>
+        <p>La valeur de la ref change suivant le type de nœud :</p>
+        <ul>
+          <li>Quand l'attribut <code>ref</code> est utilisé sur un élément HTML, la <code>ref</code> créée dans le constructeur avec <code>React.createRef()</code> reçoit l’élément DOM sous-jacent dans sa propriété <code>current</code>.</li>
+          <li>Quand l'attribut <code>ref</code> est utilisé sur un composant de classe personnalisée, l'objet <code>ref</code> reçoit l'instance du composant créée dans son <code>current</code>.</li>
+          <li><strong>Vous ne pouvez pas utiliser l'attribut <code>ref</code> sur les fonctions composants</strong> parce qu'elles n'ont pas d'instance.</li>
+        </ul>
+        <p>Les exemples ci-dessous illustrent les différences.</p>
+        <section id="adding-a-ref-to-a-dom-element" class="level4">
+          <h4>Ajouter une ref à un élément du DOM</h4>
+          <p>Ce code utilise une <code>ref</code> pour stocker une référence à un nœud du DOM :</p>
+          <pre class="language-javascript{5,12,22}"><code class="language-javascript{5,12,22}">class CustomTextInput extends React.Component {
+  constructor(props) {
+    super(props);
+    // Crée une référence pour stocker l’élément DOM textInput
+    this.textInput = React.createRef();
+    this.focusTextInput = this.focusTextInput.bind(this);
+  }
+
+  focusTextInput() {
+    // Donne explicitement le focus au champ texte en utilisant l’API DOM native.
+    // Remarque : nous utilisons `current` pour cibler le nœud DOM
+    this.textInput.current.focus();
+  }
+
+  render() {
+    // Dit à React qu’on veut associer la ref `textInput` créée
+    // dans le constructeur avec le `&#x3C;input>`.
+    return (
+      &#x3C;div>
+        &#x3C;input
+          type="text"
+          ref={this.textInput} />
+        &#x3C;input
+          type="button"
+          value="Donner le focus au champ texte"
+          onClick={this.focusTextInput}
+        />
+      &#x3C;/div>
+    );
+  }
+}</code></pre>
+          <p>React affectera l'élément DOM à la propriété <code>current</code> quand le composant sera monté, et la remettra à <code>null</code> lorsqu'il sera démonté. La <code>ref</code> est mise à jour avant le déclenchement des méthodes de cycle de vie <code>componentDidMount</code> et <code>componentDidUpdate</code>.</p>
+        </section>
+        <section id="adding-a-ref-to-a-class-component" class="level4">
+          <h4>Ajouter une ref à un composant à base de classe</h4>
+          <p>Si on voulait enrober le <code>CustomTextInput</code> ci-dessus pour simuler un clic immédiatement après le montage, on pourrait utiliser une ref pour accéder au champ personnalisé et appeler manuellement sa méthode <code>focusTextInput</code> :</p>
+          <pre class="language-javascript{4,8,13}"><code class="language-javascript{4,8,13}">class AutoFocusTextInput extends React.Component {
+  constructor(props) {
+    super(props);
+    this.textInput = React.createRef();
+  }
+
+  componentDidMount() {
+    this.textInput.current.focusTextInput();
+  }
+
+  render() {
+    return (
+      &#x3C;CustomTextInput ref={this.textInput} />
+    );
+  }
+}</code></pre>
+          <p>Il faut noter que ça ne fonctionne que si <code>CustomTextInput</code> est déclaré comme une classe :</p>
+          <pre class="language-js{1}"><code class="language-js{1}">class CustomTextInput extends React.Component {
+  // ...
+}</code></pre>
+        </section>
+        <section id="refs-and-function-components" class="level4">
+          <h4>Les refs et les fonctions composants</h4>
+          <p>Par défaut, <strong>vous ne pouvez pas utiliser l'attribut <code>ref</code> sur les fonctions composants</strong> parce qu'elles n'ont pas d'instance.</p>
+          <pre class="language-javascript{1,8,13}"><code class="language-javascript{1,8,13}">function MyFunctionComponent() {
+  return &#x3C;input />;
+}
+
+class Parent extends React.Component {
+  constructor(props) {
+    super(props);
+    this.textInput = React.createRef();
+  }
+  render() {
+    // Ça ne fonctionnera pas !
+    return (
+      &#x3C;MyFunctionComponent ref={this.textInput} />
+    );
+  }
+}</code></pre>
+          <p>Si vous voulez permettre à vos utilisateurs de passer une <code>ref</code> à votre fonction composant, vous pouvez utiliser<a href="./forwarding-refs.html"><code>forwardRef</code></a> (peut-être combiné à un <a href="./hooks-reference.html#useimperativehandle"><code>useImperativeHandle</code></a>), ou vous pouvez convertir votre composant pour être à base de classe.</p>
+          <p>Vous pouvez néanmoins <strong>utiliser l'attribut <code>ref</code> dans une fonction composant</strong>, tant que vous vous référez à un élément DOM ou un composant à base de classe :</p>
+          <pre class="language-javascript{2,3,6,13}"><code class="language-javascript{2,3,6,13}">function CustomTextInput(props) {
+  // textInput doit être déclaré ici pour que la ref puisse s’y référer
+  const textInput = useRef(null);
+
+  function handleClick() {
+    textInput.current.focus();
+  }
+
+  return (
+    &#x3C;div>
+      &#x3C;input
+        type="text"
+        ref={textInput} />
+      &#x3C;input
+        type="button"
+        value="Donner le focus au champ texte"
+        onClick={handleClick}
+      />
+    &#x3C;/div>
+  );
+}</code></pre>
+        </section>
+      </section>
+      <section id="exposing-dom-refs-to-parent-components" class="level3">
+        <h3>Exposer les refs DOM aux composants parents</h3>
+        <p>Dans de rares cas, un composant parent pourrait vouloir accéder aux nœuds DOM d’un enfant. C’est généralement déconseillé car ça brise l'encapsulation, mais c’est parfois utile pour gérer le focus, mesurer les dimensions ou la position d'un nœud DOM enfant.</p>
+        <p>Même si vous pourriez <a href="#adding-a-ref-to-a-class-component">ajouter une ref à un composant enfant</a>, ce n'est pas une solution idéale car vous n'obtiendriez qu'une instance de composant plutôt qu'un nœud DOM. De plus, ça ne fonctionnerait pas avec les fonctions composants.</p>
+        <p>Si vous utilisez React 16.3 ou une version ultérieure, nous recommandons d'utiliser <a href="./forwarding-refs.html">le transfert de refs</a> pour ce genre de cas. <strong>Le transfert de refs permet à un composant de choisir d'exposer une ref à un de ses enfants comme étant la sienne</strong>. Vous trouverez un exemple détaillé de la façon d’exposer un nœud DOM enfant à un composant parent <a href="./forwarding-refs.html#forwarding-refs-to-dom-components">dans la documentation du transfert de refs</a>.</p>
+        <p>Si vous utilisez React 16.2 ou une version antérieure, ou si vous avez besoin de plus de flexibilité que ce que permet le transfert de refs, vous pouvez utiliser <a href="https://gist.github.com/gaearon/1a018a023347fe1c2476073330cc5509">cette approche alternative</a> et passer explicitement une ref via une autre prop.</p>
+        <p>Autant que possible, nous déconseillons d’exposer les nœuds DOM, mais ça peut être une échappatoire utile. Remarquez que cette approche exige la modification du code du composant enfant. Si vous n'avez pas cette possibilité, votre seule option consiste à utiliser <a href="./react-dom.html#finddomnode"><code>findDOMNode()</code></a>, mais c’est déconseillé et déprécié en <a href="./strict-mode.html#warning-about-deprecated-finddomnode-usage">mode strict</a>.</p>
+      </section>
+      <section id="callback-refs" class="level3">
+        <h3>Refs avec fonctions de rappel</h3>
+        <p>React propose une autre façon de définir des refs appelée « refs avec fonctions de rappel », qui permet un contrôle plus fin sur l’affectation et le nettoyage des refs.</p>
+        <p>Plutôt que de passer un attribut <code>ref</code> créé par <code>createRef()</code>, vous pouvez passer une fonction. La fonction récupère l'instance du composant React ou l'élément du DOM HTML comme argument, qui peut être stocké et accédé depuis ailleurs.</p>
+        <p>L'exemple ci-dessous implémente une approche fréquente : utiliser la fonction de rappel <code>ref</code> pour stocker une référence à un nœud DOM dans une propriété d'instance.</p>
+        <pre class="language-javascript{5,7-9,11-14,19,29,34}"><code class="language-javascript{5,7-9,11-14,19,29,34}">class CustomTextInput extends React.Component {
+  constructor(props) {
+    super(props);
+
+    this.textInput = null;
+
+    this.setTextInputRef = element => {
+      this.textInput = element;
+    };
+
+    this.focusTextInput = () => {
+      // Donne le focus au champ texte en utilisant l’API DOM native.
+      if (this.textInput) this.textInput.focus();
+    };
+  }
+
+  componentDidMount() {
+    // Focus automatique sur le champ au montage
+    this.focusTextInput();
+  }
+
+  render() {
+    // Utilise la fonction de rappel `ref` pour stocker une référence à l’élément
+    // DOM du champ texte dans une propriété d’instance (ex. this.textInput)
+    return (
+      &#x3C;div>
+        &#x3C;input
+          type="text"
+          ref={this.setTextInputRef}
+        />
+        &#x3C;input
+          type="button"
+          value="Donner le focus au champ texte"
+          onClick={this.focusTextInput}
+        />
+      &#x3C;/div>
+    );
+  }
+}</code></pre>
+        <p>React appellera la fonction de rappel <code>ref</code> avec l'élément DOM quand le composant sera monté, puis avec <code>null</code> quand il sera démonté. Les refs sont toujours mises à jour avant l'exécution de <code>componentDidMount</code> et <code>componentDidUpdate</code>.</p>
+        <p>Vous pouvez passer une fonction de rappel de ref d’un composant à l’autre comme vous le feriez avec les objets refs créés par <code>React.createRef()</code>.</p>
+        <pre class="language-javascript{4,13}"><code class="language-javascript{4,13}">function CustomTextInput(props) {
+  return (
+    &#x3C;div>
+      &#x3C;input ref={props.inputRef} />
+    &#x3C;/div>
+  );
+}
+
+class Parent extends React.Component {
+  render() {
+    return (
+      &#x3C;CustomTextInput
+        inputRef={el => this.inputElement = el}
+      />
+    );
+  }
+}</code></pre>
+        <p>Dans l'exemple ci-dessus, <code>Parent</code> passe sa fonction de rappel de ref dans la propriété <code>inputRef</code> du <code>CustomTextInput</code>, et <code>CustomTextInput</code> passe la même fonction dans l’attribut spécial <code>ref</code> à l’<code>&#x3C;input></code>. Au final, <code>this.inputElement</code> dans <code>Parent</code> recevra le nœud DOM correspondant à l'élément <code>&#x3C;input></code> dans <code>CustomTextInput</code>.</p>
+      </section>
+      <section id="legacy-api-string-refs" class="level3">
+        <h3>API historique : refs textuelles</h3>
+        <p>Si vous avez travaillé avec React par le passé, vous avez peut-être l’habitude d’une ancienne API où l'attribut <code>ref</code> était une chaîne de caractères du genre <code>"textInput"</code>, et le nœud DOM était accessible via <code>this.refs.textInput</code>. Nous recommandons de ne plus utiliser cette approche en raison de <a href="https://github.com/facebook/react/pull/8333#issuecomment-271648615">plusieurs problèmes</a> ; elle est dépréciée et <strong>sera probablement supprimée dans une version future</strong>.</p>
+        <blockquote>
+          <p>Remarque</p>
+          <p>Si vous utilisez actuellement la syntaxe <code>this.refs.textInput</code> pour accéder aux refs, nous vous conseillons d'utiliser soit <a href="#callback-refs">l’approche avec fonction de rappel</a> soit <a href="#creating-refs">l'API <code>createRef</code></a>.</p>
+        </blockquote>
+      </section>
+      <section id="caveats-with-callback-refs" class="level3">
+        <h3>Limitations des refs avec fonctions de rappels</h3>
+        <p>
+          Si la fonction de rappel <code>ref</code> est définie à la volée, elle sera appelée deux fois à chaque mise à jour, d'abord avec <code>null</code> puis avec l'élément DOM. C’est parce qu'une nouvelle instance de la fonction est créée à chaque affichage, et React a besoin de nettoyer l'ancienne ref avant d'affecter la nouvelle. Vous pouvez éviter ça en définissant la fonction de rappel <code>ref</code> comme une méthode liée de la classe, même si ça ne devrait pas être gênant la plupart du temps.
+          <span style="float: footnote;"><a href="./index.html#toc">Go to TOC</a></span>
+        </p>
+      </section>
+    </section>
+  </body>
+</html>

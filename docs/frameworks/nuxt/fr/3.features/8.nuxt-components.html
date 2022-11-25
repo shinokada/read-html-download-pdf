@@ -1,0 +1,253 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="utf-8">
+    <title>Composants Nuxt</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="Nuxt arrive avec quelques composants importants, ceux-ci nous seront utiles pour construire notre application.">
+    <meta name="category" content="features">
+    <meta name="csb_link_nuxt_link" content="https://codesandbox.io/embed/github/nuxt-academy/guides-examples/tree/master/03_features/09_components_nuxt-link?fontsize=14&#x26;hidenavigation=1&#x26;theme=dark">
+    <meta name="csb_link_nuxt" content="https://codesandbox.io/embed/github/nuxt-academy/guides-examples/tree/master/03_features/09_components_nuxt?fontsize=14&#x26;hidenavigation=1&#x26;theme=dark">
+    <link rel="stylesheet" href="https://raw.githubusercontent.com/shinokada/prism-coy-theme/main/theme_common.css">
+  </head>
+  <body>
+    <section id="composants-nuxt" class="level1">
+      <h1>Composants Nuxt</h1>
+      <p>Nuxt arrive avec quelques composants importants, ceux-ci nous seront utiles pour construire notre application. Les composants sont disponibles de manière globale, ce qui veut dire que nous n'avons pas besoin de les importer pour les utiliser.</p>
+      <hr>
+      <p>Dans les paragraphes suivants, chacun de ces composants sera expliqué.</p>
+      <section id="le-composant-nuxt" class="level2">
+        <h2>Le composant Nuxt</h2>
+        <p>Le composant <code>&#x3C;Nuxt></code> nous permet d'afficher les composants page. Basiquement, le composant est remplacé par les pages qui concordent avec la route montrée. Ainsi, il est important d'ajouter le composant <code>&#x3C;Nuxt></code> à nos layouts.</p>
+        <pre class="language-html{}[layouts/default.vue]"><code class="language-html{}[layouts/default.vue]">&#x3C;template>
+  &#x3C;div>
+    &#x3C;div>Ma barre de navigation&#x3C;/div>
+    &#x3C;Nuxt />
+    &#x3C;div>Mon pied de page&#x3C;/div>
+  &#x3C;/div>
+&#x3C;/template></code></pre>
+        <section id="info" class="level4">
+          <h4>Info</h4>
+          <p>Le composant <code>&#x3C;Nuxt></code> ne peut être utilisé que dans les <a href="./concepts/views#layouts">layouts</a>.</p>
+          <p>Le composant <code>&#x3C;Nuxt></code> peut prendre la propriété <code>nuxt-child-key</code>, cette dernière sera passée à <code>&#x3C;RouterView></code> afin que les transitions dans les pages dynamiques fonctionnent correctement.</p>
+          <p>Il y a 2 façons de gérer la propriété <code>key</code> de <code>&#x3C;RouterView></code>:</p>
+          <ol>
+            <li>Utiliser la propriété <code>nuxt-child-key</code> sur notre composant <code>&#x3C;Nuxt></code></li>
+          </ol>
+          <pre class="language-html{}[layouts/default.vue]"><code class="language-html{}[layouts/default.vue]">&#x3C;template>
+  &#x3C;div>
+    &#x3C;Nuxt :nuxt-child-key="uneKey" />
+  &#x3C;/div>
+&#x3C;/template></code></pre>
+          <ol start="2">
+            <li>Ajouter l'option <code>key</code> dans les composants <em>page</em> en tant que <code>string</code> ou <code>function</code></li>
+          </ol>
+          <pre class="language-js"><code class="language-js"><span class="token keyword module">export</span> <span class="token keyword module">default</span> <span class="token punctuation">{</span>
+  <span class="token function">key</span><span class="token punctuation">(</span><span class="token parameter">route</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token keyword control-flow">return</span> route<span class="token punctuation">.</span><span class="token property-access">fullPath</span>
+  <span class="token punctuation">}</span>
+<span class="token punctuation">}</span></code></pre>
+        </section>
+      </section>
+      <section id="le-composant-nuxtchild" class="level2">
+        <h2>Le composant NuxtChild</h2>
+        <p>Ce composant est utilisé pour afficher les composants enfants dans une route imbriquée.</p>
+        <p>Exemple:</p>
+        <pre class="language-text"><code class="language-text">-| pages/
+---| parent/
+| child.vue
+---| parent.vue</code></pre>
+        <p>Cette arborescence de fichiers va générer les chemins suivants :</p>
+        <pre class="language-js"><code class="language-js"><span class="token punctuation">;</span><span class="token punctuation">[</span>
+  <span class="token punctuation">{</span>
+    <span class="token literal-property property">path</span><span class="token operator">:</span> <span class="token string">'/parent'</span><span class="token punctuation">,</span>
+    <span class="token literal-property property">component</span><span class="token operator">:</span> <span class="token string">'~/pages/parent.vue'</span><span class="token punctuation">,</span>
+    <span class="token literal-property property">name</span><span class="token operator">:</span> <span class="token string">'parent'</span><span class="token punctuation">,</span>
+    <span class="token literal-property property">children</span><span class="token operator">:</span> <span class="token punctuation">[</span>
+      <span class="token punctuation">{</span>
+        <span class="token literal-property property">path</span><span class="token operator">:</span> <span class="token string">'child'</span><span class="token punctuation">,</span>
+        <span class="token literal-property property">component</span><span class="token operator">:</span> <span class="token string">'~/pages/parent/child.vue'</span><span class="token punctuation">,</span>
+        <span class="token literal-property property">name</span><span class="token operator">:</span> <span class="token string">'parent-child'</span>
+      <span class="token punctuation">}</span>
+    <span class="token punctuation">]</span>
+  <span class="token punctuation">}</span>
+<span class="token punctuation">]</span></code></pre>
+        <p>Pour afficher le composant <code>child.vue</code>, il faut insérer le composant <code>&#x3C;NuxtChild></code> à l'intérieur de <code>pages/parent.vue</code>:</p>
+        <pre class="language-html{}[pages/parent.vue]"><code class="language-html{}[pages/parent.vue]">&#x3C;template>
+  &#x3C;div>
+    &#x3C;h1>Je suis la view parent&#x3C;/h1>
+    &#x3C;NuxtChild :foobar="123" />
+  &#x3C;/div>
+&#x3C;/template></code></pre>
+      </section>
+      <section id="keep-alive" class="level2">
+        <h2>keep-alive</h2>
+        <p>Les composants <code>&#x3C;Nuxt></code> et <code>&#x3C;NuxtChild/></code> acceptent tous les deux <code>keep-alive</code> et <code>keep-alive-props.</code></p>
+        <section id="info-1" class="level4">
+          <h4>Info</h4>
+          <p>Pour en apprendre davantage sur <code>keep-alive</code> et <code>keep-alive-props</code>, se référer à la <a href="https://vuejs.org/v2/api/#keep-alive">documentation de Vue</a>.</p>
+          <pre class="language-html{}[layouts/default.vue]"><code class="language-html{}[layouts/default.vue]">&#x3C;template>
+  &#x3C;div>
+    &#x3C;Nuxt keep-alive :keep-alive-props="{ exclude: ['modal'] }" />
+  &#x3C;/div>
+&#x3C;/template>
+
+&#x3C;!-- le code du haut sera converti dans le code suivant -->
+&#x3C;div>
+  &#x3C;keep-alive :exclude="['modal']">
+    &#x3C;RouterView />
+  &#x3C;/keep-alive>
+&#x3C;/div></code></pre>
+          <pre class="language-html{}[pages/parent.vue]"><code class="language-html{}[pages/parent.vue]">&#x3C;template>
+  &#x3C;div>
+    &#x3C;NuxtChild keep-alive :keep-alive-props="{ exclude: ['modal'] }" />
+  &#x3C;/div>
+&#x3C;/template>
+
+&#x3C;!-- le code du haut sera converti dans le code suivant -->
+&#x3C;div>
+  &#x3C;keep-alive :exclude="['modal']">
+    &#x3C;RouterView />
+  &#x3C;/keep-alive>
+&#x3C;/div></code></pre>
+          <p>Les composants <code>&#x3C;NuxtChild></code> peuvent aussi recevoir des propriétés comme n'importe quel composant standard de Vue.</p>
+          <pre class="language-html"><code class="language-html"><span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;</span>template</span><span class="token punctuation">></span></span>
+  <span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;</span>div</span><span class="token punctuation">></span></span>
+    <span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;</span>NuxtChild</span> <span class="token attr-name">:key</span><span class="token attr-value"><span class="token punctuation attr-equals">=</span><span class="token punctuation">"</span>$route.params.id<span class="token punctuation">"</span></span> <span class="token punctuation">/></span></span>
+  <span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;/</span>div</span><span class="token punctuation">></span></span>
+<span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;/</span>template</span><span class="token punctuation">></span></span></code></pre>
+          <p>Pour voir un exemple, on peut regarder celui sur les <a href="https://nuxtjs.org/examples/nested-routes">routes imbriquées</a>.</p>
+        </section>
+      </section>
+      <section id="le-composant-nuxtlink" class="level2">
+        <h2>Le composant NuxtLink</h2>
+        <p>Pour naviguer entre les pages de notre application, il faut utiliser le composant <code>&#x3C;NuxtLink></code>. Ce composant est inclus dans Nuxt et nous n'avons donc pas besoin de l'importer comme un composant standard. Son fonctionnement est le même qu'une balise HTML <code>&#x3C;a></code> a l'exception qu'au lieu d'utiliser un <code>href="/about"</code> il faut utiliser <code>to="/about"</code>. Si nous avons déjà utilisé <code>vue-router</code> par le passé, nous pouvons voir <code>&#x3C;NuxtLink></code> comme un équivalent à <code>&#x3C;RouterLink></code>.</p>
+        <p>Un simple lien vers la page <code>index.vue</code> dans notre répertoire <code>pages</code>:</p>
+        <pre class="language-html"><code class="language-html"><span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;</span>template</span><span class="token punctuation">></span></span>
+  <span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;</span>NuxtLink</span> <span class="token attr-name">to</span><span class="token attr-value"><span class="token punctuation attr-equals">=</span><span class="token punctuation">"</span>/<span class="token punctuation">"</span></span><span class="token punctuation">></span></span>Page d'accueil<span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;/</span>NuxtLink</span><span class="token punctuation">></span></span>
+<span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;/</span>template</span><span class="token punctuation">></span></span></code></pre>
+        <p>Le composant <code>&#x3C;NuxtLink></code> doit être utilisé pour tous les liens internes. Ce qui veut dire que tous les liens à l'intérieur de notre site doivent utiliser <code>&#x3C;NuxtLink></code>. La balise <code>&#x3C;a></code> doit être utilisée pour les liens externes (les sites web qui ne font pas partie de notre application).</p>
+        <pre class="language-html"><code class="language-html"><span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;</span>template</span><span class="token punctuation">></span></span>
+  <span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;</span>div</span><span class="token punctuation">></span></span>
+    <span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;</span>h1</span><span class="token punctuation">></span></span>Page d'accueil<span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;/</span>h1</span><span class="token punctuation">></span></span>
+    <span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;</span>nuxt-link</span> <span class="token attr-name">to</span><span class="token attr-value"><span class="token punctuation attr-equals">=</span><span class="token punctuation">"</span>/about<span class="token punctuation">"</span></span><span class="token punctuation">></span></span>
+      À propos (lien interne à l'application Nuxt)
+    <span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;/</span>nuxt-link</span><span class="token punctuation">></span></span>
+    <span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;</span>a</span> <span class="token attr-name">href</span><span class="token attr-value"><span class="token punctuation attr-equals">=</span><span class="token punctuation">"</span>https://nuxtjs.org<span class="token punctuation">"</span></span><span class="token punctuation">></span></span>Lien externe vers une autre page<span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;/</span>a</span><span class="token punctuation">></span></span>
+  <span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;/</span>div</span><span class="token punctuation">></span></span>
+<span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;/</span>template</span><span class="token punctuation">></span></span></code></pre>
+        <section id="info-2" class="level4">
+          <h4>Info</h4>
+          <p>Si nous voulons en savoir plus sur <code>RouterLink</code>, se référer à la <a href="https://v3.router.vuejs.org/fr/api/#router-link">documentation du Routeur Vue</a>.</p>
+        </section>
+        <section id="info-3" class="level4">
+          <h4>Info</h4>
+          <p><code>&#x3C;NuxtLink></code> utilise le <a href="./features/nuxt-components#the-nuxtlink-component">préfétching intelligent</a> par défaut.</p>
+        </section>
+      </section>
+      <section id="prefetchlinks" class="level2">
+        <h2>prefetchLinks</h2>
+        <p>Nuxt fait du prefetching intelligent, il détecte si un lien est visible (soit dans le viewport, soit lors d'un défilement) et il prefetch le JavaScript pour ces pages pour qu'elles soient prêtes quand l'utilisateur clique sur le lien. Nuxt charge la ressource seulement quand le navigateur n'est pas occupé. Le prefetching n'a pas non plus lieu si l'utilisateur est hors-ligne ou qu'il est en connexion 2G.</p>
+        <section id="désactiver-le-prefetching-pour-des-liens-spécifiques" class="level3">
+          <h3>Désactiver le prefetching pour des liens spécifiques</h3>
+          <p>Cependant, si notre page est lourde en JavaScript ou que nous avons beaucoup de pages différentes qui se retrouveraient à charger de nombreux scripts tiers, nous pouvons désactiver le prefetching sur certains de ces liens. Pour cela, nous pouvons utiliser la propriété <code>no-prefetch</code>. Depuis Nuxt v2.10.0, nous pouvons aussi définir la propriété <code>prefetch</code> à <code>false</code>.</p>
+          <pre class="language-html"><code class="language-html"><span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;</span>NuxtLink</span> <span class="token attr-name">to</span><span class="token attr-value"><span class="token punctuation attr-equals">=</span><span class="token punctuation">"</span>/about<span class="token punctuation">"</span></span> <span class="token attr-name">no-prefetch</span><span class="token punctuation">></span></span>Page à propos non pré-fetchée<span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;/</span>NuxtLink</span><span class="token punctuation">></span></span>
+<span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;</span>NuxtLink</span> <span class="token attr-name">to</span><span class="token attr-value"><span class="token punctuation attr-equals">=</span><span class="token punctuation">"</span>/about<span class="token punctuation">"</span></span> <span class="token attr-name">:prefetch</span><span class="token attr-value"><span class="token punctuation attr-equals">=</span><span class="token punctuation">"</span>false<span class="token punctuation">"</span></span><span class="token punctuation">></span></span>Page à propos non pré-fetchée<span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;/</span>NuxtLink</span><span class="token punctuation">></span></span></code></pre>
+        </section>
+        <section id="désactiver-le-prefetching-de-manière-globale" class="level3">
+          <h3>Désactiver le prefetching de manière globale</h3>
+          <p>Pour désactiver le prefetching sur tous les liens, il faut passer <code>prefetchLinks</code> à <code>false</code>:</p>
+          <pre class="language-js{}[nuxt.config.js]"><code class="language-js{}[nuxt.config.js]">export default {
+  router: {
+    prefetchLinks: false
+  }
+}</code></pre>
+          <p>Depuis Nuxt v2.10.0, si nous avons passé <code>prefetchLinks</code> à <code>false</code> mais que nous souhaitons cependant prefetch un lien particulier, nous pouvons utiliser la propriété <code>prefetch</code>:</p>
+          <pre class="language-html"><code class="language-html"><span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;</span>NuxtLink</span> <span class="token attr-name">to</span><span class="token attr-value"><span class="token punctuation attr-equals">=</span><span class="token punctuation">"</span>/about<span class="token punctuation">"</span></span> <span class="token attr-name">prefetch</span><span class="token punctuation">></span></span>Page à propos pré-fetchée<span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;/</span>NuxtLink</span><span class="token punctuation">></span></span></code></pre>
+        </section>
+      </section>
+      <section id="linkactiveclass" class="level2">
+        <h2>linkActiveClass</h2>
+        <p><code>linkActiveClass</code> marche de la même façon que la classe sur des liens actifs de <code>vue-router</code>. Si nous souhaitons montrer quels liens sont actifs, la seule chose que nous avons besoin de faire est de créer un peu de CSS pour la classe <code>nuxt-link-active</code>.</p>
+        <pre class="language-css"><code class="language-css"><span class="token selector"><span class="token class">.nuxt-link-active</span></span> <span class="token punctuation">{</span>
+  <span class="token property">color</span><span class="token punctuation">:</span> <span class="token color">red</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span></code></pre>
+        <section id="info-4" class="level4">
+          <h4>Info</h4>
+          <p>Ce CSS peut être ajouté au composant de navigation, dans une page spécifique, dans un layout ou dans le fichier <code>main.css</code>.</p>
+          <p>Si nous souhaitons changer le nom de cette classe par autre chose, nous pouvons modifier <code>linkActiveClass</code> dans la propriété <code>router</code> à l'intérieur du fichier <code>nuxt.config.js</code>.</p>
+          <pre class="language-js"><code class="language-js"><span class="token keyword module">export</span> <span class="token keyword module">default</span> <span class="token punctuation">{</span>
+  <span class="token literal-property property">router</span><span class="token operator">:</span> <span class="token punctuation">{</span>
+    <span class="token literal-property property">linkActiveClass</span><span class="token operator">:</span> <span class="token string">'mon-super-lien-actif'</span>
+  <span class="token punctuation">}</span>
+<span class="token punctuation">}</span></code></pre>
+        </section>
+        <section id="info-5" class="level4">
+          <h4>Info</h4>
+          <p>Cette option est donnée directement à la propriété <code>linkActiveClass</code> du <code>vue-router</code>, plus d'informations <a href="https://v3.router.vuejs.org/fr/api/#active-class">ici</a>.</p>
+        </section>
+      </section>
+      <section id="linkexactactiveclass" class="level2">
+        <h2>linkExactActiveClass</h2>
+        <p><code>linkExactActiveClass</code> marche exactement de la même façon que <a href="#linkactiveclass"><code>linkActiveClass</code></a> dans le cas d'une correspondance exacte de la route.</p>
+        <pre class="language-css"><code class="language-css"><span class="token selector"><span class="token class">.nuxt-link-exact-active</span></span> <span class="token punctuation">{</span>
+  <span class="token property">color</span><span class="token punctuation">:</span> <span class="token color">green</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span></code></pre>
+        <p>La configuration dans le fichier <code>nuxt.config.js</code> se fait de la même façon.</p>
+        <pre class="language-js{}[nuxt.config.js]"><code class="language-js{}[nuxt.config.js]">export default {
+  router: {
+    linkExactActiveClass: 'mon-lien-exact-actif'
+  }
+}</code></pre>
+      </section>
+      <section id="linkprefetchedclass" class="level2">
+        <h2>linkPrefetchedClass</h2>
+        <p><code>linkPrefetchedClass</code> va nous permettre d'ajouter des styles pour tous les liens qui ont été prefetch. C'est pratique pour tester tous les liens qui ont été prefetch après avoir modifié un comportement. <code>linkPrefetchedClass</code> est désactivé par défaut. Si nous souhaitons l'activer, il faut ajouter la propriété dans le fichier <code>nuxt.config.js</code>.</p>
+        <pre class="language-js{}[nuxt.config.js]"><code class="language-js{}[nuxt.config.js]">export default {
+  router: {
+    linkPrefetchedClass: 'lien-de-nuxt-prefetched'
+  }
+}</code></pre>
+        <p>Il suffit par la suite d'ajouter les styles pour cette classe.</p>
+        <pre class="language-css"><code class="language-css"><span class="token selector"><span class="token class">.nuxt-link-prefetched</span></span> <span class="token punctuation">{</span>
+  <span class="token property">color</span><span class="token punctuation">:</span> <span class="token color">orangeRed</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span></code></pre>
+        <section id="info-6" class="level4">
+          <h4>Info</h4>
+          <p>Comme nous avons pu le voir avec <code>lien-de-nuxt-prefetched</code>, le nom de la classe est totalement arbitraire.</p>
+        </section>
+      </section>
+      <section id="le-composant-côté-client-seulement" class="level2">
+        <h2>Le composant côté-client seulement</h2>
+        <p>L'usage de ce composant force un composant a être render uniquement du côté client. Pour importer un composant seulement sur le client, il faut l'encapsuler dans un <code>client-only</code>.</p>
+        <pre class="language-html{}[pages/example.vue]"><code class="language-html{}[pages/example.vue]">&#x3C;template>
+  &#x3C;div>
+    &#x3C;sidebar />
+    &#x3C;client-only placeholder="Chargement...">
+      &#x3C;!-- ce composant sera render seulement du côté client -->
+      &#x3C;comments>&#x3C;/comments>
+    &#x3C;/client-only>
+  &#x3C;/div>
+&#x3C;/template></code></pre>
+        <p>Utiliser un élément de substitution jusqu'à ce que le contenu du <code>&#x3C;client-only /></code> ne soit monté sur le client.</p>
+        <pre class="language-html{}[pages/example.vue]"><code class="language-html{}[pages/example.vue]">&#x3C;template>
+  &#x3C;div>
+    &#x3C;sidebar />
+    &#x3C;client-only>
+      &#x3C;!-- ce composant sera render seulement du côté client -->
+      &#x3C;comments>&#x3C;/comments>
+
+      &#x3C;!-- indicateur de chargement, render du côté serveur -->
+      &#x3C;comments-placeholder slot="placeholder">&#x3C;/comments-placeholder>
+    &#x3C;/client-only>
+  &#x3C;/div>
+&#x3C;/template></code></pre>
+        <section id="info-7" class="level4">
+          <h4>Info</h4>
+          <p>Depuis Nuxt > v2.9.0, il faut utiliser <code>&#x3C;client-only></code> au lieu de <code>&#x3C;no-ssr></code>.</p>
+          <p><span style="float: footnote;"><a href="../index.html#toc">Go to TOC</a></span></p>
+        </section>
+      </section>
+    </section>
+  </body>
+</html>

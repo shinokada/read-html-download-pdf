@@ -1,0 +1,208 @@
+<!doctype html>
+<html lang="de">
+  <head>
+    <meta charset="utf-8">
+    <title>Benutzen der State Hook</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="https://raw.githubusercontent.com/shinokada/prism-coy-theme/main/theme_common.css">
+  </head>
+  <body>
+    <section id="benutzen-der-state-hook" class="level1">
+      <h1>Benutzen der State Hook</h1>
+      <p><em>Hooks</em> sind ein neues Feature in React 16.8. Damit lassen sich State und andere React Features nutzen, ohne dass eine Klasse geschrieben werden muss.</p>
+      <p>Die <a href="./hooks-intro.html">Einführungsseite</a> verwendete dieses Beispiel um dir einen Ersteinblick in die Hooks zu bieten:</p>
+      <pre class="language-js{4-5}"><code class="language-js{4-5}">import React, { useState } from 'react';
+
+function Example() {
+  // Deklariere eine neue State Variable, die wir "count" nennen werden
+  const [count, setCount] = useState(0);
+
+  return (
+    &#x3C;div>
+      &#x3C;p>Du hast mich {count} mal geklickt&#x3C;/p>
+      &#x3C;button onClick={() => setCount(count + 1)}>
+        Klick mich
+      &#x3C;/button>
+    &#x3C;/div>
+  );
+}</code></pre>
+      <p>Wir beginnen mit dem Lernprozess über Hooks, indem wir diesen Code mit einem entsprechenden Klassenbeispiel vergleichen.</p>
+      <section id="equivalent-class-example" class="level2">
+        <h2>Gleichwertiges Klassenbeispiel</h2>
+        <p>Falls du bereits mit den React-Klassen vertraut bist, dann sollte dir der nachfolgende Code bekannt vorkommen:</p>
+        <pre class="language-js"><code class="language-js"><span class="token keyword">class</span> <span class="token class-name">Example</span> <span class="token keyword">extends</span> <span class="token class-name">React<span class="token punctuation">.</span>Component</span> <span class="token punctuation">{</span>
+  <span class="token function">constructor</span><span class="token punctuation">(</span><span class="token parameter">props</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token keyword">super</span><span class="token punctuation">(</span>props<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token keyword">this</span><span class="token punctuation">.</span><span class="token property-access">state</span> <span class="token operator">=</span> <span class="token punctuation">{</span>
+      <span class="token literal-property property">count</span><span class="token operator">:</span> <span class="token number">0</span>
+    <span class="token punctuation">}</span><span class="token punctuation">;</span>
+  <span class="token punctuation">}</span>
+
+  <span class="token function">render</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token keyword control-flow">return</span> <span class="token punctuation">(</span>
+      <span class="token operator">&#x3C;</span>div<span class="token operator">></span>
+        <span class="token operator">&#x3C;</span>p<span class="token operator">></span>du hast mich <span class="token punctuation">{</span><span class="token keyword">this</span><span class="token punctuation">.</span><span class="token property-access">state</span><span class="token punctuation">.</span><span class="token property-access">count</span><span class="token punctuation">}</span> mal geklickt<span class="token operator">&#x3C;</span><span class="token operator">/</span>p<span class="token operator">></span>
+        <span class="token operator">&#x3C;</span>button onClick<span class="token operator">=</span><span class="token punctuation">{</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token arrow operator">=></span> <span class="token keyword">this</span><span class="token punctuation">.</span><span class="token method function property-access">setState</span><span class="token punctuation">(</span><span class="token punctuation">{</span> <span class="token literal-property property">count</span><span class="token operator">:</span> <span class="token keyword">this</span><span class="token punctuation">.</span><span class="token property-access">state</span><span class="token punctuation">.</span><span class="token property-access">count</span> <span class="token operator">+</span> <span class="token number">1</span> <span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">}</span><span class="token operator">></span>
+          <span class="token maybe-class-name">Klick</span> mich
+        <span class="token operator">&#x3C;</span><span class="token operator">/</span>button<span class="token operator">></span>
+      <span class="token operator">&#x3C;</span><span class="token operator">/</span>div<span class="token operator">></span>
+    <span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token punctuation">}</span>
+<span class="token punctuation">}</span></code></pre>
+        <p>Der State startet mit <code>{ count: 0 }</code> und wir erhöhen <code>state.count</code>, wenn der Benutzer auf einen Button klickt, indem <code>this.setState()</code>aufgerufen wird. Nachfolgend werden wir auf der gesamten Seite Ausschnitte aus dieser Klasse verwenden.</p>
+        <blockquote>
+          <p>Hinweis</p>
+          <p>Du fragst dich vielleicht, warum wir hier einen Zähler anstelle eines realistischeren Beispiels verwenden. Damit wollen wir uns vorerst auf die API konzentrieren, während wir noch unsere ersten Schritte mit Hooks machen.</p>
+        </blockquote>
+      </section>
+      <section id="hooks-and-function-components" class="level2">
+        <h2>Hooks und Funktionskomponenten</h2>
+        <p>Zur Erinnerung: In React sehen die Funktionskomponenten so aus:</p>
+        <pre class="language-js"><code class="language-js"><span class="token keyword">const</span> <span class="token function-variable function"><span class="token maybe-class-name">Example</span></span> <span class="token operator">=</span> <span class="token punctuation">(</span><span class="token parameter">props</span><span class="token punctuation">)</span> <span class="token arrow operator">=></span> <span class="token punctuation">{</span>
+  <span class="token comment">// Du kannst hier Hooks verwenden!</span>
+  <span class="token keyword control-flow">return</span> <span class="token operator">&#x3C;</span>div <span class="token operator">/</span><span class="token operator">></span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span></code></pre>
+        <p>oder so:</p>
+        <pre class="language-js"><code class="language-js"><span class="token keyword">function</span> <span class="token function"><span class="token maybe-class-name">Example</span></span><span class="token punctuation">(</span><span class="token parameter">props</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  <span class="token comment">// Du kannst hier Hooks verwenden!</span>
+  <span class="token keyword control-flow">return</span> <span class="token operator">&#x3C;</span>div <span class="token operator">/</span><span class="token operator">></span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span></code></pre>
+        <p>Wahrscheinlich weißt du bereits, dass sich diese Komponenten "Zustandslose Komponenten" nennen. Nun führen wir die Möglichkeit ein, Zustände in den Komponenten zu verwenden, dementsprechend bevorzugen wir die Bezeichnung "Funktionskomponenten".</p>
+        <p>Hooks funktionieren <strong>nicht</strong> innerhalb von Klassen. Aber du kannst sie anstelle von Klassen verwenden.</p>
+      </section>
+      <section id="whats-a-hook" class="level2">
+        <h2>Was ist ein Hook?</h2>
+        <p>Wir fangen mit dem Import des <code>useState</code> Hooks aus React an:</p>
+        <pre class="language-js{1}"><code class="language-js{1}">import React, { useState } from 'react';
+
+function Example() {
+  // ...
+}</code></pre>
+        <p><strong>Was ist ein Hook?</strong> Ein Hook ist eine spezielle Funktion, mit der du dich in React-Funktionalitäten "einhaken" kannst. Schauen wir uns beispielsweise die <code>useState</code>-Funktion an, sie ist ein Hook, mit dem wir States zu einer zustandslosen Komponente hinzufügen können, so dass wir die sogenannte Funktionskomponente erhalten. Wir werden später weitere Hooks kennenlernen.</p>
+        <p><strong>Wann sollte ich einen Hook verwenden?</strong> Falls du bereits eine zustandslose Komponente verwendest und später feststellst, dass du die Komponente um States erweitern musst, dann musstest du früher deine Komponente in eine Klassenkomponente umschreiben, dies ist nicht mehr nötig, da du jetzt Hooks verwenden kannst. Dies werden wir jetzt sofort tun!</p>
+        <blockquote>
+          <p>Hinweis:</p>
+          <p>Es gibt einige spezielle Regeln dafür, wo man innerhalb einer Komponente Hooks verwenden kann und wo nicht. Wir werden sie in <a href="./hooks-rules.html">Regeln von Hooks</a> lernen.</p>
+        </blockquote>
+      </section>
+      <section id="declaring-a-state-variable" class="level2">
+        <h2>Deklarierung einer State-Variable</h2>
+        <p>In einer Klasse initialisieren wir den <code>count</code>-State mit <code>0</code>, in dem wir <code>this.state</code> auf <code>{ count: 0 }</code> im Konstruktor setzen:</p>
+        <pre class="language-js{4-6}"><code class="language-js{4-6}">class Example extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = {
+      count: 0
+    };
+  }</code></pre>
+        <p>In einer Funktionskomponente existiert das Schlüsselwort <code>this</code> nicht, wodurch wir <code>this.state</code> weder zuweisen noch lesen können. Stattdessen rufen wir die <code>useState</code>-Hook direkt in unserer Komponente auf:</p>
+        <pre class="language-js{4,5}"><code class="language-js{4,5}">import React, { useState } from 'react';
+
+function Example() {
+  // Deklariere eine neue State-Variable, die wir "count" nennen werden
+  const [count, setCount] = useState(0);</code></pre>
+        <p><strong>Was bewirkt das Aufrufen der <code>useState</code>-Funktion?</strong> Es deklariert eine "State-Variable". Die Variable heißt <code>count</code>, aber wir könnten sie beliebig nennen, wie z.B. <code>banane</code>. Dies ist eine Möglichkeit, einige Werte zwischen den Funktionsaufrufen zu "erhalten" — <code>useState</code> ist eine neue Möglichkeit wie man exakt die selben Eigenschaften zu benutezn, wie bei <code>this.state</code> in einer Klasse. In der Regel "verschwinden" Variablen, wenn eine Funktion fertig ausgeführt ist, jedoch bleiben die State-Variablen durch React erhalten.</p>
+        <p><strong>Welche Argumente können wir an die <code>useState</code>-Funktion übergeben?</strong> Das einzige Argument, dass der <code>useState()</code> Hook verwendet ist der initiale Zustand. Anders als es bei Klassen der Fall ist, muss der State nicht unbedingt ein Objekt sein. Wir könnten z.B. eine Zahl oder eine Zeichenkette verwenden falls dies für uns ausreichend ist. In unserem Beispiel ist die Verwendung einer Zahl ausreichend, da wir lediglich die Anzahl der Klicks auswerten möchten, demzufolge übergeben wir <code>0</code> als initialen Wert unserer State-Variable. (Falls wir zwei verschiedene Werte im State speichern wollen, rufen wir <code>useState()</code> zweimal auf.)</p>
+        <p><strong>Was gibt die <code>useState</code>-Funktion zurück?</strong> Sie gibt ein Tupel zurück: der aktuelle State und eine Funktion die, den aktuellen State aktualisieren kann. Aus diesem Grund schreiben wir <code>const [count, setCount] = useState()</code>. Dies ist vergleichbar mit <code>this.state.count</code> und <code>this.setState</code> die in Klassen verwendet werden, mit dem einzigen Unterschied, dass man sie als Tupel erhält. Falls du mit der von uns verwendeten Syntax nicht vertraut bist, werden wir <a href="./hooks-state.html#tip-what-do-square-brackets-mean">am Ende dieser Seite</a> nochmal darauf zurückkommen.</p>
+        <p>Da wir nun wissen, was der <code>useState</code> Hook macht, sollte unser Beispiel mehr Sinn machen:</p>
+        <pre class="language-js{4,5}"><code class="language-js{4,5}">import React, { useState } from 'react';
+
+function Example() {
+  // Deklariere eine neue State-Variable, die wir "count" nennen werden
+  const [count, setCount] = useState(0);</code></pre>
+        <p>Wir deklarieren eine State-Variable namens <code>count</code> und setzen sie auf <code>0</code>. React merkt sich den aktuellen Wert der Variable zwischen dem neu Rendern und stellt uns diesen für unsere Funktion zur Verfügung. Falls wir den Wert der State-Variable <code>count</code> aktualisieren möchten, können wir die Methode <code>setCount</code> aufrufen.</p>
+        <blockquote>
+          <p>Hinweis</p>
+          <p>Du fragst dich vielleicht: Warum heißt die Hook <code>useState</code> anstatt <code>createState</code>?</p>
+          <p>"Create" wäre nicht ganz zutreffend, da der State nur beim ersten Rendern der Komponente erstellt wird. Während der nachfolgenden Rendervorgänge stellt uns die <code>useState</code>-Funktion den aktuellen State bereit. Andernfalls wäre es überhaupt kein "state"! Es hat auch seinen Grund, weshalb die Namen der Hooks <em>immer</em> mit <code>use</code> beginnen. Die Gründe dafür werden wir später in den <a href="./hooks-rules.html">Regeln von Hooks</a> erfahren.</p>
+        </blockquote>
+      </section>
+      <section id="reading-state" class="level2">
+        <h2>Lesen des States</h2>
+        <p>Wenn wir den aktuellen Zählerstand in einer Klasse anzeigen lassen wollen, lesen wir <code>this.state.count</code>:</p>
+        <pre class="language-js"><code class="language-js">  <span class="token operator">&#x3C;</span>p<span class="token operator">></span><span class="token maybe-class-name">Du</span> hast mich <span class="token punctuation">{</span><span class="token keyword">this</span><span class="token punctuation">.</span><span class="token property-access">state</span><span class="token punctuation">.</span><span class="token property-access">count</span><span class="token punctuation">}</span> mal geklickt<span class="token operator">&#x3C;</span><span class="token operator">/</span>p<span class="token operator">></span></code></pre>
+        <p>In einer Funktion können wir <code>count</code> direkt verwenden:</p>
+        <pre class="language-js"><code class="language-js">  <span class="token operator">&#x3C;</span>p<span class="token operator">></span><span class="token maybe-class-name">Du</span> hast mich <span class="token punctuation">{</span>count<span class="token punctuation">}</span> mal geklickt<span class="token operator">&#x3C;</span><span class="token operator">/</span>p<span class="token operator">></span></code></pre>
+      </section>
+      <section id="updating-state" class="level2">
+        <h2>Aktualisieren des States</h2>
+        <p>In einer Klasse müssen wir <code>this.setState()</code> aufrufen, um den <code>count</code>-State zu aktualisieren:</p>
+        <pre class="language-js{1}"><code class="language-js{1}">  &#x3C;button onClick={() => this.setState({ count: this.state.count + 1 })}>
+    Klick mich
+  &#x3C;/button></code></pre>
+        <p>In einer Funktion haben wir bereits <code>setCount</code> und <code>count</code> als Variablen, so dass wir <code>this</code> nicht mehr benötigen:</p>
+        <pre class="language-js{1}"><code class="language-js{1}">  &#x3C;button onClick={() => setCount(count + 1)}>
+    Klick mich
+  &#x3C;/button></code></pre>
+      </section>
+      <section id="recap" class="level2">
+        <h2>Zusammenfassung</h2>
+        <p>Wir möchten nun <strong>das Gelernte Zeile für Zeile zusammenfassen</strong> um unseren Wissensstand zu prüfen.</p><!--
+          I'm not proud of this line markup. Please somebody fix this.
+          But if GitHub got away with it for years we can cheat.
+        -->
+        <pre class="language-js{1,4,9}"><code class="language-js{1,4,9}"> 1:  import React, { useState } from 'react';
+ 2:
+ 3:  function Example() {
+ 4:    const [count, setCount] = useState(0);
+ 5:
+ 6:    return (
+ 7:      &#x3C;div>
+ 8:        &#x3C;p>Du hast mich {count} mal geklickt&#x3C;/p>
+ 9:        &#x3C;button onClick={() => setCount(count + 1)}>
+10:         Klick mich
+11:        &#x3C;/button>
+12:      &#x3C;/div>
+13:    );
+14:  }</code></pre>
+        <ul>
+          <li><strong>Zeile 1:</strong> Wir importieren die <code>useState</code>-Hook aus React, dadurch können wir einen lokalen State in einer Funktionskomponente halten.</li>
+          <li><strong>Zeile 4:</strong> Innerhalb der <code>Example</code>-Komponente deklarieren wir durch einen Aufruf des <code>useState</code>-Hooks eine neue State-Variable, die ein Tupel zurückgibt, dessen Inhalte wir dann Namen zuweisen. Wir nennen unsere Variable <code>count</code>, da sie die Anzahl der Button-Klicks enthält. Wir initialisieren Null, indem wir <code>0</code> als einziges Argument an <code>useState</code> geben. Die zweite Variable die zurückgegeben wird ist eine Funktion. Sie erlaubt uns den Wert von <code>count</code> zu aktualisieren, dementsprechend nennen wir sie <code>setCount</code>.</li>
+          <li><strong>Zeile 9:</strong> Beim Klick durch einen User auf den Button rufen wir <code>setCount</code> mit einem neuen Wert auf. React wird dann die <code>Example</code>-Komponente erneut rendern und ihr den neuen Wert für den <code>count</code>-State übergeben.</li>
+        </ul>
+        <p>Auf den ersten Blick mag dies eine Menge sein. Überstürzte nichts! Wenn du dich in der Fülle der Informationen verlierst, dann schau dir am Besten den oben bereitgestellten Code nochmal genauer an und wiederhole die dargestellten Schritte von oben nach unten. Wir versprechen dir, dass wenn du versuchst zu "vergessen" wie der State in Klassen funktioniert und du den Code mit kühlem Kopf anschaust, es Sinn machen wird.</p>
+        <section id="tip-what-do-square-brackets-mean" class="level3">
+          <h3>Tipp: Welche Bedeutung haben die eckigen Klammern?</h3>
+          <p>Möglicherweise sind dir die eckigen Klammern aufgefallen, die wir bei der Deklaration der State-Variablen verwendet haben:</p>
+          <pre class="language-js"><code class="language-js">  <span class="token keyword">const</span> <span class="token punctuation">[</span>count<span class="token punctuation">,</span> setCount<span class="token punctuation">]</span> <span class="token operator">=</span> <span class="token function">useState</span><span class="token punctuation">(</span><span class="token number">0</span><span class="token punctuation">)</span><span class="token punctuation">;</span></code></pre>
+          <p>Die Namen auf der linken Seite sind kein Bestandteil der React-API. Du kannst deine eigenen State-Variablen frei benennen:</p>
+          <pre class="language-js"><code class="language-js">  <span class="token keyword">const</span> <span class="token punctuation">[</span>fruit<span class="token punctuation">,</span> setFruit<span class="token punctuation">]</span> <span class="token operator">=</span> <span class="token function">useState</span><span class="token punctuation">(</span><span class="token string">'banane'</span><span class="token punctuation">)</span><span class="token punctuation">;</span></code></pre>
+          <p>Diese JavaScript-Syntax wird als <a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Destructuring_assignment#Array_destructuring">"Destrukturierende Array-Zuweisung"</a> bezeichnet. Dies bedeutet, dass wir zwei neue Variablen <code>fruit</code> und <code>setFruit</code> erstellen, wobei <code>fruit</code> auf den ersten Wert gesetzt wird, der von der <code>useState</code>-Hook zurückgegeben wird und <code>setFruit</code> auf den zweiten. Dies ist gleichwertig mit dem folgenden Code:</p>
+          <pre class="language-js"><code class="language-js">  <span class="token keyword">var</span> fruitStateVariable <span class="token operator">=</span> <span class="token function">useState</span><span class="token punctuation">(</span><span class="token string">'banane'</span><span class="token punctuation">)</span><span class="token punctuation">;</span> <span class="token comment">// Gibt ein Tupel zurück</span>
+  <span class="token keyword">var</span> fruit <span class="token operator">=</span> fruitStateVariable<span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">]</span><span class="token punctuation">;</span> <span class="token comment">// Erstes Element im Tupel</span>
+  <span class="token keyword">var</span> setFruit <span class="token operator">=</span> fruitStateVariable<span class="token punctuation">[</span><span class="token number">1</span><span class="token punctuation">]</span><span class="token punctuation">;</span> <span class="token comment">// Zweites Element im Tupel</span></code></pre>
+          <p>Bei der Deklaration einer State-Variable mit Hilfe von <code>useState</code> erhalten wir einen Tupel zurück — ein Array mit zwei Werten. Der erste Wert ist der aktuelle des States, der zweite eine Funktion, mit der wir den Wert des States aktualisieren können. Die Verwendung von <code>[0]</code> und <code>[1]</code> um auf den Inhalt der Hook zuzugreifen mag etwas verwirrend sein, dementsprechend verwenden wir die Array-Destrukturierung.</p>
+          <blockquote>
+            <p>Hinweis</p>
+            <p>Möglicherweise fragst du dich, woher React nun weiß, welche Komponente es <code>useState</code> zuordnen muss, da wir so etwas wie <code>this</code> nicht an React weitergeben. Wir werden die Antwort auf <a href="./hooks-faq.html#how-does-react-associate-hook-calls-with-components">diese Frage</a>, sowie zahlreiche andere Fragen in der FAQ-Sektion beantworten.</p>
+          </blockquote>
+        </section>
+        <section id="tip-using-multiple-state-variables" class="level3">
+          <h3>Tipp: Verwenden mehrerer State-Variablen</h3>
+          <p>Die Deklaration von State-Variablen als ein Tupel in der Form <code>[something, setSomething]</code> ist insofern praktisch, da es uns erlaubt den State-Variablen <em>unterschiedliche</em> Namen zu geben, dies ist nützlich wenn man mehrere States verwenden möchte:</p>
+          <pre class="language-js"><code class="language-js"><span class="token keyword">function</span> <span class="token function"><span class="token maybe-class-name">ExampleWithManyStates</span></span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  <span class="token comment">// Deklaration von mehreren State-Variablen!</span>
+  <span class="token keyword">const</span> <span class="token punctuation">[</span>age<span class="token punctuation">,</span> setAge<span class="token punctuation">]</span> <span class="token operator">=</span> <span class="token function">useState</span><span class="token punctuation">(</span><span class="token number">42</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token keyword">const</span> <span class="token punctuation">[</span>fruit<span class="token punctuation">,</span> setFruit<span class="token punctuation">]</span> <span class="token operator">=</span> <span class="token function">useState</span><span class="token punctuation">(</span><span class="token string">'banane'</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token keyword">const</span> <span class="token punctuation">[</span>todos<span class="token punctuation">,</span> setTodos<span class="token punctuation">]</span> <span class="token operator">=</span> <span class="token function">useState</span><span class="token punctuation">(</span><span class="token punctuation">[</span><span class="token punctuation">{</span> <span class="token literal-property property">text</span><span class="token operator">:</span> <span class="token string">'Hooks erlernen'</span> <span class="token punctuation">}</span><span class="token punctuation">]</span><span class="token punctuation">)</span><span class="token punctuation">;</span></code></pre>
+          <p>In der obigen Komponente stehen uns <code>age</code>, <code>fruit</code>, und <code>todos</code> als lokale Variablen zur Verfügung, die wir ebenfalls individuell aktualisieren können:</p>
+          <pre class="language-js"><code class="language-js">  <span class="token keyword">function</span> <span class="token function">handleOrangeClick</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token comment">// Vergleichbar mit this.setState({ fruit: 'orange' })</span>
+    <span class="token function">setFruit</span><span class="token punctuation">(</span><span class="token string">'orange'</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token punctuation">}</span></code></pre>
+          <p>Du brauchst <strong>nicht</strong> zahlreichen State-Variablen zu verwenden. Die Variablen können problemlos Arrays oder Objekte halten, dementsprechend kannst du zusammenhängende Daten gruppieren. Beachte aber, dass im Gegensatz zu der in Klassen verwendeten Funktion <code>this.setState</code> die Aktualisierung durch die Hooks etwas anders funktioniert, da die State-Variable <em>ersetzt</em> wird, anstatt sie mit dem bereits vorhandenen State zu verschmelzen.</p>
+          <p>Wir geben weitere Empfehlungen zur Aufteilung unabhängiger State-Variablen die du <a href="./hooks-faq.html#should-i-use-one-or-many-state-variables">in den FAQ</a> nachlesen kannst.</p>
+        </section>
+      </section>
+      <section id="next-steps" class="level2">
+        <h2>Nächste Schritte</h2>
+        <p>Auf dieser Seite haben wir uns über einen der von React zur Verfügung gestellten Hooks, den sogenannten <code>useState</code>-Hook. Wir werden es gelegentlich auch als "State Hook" bezeichnen. Es ermöglicht uns einen lokalen State zu einer React-Funktionskomponente hinzuzufügen -- welches wir zum ersten Mal überhaupt getan haben!</p>
+        <p>Wir haben ebenfalls ein wenig mehr darüber erfahren, was Hooks überhaupt sind. Hooks sind Funktionen, mit denen man sich über Funktionskomponenten in die React-Funktionalität "einhaken" kann. Ihr Name beginnt immer mit <code>use</code>. Es gibt zahlreiche weitere Hooks, die wir noch nicht kennengelernt haben.</p>
+        <p>
+          <strong>Fahren wir nun fort mit der <a href="./hooks-effect.html">nächsten Hook: <code>useEffect</code>.</a></strong> Diese ermöglicht dir die Durchführung von Seiten-Effekten innerhalb von Komponenten und ähnelt den Lifecycle-Methoden in Klassen.
+          <span style="float: footnote;"><a href="./index.html#toc">Go to TOC</a></span>
+        </p>
+      </section>
+    </section>
+  </body>
+</html>

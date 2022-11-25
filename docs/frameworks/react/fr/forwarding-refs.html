@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="utf-8">
+    <title>Transfert de refs</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="https://raw.githubusercontent.com/shinokada/prism-coy-theme/main/theme_common.css">
+  </head>
+  <body>
+    <section id="transfert-de-refs" class="level1">
+      <h1>Transfert de refs</h1>
+      <p>Le transfert de ref est une technique permettant de déléguer automatiquement une <a href="./refs-and-the-dom.html">ref</a> d'un composant à l'un de ses enfants. Ça n'est généralement pas nécessaire pour la plupart des composants dans une application. Cependant, ça peut être utile pour certains types de composants, particulièrement dans les bibliothèques de composants réutilisables. Les scénarios les plus fréquents sont décrits ci-dessous.</p>
+      <section id="forwarding-refs-to-dom-components" class="level2">
+        <h2>Transfert de refs vers des composants du DOM</h2>
+        <p>
+          Prenons un composant <code>FancyButton</code> qui affiche l'élément DOM natif <code>button</code> :
+          <code>embed:forwarding-refs/fancy-button-simple.js</code>
+        </p>
+        <p>
+          Les composants React masquent leurs détails d'implémentation, y compris leur rendu.
+          Les autres composants utilisant <code>FancyButton</code> <strong>n'auront généralement pas besoin</strong> <a href="./refs-and-the-dom.html">d'obtenir une ref</a> sur l'élément DOM interne <code>button</code>. C'est une bonne chose, car ça empêche les composants de trop s'appuyer sur la structure DOM les uns et des autres.
+        </p>
+        <p>Bien qu'une telle encapsulation soit souhaitable pour les composants applicatifs tels que <code>FeedStory</code> ou <code>Comment</code>, elle peut être gênante pour les composants hautement réutilisables, tels que <code>FancyButton</code> ou <code>MyTextInput</code>. Ces composants ont tendance à être utilisés un peu partout dans l’application de manière similaire à un <code>button</code> ou un <code>input</code>, et l’accès à leurs nœuds DOM peut s'avérer nécessaire pour la gestion du focus, de la sélection ou des animations.</p>
+        <p><strong>Le transfert de ref est une fonctionnalité optionnelle qui permet à certains composants de prendre une <code>ref</code> qu’ils reçoivent et de la passer plus bas dans l’arbre (en d’autres termes, la « transférer ») à un composant enfant.</strong></p>
+        <p>
+          Dans l'exemple ci-dessous, <code>FancyButton</code> utilise <code>React.forwardRef</code> pour obtenir la <code>ref</code> qui lui est passée, puis la transfère au <code>button</code> DOM qu'il affiche :
+          <code>embed:forwarding-refs/fancy-button-simple-ref.js</code>
+        </p>
+        <p>De cette façon, les composants utilisant <code>FancyButton</code> peuvent obtenir une ref sur le nœud DOM <code>button</code> sous-jacent et y accéder si nécessaire, comme s'ils utilisaient directement un <code>button</code> DOM.</p>
+        <p>Voici une explication étape par étape de ce qui se passe dans l'exemple ci-dessus :</p>
+        <ol>
+          <li>Nous créons une <a href="./refs-and-the-dom.html">ref React</a> en appelant <code>React.createRef</code> et l'affectons à une variable <code>ref</code>.</li>
+          <li>Nous passons notre <code>ref</code> à <code>&#x3C;FancyButton ref={ref}></code> en la spécifiant comme un attribut JSX.</li>
+          <li>React transmet la <code>ref</code> à la fonction <code>(props, ref) => ...</code> à l'intérieur de <code>forwardRef</code> comme deuxième argument.</li>
+          <li>Nous transférons cet argument <code>ref</code> au <code>&#x3C;button ref={ref}></code> en le spécifiant comme un attribut JSX.</li>
+          <li>Quand la ref est liée, <code>ref.current</code> pointera vers le nœud DOM <code>button</code>.</li>
+        </ol>
+        <blockquote>
+          <p>Remarque</p>
+          <p>Le second argument <code>ref</code> n’existe que quand vous définissez un composant avec l'appel à <code>React.forwardRef</code>. Les fonctions composants habituelles et les composants à base de classes ne reçoivent pas l'argument <code>ref</code>, et la ref n'est pas non plus disponible dans les props du composant.</p>
+          <p>Le transfert de refs n'est pas limité aux composants DOM. Vous pouvez aussi transférer des refs vers des instances de classe de composant.</p>
+        </blockquote>
+      </section>
+      <section id="note-for-component-library-maintainers" class="level2">
+        <h2>Note pour les mainteneurs de bibliothèques de composants</h2>
+        <p><strong>Lorsque vous commencez à utiliser <code>forwardRef</code> dans une bibliothèque de composants, vous devez le traiter comme une rupture de compatibilité ascendante et publier une nouvelle version majeure de votre bibliothèque.</strong> En effet, votre bibliothèque a probablement un comportement différent (par exemple la cible d'affectation des refs et la nature des types exportés), et ça pourrait casser les applications et autres bibliothèques qui dépendent de l'ancien comportement.</p>
+        <p>L'application conditionnelle de <code>React.forwardRef</code> lorsqu'elle existe est également déconseillée pour les mêmes raisons : ça modifie le comportement de votre bibliothèque et pourrait casser les applications de vos utilisateurs lorsqu'ils mettent à jour React.</p>
+      </section>
+      <section id="forwarding-refs-in-higher-order-components" class="level2">
+        <h2>Transfert des refs dans les composants d’ordre supérieur</h2>
+        <p>
+          Cette technique peut aussi être particulièrement utile avec les <a href="./higher-order-components.html">composants d'ordre supérieur</a> <em>(Higher-Order Components ou HOC, NdT)</em>. Commençons par un exemple de HOC qui journalise les props du composant dans la console :
+          <code>embed:forwarding-refs/log-props-before.js</code>
+        </p>
+        <p>
+          Le HOC <code>logProps</code> transmet toutes les <code>props</code> au composant qu'il enrobe, ainsi le résultat affiché sera la même. Par exemple, nous pouvons utiliser ce HOC pour lister toutes les props transmises à notre composant <em>fancy button</em> :
+          <code>embed:forwarding-refs/fancy-button.js</code>
+        </p>
+        <p>Il y a une limitation dans l'exemple ci-dessus : les refs ne seront pas transférées. C'est parce que <code>ref</code> n'est pas une prop. Comme <code>key</code>, elle est gérée différemment par React. Si vous ajoutez une ref à un HOC, la ref fera référence au composant conteneur extérieur, et non au composant enrobé.</p>
+        <p>
+          Ça signifie que les refs destinées à notre composant <code>FancyButton</code> seront en réalité attachées au composant <code>LogProps</code> :
+          <code>embed:forwarding-refs/fancy-button-ref.js</code>
+        </p>
+        <p>
+          Heureusement, nous pouvons explicitement transférer les refs au composant <code>FancyButton</code> interne à l’aide de l’API <code>React.forwardRef</code>. Celle-ci accepte une fonction de rendu qui reçoit les arguments <code>props</code> et <code>ref</code> et renvoie un nœud React. Par exemple :
+          <code>embed:forwarding-refs/log-props-after.js</code>
+        </p>
+      </section>
+      <section id="displaying-a-custom-name-in-devtools" class="level2">
+        <h2>Affichage d'un nom personnalisé dans les DevTools</h2>
+        <p><code>React.forwardRef</code> accepte une fonction de rendu. Les outils de développement React <em>(React DevTools, NdT)</em> utilisent cette fonction pour déterminer quoi afficher pour le composant de transfert de ref.</p>
+        <p>
+          Par exemple, le composant suivant apparaîtra sous le nom "<em>ForwardRef</em>" dans les DevTools :
+          <code>embed:forwarding-refs/wrapped-component.js</code>
+        </p>
+        <p>
+          Si vous nommez la fonction de rendu, les DevTools incluront également son nom (par exemple, "<em>ForwardRef(myFunction)</em>") :
+          <code>embed:forwarding-refs/wrapped-component-with-function-name.js</code>
+        </p>
+        <p>
+          Vous pouvez même définir la propriété <code>displayName</code> de la fonction pour y inclure le composant que vous enrobez :
+          <code>embed:forwarding-refs/customized-display-name.js</code>
+          <span style="float: footnote;"><a href="./index.html#toc">Go to TOC</a></span>
+        </p>
+      </section>
+    </section>
+  </body>
+</html>

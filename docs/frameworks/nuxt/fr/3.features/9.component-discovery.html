@@ -1,0 +1,111 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="utf-8">
+    <title>Découverte automatique des composants</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="Nuxt est capable d&#x27;importer automatiquement les composants utilisés dans un template.">
+    <meta name="category" content="features">
+    <meta name="img" content="/docs/components.png">
+    <meta name="imgAlt" content="nuxt components module">
+    <link rel="stylesheet" href="https://raw.githubusercontent.com/shinokada/prism-coy-theme/main/theme_common.css">
+  </head>
+  <body>
+    <section id="activer-la-découverte-automatique-auto-discovery" class="level2">
+      <h2>Activer la découverte automatique (auto-discovery)</h2>
+      <p>Depuis la version <code>v2.13</code>, Nuxt est capable d'importer automatiquement les composants utilisés dans un template. Pour activer cette fonctionnalité, ajoutez <code>components: true</code> dans la configuration globable de votre projet Nuxt.</p>
+      <pre class="language-js{}[nuxt.config.js]"><code class="language-js{}[nuxt.config.js]">export default {
+  components: true
+}</code></pre>
+      <section id="info" class="level4">
+        <h4>Info</h4>
+        <p>Pour en savoir plus, consultez <a href="/fr/docs/configuration-glossary/configuration-components#advanced">la documentation de configuration de la découverte automatique (auto-discovery)</a>.</p>
+      </section>
+    </section>
+    <section id="utiliser-les-composants" class="level2">
+      <h2>Utiliser les composants</h2>
+      <p>Une fois les composants créés dans le dossier <code>/components</code>, ils seront directement accessibles depuis n'importe quelle partie de l'application. Ils sont utilisables sans avoir à les importer.</p>
+      <pre class="language-bash"><code class="language-bash"><span class="token operator">|</span> components/
+--<span class="token operator">|</span> TheHeader.vue
+--<span class="token operator">|</span> TheFooter.vue</code></pre>
+      <pre class="language-html{}[layouts/default.vue]"><code class="language-html{}[layouts/default.vue]">&#x3C;template>
+  &#x3C;div>
+    &#x3C;TheHeader />
+    &#x3C;Nuxt />
+    &#x3C;TheFooter />
+  &#x3C;/div>
+&#x3C;/template></code></pre>
+      <section id="info-1" class="level4">
+        <h4>Info</h4>
+        <p>Plus d'exemples sur la <a href="https://codesandbox.io/s/nuxt-components-cou9k">démo CodeSandbox</a> ou sur la <a href="https://www.youtube.com/watch?v=lQ8OBrgVVr8">vidéo d'exemple</a>.</p>
+      </section>
+    </section>
+    <section id="noms-des-composants" class="level2">
+      <h2>Noms des composants</h2>
+      <p>Si les composants sont imbriqués dans des dossiers, comme ici :</p>
+      <pre class="language-bash"><code class="language-bash"><span class="token operator">|</span> components/
+--<span class="token operator">|</span> base/
+----<span class="token operator">|</span> foo/
+<span class="token operator">|</span> Button.vue</code></pre>
+      <p>
+        Le nom du composant sera déduit du nom du fichier dans lequel il se trouve et préfixé par le ou les noms des dossiers parents.
+        Avec l'exemple plus haut, le nom du composant sera :
+      </p>
+      <pre class="language-html"><code class="language-html"><span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;</span>BaseFooButton</span> <span class="token punctuation">/></span></span></code></pre>
+      <p>
+        alert
+        Pour plus de clarté, il est recommandé que le composant ait le même nom que le fichier dans lequel il se trouve. Dans l'exemple plus haut, il faut renommer <code>Button.vue</code> en <code>BaseFooButton.vue</code>.
+      </p>
+      <p>Si vous voulez utiliser une structure de dossier personnalisée qui ne doit pas se refléter dans le nom du composant, il est possible de le spécifier explicitement dans la configuration globale du projet Nuxt :</p>
+      <pre class="language-bash"><code class="language-bash"><span class="token operator">|</span> components/
+--<span class="token operator">|</span> base/
+----<span class="token operator">|</span> foo/
+<span class="token operator">|</span> Button.vue</code></pre>
+      <pre class="language-bash{}[nuxt.config.js]"><code class="language-bash{}[nuxt.config.js]">components: {
+  dirs: [
+    '~/components',
+    '~/components/base'
+  ]
+}</code></pre>
+      <p>Avec cette configuration, le nom du composant sera <code>FooButton</code> plutôt que <code>BaseFooButton</code>.</p>
+      <pre class="language-html{}[pages/index.vue]"><code class="language-html{}[pages/index.vue]">&#x3C;FooButton /></code></pre>
+      <section id="info-2" class="level4">
+        <h4>Info</h4>
+        <p>Pensez à nommer vos composants en vous référant aux <a href="https://fr.vuejs.org/v2/style-guide">conventions de Vue.js</a>.</p>
+      </section>
+    </section>
+    <section id="imports-dynamiques" class="level2">
+      <h2>Imports dynamiques</h2>
+      <p>Pour importer un composant de façon dynamique (chargement différé ou lazy-loading), il suffit d'ajouter le préfixe <code>Lazy</code> au nom du composant.</p>
+      <pre class="language-html{}[layouts/default.vue]"><code class="language-html{}[layouts/default.vue]">&#x3C;template>
+  &#x3C;div>
+    &#x3C;TheHeader />
+    &#x3C;Nuxt />
+    &#x3C;LazyTheFooter />
+  &#x3C;/div>
+&#x3C;/template></code></pre>
+      <p>En utilisant le préfixe <code>Lazy</code>, le chargement du composant est différé en attendant le moment où il devient réellement nécessaire. C'est principalement utilisé pour optimiser la taille du bundle JavaScript.</p>
+      <pre class="language-html{}[pages/index.vue]"><code class="language-html{}[pages/index.vue]">&#x3C;template>
+  &#x3C;div>
+    &#x3C;h1>Mountains&#x3C;/h1>
+    &#x3C;LazyMountainsList v-if="show" />
+    &#x3C;button v-if="!show" @click="show = true">Show List&#x3C;/button>
+  &#x3C;/div>
+&#x3C;/template>
+
+&#x3C;script>
+export default {
+  data() {
+    return {
+      show: false
+    }
+  }
+}
+&#x3C;/script></code></pre>
+      <p>
+        :modal{src="img" alt="imgAlt"}
+        <span style="float: footnote;"><a href="../index.html#toc">Go to TOC</a></span>
+      </p>
+    </section>
+  </body>
+</html>

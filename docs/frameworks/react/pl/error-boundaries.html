@@ -1,0 +1,139 @@
+<!doctype html>
+<html lang="pl">
+  <head>
+    <meta charset="utf-8">
+    <title>Granice błędów</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="https://raw.githubusercontent.com/shinokada/prism-coy-theme/main/theme_common.css">
+  </head>
+  <body>
+    <section id="granice-błędów" class="level1">
+      <h1>Granice błędów</h1>
+      <p>W przeszłości błędy javascriptowe wewnątrz komponentów uszkadzały wewnętrzny stan Reacta i <a href="https://github.com/facebook/react/issues/4026">wywoływały</a> <a href="https://github.com/facebook/react/issues/6895">tajemnicze</a> <a href="https://github.com/facebook/react/issues/8579">błędy</a> w kolejnych renderowaniach. Były one następstwem wcześniejszego błędu w kodzie aplikacji, jednakże React nie dostarczał żadnego rozwiązania pozwalającego na właściwe ich obsłużenie wewnątrz komponentów oraz nie potrafił odtworzyć aplikacji po ich wystąpieniu.</p>
+      <section id="introducing-error-boundaries" class="level2">
+        <h2>Przedstawiamy granice błędów</h2>
+        <p>Błąd w kodzie JavaScript, występujący w jednej z części interfejsu użytkownika (UI), nie powinien psuć całej aplikacji. Aby rozwiązać ten problem, w Reakcie 16 wprowadziliśmy koncepcję granic błędów (ang. <em>error boundary</em>).</p>
+        <p>Granice błędów to komponenty reactowe, które <strong>przechwytują błędy javascriptowe występujące gdziekolwiek wewnątrz drzewa komponentów ich potomków, a następnie logują je i wyświetlają zastępczy interfejs UI</strong>, zamiast pokazywać ten niepoprawnie działający. Granice błędów przechwytują błędy występujące podczas renderowania, w metodach cyklu życia komponentów, a także w konstruktorach całego podrzędnego im drzewa komponentów.</p>
+        <blockquote>
+          <p>Uwaga</p>
+          <p>Granice błędów <strong>nie obsługują</strong> błędów w:</p>
+          <ul>
+            <li>Procedurach obsługi zdarzeń (ang. event handlers) (<a href="#how-about-event-handlers">informacje</a>)</li>
+            <li>Asynchronicznym kodzie (np. w metodach: <code>setTimeout</code> lub w funkcjach zwrotnych <code>requestAnimationFrame</code>)</li>
+            <li>Komponentach renderowanych po stronie serwera</li>
+            <li>Błędach rzuconych w samych granicach błędów (a nie w ich podrzędnych komponentach)</li>
+          </ul>
+        </blockquote>
+        <p>Aby komponent klasowy stał się granicą błędu, musi definiować jedną lub obie metody cyklu życia: <a href="./react-component.html#static-getderivedstatefromerror"><code>static getDerivedStateFromError()</code></a> i/lub <a href="./react-component.html#componentdidcatch"><code>componentDidCatch()</code></a>. Należy używać <code>static getDerivedStateFromError()</code> do wyrenderowania zastępczego UI po rzuceniu błędu, a <code>componentDidCatch()</code>, aby zalogować informacje o błędzie.</p>
+        <pre class="language-js{7-10,12-15,18-21}"><code class="language-js{7-10,12-15,18-21}">class ErrorBoundary extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = { hasError: false };
+  }
+
+  static getDerivedStateFromError(error) {
+    // Zaktualizuj stan, aby następny render pokazał zastępcze UI.
+    return { hasError: true };
+  }
+
+  componentDidCatch(error, errorInfo) {
+    // Możesz także zalogować błąd do zewnętrznego serwisu raportowania błędów
+    logErrorToMyService(error, errorInfo);
+  }
+
+  render() {
+    if (this.state.hasError) {
+      // Możesz wyrenderować dowolny interfejs zastępczy.
+      return &#x3C;h1>Something went wrong.&#x3C;/h1>;
+    }
+
+    return this.props.children; 
+  }
+}</code></pre>
+        <p>Po zdefiniowaniu, granicy błędu można używać jak normalnego komponentu:</p>
+        <pre class="language-js"><code class="language-js"><span class="token operator">&#x3C;</span><span class="token maybe-class-name">ErrorBoundary</span><span class="token operator">></span>
+  <span class="token operator">&#x3C;</span><span class="token maybe-class-name">MyWidget</span> <span class="token operator">/</span><span class="token operator">></span>
+<span class="token operator">&#x3C;</span><span class="token operator">/</span><span class="token maybe-class-name">ErrorBoundary</span><span class="token operator">></span></code></pre>
+        <p>Granice błędów działają jak bloki <code>catch {}</code> w JavaScript, tyle że dla komponentów. Można je zdefiniować tylko w komponentach klasowych. W praktyce, w większości przypadków wystarczy zdefiniować jeden komponent granicy błędu i używać go w całej aplikacji.</p>
+        <p>Należy pamiętać, że <strong>granice błędów wyłapują błędy w komponentach potomnych</strong>. Nie są one jednak w stanie obsłużyć własnych błędów. W takim przypadku, jeżeli granica błędu nie będzie w stanie wyświetlić zastępczego UI, błąd zostanie przekazany do kolejnej najbliższej granicy błędu powyżej w strukturze komponentów. Jest to zachowanie podobne do tego znanego z javascriptowych bloków <code>catch {}</code>.</p>
+      </section>
+      <section id="live-demo" class="level2">
+        <h2>Demo</h2>
+        <p><a href="https://codepen.io/gaearon/pen/wqvxGa?editors=0010">Przykład tworzenia i użycia granicy błędów</a>.</p>
+      </section>
+      <section id="where-to-place-error-boundaries" class="level2">
+        <h2>Gdzie umiejscowić granice błędów</h2>
+        <p>Poziom granularności granic błędów zależy wyłącznie od ciebie. Możesz opakować tylko główny komponent aplikacji i wyświetlać tekst "Coś poszło nie tak", jak to zwykle robi się we frameworkach serwerowych. Możesz też otoczyć każdy z widgetów aplikacji osobną granicą błędów, aby błędy w ich wnętrzu nie zabijały całej aplikacji.</p>
+      </section>
+      <section id="new-behavior-for-uncaught-errors" class="level2">
+        <h2>Nowe zachowanie nieobsłużonych błędów</h2>
+        <p>Wprowadzenie granic błędów ma ważne następstwo. <strong>Od Reacta w wersji 16, błędy, które nie zostały obsłużone za pomocą granicy błędów, spowodują odmontowanie całego drzewa komponentów.</strong></p>
+        <p>Przedyskutowaliśmy tę zmianę i z naszego doświadczenia wynika, że lepiej jest usunąć całe drzewo komponentów niż wyświetlać zepsute fragmenty UI. Na przykład, w produkcie takim jak Messenger pozostawienie wyświetlonego zepsutego kawałka UI może sprawić, że ktoś nieświadomie wyśle wiadomość do innej osoby. Również w aplikacjach finansowych wyświetlanie złego stanu konta jest gorszą sytuacją niż nie wyświetlenie niczego.</p>
+        <p>Ta zmiana oznacza, że wraz z migracją do nowej wersji Reacta odkryte zostaną błędy w aplikacjach, które do tej pory nie zostały zauważone. Dodanie granic błędów zapewni lepsze doświadczenie dla użytkownika, gdy coś pójdzie nie tak.</p>
+        <p>Przykładowo, Facebook Messenger opakowuje w osobne granice błędów następujące fragmenty aplikacji: zawartość paska bocznego, panel z informacjami o konwersacji, listę konwersacji i pole tekstowe na wiadomość. Jeżeli jeden z tych elementów zadziała nieprawidłowo, reszta pozostanie interaktywa i działająca.</p>
+        <p>Zachęcamy również do używania (lub zbudowania własnego) narzędzia do raportowania błędów, dzięki czemu będzie możliwe poznanie nieobsłużonych błędów występujących w środowisku produkcyjnym.</p>
+      </section>
+      <section id="component-stack-traces" class="level2">
+        <h2>Ślad stosu komponentów</h2>
+        <p>React 16, w środowisku deweloperskim, wyświetla w konsoli wszystkie błędy złapane podczas renderowania, nawet jeżeli aplikacja przypadkowo je przejmie. Oprócz wiadomości błędu i javascriptowego stosu, dostępny jest również stos komponentów. Dzięki temu wiadomo, gdzie dokładnie w drzewie komponentów wystąpił błąd:</p>
+        <img src="./docs/error-boundaries-stack-trace.png" style="max-width:100%" alt="Błąd złapany w komponencie będącym granicą błędów">
+        <p>W drzewie komponentów widoczne są również numery linii i nazwy plików. Ten mechanizm domyślnie działa w aplikacjach stworzonych przy użyciu <a href="https://github.com/facebookincubator/create-react-app">Create React App</a>:</p>
+        <img src="./docs/error-boundaries-stack-trace-line-numbers.png" style="max-width:100%" alt="Błąd złapany w komponencie będącym granicą błędów wraz z numerami linii">
+        <p>Jeżeli nie używasz Create React App, możesz ręcznie dodać <a href="https://www.npmjs.com/package/@babel/plugin-transform-react-jsx-source">ten plugin</a> do swojej konfiguracji Babela. Został on stworzony do używania tylko podczas fazy deweloperskiej i <strong>powinien zostać wyłączony w środowisku produkcyjnym</strong></p>
+        <blockquote>
+          <p>Uwaga</p>
+          <p>Nazwy komponentów wyświetlane w śladzie stosu zależą od własności <a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Function/name"><code>Function.name</code></a>. Jeżeli obsługujesz starsze przeglądarki, które nie dostarczają jej natywnie (np. IE 11), możesz dodać łatkę taką jak <a href="https://github.com/JamesMGreene/Function.name"><code>function.name-polyfill</code></a>. Alternatywą jest zadeklarowanie wprost <a href="./react-component.html#displayname"><code>displayName</code></a> we wszystkich komponentach.</p>
+        </blockquote>
+      </section>
+      <section id="how-about-trycatch" class="level2">
+        <h2>A co z try/catch?</h2>
+        <p><code>try</code> / <code>catch</code> jest świetnym rozwiązaniem, ale działa tylko dla imperatywnego kodu:</p>
+        <pre class="language-js"><code class="language-js"><span class="token keyword control-flow">try</span> <span class="token punctuation">{</span>
+  <span class="token function">showButton</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span> <span class="token keyword control-flow">catch</span> <span class="token punctuation">(</span>error<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  <span class="token comment">// ...</span>
+<span class="token punctuation">}</span></code></pre>
+        <p>Natomiast komponenty reactowe są deklaratywne i określają, <em>co</em> powinno zostać wyrenderowane:</p>
+        <pre class="language-js"><code class="language-js"><span class="token operator">&#x3C;</span><span class="token maybe-class-name">Button</span> <span class="token operator">/</span><span class="token operator">></span></code></pre>
+        <p>Granice błędów zachowują deklaratywną naturę Reacta. Na przykład, jeżeli w metodzie <code>componentDidUpdate</code> wystąpi błąd podczas aktualizacji stanu, aplikacja poprawnie przekaże błąd do najbliższej granicy błędów.</p>
+      </section>
+      <section id="how-about-event-handlers" class="level2">
+        <h2>A co z procedurami obsługi zdarzeń?</h2>
+        <p>Granice błędów nie obsługują błędów z procedur obsługi zdarzeń.</p>
+        <p>React nie potrzebuje granic błędów do przywrócenia aplikacji po błędzie powstałych w procedurze obsługi zdarzeń. W przeciwieństwie do metod cyklu życia komponentu lub metody renderującej, procedury obsługi zdarzeń nie są wywoływane w trakcie renderowania. Dzięki temu nawet w przypadku błędu React wie, co wyświetlić na ekranie.</p>
+        <p>Aby obsłużyć błąd w procedurze obsługi zdarzenia, należy użyć javascriptowego <code>try</code> / <code>catch</code>:</p>
+        <pre class="language-js{9-13,17-20}"><code class="language-js{9-13,17-20}">class MyComponent extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = { error: null };
+    this.handleClick = this.handleClick.bind(this);
+  }
+
+  handleClick() {
+    try {
+      // Kod, który rzuci wyjątek
+    } catch (error) {
+      this.setState({ error });
+    }
+  }
+
+  render() {
+    if (this.state.error) {
+      return &#x3C;h1>Caught an error.&#x3C;/h1>
+    }
+    return &#x3C;button onClick={this.handleClick}>Click Me&#x3C;/button>
+  }
+}</code></pre>
+        <p>Powyższy przykład prezentuje normalne zachowanie JavaScriptu i nie używa granic błędów.</p>
+      </section>
+      <section id="naming-changes-from-react-15" class="level2">
+        <h2>Zmiany nazewnictwa od Reacta w wersji 15</h2>
+        <p>React 15 zawierał bardzo okrojoną obsługę granic błędów za pomocą metody o nazwie <code>unstable_handleError</code>. Ta metoda nie jest już obsługiwana i należy zmienić jej nazwę na <code>componentDidCatch</code> począwszy od pierwszych beta wersji Reacta 16.</p>
+        <p>
+          Ze względu na tę zmianę stworzyliśmy <a href="https://github.com/reactjs/react-codemod#error-boundaries">codemod</a>, który automatycznie przekształci twój kod.
+          <span style="float: footnote;"><a href="./index.html#toc">Go to TOC</a></span>
+        </p>
+      </section>
+    </section>
+  </body>
+</html>

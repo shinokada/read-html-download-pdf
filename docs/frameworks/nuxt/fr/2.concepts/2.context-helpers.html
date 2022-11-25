@@ -1,0 +1,193 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="utf-8">
+    <title>Helpers et Contexte</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="Le contexte fournit des informations *additionnelles* et souvent optionnelles de la requête envoyée à l&#x27;application.">
+    <meta name="category" content="concepts">
+    <meta name="csb_link_context" content="https://codesandbox.io/embed/github/nuxt-academy/guides-examples/tree/master/02_concepts/02_context_helpers-context?fontsize=14&#x26;hidenavigation=1&#x26;theme=dark">
+    <meta name="csb_link_helpers" content="https://codesandbox.io/embed/github/nuxt-academy/guides-examples/tree/master/02_concepts/02_context_helpers-helpers?fontsize=14&#x26;hidenavigation=1&#x26;theme=dark">
+    <link rel="stylesheet" href="https://raw.githubusercontent.com/shinokada/prism-coy-theme/main/theme_common.css">
+  </head>
+  <body>
+    <section id="helpers-et-contexte" class="level1">
+      <h1>Helpers et Contexte</h1>
+      <p>Le contexte fournit des informations <em>additionnelles</em> et souvent optionnelles de la requête envoyée à l'application.</p>
+      <hr>
+      <figure>
+        <img src="../docs/context.svg" alt="Nuxt context keys">
+        <figcaption aria-hidden="true">Nuxt context keys</figcaption>
+      </figure>
+      <p>L'objet <code>context</code> est disponible dans des fonctions spécifiques de Nuxt comme <a href="./features/data-fetching#async-data">asyncData</a>, <a href="./directory-structure/plugins">plugins</a>, <a href="./directory-structure/middleware">middleware</a> et <a href="./directory-structure/store#the-nuxtserverinit-action">nuxtServerInit</a>. Le contexte fournit des informations <em>additionnelles</em> et souvent optionnelles de la requête envoyée à l'application.</p>
+      <p>Tout d'abord, le contexte est utilisé pour permettre un accès aux autres parties d'une application Nuxt, comme par exemple un store Vuex ou l'instance <code>connect</code> sous-jacente. Ainsi, nous avons les objets <code>req</code> et <code>res</code> disponibles dans le contexte du côté serveur et le <code>store</code> de toujours disponible. Avec le temps, le contexte fut étendu avec plein d'autres variables bien pratiques et de raccourcis. Ainsi, nous avons accès au fonctionnalités du HMR en mode <code>development</code>, la <code>route</code> actuelle, les <code>params</code> de la page, la <code>query</code> (URL), ainsi que la possibilité d'avoir accès à des variables d'environment à travers le contexte. En plus de cela, les modules de fonctions et les helpers peuvent être exposés à travers le contexte pour être disponibles sur les deux - côté client et serveur.</p>
+      <p><strong>Toutes les propriétés du contexte qui sont présents par défaut</strong></p>
+      <pre class="language-js"><code class="language-js"><span class="token keyword">function</span> <span class="token punctuation">(</span><span class="token parameter">context</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  <span class="token comment">// toujours disponibles</span>
+  <span class="token keyword">const</span> <span class="token punctuation">{</span>
+    app<span class="token punctuation">,</span>
+    store<span class="token punctuation">,</span>
+    route<span class="token punctuation">,</span>
+    params<span class="token punctuation">,</span>
+    query<span class="token punctuation">,</span>
+    env<span class="token punctuation">,</span>
+    isDev<span class="token punctuation">,</span>
+    isHMR<span class="token punctuation">,</span>
+    redirect<span class="token punctuation">,</span>
+    error<span class="token punctuation">,</span>
+   $config
+  <span class="token punctuation">}</span> <span class="token operator">=</span> context
+
+  <span class="token comment">// disponible uniquement côté serveur</span>
+  <span class="token keyword control-flow">if</span> <span class="token punctuation">(</span>process<span class="token punctuation">.</span><span class="token property-access">server</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token keyword">const</span> <span class="token punctuation">{</span> req<span class="token punctuation">,</span> res<span class="token punctuation">,</span> beforeNuxtRender <span class="token punctuation">}</span> <span class="token operator">=</span> context
+  <span class="token punctuation">}</span>
+
+  <span class="token comment">// disponible uniquement côté client</span>
+  <span class="token keyword control-flow">if</span> <span class="token punctuation">(</span>process<span class="token punctuation">.</span><span class="token property-access">client</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token keyword">const</span> <span class="token punctuation">{</span> <span class="token keyword module">from</span><span class="token punctuation">,</span> nuxtState <span class="token punctuation">}</span> <span class="token operator">=</span> context
+  <span class="token punctuation">}</span>
+<span class="token punctuation">}</span></code></pre>
+      <section id="warning" class="level4">
+        <h4>Warning</h4>
+        <p>Le <em>context</em> dont nous parlons ici ne doit pas être confondu avec l'objet <code>context</code> disponible dans les <a href="https://vuex.vuejs.org/guide/actions.html">Actions Vuex</a> ou celui disponible dans la fonction <code>build.extend</code> dans notre <code>nuxt.config.js</code>. Ils n'ont absolument aucun rapport entre eux !</p>
+        <p>Découvrez davantage de propriétés disponibles dans le contexte dans le <a href="./internals-glossary/context">Glossaire des propriétés internes</a></p>
+      </section>
+      <section id="exemples" class="level2">
+        <h2>Exemples</h2>
+        <section id="utiliser-les-paramètres-de-la-page-pour-notre-requête-api" class="level3">
+          <h3>Utiliser les paramètres de la page pour notre requête API</h3>
+          <p>Le contexte expose directement tous les paramètres dynamiques possibles de la route via <code>context.params</code>. Dans l'exemple suivant, on appelle une API grâce au module <code>nuxt/http</code> en utilisant un paramètre dynamique de la page dans l'URL. Les modules tels que <a href="https://http.nuxtjs.org/">nuxt/http</a> peuvent exposer leurs propres fonctions qui sont par la suite disponibles à travers l'objet <code>context.app</code>.</p>
+          <p>De plus, nous allons entourer l'appel d'API d'une instruction <code>try/catch</code> pour gérer le cas d'erreurs potentielles. Avec la fonction <code>context.error</code>, nous pouvons directement afficher la page d'erreur de Nuxt et lui passer l'erreur survenue.</p>
+          <pre class="language-js{}[pages/posts/_id.vue]"><code class="language-js{}[pages/posts/_id.vue]">export default {
+  async asyncData(context) {
+    const id = context.params.id
+    try {
+      // ici, on utilise le module nuxtjs/http disponible via context.app
+      const post = await context.app.$http.$get(
+        `https://api.nuxtjs.dev/posts/${id}`
+      )
+      return { post }
+    } catch (error) {
+      context.error(error) // affiche la page d'erreur de nuxt avec l'erreur correspondante
+    }
+  }
+}</code></pre>
+          <p>Grâce à l'<a href="https://hacks.mozilla.org/2015/05/es6-in-depth-destructuring/">ES6</a>, on peut utiliser la syntaxe pour déstructurer l'objet <code>context</code>. On peut passer les objets auxquels nous voulons avoir accès et ensuite les utiliser dans notre code sans même utiliser le mot <code>context</code>.</p>
+          <pre class="language-js{}[pages/posts/_id.vue]"><code class="language-js{}[pages/posts/_id.vue]">export default {
+  async asyncData({ params, $http, error }) {
+    const id = params.id
+
+    try {
+      // ici on utilise le module nuxtjs/http depuis le contexte
+      const post = await $http.$get(`https://api.nuxtjs.dev/posts/${id}`)
+      return { post }
+    } catch (error) {
+      error(error) // affiche la page d'erreur de nuxt avec l'erreur correspondante
+    }
+  }
+}</code></pre>
+          <p>Si nous préférons utiliser les paramètres de la requête, nous pouvons alors utiliser <code>context.query.id</code>.</p>
+        </section>
+        <section id="rediriger-les-utilisateurs-et-accéder-au-store" class="level3">
+          <h3>Rediriger les utilisateurs et accéder au store</h3>
+          <p>Accéder au store Vuex (quand nous l'avons configuré dans le répertoire <code>store</code>) est aussi possible via le contexte. Cela fournit un objet <code>store</code> qui est équivalent à <code>this.$store</code> dans les composants Vue. De plus, on peut utiliser la méthode <code>redirect</code>, un helper disponible via le contexte, pour rediriger l'utilisateur dans le cas où le state <code>authenticated</code> est <a href="https://developer.mozilla.org/fr/docs/Glossary/Falsy">falsy</a>.</p>
+          <pre class="language-js"><code class="language-js"><span class="token keyword module">export</span> <span class="token keyword module">default</span> <span class="token punctuation">{</span>
+  <span class="token function">middleware</span><span class="token punctuation">(</span><span class="token parameter"><span class="token punctuation">{</span> store<span class="token punctuation">,</span> redirect <span class="token punctuation">}</span></span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token comment">// on déstructure les objets avec leurs propriétés</span>
+    <span class="token keyword">const</span> isAuthenticated <span class="token operator">=</span> store<span class="token punctuation">.</span><span class="token property-access">state</span><span class="token punctuation">.</span><span class="token property-access">authenticated</span>
+    <span class="token keyword control-flow">if</span> <span class="token punctuation">(</span><span class="token operator">!</span>isAuthenticated<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+      <span class="token keyword control-flow">return</span> <span class="token function">redirect</span><span class="token punctuation">(</span><span class="token string">'/login'</span><span class="token punctuation">)</span>
+    <span class="token punctuation">}</span>
+  <span class="token punctuation">}</span>
+<span class="token punctuation">}</span></code></pre>
+        </section>
+      </section>
+      <section id="les-helpers" class="level2">
+        <h2>Les helpers</h2>
+        <p>En plus des raccourcis dans le contexte, il y a aussi de petits helpers présents dans notre application Nuxt.</p>
+      </section>
+      <section id="nuxt-le-helper-nuxt" class="level2">
+        <h2><code>$nuxt</code>: Le helper Nuxt</h2>
+        <p>Le helper <code>$nuxt</code> est prévu pour améliorer l'expérience utilisateur et peut être une trappe de secours dans certains cas. Il est accessible via <code>this.$nuxt</code> dans les composants Vue et via <code>window.$nuxt</code> du côté client.</p>
+        <section id="vérification-de-la-connexion" class="level3">
+          <h3>Vérification de la connexion</h3>
+          <p>Le helper <code>$nuxt</code> fournit un moyen rapide pour voir si l'utilisateur a de la connexion ou pas: nous avons accès aux booléens <code>isOffline</code> et <code>isOnline</code>. On peut utiliser ceux-ci pour montrer un message dès que l'utilisateur est hors ligne (par exemple).</p>
+          <pre class="language-html{}[layouts/default.vue]"><code class="language-html{}[layouts/default.vue]">&#x3C;template>
+  &#x3C;div>
+    &#x3C;div v-if="$nuxt.isOffline">Vous êtes hors-ligne&#x3C;/div>
+    &#x3C;Nuxt />
+  &#x3C;/div>
+&#x3C;/template></code></pre>
+        </section>
+        <section id="accéder-à-linstance-racine" class="level3">
+          <h3>Accéder à l'instance racine</h3>
+          <p>Au delà de l'aspect DX/UX, le helper <code>$nuxt</code> fournit aussi un raccourci à l'instance racine de notre application à partir de n'importe quel composant. Mais ce n'est pas tout - nous pouvons aussi avoir accès au helper <code>$nuxt</code> via <code>window.$nuxt</code>, ce qui peut être pratique comme solution de secours pour avoir accès à des méthodes de module comme <code>$axios</code> depuis l'extérieur de nos composants Vue. Nous pouvons utiliser cela judicieusement et seulement en <strong>dernier recours</strong>.</p>
+        </section>
+        <section id="actualiser-la-data-de-la-page" class="level3">
+          <h3>Actualiser la data de la page</h3>
+          <p>Quand nous voulons actualiser la page actuelle pour l'utilisateur, nous ne voulons pas recharger la page intégralement et entraîner une nouvelle requête au serveur ainsi qu'une nouvelle initialisation de l'intégralité de notre application Nuxt. À la place, on préférera souvent juste actualiser la data, que l'on peut récupérer avec <code>asyncData</code> ou <code>fetch</code>.</p>
+          <p>Nous pouvons faire cela en utilisant <code>this.$nuxt.refresh()</code> !</p>
+          <pre class="language-html"><code class="language-html"><span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;</span>template</span><span class="token punctuation">></span></span>
+  <span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;</span>div</span><span class="token punctuation">></span></span>
+    <span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;</span>div</span><span class="token punctuation">></span></span>{{ content }}<span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;/</span>div</span><span class="token punctuation">></span></span>
+    <span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;</span>button</span> <span class="token attr-name">@click</span><span class="token attr-value"><span class="token punctuation attr-equals">=</span><span class="token punctuation">"</span>refresh<span class="token punctuation">"</span></span><span class="token punctuation">></span></span>Actualiser<span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;/</span>button</span><span class="token punctuation">></span></span>
+  <span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;/</span>div</span><span class="token punctuation">></span></span>
+<span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;/</span>template</span><span class="token punctuation">></span></span>
+
+<span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;</span>script</span><span class="token punctuation">></span></span><span class="token script"><span class="token language-javascript">
+  <span class="token keyword module">export</span> <span class="token keyword module">default</span> <span class="token punctuation">{</span>
+    <span class="token function">asyncData</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+      <span class="token keyword control-flow">return</span> <span class="token punctuation">{</span> <span class="token literal-property property">content</span><span class="token operator">:</span> <span class="token string">'Créé le: '</span> <span class="token operator">+</span> <span class="token keyword">new</span> <span class="token class-name">Date</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">}</span>
+    <span class="token punctuation">}</span><span class="token punctuation">,</span>
+    <span class="token literal-property property">methods</span><span class="token operator">:</span> <span class="token punctuation">{</span>
+      <span class="token function">refresh</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token keyword">this</span><span class="token punctuation">.</span><span class="token property-access">$nuxt</span><span class="token punctuation">.</span><span class="token method function property-access">refresh</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+      <span class="token punctuation">}</span>
+    <span class="token punctuation">}</span>
+  <span class="token punctuation">}</span>
+</span></span><span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;/</span>script</span><span class="token punctuation">></span></span></code></pre>
+        </section>
+        <section id="contrôler-la-barre-de-progression" class="level3">
+          <h3>Contrôler la barre de progression</h3>
+          <p>Avec <code>$nuxt</code>, nous pouvons aussi contrôler la barre de progression de manière programmatique via <code>this.$nuxt.$loading</code>.</p>
+          <pre class="language-js"><code class="language-js"><span class="token keyword module">export</span> <span class="token keyword module">default</span> <span class="token punctuation">{</span>
+  <span class="token function">mounted</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token keyword">this</span><span class="token punctuation">.</span><span class="token method function property-access">$nextTick</span><span class="token punctuation">(</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token arrow operator">=></span> <span class="token punctuation">{</span>
+      <span class="token keyword">this</span><span class="token punctuation">.</span><span class="token property-access">$nuxt</span><span class="token punctuation">.</span><span class="token property-access">$loading</span><span class="token punctuation">.</span><span class="token method function property-access">start</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+      <span class="token function">setTimeout</span><span class="token punctuation">(</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token arrow operator">=></span> <span class="token keyword">this</span><span class="token punctuation">.</span><span class="token property-access">$nuxt</span><span class="token punctuation">.</span><span class="token property-access">$loading</span><span class="token punctuation">.</span><span class="token method function property-access">finish</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">,</span> <span class="token number">500</span><span class="token punctuation">)</span>
+    <span class="token punctuation">}</span><span class="token punctuation">)</span>
+  <span class="token punctuation">}</span>
+<span class="token punctuation">}</span></code></pre>
+          <p>Plus d'informations sont disponibles dans le <a href="./features/loading">chapitre sur le chargement</a></p>
+        </section>
+      </section>
+      <section id="le-helper-onnuxtready" class="level2">
+        <h2>Le helper onNuxtReady</h2>
+        <p>Si nous voulons exécuter certains scripts <em>après</em> que notre application Nuxt soit chargée et prête, nous pouvons utiliser la fonction <code>window.onNuxtReady</code>. Cela peut être utile si nous souhaitons exécuter une fonction côté client sans augmenter le temps à l'interactivité (<a href="https://web.dev/tti/">TTI</a>).</p>
+        <pre class="language-js"><code class="language-js"><span class="token dom variable">window</span><span class="token punctuation">.</span><span class="token method function property-access">onNuxtReady</span><span class="token punctuation">(</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token arrow operator">=></span> <span class="token punctuation">{</span>
+  <span class="token console class-name">console</span><span class="token punctuation">.</span><span class="token method function property-access">log</span><span class="token punctuation">(</span><span class="token string">'Nuxt est monté et prêt'</span><span class="token punctuation">)</span>
+<span class="token punctuation">}</span><span class="token punctuation">)</span></code></pre>
+      </section>
+      <section id="les-helpers-de-process" class="level2">
+        <h2>Les helpers de Process</h2>
+        <p>Nuxt injecte trois valeurs booléennes dans l'objet global <code>process</code>, ce dernier va permettre de déterminer si l'app a été render côté serveur ou intégralement côté client, ainsi que vérifier la génération du site en version statique. Ces helpers sont disponibles à travers notre application et sont communément utilisés dans un bloc <code>asyncData</code>.</p>
+        <pre class="language-html{}[pages/about.vue]"><code class="language-html{}[pages/about.vue]">&#x3C;template>
+  &#x3C;h1>Je suis render côté {{ renderedOn }}&#x3C;/h1>
+&#x3C;/template>
+
+&#x3C;script>
+  export default {
+    asyncData() {
+      return { renderedOn: process.client ? 'client' : 'serveur' }
+    }
+  }
+&#x3C;/script></code></pre>
+        <p>
+          Dans l'exemple, <code>renderedOn</code> aura la valeur <code>'serveur'</code> dans le cas d'un render côté serveur quand un utilisateur arrivera sur la page directement. Quand l'utilisateur voudra naviguer jusqu'à la page à partir d'un autre endroit de l'application, par exemple en cliquant sur un <code>&#x3C;NuxtLink></code>, la valeur sera à <code>'client'</code>.
+          <span style="float: footnote;"><a href="../index.html#toc">Go to TOC</a></span>
+        </p>
+      </section>
+    </section>
+  </body>
+</html>

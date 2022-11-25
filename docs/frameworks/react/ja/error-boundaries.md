@@ -89,11 +89,11 @@ error boundary の粒度はあなた次第です。サーバサイドフレー�
 
 React 16 は開発時に、レンダー中に起こった全てのエラーをコンソールに出力します（アプリケーションが誤ってエラーを握り潰してしまっても出力します）。そこではエラーメッセージと JavaScript のスタックに加えて、コンポーネントのスタックトレースも提供します。これにより、コンポーネントツリーのどこでエラーが発生したのかが正確にわかります：
 
-<img src="../images/docs/error-boundaries-stack-trace.png" style="max-width:100%" alt="Error caught by Error Boundary component">
+<img src="./docs/error-boundaries-stack-trace.png" style="max-width:100%" alt="Error caught by Error Boundary component">
 
 コンポーネントスタックトレースにはファイル名と行番号も出力できます。[Create React App](https://github.com/facebookincubator/create-react-app) のプロジェクトではこれがデフォルトで有効になっています：
 
-<img src="../images/docs/error-boundaries-stack-trace-line-numbers.png" style="max-width:100%" alt="Error caught by Error Boundary component with line numbers">
+<img src="./docs/error-boundaries-stack-trace-line-numbers.png" style="max-width:100%" alt="Error caught by Error Boundary component with line numbers">
 
 Create React App を使用しない場合は、[このプラグイン](https://www.npmjs.com/package/@babel/plugin-transform-react-jsx-source)を手動で Babel の設定に追加してください。ただし、この機能は開発専用であり、**本番では必ず無効化しなければならない**ことに注意してください。
 

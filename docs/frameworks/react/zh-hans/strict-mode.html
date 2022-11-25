@@ -1,0 +1,174 @@
+<!doctype html>
+<html lang="zh-hans">
+  <head>
+    <meta charset="utf-8">
+    <title>严格模式</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="https://raw.githubusercontent.com/shinokada/prism-coy-theme/main/theme_common.css">
+  </head>
+  <body>
+    <section id="严格模式" class="level1">
+      <h1>严格模式</h1>
+      <p><code>StrictMode</code> 是一个用来突出显示应用程序中潜在问题的工具。与 <code>Fragment</code> 一样，<code>StrictMode</code> 不会渲染任何可见的 UI。它为其后代元素触发额外的检查和警告。</p>
+      <blockquote>
+        <p>注意：</p>
+        <p>严格模式检查仅在开发模式下运行；<em>它们不会影响生产构建</em>。</p>
+      </blockquote>
+      <p>
+        你可以为应用程序的任何部分启用严格模式。例如：
+        <code>embed:strict-mode/enabling-strict-mode.js</code>
+      </p>
+      <p>在上述的示例中，<em>不</em>会对 <code>Header</code> 和 <code>Footer</code> 组件运行严格模式检查。但是，<code>ComponentOne</code> 和 <code>ComponentTwo</code> 以及它们的所有后代元素都将进行检查。</p>
+      <p><code>StrictMode</code> 目前有助于：</p>
+      <ul>
+        <li><a href="#identifying-unsafe-lifecycles">识别不安全的生命周期</a></li>
+        <li><a href="#warning-about-legacy-string-ref-api-usage">关于使用过时字符串 ref API 的警告</a></li>
+        <li><a href="#warning-about-deprecated-finddomnode-usage">关于使用废弃的 findDOMNode 方法的警告</a></li>
+        <li><a href="#detecting-unexpected-side-effects">检测意外的副作用</a></li>
+        <li><a href="#detecting-legacy-context-api">检测过时的 context API</a></li>
+        <li><a href="#ensuring-reusable-state">确保可复用的状态</a></li>
+      </ul>
+      <p>未来的 React 版本将添加更多额外功能。</p>
+      <section id="identifying-unsafe-lifecycles" class="level3">
+        <h3>识别不安全的生命周期</h3>
+        <p>正如<a href="/blog/2018/03/27/update-on-async-rendering.html">这篇博文</a>所述，某些过时的生命周期方法在异步 React 应用程序中使用是不安全的。但是，如果你的应用程序使用了第三方库，很难确保它们不使用这些生命周期方法。幸运的是，严格模式可以帮助解决这个问题！</p>
+        <p>当启用严格模式时，React 会列出使用了不安全生命周期方法的所有 class 组件，并打印一条包含这些组件信息的警告消息，如下所示：</p>
+        <p>
+          <img src="../images/blog/strict-mode-unsafe-lifecycles-warning.png">
+        </p>
+        <p><em>此时</em>解决项目中严格模式所识别出来的问题，会使得在未来的 React 版本中使用 concurrent 渲染变得更容易。</p>
+      </section>
+      <section id="warning-about-legacy-string-ref-api-usage" class="level3">
+        <h3>关于使用过时字符串 ref API 的警告</h3>
+        <p>以前，React 提供了两种方法管理 refs 的方式：已过时的字符串 ref API 的形式及回调函数 API 的形式。尽管字符串 ref API 在两者中使用更方便，但是它有<a href="https://github.com/facebook/react/issues/1373">一些缺点</a>，因此官方推荐采用<a href="./refs-and-the-dom.html#legacy-api-string-refs">回调的方式</a>。</p>
+        <p>
+          React 16.3 新增了第三种选择，它提供了使用字符串 ref 的便利性，并且不存在任何缺点：
+          <code>embed:16-3-release-blog-post/create-ref-example.js</code>
+        </p>
+        <p>由于对象 ref 主要是为了替换字符串 ref 而添加的，因此严格模式现在会警告使用字符串 ref。</p>
+        <blockquote>
+          <p><strong>注意：</strong></p>
+          <p>除了新增加的 <code>createRef</code> API，回调 ref 依旧适用。</p>
+          <p>你无需替换组件中的回调 ref。它们更灵活，因此仍将作为高级功能保留。</p>
+        </blockquote>
+        <p><a href="./refs-and-the-dom.html">在此处了解有关 <code>createRef</code> API 的更多信息</a></p>
+      </section>
+      <section id="warning-about-deprecated-finddomnode-usage" class="level3">
+        <h3>关于使用废弃的 findDOMNode 方法的警告</h3>
+        <p>React 支持用 <code>findDOMNode</code> 来在给定 class 实例的情况下在树中搜索 DOM 节点。通常你不需要这样做，因为你可以<a href="./refs-and-the-dom.html#creating-refs">将 ref 直接绑定到 DOM 节点</a>。</p>
+        <p><code>findDOMNode</code> 也可用于 class 组件，但它违反了抽象原则，它使得父组件需要单独渲染子组件。它会产生重构危险，你不能更改组件的实现细节，因为父组件可能正在访问它的 DOM 节点。<code>findDOMNode</code> 只返回第一个子节点，但是使用 Fragments，组件可以渲染多个 DOM 节点。<code>findDOMNode</code> 是一个只读一次的 API。调用该方法只会返回第一次查询的结果。如果子组件渲染了不同的节点，则无法跟踪此更改。因此，<code>findDOMNode</code> 仅在组件返回单个且不可变的 DOM 节点时才有效。</p>
+        <p>你可以通过将 ref 传递给自定义组件并使用 <a href="./forwarding-refs.html#forwarding-refs-to-dom-components">ref 转发</a>来将其传递给 DOM 节点。</p>
+        <p>你也可以在组件中创建一个 DOM 节点的 wrapper，并将 ref 直接绑定到它。</p>
+        <pre class="language-javascript{4,7}"><code class="language-javascript{4,7}">class MyComponent extends React.Component {
+  constructor(props) {
+    super(props);
+    this.wrapper = React.createRef();
+  }
+  render() {
+    return &#x3C;div ref={this.wrapper}>{this.props.children}&#x3C;/div>;
+  }
+}</code></pre>
+        <blockquote>
+          <p>注意：</p>
+          <p>在 CSS 中，如果你不希望节点成为布局的一部分，则可以使用 <a href="https://developer.mozilla.org/en-US/docs/Web/CSS/display#display_contents"><code>display: contents</code></a> 属性。</p>
+        </blockquote>
+      </section>
+      <section id="detecting-unexpected-side-effects" class="level3">
+        <h3>检测意外的副作用</h3>
+        <p>从概念上讲，React 分两个阶段工作：</p>
+        <ul>
+          <li><strong>渲染</strong> 阶段会确定需要进行哪些更改，比如 DOM。在此阶段，React 调用 <code>render</code>，然后将结果与上次渲染的结果进行比较。</li>
+          <li><strong>提交</strong> 阶段发生在当 React 应用变化时。（对于 React DOM 来说，会发生在 React 插入，更新及删除 DOM 节点的时候。）在此阶段，React 还会调用 <code>componentDidMount</code> 和 <code>componentDidUpdate</code> 之类的生命周期方法。</li>
+        </ul>
+        <p>提交阶段通常会很快，但渲染过程可能很慢。因此，即将推出的 concurrent 模式 (默认情况下未启用) 将渲染工作分解为多个部分，对任务进行暂停和恢复操作以避免阻塞浏览器。这意味着 React 可以在提交之前多次调用渲染阶段生命周期的方法，或者在不提交的情况下调用它们（由于出现错误或更高优先级的任务使其中断）。</p>
+        <p>渲染阶段的生命周期包括以下 class 组件方法：</p>
+        <ul>
+          <li><code>constructor</code></li>
+          <li><code>componentWillMount</code> (or <code>UNSAFE_componentWillMount</code>)</li>
+          <li><code>componentWillReceiveProps</code> (or <code>UNSAFE_componentWillReceiveProps</code>)</li>
+          <li><code>componentWillUpdate</code> (or <code>UNSAFE_componentWillUpdate</code>)</li>
+          <li><code>getDerivedStateFromProps</code></li>
+          <li><code>shouldComponentUpdate</code></li>
+          <li><code>render</code></li>
+          <li><code>setState</code> 更新函数（第一个参数）</li>
+        </ul>
+        <p>因为上述方法可能会被多次调用，所以不要在它们内部编写副作用相关的代码，这点非常重要。忽略此规则可能会导致各种问题的产生，包括内存泄漏和或出现无效的应用程序状态。不幸的是，这些问题很难被发现，因为它们通常具有<a href="https://en.wikipedia.org/wiki/Deterministic_algorithm">非确定性</a>。</p>
+        <p>严格模式不能自动检测到你的副作用，但它可以帮助你发现它们，使它们更具确定性。通过故意重复调用以下函数来实现的该操作：</p>
+        <ul>
+          <li>class 组件的 <code>constructor</code>，<code>render</code> 以及 <code>shouldComponentUpdate</code> 方法</li>
+          <li>class 组件的生命周期方法 <code>getDerivedStateFromProps</code></li>
+          <li>函数组件体</li>
+          <li>状态更新函数 (即 <code>setState</code> 的第一个参数）</li>
+          <li>函数组件通过使用 <code>useState</code>，<code>useMemo</code> 或者 <code>useReducer</code></li>
+        </ul>
+        <blockquote>
+          <p>注意：</p>
+          <p>这仅适用于开发模式。<em>生产模式下生命周期不会被调用两次。</em></p>
+        </blockquote>
+        <p>
+          例如，请考虑以下代码：
+          <code>embed:strict-mode/side-effects-in-constructor.js</code>
+        </p>
+        <p>这段代码看起来似乎没有问题。但是如果 <code>SharedApplicationState.recordEvent</code> 不是<a href="https://en.wikipedia.org/wiki/Idempotence#Computer_science_meaning">幂等</a>的情况下，多次实例化此组件可能会导致应用程序状态无效。这种小 bug 可能在开发过程中不会表现出来，或者说表现出来但并不明显，并因此被忽视。</p>
+        <p>严格模式采用故意重复调用方法（如组件的构造函数）的方式，使得这种 bug 更容易被发现。</p>
+        <blockquote>
+          <p>注意：</p>
+          <p>在 React 17 中，React 会自动修改 console 的方法，例如 <code>console.log()</code>，在第二次调用生命周期函数时，将日志静默。然而，在某些情况下，这可能会导致一些不符合期望的行为发生，此时，<a href="https://github.com/facebook/react/issues/20090#issuecomment-715927125">可以使用替代解决方案</a>。</p>
+          <p>从 React 18 开始，React 不会抑制任何日志。不过，如果你安装了 React Dev Tools，第二次调用的日志会出现被轻微淡化。React DevTools 也提供了一个设置（默认关闭）来完全抑制它们。</p>
+        </blockquote>
+      </section>
+      <section id="detecting-legacy-context-api" class="level3">
+        <h3>检测过时的 context API</h3>
+        <p>过时的 context API 容易出错，将在未来的主要版本中删除。在所有 16.x 版本中它仍然有效，但在严格模式下，将显示以下警告：</p>
+        <p>
+          <img src="../images/blog/warn-legacy-context-in-strict-mode.png">
+        </p>
+        <p>阅读<a href="./context.html">新的 context API 文档</a>以帮助你迁移到新版本。</p>
+      </section>
+      <section id="ensuring-reusable-state" class="level3">
+        <h3>确保可复用的 state</h3>
+        <p>在未来，我们希望增加一个功能，允许 React 在保留 state 的同时对 UI 进行增删。例如，当用户从当前屏幕的标签离开并返回时，React 应该能立即展示之前屏幕的内容。为了做到这一点，React 将支持使用卸载前已有的组件状态重新挂载到树上。</p>
+        <p>该特性会给 React 带来更好的开箱即用性能，但需要组件对多次挂载和销毁的副作用具有弹性。大多数副作用将在不做任何改变的情况下工作，但有些副作用可能会在销毁回调中未正确的清理订阅，或者隐示的认为它们只被挂载或销毁一次。</p>
+        <p>为了帮助解决这些问题，React 18 为严格模式引入了一个全新的仅用于开发环境的检查操作。每当第一次安装组件时，这个新的检查将自动卸载并重新安装每个组件，并在第二次挂载时恢复之前的 state。</p>
+        <p>为了演示你在严格模式下看到的具有这一特性的开发行为，考虑一下当 React 挂载一个新组件时会发生什么？如果没有这个变化，当一个组件挂载时，React 会创建副作用：</p>
+        <pre class="language-text"><code class="language-text">* React mounts the component.
+  * Layout effects are created.
+  * Effects are created.</code></pre>
+        <p>从 React 18 开始的严格模式，每当组件在开发中挂载时，React 会模拟立即卸载和重新挂载组件：</p>
+        <pre class="language-text"><code class="language-text">* React mounts the component.
+    * Layout effects are created.
+    * Effect effects are created.
+* React simulates effects being destroyed on a mounted component.
+    * Layout effects are destroyed.
+    * Effects are destroyed.
+* React simulates effects being re-created on a mounted component.
+    * Layout effects are created
+    * Effect setup code runs</code></pre>
+        <p>在第二次挂载时，React 将恢复第一次装载时的状态。这个功能模拟了用户的行为，比如用户从屏幕上切换标签再回来，确保代码能正确处理状态恢复。</p>
+        <p>当组件卸载时，副作用会如常销毁：</p>
+        <pre class="language-text"><code class="language-text">* React unmounts the component.
+  * Layout effects are destroyed.
+  * Effect effects are destroyed.</code></pre>
+        <p>卸载和重新挂载的函数，包括：</p>
+        <ul>
+          <li><code>componentDidMount</code></li>
+          <li><code>componentWillUnmount</code></li>
+          <li><code>useEffect</code></li>
+          <li><code>useLayoutEffect</code></li>
+          <li><code>useInsertionEffect</code></li>
+        </ul>
+        <blockquote>
+          <p>注意：</p>
+          <p>这只适用于开发模式，<em>生产环境没有变化</em>。</p>
+        </blockquote>
+        <p>如需了解更多常见问题，请参阅：</p>
+        <ul>
+          <li>
+            <a href="https://github.com/reactwg/react-18/discussions/18">如何在 Effects 中支持可复用的 state</a>
+            <span style="float: footnote;"><a href="./index.html#toc">Go to TOC</a></span>
+          </li>
+        </ul>
+      </section>
+    </section>
+  </body>
+</html>

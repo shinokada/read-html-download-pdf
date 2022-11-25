@@ -1,0 +1,366 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="utf-8">
+    <title>État et cycle de vie</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="https://raw.githubusercontent.com/shinokada/prism-coy-theme/main/theme_common.css">
+  </head>
+  <body>
+    <section id="état-et-cycle-de-vie" class="level1">
+      <h1>État et cycle de vie</h1>
+      <p>Cette page présente les concepts d'état local et de cycle de vie dans un composant React. Vous pouvez trouver <a href="./react-component.html">la référence d'API des composants ici</a>.</p>
+      <p>Prenons l'exemple de l'horloge dans <a href="./rendering-elements.html#updating-the-rendered-element">une des sections précédentes</a>. Dans <a href="./rendering-elements.html#rendering-an-element-into-the-dom">Le rendu des éléments</a>, nous avons appris une seule façon de mettre à jour l'interface utilisateur (UI). On appelle <code>ReactDOM.render()</code> pour changer la sortie rendue :</p>
+      <pre class="language-js{8-11}"><code class="language-js{8-11}">function tick() {
+  const element = (
+    &#x3C;div>
+      &#x3C;h1>Bonjour, monde !&#x3C;/h1>
+      &#x3C;h2>Il est {new Date().toLocaleTimeString()}.&#x3C;/h2>
+    &#x3C;/div>
+  );
+  ReactDOM.render(
+    element,
+    document.getElementById('root')
+  );
+}
+
+setInterval(tick, 1000);</code></pre>
+      <p><a href="https://codepen.io/gaearon/pen/gwoJZk?editors=0010"><strong>Essayer sur CodePen</strong></a></p>
+      <p>Dans cette section, nous allons apprendre à faire un composant <code>Clock</code> vraiment réutilisable et isolé. Il mettra en place son propre minuteur et se mettra à jour tout seul à chaque seconde.</p>
+      <p>Nous commençons par isoler l'apparence de l'horloge :</p>
+      <pre class="language-js{3-6,12}"><code class="language-js{3-6,12}">function Clock(props) {
+  return (
+    &#x3C;div>
+      &#x3C;h1>Bonjour, monde !&#x3C;/h1>
+      &#x3C;h2>Il est {props.date.toLocaleTimeString()}.&#x3C;/h2>
+    &#x3C;/div>
+  );
+}
+
+function tick() {
+  ReactDOM.render(
+    &#x3C;Clock date={new Date()} />,
+    document.getElementById('root')
+  );
+}
+
+setInterval(tick, 1000);</code></pre>
+      <p><a href="https://codepen.io/gaearon/pen/dpdoYR?editors=0010"><strong>Essayer sur CodePen</strong></a></p>
+      <p>Cependant, il manque une contrainte cruciale : le fait que la <code>Clock</code> mette en place le minuteur et mette à jour son interface utilisateur devrait être un détail d'implémentation de la <code>Clock</code>.</p>
+      <p>Idéalement, on veut écrire ceci une seule fois et voir la <code>Clock</code> se mettre à jour elle-même :</p>
+      <pre class="language-js{2}"><code class="language-js{2}">ReactDOM.render(
+  &#x3C;Clock />,
+  document.getElementById('root')
+);</code></pre>
+      <p>Pour implémenter ça, on a besoin d'ajouter un « état local » au composant <code>Horloge</code>.</p>
+      <p>L'état local est similaire aux props, mais il est privé et complètement contrôlé par le composant.</p>
+      <section id="converting-a-function-to-a-class" class="level2">
+        <h2>Convertir une fonction en classe</h2>
+        <p>Vous pouvez convertir un composant fonctionnel comme <code>Clock</code> en une classe en cinq étapes :</p>
+        <ol>
+          <li>
+            <p>Créez une <a href="https://developer.mozilla.org/fr/docs/Web/JavaScript/Reference/Classes">classe ES6</a>, avec le même nom, qui étend <code>React.Component</code>.</p>
+          </li>
+          <li>
+            <p>Ajoutez-y une méthode vide appelée <code>render()</code>.</p>
+          </li>
+          <li>
+            <p>Déplacez le corps de la fonction dans la méthode <code>render()</code>.</p>
+          </li>
+          <li>
+            <p>Remplacez <code>props</code> par <code>this.props</code> dans le corps de la méthode <code>render()</code>.</p>
+          </li>
+          <li>
+            <p>Supprimez la déclaration désormais vide de la fonction.</p>
+          </li>
+        </ol>
+        <pre class="language-js"><code class="language-js"><span class="token keyword">class</span> <span class="token class-name">Clock</span> <span class="token keyword">extends</span> <span class="token class-name">React<span class="token punctuation">.</span>Component</span> <span class="token punctuation">{</span>
+  <span class="token function">render</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token keyword control-flow">return</span> <span class="token punctuation">(</span>
+      <span class="token operator">&#x3C;</span>div<span class="token operator">></span>
+        <span class="token operator">&#x3C;</span>h1<span class="token operator">></span><span class="token maybe-class-name">Bonjour</span><span class="token punctuation">,</span> monde <span class="token operator">!</span><span class="token operator">&#x3C;</span><span class="token operator">/</span>h1<span class="token operator">></span>
+        <span class="token operator">&#x3C;</span>h2<span class="token operator">></span><span class="token maybe-class-name">Il</span> est <span class="token punctuation">{</span><span class="token keyword">this</span><span class="token punctuation">.</span><span class="token property-access">props</span><span class="token punctuation">.</span><span class="token property-access">date</span><span class="token punctuation">.</span><span class="token method function property-access">toLocaleTimeString</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">}</span><span class="token punctuation">.</span><span class="token operator">&#x3C;</span><span class="token operator">/</span>h2<span class="token operator">></span>
+      <span class="token operator">&#x3C;</span><span class="token operator">/</span>div<span class="token operator">></span>
+    <span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token punctuation">}</span>
+<span class="token punctuation">}</span></code></pre>
+        <p><a href="https://codepen.io/gaearon/pen/zKRGpo?editors=0010"><strong>Essayer sur CodePen</strong></a></p>
+        <p>Le composant <code>Clock</code> est maintenant défini comme une classe au lieu d'une fonction.</p>
+        <p>La méthode <code>render</code> sera appelée à chaque fois qu'une mise à jour aura lieu, mais tant que l'on exploite le rendu de <code>&#x3C;Clock /></code> dans le même nœud DOM, une seule instance de la classe <code>clock</code> sera utilisée. Cela nous permet d'utiliser des fonctionnalités supplémentaires telles que l'état local et les méthodes de cycle de vie.</p>
+      </section>
+      <section id="adding-local-state-to-a-class" class="level2">
+        <h2>Ajouter un état local à une classe</h2>
+        <p>Nous allons déplacer la <code>date</code> des props vers l'état en trois étapes :</p>
+        <ol>
+          <li>Remplacez <code>this.props.date</code> avec <code>this.state.date</code> dans la méthode <code>render()</code> :</li>
+        </ol>
+        <pre class="language-js{6}"><code class="language-js{6}">class Clock extends React.Component {
+  render() {
+    return (
+      &#x3C;div>
+        &#x3C;h1>Bonjour, monde !&#x3C;/h1>
+        &#x3C;h2>Il est {this.state.date.toLocaleTimeString()}.&#x3C;/h2>
+      &#x3C;/div>
+    );
+  }
+}</code></pre>
+        <ol start="2">
+          <li>Ajoutez <a href="https://developer.mozilla.org/fr/docs/Web/JavaScript/Reference/Classes#Constructeur">un constructeur de classe</a> qui initialise <code>this.state</code>:</li>
+        </ol>
+        <pre class="language-js{4}"><code class="language-js{4}">class Clock extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = {date: new Date()};
+  }
+
+  render() {
+    return (
+      &#x3C;div>
+        &#x3C;h1>Bonjour, monde !&#x3C;/h1>
+        &#x3C;h2>Il est {this.state.date.toLocaleTimeString()}.&#x3C;/h2>
+      &#x3C;/div>
+    );
+  }
+}</code></pre>
+        <p>Notez que l'on passe <code>props</code> au constructeur de base :</p>
+        <pre class="language-js{2}"><code class="language-js{2}">  constructor(props) {
+    super(props);
+    this.state = {date: new Date()};
+  }</code></pre>
+        <p>Les composants à base de classe devraient toujours appeler le constructeur de base avec <code>props</code>.</p>
+        <ol start="3">
+          <li>Supprimez la prop <code>date</code> de l'élément <code>&#x3C;Clock /></code> :</li>
+        </ol>
+        <pre class="language-js{2}"><code class="language-js{2}">ReactDOM.render(
+  &#x3C;Clock />,
+  document.getElementById('root')
+);</code></pre>
+        <p>Nous rajouterons plus tard le code du minuteur dans le composant lui-même.</p>
+        <p>Le résultat ressemble à ceci :</p>
+        <pre class="language-js{2-5,11,18}"><code class="language-js{2-5,11,18}">class Clock extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = {date: new Date()};
+  }
+
+  render() {
+    return (
+      &#x3C;div>
+        &#x3C;h1>Bonjour, monde !&#x3C;/h1>
+        &#x3C;h2>Il est {this.state.date.toLocaleTimeString()}.&#x3C;/h2>
+      &#x3C;/div>
+    );
+  }
+}
+
+ReactDOM.render(
+  &#x3C;Clock />,
+  document.getElementById('root')
+);</code></pre>
+        <p><a href="https://codepen.io/gaearon/pen/KgQpJd?editors=0010"><strong>Essayer sur CodePen</strong></a></p>
+        <p>Ensuite, nous allons faire en sorte que le composant <code>Clock</code> mette en place son propre minuteur et se mette à jour toutes les secondes.</p>
+      </section>
+      <section id="adding-lifecycle-methods-to-a-class" class="level2">
+        <h2>Ajouter des méthodes de cycle de vie à une classe</h2>
+        <p>Dans des applications avec de nombreux composants, il est très important de libérer les ressources utilisées par les composants quand ils sont détruits.</p>
+        <p>Nous voulons <a href="https://developer.mozilla.org/fr/docs/Web/API/WindowTimers/setInterval">mettre en place un minuteur</a> quand une <code>Horloge</code> apparaît dans le DOM pour la première fois. Le terme React « montage » désigne cette phase.</p>
+        <p>Nous voulons également <a href="https://developer.mozilla.org/fr/docs/Web/API/WindowTimers/clearInterval">nettoyer le minuteur</a> quand le DOM produit par l'<code>Horloge</code> est supprimé. En React, on parle de « démontage ».</p>
+        <p>Nous pouvons déclarer des méthodes spéciales sur un composant à base de classe pour exécuter du code quand un composant est monté et démonté :</p>
+        <pre class="language-js{7-9,11-13}"><code class="language-js{7-9,11-13}">class Clock extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = {date: new Date()};
+  }
+
+  componentDidMount() {
+
+  }
+
+  componentWillUnmount() {
+
+  }
+
+  render() {
+    return (
+      &#x3C;div>
+        &#x3C;h1>Bonjour, monde !&#x3C;/h1>
+        &#x3C;h2>Il est {this.state.date.toLocaleTimeString()}.&#x3C;/h2>
+      &#x3C;/div>
+    );
+  }
+}</code></pre>
+        <p>On les appelle des « méthodes de cycle de vie ».</p>
+        <p>La méthode <code>componentDidMount()</code> est exécutée après que la sortie du composant a été injectée dans le DOM. C'est un bon endroit pour mettre en place le minuteur :</p>
+        <pre class="language-js{2-5}"><code class="language-js{2-5}">  componentDidMount() {
+    this.timerID = setInterval(
+      () => this.tick(),
+      1000
+    );
+  }</code></pre>
+        <p>Notez qu’on a enregistré l'ID du minuteur directement sur <code>this</code> (<code>this.timerID</code>).</p>
+        <p>Alors que <code>this.props</code> est mis en place par React lui-même et que <code>this.state</code> a un sens bien spécial, vous pouvez très bien ajouter manuellement d'autres champs sur la classe si vous avez besoin de stocker quelque chose qui ne participe pas au flux de données (comme un ID de minuteur).</p>
+        <p>Nous allons détruire le minuteur dans la méthode de cycle de vie <code>componentWillUnmount()</code> :</p>
+        <pre class="language-js{2}"><code class="language-js{2}">  componentWillUnmount() {
+    clearInterval(this.timerID);
+  }</code></pre>
+        <p>Enfin, nous allons implémenter une méthode appelée <code>tick()</code> que le composant <code>Clock</code> va exécuter toutes les secondes.</p>
+        <p>Elle utilisera <code>this.setState()</code> pour planifier une mise à jour de l'état local du composant :</p>
+        <pre class="language-js{18-22}"><code class="language-js{18-22}">class Clock extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = {date: new Date()};
+  }
+
+  componentDidMount() {
+    this.timerID = setInterval(
+      () => this.tick(),
+      1000
+    );
+  }
+
+  componentWillUnmount() {
+    clearInterval(this.timerID);
+  }
+
+  tick() {
+    this.setState({
+      date: new Date()
+    });
+  }
+
+  render() {
+    return (
+      &#x3C;div>
+        &#x3C;h1>Bonjour, monde !&#x3C;/h1>
+        &#x3C;h2>Il est {this.state.date.toLocaleTimeString()}.&#x3C;/h2>
+      &#x3C;/div>
+    );
+  }
+}
+
+ReactDOM.render(
+  &#x3C;Clock />,
+  document.getElementById('root')
+);</code></pre>
+        <p><a href="https://codepen.io/gaearon/pen/amqdNA?editors=0010"><strong>Essayer sur CodePen</strong></a></p>
+        <p>Maintenant l'horloge se met à jour toutes les secondes.</p>
+        <p>Récapitulons ce qui se passe et l'ordre dans lequel les méthodes sont invoquées :</p>
+        <ol>
+          <li>
+            <p>Quand <code>&#x3C;Clock /></code> est passé à <code>ReactDOM.render()</code>, React appelle le constructeur du composant <code>Clock</code>. Puisque <code>Clock</code> a besoin d'afficher l'heure actuelle, il initialise <code>this.state</code> avec un objet contenant l'heure actuelle. Nous mettrons cet état à jour par la suite.</p>
+          </li>
+          <li>
+            <p>React appelle ensuite la méthode <code>render()</code> du composant <code>Clock</code>. C'est comme cela que React découvre ce qu'il faut afficher à l'écran. React met ensuite à jour le DOM pour correspondre à la sortie de la méthode <code>render()</code> du composant <code>Clock</code>.</p>
+          </li>
+          <li>
+            <p>Quand la sortie de la <code>Clock</code> est insérée dans le DOM, React appelle la méthode de cycle de vie <code>componentDidMount()</code>. À l'intérieur, le composant <code>Clock</code> demande au navigateur de mettre en place un minuteur pour appeler la méthode <code>tick()</code> du composant une fois par seconde.</p>
+          </li>
+          <li>
+            <p>Chaque seconde, le navigateur appelle la méthode <code>tick()</code>. À l'intérieur, le composant <code>Clock</code> planifie une mise à jour de l'interface utilisateur en appelant <code>setState()</code> avec un objet contenant l'heure actuelle. Grâce à l'appel à <code>setState()</code>, React sait que l'état a changé, et invoque à nouveau la méthode <code>render()</code> pour savoir ce qui devrait être affiché à l'écran. Cette fois, la valeur de <code>this.state.date</code> dans la méthode <code>render()</code> est différente, la sortie devrait donc inclure l'heure mise à jour. React met à jour le DOM en accord avec cela.</p>
+          </li>
+          <li>
+            <p>Si le composant <code>Clock</code> finit par être retiré du DOM, React appellera la méthode de cycle de vie <code>componentWillUnmount()</code> pour que le minuteur soit arrêté.</p>
+          </li>
+        </ol>
+      </section>
+      <section id="using-state-correctly" class="level2">
+        <h2>Utiliser l'état local correctement</h2>
+        <p>Il y'a trois choses que vous devriez savoir à propos de <code>setState()</code>.</p>
+        <section id="do-not-modify-state-directly" class="level3">
+          <h3>Ne modifiez pas l'état directement</h3>
+          <p>Par exemple, ceci ne déclenchera pas un rafraîchissement du composant :</p>
+          <pre class="language-js"><code class="language-js"><span class="token comment">// Erroné</span>
+<span class="token keyword">this</span><span class="token punctuation">.</span><span class="token property-access">state</span><span class="token punctuation">.</span><span class="token property-access">comment</span> <span class="token operator">=</span> <span class="token string">'Bonjour'</span><span class="token punctuation">;</span></code></pre>
+          <p>À la place, utilisez <code>setState()</code> :</p>
+          <pre class="language-js"><code class="language-js"><span class="token comment">// Correct</span>
+<span class="token keyword">this</span><span class="token punctuation">.</span><span class="token method function property-access">setState</span><span class="token punctuation">(</span><span class="token punctuation">{</span><span class="token literal-property property">comment</span><span class="token operator">:</span> <span class="token string">'Bonjour'</span><span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">;</span></code></pre>
+          <p>Le seul endroit où vous pouvez affecter <code>this.state</code>, c’est le constructeur.</p>
+        </section>
+        <section id="state-updates-may-be-asynchronous" class="level3">
+          <h3>Les mises à jour de l'état peuvent être asynchrones</h3>
+          <p>React peut grouper plusieurs appels à <code>setState()</code> en une seule mise à jour pour des raisons de performance.</p>
+          <p>Comme <code>this.props</code> et <code>this.state</code> peuvent être mises à jour de façon asynchrone, vous ne devez pas vous baser sur leurs valeurs pour calculer le prochain état.</p>
+          <p>Par exemple, ce code peut échouer pour mettre à jour un compteur :</p>
+          <pre class="language-js"><code class="language-js"><span class="token comment">// Erroné</span>
+<span class="token keyword">this</span><span class="token punctuation">.</span><span class="token method function property-access">setState</span><span class="token punctuation">(</span><span class="token punctuation">{</span>
+  <span class="token literal-property property">counter</span><span class="token operator">:</span> <span class="token keyword">this</span><span class="token punctuation">.</span><span class="token property-access">state</span><span class="token punctuation">.</span><span class="token property-access">counter</span> <span class="token operator">+</span> <span class="token keyword">this</span><span class="token punctuation">.</span><span class="token property-access">props</span><span class="token punctuation">.</span><span class="token property-access">increment</span><span class="token punctuation">,</span>
+<span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">;</span></code></pre>
+          <p>Pour remédier à ce problème, utilisez la seconde forme de <code>setState()</code> qui accepte une fonction à la place d'un objet. Cette fonction recevra l'état précédent comme premier argument et les props au moment de la mise à jour comme second argument :</p>
+          <pre class="language-js"><code class="language-js"><span class="token comment">// Correct</span>
+<span class="token keyword">this</span><span class="token punctuation">.</span><span class="token method function property-access">setState</span><span class="token punctuation">(</span><span class="token punctuation">(</span><span class="token parameter">state<span class="token punctuation">,</span> props</span><span class="token punctuation">)</span> <span class="token arrow operator">=></span> <span class="token punctuation">(</span><span class="token punctuation">{</span>
+  <span class="token literal-property property">counter</span><span class="token operator">:</span> state<span class="token punctuation">.</span><span class="token property-access">counter</span> <span class="token operator">+</span> props<span class="token punctuation">.</span><span class="token property-access">increment</span>
+<span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span></code></pre>
+          <p>Nous avons utilisé une <a href="https://developer.mozilla.org/fr/docs/Web/JavaScript/Reference/Fonctions/Fonctions_fl%C3%A9ch%C3%A9es">fonction fléchée</a> ci-dessus, mais une fonction normale marche aussi :</p>
+          <pre class="language-js"><code class="language-js"><span class="token comment">// Correct</span>
+<span class="token keyword">this</span><span class="token punctuation">.</span><span class="token method function property-access">setState</span><span class="token punctuation">(</span><span class="token keyword">function</span><span class="token punctuation">(</span><span class="token parameter">state<span class="token punctuation">,</span> props</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  <span class="token keyword control-flow">return</span> <span class="token punctuation">{</span>
+    <span class="token literal-property property">counter</span><span class="token operator">:</span> state<span class="token punctuation">.</span><span class="token property-access">counter</span> <span class="token operator">+</span> props<span class="token punctuation">.</span><span class="token property-access">increment</span>
+  <span class="token punctuation">}</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">;</span></code></pre>
+        </section>
+        <section id="state-updates-are-merged" class="level3">
+          <h3>Les mises à jour de l'état sont fusionnées</h3>
+          <p>Quand vous invoquez <code>setState()</code>, React fusionne les objets que vous donnez avec l'état actuel.</p>
+          <p>Par exemple, votre état peut contenir plusieurs variables indépendantes :</p>
+          <pre class="language-js{4,5}"><code class="language-js{4,5}">  constructor(props) {
+    super(props);
+    this.state = {
+      posts: [],
+      comments: []
+    };
+  }</code></pre>
+          <p>Ensuite, vous pouvez les mettre à jour indépendamment avec des appels séparés à <code>setState()</code> :</p>
+          <pre class="language-js{4,10}"><code class="language-js{4,10}">  componentDidMount() {
+    fetchPosts().then(response => {
+      this.setState({
+        posts: response.posts
+      });
+    });
+
+    fetchComments().then(response => {
+      this.setState({
+        comments: response.comments
+      });
+    });
+  }</code></pre>
+          <p>La fusion n'est pas profonde, donc <code>this.setState({comments})</code> laisse <code>this.state.posts</code> intacte, mais remplace complètement <code>this.state.comments</code>.</p>
+        </section>
+      </section>
+      <section id="the-data-flows-down" class="level2">
+        <h2>Les données descendent</h2>
+        <p>Ni parent ni enfant ne peuvent savoir si un certain composant est à état ou non, et ne devraient pas se soucier de savoir s'il est défini par une fonction ou une classe.</p>
+        <p>C'est pourquoi on dit souvent que l'état est local ou encapsulé. Il est impossible d'y accéder depuis un autre composant.</p>
+        <p>Un composant peut choisir de passer son état à ses enfants via des props :</p>
+        <pre class="language-js"><code class="language-js"><span class="token operator">&#x3C;</span><span class="token maybe-class-name">FormattedDate</span> date<span class="token operator">=</span><span class="token punctuation">{</span><span class="token keyword">this</span><span class="token punctuation">.</span><span class="token property-access">state</span><span class="token punctuation">.</span><span class="token property-access">date</span><span class="token punctuation">}</span> <span class="token operator">/</span><span class="token operator">></span></code></pre>
+        <p>Le composant <code>FormattedDate</code> reçoit la <code>date</code> dans ses props et ne sait pas si elle vient de l'état de la <code>Clock</code>, des props de la <code>Clock</code>, ou a été tapée à la main :</p>
+        <pre class="language-js"><code class="language-js"><span class="token keyword">function</span> <span class="token function"><span class="token maybe-class-name">FormattedDate</span></span><span class="token punctuation">(</span><span class="token parameter">props</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  <span class="token keyword control-flow">return</span> <span class="token operator">&#x3C;</span>h2<span class="token operator">></span><span class="token maybe-class-name">Il</span> est <span class="token punctuation">{</span>props<span class="token punctuation">.</span><span class="token property-access">date</span><span class="token punctuation">.</span><span class="token method function property-access">toLocaleTimeString</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">}</span><span class="token punctuation">.</span><span class="token operator">&#x3C;</span><span class="token operator">/</span>h2<span class="token operator">></span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span></code></pre>
+        <p><a href="https://codepen.io/gaearon/pen/zKRqNB?editors=0010"><strong>Essayer sur CodePen</strong></a></p>
+        <p>On appelle souvent cela un flux de données « du haut vers le bas » ou « unidirectionnel ». Un état local est toujours possédé par un composant spécifique, et toute donnée ou interface utilisateur dérivée de cet état ne peut affecter que les composants « en-dessous » de celui-ci dans l'arbre de composants.</p>
+        <p>Si vous imaginez un arbre de composants comme une cascade de props, chaque état de composant est une source d'eau supplémentaire qui rejoint la cascade à un point quelconque, mais qui coule également vers le bas.</p>
+        <p>Pour démontrer que tous les composants sont réellement isolés, nous pouvons créer un composant <code>App</code> qui affiche trois <code>&#x3C;Clock></code>s :</p>
+        <pre class="language-js{4-6}"><code class="language-js{4-6}">function Application() {
+  return (
+    &#x3C;div>
+      &#x3C;Clock />
+      &#x3C;Clock />
+      &#x3C;Clock />
+    &#x3C;/div>
+  );
+}
+
+ReactDOM.render(
+  &#x3C;Application />,
+  document.getElementById('root')
+);</code></pre>
+        <p><a href="https://codepen.io/gaearon/pen/vXdGmd?editors=0010"><strong>Essayer sur CodePen</strong></a></p>
+        <p>Chaque <code>Clock</code> met en place son propre minuteur et se met à jour indépendamment.</p>
+        <p>
+          Dans une application React, le fait qu'un composant soit à état ou non est considéré comme un détail d'implémentation du composant qui peut varier avec le temps. Vous pouvez utiliser des composants sans état à l'intérieur de composants à état, et vice-versa.
+          <span style="float: footnote;"><a href="./index.html#toc">Go to TOC</a></span>
+        </p>
+      </section>
+    </section>
+  </body>
+</html>

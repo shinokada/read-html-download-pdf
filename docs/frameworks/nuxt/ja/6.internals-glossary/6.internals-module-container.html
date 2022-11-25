@@ -1,0 +1,111 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="utf-8">
+    <title>ModuleContainer クラス</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="navigation.title" content="Module Container">
+    <meta name="description" content="Nuxt ModuleContainer クラス">
+    <meta name="category" content="internals-glossary">
+    <link rel="stylesheet" href="https://raw.githubusercontent.com/shinokada/prism-coy-theme/main/theme_common.css">
+  </head>
+  <body>
+    <section id="modulecontainer-クラス" class="level1">
+      <h1>ModuleContainer クラス</h1>
+      <hr>
+      <ul>
+        <li>ソース: <strong><a href="https://github.com/nuxt/nuxt.js/blob/dev/packages/core/src/module.js">core/module.js</a></strong></li>
+      </ul>
+      <p>すべての<a href="./directory-structure/modules">モジュール</a>は <code>ModuleContainer</code> インスタンスのコンテキストの中で呼ばれます。</p>
+      <section id="tapable-プラグイン" class="level2">
+        <h2>Tapable プラグイン</h2>
+        <p>特定のライフサイクルイベントでフックを登録できます。</p>
+        <pre class="language-js"><code class="language-js">nuxt<span class="token punctuation">.</span><span class="token property-access">moduleContainer</span><span class="token punctuation">.</span><span class="token method function property-access">plugin</span><span class="token punctuation">(</span><span class="token string">'ready'</span><span class="token punctuation">,</span> <span class="token keyword">async</span> <span class="token parameter">moduleContainer</span> <span class="token arrow operator">=></span> <span class="token punctuation">{</span>
+  <span class="token comment">// すべてのモジュールの準備ができたらこの処理を実行します</span>
+<span class="token punctuation">}</span><span class="token punctuation">)</span></code></pre>
+        <p><a href="./directory-structure/modules">モジュール</a>コンテキストの中では代わりに以下のようにできます：</p>
+        <pre class="language-js"><code class="language-js"><span class="token keyword">this</span><span class="token punctuation">.</span><span class="token method function property-access">plugin</span><span class="token punctuation">(</span><span class="token string">'ready'</span><span class="token punctuation">,</span> <span class="token keyword">async</span> <span class="token parameter">moduleContainer</span> <span class="token arrow operator">=></span> <span class="token punctuation">{</span>
+  <span class="token comment">// すべてのモジュールの準備ができたらこの処理を実行します</span>
+<span class="token punctuation">}</span><span class="token punctuation">)</span></code></pre>
+        <p>
+          | プラグイン | 引数 | タイミング |
+          | |
+          | <code>ready</code> | moduleContainer | <code>nuxt.config.js</code> にあるすべてのモジュールが初期化されたとき |
+        </p>
+      </section>
+      <section id="メソッド" class="level2">
+        <h2>メソッド</h2>
+        <section id="addvendor-vendor" class="level3">
+          <h3>addVendor (vendor)</h3>
+          <p><strong><code>vendor</code> は使われていないので非推奨です</strong></p>
+          <p><code>options.build.vendor</code> に追加し、一意なフィルタを適用します。</p>
+        </section>
+        <section id="addtemplate-template" class="level3">
+          <h3>addTemplate (template)</h3>
+          <ul>
+            <li><strong>template</strong>: <code>String</code> または <code>Object</code>
+              <ul>
+                <li><code>src</code></li>
+                <li><code>options</code></li>
+                <li><code>fileName</code></li>
+              </ul>
+            </li>
+          </ul>
+          <p>プロジェクトの <code>buildDir</code>（<code>.nuxt</code>）へビルド中に、<a href="https://lodash.com/docs/4.17.4#template">lodash template</a> を使って与えられたテンプレートをレンダリングします。</p>
+          <p><code>fileName</code> を与えないか <code>template</code> が文字列の場合、ターゲットのファイル名はデフォルトで <code>[dirName].[fileName].[pathHash].[ext]</code> になります。</p>
+          <p>このメソッドは最終的な <code>{ dst, src, options }</code> オブジェクトを返します。</p>
+        </section>
+        <section id="addplugin-template" class="level3">
+          <h3>addPlugin (template)</h3>
+          <ul>
+            <li><strong>template</strong>: オブジェクトプロパティ (<code>src</code>、<code>options</code>、<code>fileName</code>、<code>mode</code>)。</li>
+          </ul>
+          <p><code>addTemplate</code> を使ってプラグインを登録し、<code>plugins[]</code> 配列の先頭に追加します。</p>
+          <pre class="language-js"><code class="language-js"><span class="token keyword">this</span><span class="token punctuation">.</span><span class="token method function property-access">addPlugin</span><span class="token punctuation">(</span><span class="token punctuation">{</span>
+  <span class="token literal-property property">src</span><span class="token operator">:</span> path<span class="token punctuation">.</span><span class="token method function property-access">resolve</span><span class="token punctuation">(</span>__dirname<span class="token punctuation">,</span> <span class="token string">'templates/foo.js'</span><span class="token punctuation">)</span><span class="token punctuation">,</span>
+  <span class="token literal-property property">fileName</span><span class="token operator">:</span> <span class="token string">'foo.server.js'</span> <span class="token comment">// [optional] はサーバーバンドルにのみ含まれます</span>
+  <span class="token literal-property property">options</span><span class="token operator">:</span> moduleOptions
+<span class="token punctuation">}</span><span class="token punctuation">)</span></code></pre>
+          <p><strong>注意:</strong> プラグインをクライアントサイドまたはサーバーサイドでのみ使う場合は <code>mode</code> または <code>.client</code> と <code>.server</code> 修飾子を <code>fileName</code> オプションと共に使えます（利用可能なオプションについては <a href="./directory-structure/plugins#name-conventional-plugin">plugins</a> を参照してください）。</p>
+          <p><code>fileName</code> を指定する場合、<code>fileName</code> にカスタムパスを設定できます。名前の衝突を防ぐため <code>.nuxt</code> フォルダ内のフォルダ構成を選択できます：</p>
+          <pre class="language-js"><code class="language-js"><span class="token punctuation">{</span>
+  <span class="token literal-property property">fileName</span><span class="token operator">:</span> path<span class="token punctuation">.</span><span class="token method function property-access">join</span><span class="token punctuation">(</span><span class="token string">'folder'</span><span class="token punctuation">,</span> <span class="token string">'foo.client.js'</span><span class="token punctuation">)</span><span class="token punctuation">,</span> <span class="token comment">// 結果は `.nuxt/folder/foo.client.js` になります</span>
+<span class="token punctuation">}</span></code></pre>
+        </section>
+        <section id="addservermiddleware-middleware" class="level3">
+          <h3>addServerMiddleware (middleware)</h3>
+          <p><a href="./configuration-glossary/configuration-servermiddleware">options.serverMiddleware</a>にミドルウェアをプッシュします。</p>
+        </section>
+        <section id="extendbuild-fn" class="level3">
+          <h3>extendBuild (fn)</h3>
+          <p><a href="./configuration-glossary/configuration-build#extend">options.build.extend</a> 関数をつなげることで webpack のビルド設定を簡単に拡張できます。</p>
+        </section>
+        <section id="extendroutes-fn" class="level3">
+          <h3>extendRoutes (fn)</h3>
+          <p><a href="./configuration-glossary/configuration-router#extendroutes">options.build.extendRoutes</a> 関数をつなげることでルートを簡単に拡張できます。</p>
+        </section>
+        <section id="addmodule-moduleopts-requireonce" class="level3">
+          <h3>addModule (moduleOpts, requireOnce)</h3>
+          <p><em>非同期関数</em></p>
+          <p>モジュールを登録します。<code>moduleOpts</code> は文字列または配列（<code>[src, options]</code>）です。<code>requireOnce</code> が <code>true</code> で解決されたモジュールが <code>meta</code> をエクスポートしている場合に、同じモジュールが二度登録されるのを回避します。</p>
+        </section>
+        <section id="requiremodule-moduleopts" class="level3">
+          <h3>requireModule (moduleOpts)</h3>
+          <p><em>非同期関数</em></p>
+          <p><code>addModule(moduleOpts, true)</code> の短縮形です。</p>
+        </section>
+      </section>
+      <section id="フック" class="level2">
+        <h2>フック</h2>
+        <p>特定のライフサイクルイベントでフックを登録できます。</p>
+        <p>
+          | フック | 引数 | タイミング |
+          | |
+          | <code>modules:before</code> | (moduleContainer, options) | ModuleContainer クラスが作られる前に呼ばれ、メソッドとオプションのオーバーロードに役立ちます。 |
+          | <code>modules:done</code> | (moduleContainer) | すべてのモジュールがロードされたときに呼ばれます。 |
+          <span style="float: footnote;"><a href="../index.html#toc">Go to TOC</a></span>
+        </p>
+      </section>
+    </section>
+  </body>
+</html>

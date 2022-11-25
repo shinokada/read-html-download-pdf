@@ -1,0 +1,526 @@
+<!doctype html>
+<html lang="he">
+  <head>
+    <meta charset="utf-8">
+    <title>React.Component</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="https://raw.githubusercontent.com/shinokada/prism-coy-theme/main/theme_common.css">
+  </head>
+  <body>
+    <section id="reactcomponent" class="level1">
+      <h1>React.Component</h1>
+      <p>הדף הזה מכיל הפניית API מפורטת עבור ההגדרה של קומפוננטת מחלקה ב-React. הוא מניח שאתם מכירים קונספטים בסיסיים ב-React, כדוגמת <a href="./components-and-props.html">קומפוננטות ו-Props</a>, בנוסף גם <a href="./state-and-lifecycle.html">State ומעגל-חיים</a>. אם אתם לא, קראו אותם תחילה.</p>
+      <section id="overview" class="level2">
+        <h2>סקירה-כללית</h2>
+        <p>React מאפשרת להגדיר קומפוננטות כמחלקות או כפונקציות. קומפוננטות המוגדרות כמחלקות כרגע מספקות יותר אפשרויות אשר מתוארות בפירוט בדף זה. כדי להגדיר קומפוננטת מחלקה ב-React, נדרש להרחיב ל-<code>React.Component</code>:</p>
+        <pre class="language-js"><code class="language-js"><span class="token keyword">class</span> <span class="token class-name">Welcome</span> <span class="token keyword">extends</span> <span class="token class-name">React<span class="token punctuation">.</span>Component</span> <span class="token punctuation">{</span>
+  <span class="token function">render</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token keyword control-flow">return</span> <span class="token operator">&#x3C;</span>h1<span class="token operator">></span><span class="token maybe-class-name">Hello</span><span class="token punctuation">,</span> <span class="token punctuation">{</span><span class="token keyword">this</span><span class="token punctuation">.</span><span class="token property-access">props</span><span class="token punctuation">.</span><span class="token property-access">name</span><span class="token punctuation">}</span><span class="token operator">&#x3C;</span><span class="token operator">/</span>h1<span class="token operator">></span><span class="token punctuation">;</span>
+  <span class="token punctuation">}</span>
+<span class="token punctuation">}</span></code></pre>
+        <p>המתודה היחידה <em>שחייב</em> להגדיר בתת-מחלקה מסוג <code>React.Component</code> נקראת <a href="#render"><code>render()</code></a>. כל שאר המתודות המתוארות בדף זה הן אופציונליות.</p>
+        <p><strong>אנחנו ממליצים בחום נגד יצירת קומפוננטות-בסיס משלכם.</strong> בקומפוננטות React, <a href="./composition-vs-inheritance.html">שימוש חוזר בקוד מושג בעיקר על-ידי קומפוזיציה מאשר על-ידי הורשה</a>.</p>
+        <blockquote>
+          <p>הערה:</p>
+          <p>React לא כופה על שימוש בתחביר מחלקות של גרסת ES6. אם אתם מעדיפים להימנע ממנו, אתם רשאיים להשתמש במודול <code>create-react-class</code> או הרחבה מותאמת דומה, במקום. העיפו מבט ב-<a href="./react-without-es6.html">שימוש ב-React ללא גרסת ES6</a> כדי ללמוד עוד.</p>
+        </blockquote>
+        <section id="the-component-lifecycle" class="level3">
+          <h3>קומפוננטת מעגל-החיים</h3>
+          <p>לכל קומפוננטה קיימות מספר "מתודות של מעגל חיים" שניתן לדרוס כדי להריץ קוד בזמנים מסוימים בתהליך. <strong>אתם יכולים להשתמש <a href="https://projects.wojtekmaj.pl/react-lifecycle-methods-diagram/">בדיאגרמת מעגל-החיים הזו</a> כשליף.</strong> ברשימה מטה, מתודות מעגל-חיים שבשימוש נפוץ יותר, מסומנות <strong>במודגש</strong>. שאר המתודות קיימות עבור שימושים נדירים יותר.</p>
+          <section id="mounting" class="level4">
+            <h4>עיגון (Mounting)</h4>
+            <p>קריאה למתודות הבאות מתבצעות בסדר הזה כאשר מופע של קומפוננטה נוצר ומוכנס לתוך ה-DOM:</p>
+            <ul>
+              <li><a href="#constructor"><strong><code>constructor()</code></strong></a></li>
+              <li><a href="#static-getderivedstatefromprops"><code>static getDerivedStateFromProps()</code></a></li>
+              <li><a href="#render"><strong><code>render()</code></strong></a></li>
+              <li><a href="#componentdidmount"><strong><code>componentDidMount()</code></strong></a></li>
+            </ul>
+            <blockquote>
+              <p>הערה:</p>
+              <p>המתודות האלו נחשבות לישנות וכדאי <a href="/blog/2018/03/27/update-on-async-rendering.html">להימנע מהן</a> בקוד חדש:</p>
+              <ul>
+                <li><a href="#unsafe_componentwillupdate"><code>UNSAFE_componentWillUpdate()</code></a></li>
+                <li><a href="#unsafe_componentwillreceiveprops"><code>UNSAFE_componentWillReceiveProps()</code></a></li>
+              </ul>
+            </blockquote>
+          </section>
+          <section id="updating" class="level4">
+            <h4>עדכון</h4>
+            <p>עדכון יכול להיגרם על ידי שינוי props או state. המתודות האלו נקראות בסדר להלן כאשר קומפוננטה מרונדרת מחדש:</p>
+            <ul>
+              <li><a href="#static-getderivedstatefromprops"><code>static getDerivedStateFromProps()</code></a></li>
+              <li><a href="#shouldcomponentupdate"><code>shouldComponentUpdate()</code></a></li>
+              <li><a href="#render"><strong><code>render()</code></strong></a></li>
+              <li><a href="#getsnapshotbeforeupdate"><code>getSnapshotBeforeUpdate()</code></a></li>
+              <li><a href="#componentdidupdate"><strong><code>componentDidUpdate()</code></strong></a></li>
+            </ul>
+            <blockquote>
+              <p>הערה:</p>
+              <p>המתודות להלן נחשבות ישנות ועדיף <a href="/blog/2018/03/27/update-on-async-rendering.html">להמנע משימוש בהן</a> בקוד חדש:</p>
+              <ul>
+                <li><a href="#unsafe_componentwillupdate"><code>UNSAFE_componentWillUpdate()</code></a></li>
+                <li><a href="#unsafe_componentwillreceiveprops"><code>UNSAFE_componentWillReceiveProps()</code></a></li>
+              </ul>
+            </blockquote>
+          </section>
+          <section id="unmounting" class="level4">
+            <h4>הסרה (Unmounting)</h4>
+            <p>קריאה למתודה הזו מתבצעת כאשר קומפוננטה מוסרת מה-DOM:</p>
+            <ul>
+              <li><a href="#componentwillunmount"><strong><code>componentWillUnmount()</code></strong></a></li>
+            </ul>
+          </section>
+          <section id="error-handling" class="level4">
+            <h4>ניהול שגיאות</h4>
+            <p>קריאה למתודות האלו מתבצעת כאשר קיימת שגיאה ברינדור, במתודת מעגל-חיים, או בבנאי של קומפוננטת ילד כלשהי.</p>
+            <ul>
+              <li><a href="#static-getderivedstatefromerror"><code>static getDerivedStateFromError()</code></a></li>
+              <li><a href="#componentdidcatch"><code>componentDidCatch()</code></a></li>
+            </ul>
+          </section>
+        </section>
+        <section id="other-apis" class="level3">
+          <h3>API-ים אחרים</h3>
+          <p>כל קומפוננטה מספקת בנוסף מספר API-ים אחרים.</p>
+          <ul>
+            <li><a href="#setstate"><code>setState()</code></a></li>
+            <li><a href="#forceupdate"><code>forceUpdate()</code></a></li>
+          </ul>
+        </section>
+        <section id="class-properties" class="level3">
+          <h3>Properties של מחלקה</h3>
+          <ul>
+            <li><a href="#defaultprops"><code>defaultProps</code></a></li>
+            <li><a href="#displayname"><code>displayName</code></a></li>
+          </ul>
+        </section>
+        <section id="instance-properties" class="level3">
+          <h3>Properties של מופע</h3>
+          <ul>
+            <li><a href="#props"><code>props</code></a></li>
+            <li><a href="#state"><code>state</code></a></li>
+          </ul>
+          <hr>
+        </section>
+      </section>
+      <section id="reference" class="level2">
+        <h2>עיון</h2>
+        <section id="commonly-used-lifecycle-methods" class="level3">
+          <h3>מתודות מעגל-חיים שבשימוש נפוץ</h3>
+          <p>המתודות בחלק הזה מכסות את החלק הנרחב של שימושים שתתקלו בהם כאשר תיצרו קומפוננטות ב-React. <strong>להפנייה ויזואלית, בידקו <a href="https://projects.wojtekmaj.pl/react-lifecycle-methods-diagram/">את דיאגרת מעגל-החיים הזו</a>.</strong></p>
+        </section>
+        <section id="render-render" class="level3">
+          <h3><code>render()</code> {#render}</h3>
+          <pre class="language-javascript"><code class="language-javascript"><span class="token function">render</span><span class="token punctuation">(</span><span class="token punctuation">)</span></code></pre>
+          <p>מתודת ה-<code>render()</code> היא המתודה הנדרשת היחידה בשימוש של קומפוננטת מחלקה.</p>
+          <p>בקריאה אליה, המתודה תבחן את <code>this.props</code> ואת <code>this.state</code> ותחזיר את אחד הסוגים הבאים:</p>
+          <ul>
+            <li><strong>אלמנטים של React.</strong> בדרך כלל נוצרים על ידי <a href="./introducing-jsx.html">JSX</a>. לדוגמא, <code>&#x3C;div /></code> ו- <code>&#x3C;MyComponent /></code> הם אלמנטים של React שמנחים את React לרנדר צומת של DOM, או קומפוננטת משתמש אחרת, בהתאמה.</li>
+            <li><strong>מערכים ו-Fragments.</strong> מאפשרים להחזיר אלמנטים מרובים מ-render. קראו את התיעוד ב-<a href="./fragments.html">fragments</a> מידע נוסף.</li>
+            <li><strong>Portals</strong>. מאפשרים לרנדר ילדים לתוך תת-עץ DOM שונה. קראו את התיעוד ב-<a href="./portals.html">portals</a> למידע נוסף.</li>
+            <li><strong>מחרוזות ומספרים.</strong> מרונדרים כצמתי טקסט בתוך ה-DOM.</li>
+            <li><strong>משתנים בולאנים או <code>null</code></strong>. מרנדר כלום. (בעיקר קיים כדי לתמוך בתבנית <code>return test &#x26;&#x26; &#x3C;Child /></code>, כאשר <code>test</code> הוא משתנה בולאני.)</li>
+          </ul>
+          <p>הפונקציה <code>render()</code> צריכה להיות טהורה, כלומר היא לא משנה את ה-state של הקומפוננטה, היא מחזירה את אותה התוצאה בכל פעם שהיא מתבצעת, והיא לא מדברת ישירות עם הדפדפן.</p>
+          <p>כאשר יש צורך לדבר עם הדפדפן, יש להשתמש ב- <code>componentDidMount()</code> או במתודות האחרות של מעגל-החיים במקום. שמירה על כך ש- <code>render</code> תשמר טהורה, הופכת את החשיבה על קומפוננות ליותר קלה.</p>
+          <blockquote>
+            <p>הערה</p>
+            <p><code>render()</code> לא תתבצע אם <a href="#shouldcomponentupdate"><code>shouldComponentUpdate()</code></a> מחזירה 'false'.</p>
+          </blockquote>
+          <hr>
+        </section>
+        <section id="constructor-constructor" class="level3">
+          <h3><code>constructor()</code> {#constructor}</h3>
+          <pre class="language-javascript"><code class="language-javascript"><span class="token function">constructor</span><span class="token punctuation">(</span>props<span class="token punctuation">)</span></code></pre>
+          <p><strong>אם אין צורך באתחול state ו-binding עבור מתודות, אין צורך לממש בנאי עבור קומפוננטת ה-React שלכם.</strong></p>
+          <p>קריאה לבנאי של קומפוננטת ה-React שלכם מתבצעת לפני ה-Mounting של הקומפוננטה. כאשר מממשים את הבנאי עבור תת-מחלקה מסוג <code>React.Component</code>, נדרשת קריאה ל- <code>super(props)</code> לפני כל ביטוי אחר. אחרת, <code>this.props</code> יהפוך להיות לא-מוגדר (undefined) בבנאי, מה שיכול להוביל לבאגים.</p>
+          <p>בדרך כלל ב-React, בנאים נכתבים עבור שתי מטרות בלבד:</p>
+          <ul>
+            <li>איתחול <a href="./state-and-lifecycle.html">local state</a> על ידי הקצאת אוביקט ל- <code>this.state</code>.</li>
+            <li>Binding <a href="./handling-events.html">event handler</a> של מתודות למופע כלשהו.</li>
+          </ul>
+          <p><strong>לא אמורה להתבצע קריאה ל- <code>setState()</code></strong> בתוך ה- <code>constructor()</code>. במקום זאת, אם קומפוננטה צריכה להשתמש ב-state מקומי, <strong>עליכם להקצות את ה-state הראשוני ל- <code>this.state</code></strong> ישירות בתוך הבנאי:</p>
+          <pre class="language-js"><code class="language-js"><span class="token function">constructor</span><span class="token punctuation">(</span><span class="token parameter">props</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  <span class="token keyword">super</span><span class="token punctuation">(</span>props<span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token comment">// לא לקרוא ל-this.setState() כאן!</span>
+  <span class="token keyword">this</span><span class="token punctuation">.</span><span class="token property-access">state</span> <span class="token operator">=</span> <span class="token punctuation">{</span> <span class="token literal-property property">counter</span><span class="token operator">:</span> <span class="token number">0</span> <span class="token punctuation">}</span><span class="token punctuation">;</span>
+  <span class="token keyword">this</span><span class="token punctuation">.</span><span class="token property-access">handleClick</span> <span class="token operator">=</span> <span class="token keyword">this</span><span class="token punctuation">.</span><span class="token method function property-access">handleClick</span><span class="token punctuation">.</span><span class="token method function property-access">bind</span><span class="token punctuation">(</span><span class="token keyword">this</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span></code></pre>
+          <p>הבנאי הוא המקום היחידי שאמורה להתבצע בו הקצאה ישירה ל- <code>this.state</code>. בכל שאר המתודות, צריך להתבצע שימוש ב- <code>this.setState()</code> במקום.</p>
+          <p>יש להימנע מהצהרה ראשונית על side-effects כלשהן או מינויים (subscriptions) בתוך הבנאי. עבור שימושים אלו, יש להשתמש ב- <code>componentDidMount()</code> במקום.</p>
+          <blockquote>
+            <p>הערה</p>
+            <p><strong>יש להימנע מהעתקת props לתוך state!, זוהי טעות נפוצה:</strong></p>
+            <pre class="language-js"><code class="language-js"><span class="token function">constructor</span><span class="token punctuation">(</span><span class="token parameter">props</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+ <span class="token keyword">super</span><span class="token punctuation">(</span>props<span class="token punctuation">)</span><span class="token punctuation">;</span>
+ <span class="token comment">// אל תעשו זאת!</span>
+ <span class="token keyword">this</span><span class="token punctuation">.</span><span class="token property-access">state</span> <span class="token operator">=</span> <span class="token punctuation">{</span> <span class="token literal-property property">color</span><span class="token operator">:</span> props<span class="token punctuation">.</span><span class="token property-access">color</span> <span class="token punctuation">}</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span></code></pre>
+            <p>הבעיה היא שזה גם לא נחוץ (אפשר להשתמש ב- <code>this.props.color</code> ישירות במקום), וגם יוצר באגים (עדכונים ל- <code>color</code> prop לא ישוקפו ב-state).</p>
+            <p><strong>השתמשו בתבנית הזו אם רוצים באופן מכוון להתעלם מעדכוני prop.</strong> במקרים האלו, הגיוני יותר לשנות את שם ה-prop ל- <code>initialColor</code> או <code>defaultColor</code>. אז תוכלו לגרום לקומפוננטה לבצע "איפוס" ל-state הפנימי באופן כפוי על-ידי <a href="/blog/2018/06/07/you-probably-dont-need-derived-state.html#recommendation-fully-uncontrolled-component-with-a-key">שינוי <code>המהפתח</code> שלו</a> כאשר יש צורך בכך.</p>
+            <p>קראו את <a href="/blog/2018/06/07/you-probably-dont-need-derived-state.html">הפוסט בבלוג שלנו על הימנעות מ- derived state</a> כדי ללמוד על מה לעשות אם אתם חושבים שאתם צריכים state שיהיה תלוי ב-props.</p>
+          </blockquote>
+          <hr>
+        </section>
+        <section id="componentdidmount-componentdidmount" class="level3">
+          <h3><code>componentDidMount()</code> {#componentdidmount}</h3>
+          <pre class="language-javascript"><code class="language-javascript"><span class="token function">componentDidMount</span><span class="token punctuation">(</span><span class="token punctuation">)</span></code></pre>
+          <p>המתודה <code>componentDidMount()</code> מתבצעת מידית לאחר ה-Mounting של הקומפוננטה (כאשר היא מוכנסת לתוך העץ). איתחול שדורש צמתי DOM יתאים להיות כאן. אם יש צורך לטעון מידע מקצה מרוחק, זה מקום טוב ליצור את בקשת הרשת.</p>
+          <p>המתודה הזו היא מקום טוב להגדיר מינויים (subscription). אם אכן אתם מבצעים זאת, לא לשכוח לבטל מינוי ב- <code>componentWillUnmount()</code>.</p>
+          <p>אתם יכולים <strong>לקרוא ל- <code>setState()</code> באופן מידי</strong> ב- <code>componentDidMount()</code>. זה יגרום לרינדור נוסף, אבל הוא יקרה לפני שהדפדפן יעדכן את המסך. זה מבטיח שאפילו למרות שקריאה ל- <code>render()</code> תתבצע פעמיים במקרה זה, המשתמש לא יוכל לראות את state הביניים. השתמשו בתבנית זו עם יתר זהירות מכיוון שלעתים היא יוצרת בעיות בביצועים. ברוב המקרים, ניתן לבצע הקצאה ל-state ההתחלתי בתוך ה- <code>constructor()</code> במקום. עם זאת, יכול להיות שהתבנית הזו תהיה הכרחית במקרים כמו modals ו-tooltips כאשר יש צורך למדוד צומת ב-DOM לפני רינדור משהו שתלוי בגודלו או מיקומו.</p>
+          <hr>
+        </section>
+        <section id="componentdidupdate-componentdidupdate" class="level3">
+          <h3><code>componentDidUpdate()</code> {#componentdidupdate}</h3>
+          <pre class="language-javascript"><code class="language-javascript"><span class="token function">componentDidUpdate</span><span class="token punctuation">(</span>prevProps<span class="token punctuation">,</span> prevState<span class="token punctuation">,</span> snapshot<span class="token punctuation">)</span></code></pre>
+          <p>המתודה <code>componentDidUpdate()</code> מתבצעת מידית לאחר שהעידכון קורה. אין קריאה למתודה הזו ברינדור הראשוני.</p>
+          <p>השתמשו בזה כהזדמנות לנהל את ה-DOM כאשר הקומפוננטה עודכנה. זה גם מקום טוב לבצע בקשות רשת כל עוד אתם משווים את ה-props הנוכחיים ל-props הקודמים (לדוגמא, יכול להיות שבקשת רשת אינה הכרחית אם ה-props לא השתנו).</p>
+          <pre class="language-js"><code class="language-js"><span class="token function">componentDidUpdate</span><span class="token punctuation">(</span><span class="token parameter">prevProps</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  <span class="token comment">// שימוש טיפוסי (לא לשכוח להשוות את ה-props):</span>
+  <span class="token keyword control-flow">if</span> <span class="token punctuation">(</span><span class="token keyword">this</span><span class="token punctuation">.</span><span class="token property-access">props</span><span class="token punctuation">.</span><span class="token property-access">userID</span> <span class="token operator">!==</span> prevProps<span class="token punctuation">.</span><span class="token property-access">userID</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token keyword">this</span><span class="token punctuation">.</span><span class="token method function property-access">fetchData</span><span class="token punctuation">(</span><span class="token keyword">this</span><span class="token punctuation">.</span><span class="token property-access">props</span><span class="token punctuation">.</span><span class="token property-access">userID</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token punctuation">}</span>
+<span class="token punctuation">}</span></code></pre>
+          <p>ניתן <strong>לקרוא באופן מידי ל- <code>setState()</code></strong> ב- <code>componentDidUpdate()</code> אבל שימו לב שקריאה כזו <strong>מחויבת להיות עטופה במשפט תנאי</strong> כמו בדוגמא מעלה, אחרת תהיה לולאה אינסופית. בנוסף, רינדור נוסף יתבצע, שלמרות שלא יהיה גלוי לעינו של המשתמש, יוכל להשפיע על ביצועיה של הקומפוננטה. אם אתם מנסים "לשקף" state ל- prop, שיקלו שימוש ב- prop ישירות, במקום. קראו עוד על <a href="/blog/2018/06/07/you-probably-dont-need-derived-state.html">למה העתקת props לתוך state גורם לבאגים</a>.</p>
+          <p>אם הקומפוננטה שלכם מממשת את מתודת מעגל-החיים <code>getSnapshotBeforeUpdate()</code> (שזה מקרה נדיר), הערך שהיא תחזיר יועבר כפרמטר "תמונת-מצב" שלישי ל- <code>componentDidUpdate()</code>. אחרת, הפרמטר הזה יהיה לא-מוגדר.</p>
+          <blockquote>
+            <p>הערה</p>
+            <p>המתודה <code>componentDidUpdate()</code> לא תתבצע אם <a href="#shouldcomponentupdate"><code>shouldComponentUpdate()</code></a> תחזיר 'false'.</p>
+          </blockquote>
+          <hr>
+        </section>
+        <section id="componentwillunmount-componentwillunmount" class="level3">
+          <h3><code>componentWillUnmount()</code> {#componentwillunmount}</h3>
+          <pre class="language-javascript"><code class="language-javascript"><span class="token function">componentWillUnmount</span><span class="token punctuation">(</span><span class="token punctuation">)</span></code></pre>
+          <p>המתודה <code>componentWillUnmount()</code> מתבצעת באופן מידי לפני Unmounting של קומפוננטה והריסתה. בצעו כל ניקוי חיוני במתודה הזו, כדוגמת ביטול טיימרים, ביטול בקשות רשת, או ניקוי של כל מינוי שנוצר ב- <code>componentDidMount()</code>.</p>
+          <p><strong>קריאה ל- <code>setState()</code> לא אמורה להתבצע</strong> ב- <code>componentWillUnmount</code> מכיוון שהקומפוננטה לעולם לא תרונדר שוב. ברגע שמופע של קומפוננטה ביצע Unmounting, הוא לעולם לא יבצע Mounting שוב.</p>
+          <hr>
+        </section>
+        <section id="rarely-used-lifecycle-methods" class="level3">
+          <h3>מתודות מעגל-חיים שבשימוש נדיר</h3>
+          <p>המתודות בחלק הזה מתכתבות עם שימושים פחות נפוצים. הן נוחות לשימוש לעתים, אבל רוב הקומפוננטות ככל הנראה לא זקוקות להן. <strong>אתם יכולים לראות את רוב המתודות להלן <a href="https://projects.wojtekmaj.pl/react-lifecycle-methods-diagram/">בדיאגרמת מעגל-החיים הזו</a> על ידי לחיצה על תיבת הסימון - "הראה מתודות מעגל-חיים פחות נפוצות" בראשה.</strong></p>
+        </section>
+        <section id="shouldcomponentupdate-shouldcomponentupdate" class="level3">
+          <h3><code>shouldComponentUpdate()</code> {#shouldcomponentupdate}</h3>
+          <pre class="language-javascript"><code class="language-javascript"><span class="token function">shouldComponentUpdate</span><span class="token punctuation">(</span>nextProps<span class="token punctuation">,</span> nextState<span class="token punctuation">)</span></code></pre>
+          <p>השתמשו ב- <code>shouldComponentUpdate</code> כדי לגרום ל-React לדעת אם פלט של קומפוננטה לא מושפע על ידי השינוי הנוכחי ב-state או props. התנהגות ברירת המחדל היא לרנדר שוב בכל שינוי של state, וברוב המקרים עליכם להסתמך על התנהגות זו.</p>
+          <p>המתודה <code>shouldComponentUpdate()</code> מתבצעת לפני רינדור בעקבות קבלת props או state חדשים. ברירת המחדל היא <code>true</code>. לא מתבצעת קריאה למתודה זו ברינדור הראשוני או כאשר יש שימוש ב- <code>forceUpdate()</code>.</p>
+          <p>המתודה הזו קיימת רק כ-<strong><a href="./optimizing-performance.html">אופטימיזציה בביצועים</a>.</strong> אל תסתמכו עליה כדי "למנוע" רינדור, זה יכול להוביל לבאגים. <strong>שיקלו להשתמש ב-<a href="./react-api.html#reactpurecomponent"><code>PureComponent</code></a></strong> במקום לכתוב את <code>shouldComponentUpdate()</code> בעצמכם. <code>PureComponent</code> מבצע השוואה רדודה של props ו-state, ומפחית את הסיכוי שנדלג על עדכון הכרחי.</p>
+          <p>אם אתם בטוחים בעצמכם שאתם רוצים לכתוב אותה בעצמכם, רצוי שתשוו את <code>this.props</code> עם <code>nextProps</code> ואת <code>this.state</code> עם <code>nextState</code> ולהחזיר <code>ביטוי שקר</code> וכך בעצם לומר ל-React שאפשר לדלג על העידכון. שימו לב שהחזרת <code>false</code> לא מונע מקומפוננטות-ילד לבצע רינדור חוזר, כאשר ה-state <em>שלהם</em> משתנה.</p>
+          <p>אנחנו לא ממליצים לבצע בדיקות איכות עמוקות או שימוש ב- <code>JSON.stringify()</code> ב- <code>shouldComponentUpdate()</code>. זה מאוד לא יעיל ויכול לגרוע בביצועים.</p>
+          <p>כרגע, אם <code>shouldComponentUpdate()</code> מחזירה <code>false</code>, אז <a href="#unsafe_componentwillupdate"><code>UNSAFE_componentWillUpdate()</code></a>, <a href="#render"><code>render()</code></a>, ו- <a href="#componentdidupdate"><code>componentDidUpdate()</code></a> לא יתבצעו. בעתיד React אולי תתייחס ל- <code>shouldComponentUpdate()</code> כאל רמז, מאשר כאל directive נוקשה, והחזרת <code>false</code> אולי תוביל לרינדור נוסף של הקומפוננטה.</p>
+          <hr>
+        </section>
+        <section id="static-getderivedstatefromprops-static-getderivedstatefromprops" class="level3">
+          <h3><code>static getDerivedStateFromProps()</code> {#static-getderivedstatefromprops}</h3>
+          <pre class="language-js"><code class="language-js"><span class="token keyword">static</span> <span class="token function">getDerivedStateFromProps</span><span class="token punctuation">(</span>props<span class="token punctuation">,</span> state<span class="token punctuation">)</span></code></pre>
+          <p>המתודה <code>getDerivedStateFromProps</code> מופעלת רגע לפני הקריאה למתודת הרינדור, גם ב-mount הראשוני וגם על עדכונים לאחר מכן. עליה להחזיר אובייקט על מנת לעדכן את ה-state, או <code>null</code> כדי לא לעדכן כלום.</p>
+          <p>המתודה הזו קיימת <a href="/blog/2018/06/07/you-probably-dont-need-derived-state.html#when-to-use-derived-state">לשימושים נדירים</a> בהם ה-state תלוי בשינויים ב-props במהלך הזמן. לדוגמא, ייתכן שיהיה זה שימושי לשימוש במימוש של קומפוננטת <code>&#x3C;Transition></code> שמשווה את הילדים הקודמים והבאים שלה כדי להחליט איזה מהם להנפיש.</p>
+          <p>
+            שימוש ב- deriving state מוביל לקוד ארוך ומקשה על חשיבה על הקומפוננטות שלכם.
+            <a href="/blog/2018/06/07/you-probably-dont-need-derived-state.html">ודאו שאתם מכירים מימוש עם אלטרנטיבות פשוטות יותר:</a>
+          </p>
+          <ul>
+            <li>
+              <p>אם אתם צריכים <strong>ליצור side-effect</strong> (לדוגמא, קבלת מידע או הנפשה) כתגובה לשינוי ב-props, השתמשו ב- <a href="#componentdidupdate"><code>componentDidUpdate</code></a> מעגל-החיים במקום.</p>
+            </li>
+            <li>
+              <p>אם אתם רוצים <strong>לחשב מחדש מידע מסוים רק כאשר prop משתנה</strong>, <a href="/blog/2018/06/07/you-probably-dont-need-derived-state.html#what-about-memoization">השתמשו ב-memoization helper במקום</a>.</p>
+            </li>
+            <li>
+              <p>אם אתם רוצים <strong>לאפס state כלשהו כאשר prop משתנה</strong>, שקלו לייצר קומפוננטה <a href="/blog/2018/06/07/you-probably-dont-need-derived-state.html#recommendation-fully-controlled-component">fully controlled</a> או <a href="/blog/2018/06/07/you-probably-dont-need-derived-state.html#recommendation-fully-uncontrolled-component-with-a-key">fully uncontrolled with a <code>key</code></a> במקום.</p>
+            </li>
+          </ul>
+          <p>למתודה הזו אין גישה למופעים של קומפוננטות. אם תרצו, אתם יכולים לעשות שימוש חוזר בקוד בין <code>getDerivedStateFromProps()</code> ושאר המתודות במחלקה על-ידי חילוץ פונקציות טהורות מתוך ה-props וה-state של הקומפוננטה מחוץ להגדרת המחלקה.</p>
+          <p>שימו לב שהמתודה הזו מתבצעת בכל רינדור, ללא קשר לסיבה שהיא הופעלה. זה בניגוד ל- <code>UNSAFE_componentWillReceiveProps</code>, שמתבצעת רק כאשר ההורה גורם לרינדור מחדש ולא כתוצאה של <code>setState</code> מקומי.</p>
+          <hr>
+        </section>
+        <section id="getsnapshotbeforeupdate-getsnapshotbeforeupdate" class="level3">
+          <h3><code>getSnapshotBeforeUpdate()</code> {#getsnapshotbeforeupdate}</h3>
+          <pre class="language-javascript"><code class="language-javascript"><span class="token function">getSnapshotBeforeUpdate</span><span class="token punctuation">(</span>prevProps<span class="token punctuation">,</span> prevState<span class="token punctuation">)</span></code></pre>
+          <p>המתודה <code>getSnapshotBeforeUpdate()</code> מתבצעת רגע לפני שהפלט של הרינדור האחרון ביותר הועבר ל-DOM לדוגמא. זה מאפשר לקומפוננטה ללכוד מידע מסוים מה-DOM (לדוגמא, מיקום הגלילה) לפני שהוא עשוי להשתנות. כל ערך שיוחזר על-ידי מתודת מעגל-החיים הזו יועבר כפרמטר ל-<code>componentDidUpdate()</code>.</p>
+          <p>השימוש הזה לא נפוץ, אבל יכול להתרחש ב-UI-ים כמו גדיל של צ'אט שצריך לנהל מיקום גלילה בדרך מיוחדת.</p>
+          <p>ערך של תמונת-מצב (או <code>null</code>) אמור להיות מוחזר</p>
+          <p>לדוגמא:</p>
+          <p><code>embed:react-component-reference/get-snapshot-before-update.js</code></p>
+          <p>בדוגמאות למעלה, חשוב לקרוא את ה- <code>scrollHeight</code> property ב- <code>getSnapshotBeforeUpdate</code> בגלל שיכולים להיות עיכובים בין שלב "הרינדור" במעגל-החיים (כמו <code>render</code>) לבין שלב ה- "commit" במעגל-החיים (כמו ב- <code>getSnapshotBeforeUpdate</code> וב- <code>componentDidUpdate</code>).</p>
+          <hr>
+        </section>
+        <section id="error-boundaries" class="level3">
+          <h3>Error boundaries</h3>
+          <p><a href="./error-boundaries.html">Error boundaries</a> הם קומפוננטות של React שתופסות שגיאות של JavaScript בכל מקום בעץ קומפוננטות הילד שלהם, מתעדת את השגיאות האלו, ומציגה UI מגובה של עץ הקומפוננטה שהתרסקה. Error boundaries תופסת שגיאות במהלך רינדור, במתודות מעגל-החיים, ובבנאים של כל העץ שמתחתיהם.</p>
+          <p>קומפוננטת מחלקה הופכת ל- error boundary אם היא מגדירה את אחת המתודות הבאות של מעגל-החיים (או שתיהן): <code>static getDerivedStateFromError()</code>, <code>componentDidCatch()</code>. עדכון של state ממעגל-החיים הזה מאפשר לנו ללכוד שגיאת JavaScript לא מטופלת בעץ מתחת ולהציג UI מגובה.</p>
+          <p>השתמשו ב-error boundaries להתאושש מחריגות לא צפויות בלבד; <strong>אל תנסו להשתמש בהם עבור בקרת זרימה.</strong></p>
+          <p>לפרטים נוספים, הסתכלו ב- <a href="/blog/2017/07/26/error-handling-in-react-16.html"><em>טיפול בשגיאות ב-React 16</em></a>.</p>
+          <blockquote>
+            <p>הערה</p>
+            <p>Error boundaries תופסים שגיאות בקומפוננטות <strong>מתחתיהם</strong> בעץ בלבד. error boundary לא יכול לתפוס שגיאה בתוך עצמו.</p>
+          </blockquote>
+        </section>
+        <section id="static-getderivedstatefromerror-static-getderivedstatefromerror" class="level3">
+          <h3><code>static getDerivedStateFromError()</code> {#static-getderivedstatefromerror}</h3>
+          <pre class="language-javascript"><code class="language-javascript"><span class="token keyword">static</span> <span class="token function">getDerivedStateFromError</span><span class="token punctuation">(</span>error<span class="token punctuation">)</span></code></pre>
+          <p>
+            מעגל-חיים זה מתבצע לאחר ששגיאה נזרקה על ידי קומפוננטת-צאצא.
+            הוא מקבל את השגיאה שנזרקה כפרמטר ואמור להחזיר ערך כדי לעדכן את state.
+          </p>
+          <pre class="language-js{7-10,13-16}"><code class="language-js{7-10,13-16}">class ErrorBoundary extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = { hasError: false };
+  }
+
+  static getDerivedStateFromError(error) {
+    // מעדכן את ה-state כדי שהרינדור הבא יראה את ה-UI המגובה.
+    return { hasError: true };
+  }
+
+  render() {
+    if (this.state.hasError) {
+      // ניתן לרנדר כל גיבוי UI מותאם.
+      return &#x3C;h1>Something went wrong.&#x3C;/h1>;
+    }
+
+    return this.props.children;
+  }
+}</code></pre>
+          <blockquote>
+            <p>הערה</p>
+            <p>
+              המתודה <code>getDerivedStateFromError()</code> נקראת במהלך שלב "הרינדור", לכן side-effects לא מורשים.
+              בשביל מקרים כאלו, השתמשו ב- <code>componentDidCatch()</code> במקום.
+            </p>
+          </blockquote>
+          <hr>
+        </section>
+        <section id="componentdidcatch-componentdidcatch" class="level3">
+          <h3><code>componentDidCatch()</code> {#componentdidcatch}</h3>
+          <pre class="language-javascript"><code class="language-javascript"><span class="token function">componentDidCatch</span><span class="token punctuation">(</span>error<span class="token punctuation">,</span> info<span class="token punctuation">)</span></code></pre>
+          <p>
+            מתודת מעגל-החיים הזו מתבצעת לאחר ששגיאה נזרקה על-ידי קומפוננת צאצא.
+            היא מקבל שני פרמטרים:
+          </p>
+          <ol>
+            <li><code>שגיאה (error)</code> - השגיאה שנזרקה.</li>
+            <li><code>מידע (info)</code> - אובייקט עם מפתח <code>componentStack</code> המכיל <a href="./error-boundaries.html#component-stack-traces">מידע לגבי איזו קומפוננטה זרקה את השגיאה</a>.</li>
+          </ol>
+          <p>
+            קריאה ל- <code>componentDidCatch()</code> מתבצעת במהלך שלב ה-"commit", לכן side-effects מורשים.
+            רצוי להשתמש בה לדברים כמו תיעוד שגיאות:
+          </p>
+          <pre class="language-js{12-19}"><code class="language-js{12-19}">class ErrorBoundary extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = { hasError: false };
+  }
+
+  static getDerivedStateFromError(error) {
+    // מעדכן את ה-state כדי שהרינדור הבא יראה את ה-UI המגובה.
+    return { hasError: true };
+  }
+
+  componentDidCatch(error, info) {
+    // דוגמה ל-"componentStack":
+    //   ב-ComponentThatThrows (נוצר על-ידי App)
+    //   ב-ErrorBoundary (נוצר על-ידי App)
+    //   ב-div (נוצר על-ידי App)
+    //   ב-App
+    logComponentStackToMyService(info.componentStack);
+  }
+
+  render() {
+    if (this.state.hasError) {
+      // ניתן לרנדר כל UI גיבוי מותאם.
+      return &#x3C;h1>משהו השתבש.&#x3C;h1/>;
+    }
+
+    return this.props.children;
+  }
+}</code></pre>
+          <p>בגרסאות production ו- development יש הבדל שולי בדרך שבה <code>componentDidCatch()</code> מטפלת בשגיאות.</p>
+          <p>בפיתוח, השגיאות יבעבעו ל-<code>window</code>, זה אומר שכל <code>window.onerror</code> או <code>window.addEventListener('error', callback)</code> יירטו את השגיאות שנתפסו על ידי <code>componentDidCatch()</code>.</p>
+          <p>ב-production, במקום, השגיאות לא יבעבעו מעלה, מה שאומר שכל error handler קודם יקבל רק שגיאות שלא נתפסו במפורש על ידי <code>componentDidCatch()</code>.</p>
+          <blockquote>
+            <p>הערה</p>
+            <p>
+              באירוע השגיאה, ניתו לרנדר גיבוי UI עם <code>componentDidCatch()</code> על ידי קריאה ל- <code>setState</code>, אבל תכונה זו תצא משימוש בגרסא עתידית.
+              השתמשו ב- <code>static getDerivedStateFromError()</code> על מנת לטפל ברינדור מגובה במקום.
+            </p>
+          </blockquote>
+          <hr>
+        </section>
+        <section id="legacy-lifecycle-methods" class="level3">
+          <h3>Legacy Lifecycle Methods</h3>
+          <p>מתודות מעגל-החיים להלן מסומן כ"ישנות". הן עדיין יעבדו, אבל אנחנו לא ממליצים להשתמש בהם בקוד חדש. אתם יכולים ללמוד עוד על מעבר ממתודות מעגל-חיים המוגדרות כ"מורשת" ב-<a href="/blog/2018/03/27/update-on-async-rendering.html">פוסט הזה</a>.</p>
+        </section>
+        <section id="unsafe_componentwillmount-unsafe_componentwillmount" class="level3">
+          <h3><code>UNSAFE_componentWillMount()</code> {#unsafe_componentwillmount}</h3>
+          <pre class="language-javascript"><code class="language-javascript"><span class="token function"><span class="token maybe-class-name">UNSAFE_componentWillMount</span></span><span class="token punctuation">(</span><span class="token punctuation">)</span></code></pre>
+          <blockquote>
+            <p>הערה</p>
+          </blockquote>
+          <p><code>UNSAFE_componentWillMount()</code> מתבצעת רגע לפני שה-mounting מתרחש. היא נקראת לפני <code>render()</code>, לכן קריאה ל- <code>setState()</code> סנכרונית במתודה הזו לא תייצר רינדור נוסף. בכלליות, אנחנו ממליצים על שימוש ב- <code>constructor()</code> במקום בשביל איתחול state.</p>
+          <p>המנעו מהגדרת כל side-effects או מינויים במתודה הזו. למקרים האלו, השתמשו ב- <code>componentDidMount()</code> במקום.</p>
+          <p>זו מתודת מעגל-החיים היחידה שנקראת ברינדור שרת.</p>
+          <hr>
+        </section>
+        <section id="unsafe_componentwillreceiveprops-unsafe_componentwillreceiveprops" class="level3">
+          <h3><code>UNSAFE_componentWillReceiveProps()</code> {#unsafe_componentwillreceiveprops}</h3>
+          <pre class="language-javascript"><code class="language-javascript"><span class="token function"><span class="token maybe-class-name">UNSAFE_componentWillReceiveProps</span></span><span class="token punctuation">(</span>nextProps<span class="token punctuation">)</span></code></pre>
+          <blockquote>
+            <p>הערה</p>
+            <p>מעגל-החיים הזה נקרא בעבר <code>componentWillReceiveProps</code>. השם הזה ימשיך לעבוד עד גרסא 17. השתמשו ב-<a href="https://github.com/reactjs/react-codemod#rename-unsafe-lifecycles"><code>rename-unsafe-lifecycles</code> codemod</a> כדי לעדכן את הקומפוננטות שלכם אוטומטית.</p>
+          </blockquote>
+          <blockquote>
+            <p>הערה:</p>
+            <p>שימוש במתודת מעגל-החיים הזו לעתים תכופות מוביל לבאגים ולחוסר עקביות.</p>
+            <ul>
+              <li>אם אתם צריכים <strong>ליצור side-effect</strong> (לדוגמא, קבלת מידע או הנפשה) כתגובה לשינוי ב-props, השתמשו ב-<a href="#componentdidupdate"><code>componentDidUpdate</code></a> במקום.</li>
+              <li>אם השתמשתם ב- <code>componentWillReceiveProps</code> עבור <strong>חישוב מחדש של מידע כלשהו רק כאשר prop השתנה</strong>, <a href="/blog/2018/06/07/you-probably-dont-need-derived-state.html#what-about-memoization">השתמשו ב-memoization helper במקום</a>.</li>
+              <li>אם השתמשתם ב- <code>componentWillReceiveProps</code> על מנת <strong>"לאפס" state כאשר prop השתנה</strong>, שיקלו ליצור קומפוננטה <a href="/blog/2018/06/07/you-probably-dont-need-derived-state.html#recommendation-fully-controlled-component">fully controlled</a> או <a href="/blog/2018/06/07/you-probably-dont-need-derived-state.html#recommendation-fully-uncontrolled-component-with-a-key">fully uncontrolled with a <code>key</code></a> במקום.</li>
+            </ul>
+            <p>למקרים אחרים, <a href="/blog/2018/06/07/you-probably-dont-need-derived-state.html">עקבו אחר ההמלצות בפוסט הזה מתוך הבלוג על derived state</a>.</p>
+          </blockquote>
+          <p><code>UNSAFE_componentWillReceiveProps()</code> מתבצעת לפני שקומפוננטה שעברה mounting מקבלת props חדשים. אם אתם צריכים לעדכן את ה-state כתגובה לשינוי props (לדוגמא, כדי לאפס אותו), אתם יכולים להשוות את <code>this.props</code> ואת <code>nextProps</code> ולבצע חילופי state באמצעות <code>this.setState()</code> במתודה הזו.</p>
+          <p>שימו לב שאם קומפוננטת הורה גורמת לקומפוננטה שלכם להתרנדר מחדש, תתבצע קריאה למתודה הזו אפילו אם props לא השתנו. ודאו להשוות את הערכים הנוכחיים והבאים אם אתם רוצים רק לטפל בשינויים.</p>
+          <p>React לא קוראת ל- <code>UNSAFE_componentWillReceiveProps()</code> עם props התחלתיים במהלך <a href="#mounting">mounting</a>. היא קוראת למתודה הזו רק אם מספר props של הקומפוננטה עשויים להתעדכן. קריאה ל- <code>this.setState()</code> בדרך כלל לא מעוררת קריאה ל- <code>UNSAFE_componentWillReceiveProps()</code>.</p>
+          <hr>
+        </section>
+        <section id="unsafe_componentwillupdate-unsafe_componentwillupdate" class="level3">
+          <h3><code>UNSAFE_componentWillUpdate()</code> {#unsafe_componentwillupdate}</h3>
+          <pre class="language-javascript"><code class="language-javascript"><span class="token function"><span class="token maybe-class-name">UNSAFE_componentWillUpdate</span></span><span class="token punctuation">(</span>nextProps<span class="token punctuation">,</span> nextState<span class="token punctuation">)</span></code></pre>
+          <blockquote>
+            <p>הערה</p>
+            <p>מתודת מעגל-החיים הזו נקרא בעבר <code>componentWillUpdate</code>. השם הזה ימשיך לעבוד עד לגרסא 17. השתמשו ב-<a href="https://github.com/reactjs/react-codemod#rename-unsafe-lifecycles"><code>rename-unsafe-lifecycles</code> codemod</a> לעדכון אוטומטי של הקומפוננטות שלכם.</p>
+          </blockquote>
+          <p><code>UNSAFE_componentWillUpdate()</code> מתבצעת רגע לפני רינדור כתוצאה מקבלת props או state חדשים. השתמשו בה כהזדמנות לבצע הכנות לפני שעדכון מתבצע. המתודה הזו לא נקראת ברינדור הראשוני.</p>
+          <p>שימו לב שאתם לא יכולים לקרוא ל- <code>this.setState()</code> כאן; גם אתם לא אמורים לעשות דבר שיגרום לעדכון קומפוננטה ב-React לפני ש- <code>UNSAFE_componentWillUpdate()</code> חוזרת.</p>
+          <p>בדרך כלל, המתודה הזו יכולה להיות מוחלפת על-ידי <code>componentDidUpdate()</code>. אם קראתם מה-DOM במתודה הזו (לדוגמא, כדי לשמור מיקום גלילה), אתם יכולים להעביר את הלוגיקה הזו ל-<code>getSnapshotBeforeUpdate()</code>.</p>
+          <blockquote>
+            <p>הערה</p>
+            <p><code>UNSAFE_componentWillUpdate()</code> לא תתבצע אם <a href="#shouldcomponentupdate"><code>shouldComponentUpdate()</code></a> מחזירה false.</p>
+          </blockquote>
+          <hr>
+        </section>
+      </section>
+      <section id="other-apis-1" class="level2">
+        <h2>API-ים אחרים</h2>
+        <p>לא כמו מתודות מעגל-החיים למעלה (אשר React קוראת להן עבורנו), המתודות להלן הן מתודות <em>שאנחנו</em> יכולים לקרוא להן מהקומפוננטות שאנו יוצרים.</p>
+        <p>יש רק שניים כאלו: <code>setState()</code> ו- <code>forceUpdate()</code>.</p>
+        <section id="setstate-setstate" class="level3">
+          <h3><code>setState()</code> {#setstate}</h3>
+          <pre class="language-javascript"><code class="language-javascript"><span class="token function">setState</span><span class="token punctuation">(</span>updater<span class="token punctuation">,</span> <span class="token punctuation">[</span>callback<span class="token punctuation">]</span><span class="token punctuation">)</span></code></pre>
+          <p><code>setState()</code> מכניסה לתור שינויים ב-state של הקומפוננטה ואומרת ל-React שהקומפוננטה הזו והילדים שלה צריכים להיות מרונדרים מחדש עם ה-state המעודכן. זו המתודה הראשית שבה משתמשים כדי לעדכן את ממשק המשתמש בתגובה למנהלי אירועים ותגובות שרת.</p>
+          <p>
+            &#x3C;&#x3C;&#x3C;&#x3C;&#x3C;&#x3C;&#x3C; HEAD
+            חישבו על <code>setState()</code> כאל <em>בקשה</em> מאשר כאל פקודה מידית לעדכון הקומפוננטה. למען ביצועים טובים יותר, React עשויה לעכב את ביצועה של הפקודה, ואז לעדכן מספר קומפוננטות במעבר אחד. React לא מבטיחה ששינוי ה-state יתבצעו מידית.
+            =======
+            Think of <code>setState()</code> as a <em>request</em> rather than an immediate command to update the component. For better perceived performance, React may delay it, and then update several components in a single pass. In the rare case that you need to force the DOM update to be applied synchronously, you may wrap it in <a href="./react-dom.html#flushsync"><code>flushSync</code></a>, but this may hurt performance.
+          </p>
+          <blockquote>
+            <blockquote>
+              <blockquote>
+                <blockquote>
+                  <blockquote>
+                    <blockquote>
+                      <blockquote>
+                        <p>84ad3308338e2bb819f4f24fa8e9dfeeffaa970b</p>
+                      </blockquote>
+                    </blockquote>
+                  </blockquote>
+                </blockquote>
+              </blockquote>
+            </blockquote>
+          </blockquote>
+          <p><code>setState()</code> לא תמיד מעדכנת באופן מידי את הקומפוננטה. היא עשויה לדחות את העידכון לאחר כך. זה גורם לכך שקריאה מ- <code>this.state</code> ישר אחרי קריאה ל-<code>setState()</code> למלכודת פוטנציאלית. במקום, השתמשו ב- <code>componentDidUpdate</code> או בפונקצית ה-callback ב-<code>setState</code> (<code>setState(updater, callback)</code>), בכל אחד מהמקרים מובטח כי יתבצע לאחד שהעדכון יקרה. אם יש צורך להגדיר את ה-state בהתבסס על ה-state הקודם, קראו על הארגומנט <code>updater</code> מטה.</p>
+          <p><code>setState()</code> תמיד יוביל לרינדור מחדש אלא אם <code>shouldComponentUpdate()</code> תחזיר <code>false</code>. אם אובייקטים שניתנים לשינוי (mutable) נמצאים בשימוש ולוגיקת רינדור מותנה לא יכולה להיות ממומשת ב- <code>shouldComponentUpdate()</code>, קריאה ל- <code>setState()</code> רק כאשר ה-state החדש שונה מהקודם תמנע רינדור מחדש מיותר.</p>
+          <p>הארגומנט הראשון הוא פונקציית <code>updater</code> עם החתימה:</p>
+          <pre class="language-javascript"><code class="language-javascript"><span class="token punctuation">(</span><span class="token parameter">state<span class="token punctuation">,</span> props</span><span class="token punctuation">)</span> <span class="token arrow operator">=></span> stateChange</code></pre>
+          <p><code>state</code> הוא הפנייה ל-state של הקומפוננטה בזמן שהשינוי היה מבוצע. לא אמורים לבצע שינויים ישירות. במקום, שינויים צריכים להיות מיוצגים על ידי בניית אוביקט חדש המבוסס על הקלט מ-<code>state</code> ו-<code>props</code>. למשל, נניח שרצינו להגדיל ערך ב-state על-ידי <code>props.step</code>:</p>
+          <pre class="language-javascript"><code class="language-javascript"><span class="token keyword">this</span><span class="token punctuation">.</span><span class="token method function property-access">setState</span><span class="token punctuation">(</span><span class="token punctuation">(</span><span class="token parameter">state<span class="token punctuation">,</span> props</span><span class="token punctuation">)</span> <span class="token arrow operator">=></span> <span class="token punctuation">{</span>
+  <span class="token keyword control-flow">return</span> <span class="token punctuation">{</span><span class="token literal-property property">counter</span><span class="token operator">:</span> state<span class="token punctuation">.</span><span class="token property-access">counter</span> <span class="token operator">+</span> props<span class="token punctuation">.</span><span class="token property-access">step</span><span class="token punctuation">}</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">;</span></code></pre>
+          <p>גם <code>state</code> וגם <code>props</code> שהתקבלו על ידי פונציית העדכון מובטחים להיות מעודכנים. הפלט של העדכון מתאחד באופן רדוד עם <code>state</code>.</p>
+          <p>הפרמטר השני ל- <code>setState()</code> הוא פונקציית callback אופציונלית שתתבצע ברגע ש- <code>setState</code> תושלם והקומפוננטה תרונדר מחדש. בכלליות, אנחנו ממליצים על שימוש ב- <code>componentDidUpdate()</code> ללוגיקות כאלו, במקום.</p>
+          <p>אופציונלית, ניתן להעביר אובייקט כארגומנט הראשון ל- <code>setState()</code> במקום פונקציה:</p>
+          <pre class="language-javascript"><code class="language-javascript"><span class="token function">setState</span><span class="token punctuation">(</span>stateChange<span class="token punctuation">[</span><span class="token punctuation">,</span> callback<span class="token punctuation">]</span><span class="token punctuation">)</span></code></pre>
+          <p>דרך זו מבצעת איחוד רדוד של <code>stateChange</code> לתוך ה-state החדש, לדוגמא כדי לשנות כמות של פריט בעגלת קניות:</p>
+          <pre class="language-javascript"><code class="language-javascript"><span class="token keyword">this</span><span class="token punctuation">.</span><span class="token method function property-access">setState</span><span class="token punctuation">(</span><span class="token punctuation">{</span><span class="token literal-property property">quantity</span><span class="token operator">:</span> <span class="token number">2</span><span class="token punctuation">}</span><span class="token punctuation">)</span></code></pre>
+          <p>הצורה הזו של <code>setState()</code> היא גם אסינכרונית, וקריאות מרובות במהלך אותו מעגל-חיים עלולים להתנגש. לדוגמא, אם ננסה להגדיל כמות של פריט יותר מפעם אחת באותו מעגל, זה יגרום לתוצאה השקולה ל:</p>
+          <pre class="language-javaScript"><code class="language-javaScript">Object.assign(
+  previousState,
+  {quantity: state.quantity + 1},
+  {quantity: state.quantity + 1},
+  ...
+)</code></pre>
+          <p>קריאות עוקבות יגרמו לדריסה של ערכים מקריאות קודמות באותו מעגל, לכן הכמות תגדל פעם אחת בלבד. אם ה-state הבא תלוי ב-state הנוכחי, אנחנו ממליצים להשתמש בצורה של פונקציית עדכון, במקום:</p>
+          <pre class="language-js"><code class="language-js"><span class="token keyword">this</span><span class="token punctuation">.</span><span class="token method function property-access">setState</span><span class="token punctuation">(</span><span class="token punctuation">(</span><span class="token parameter">state</span><span class="token punctuation">)</span> <span class="token arrow operator">=></span> <span class="token punctuation">{</span>
+  <span class="token keyword control-flow">return</span> <span class="token punctuation">{</span><span class="token literal-property property">quantity</span><span class="token operator">:</span> state<span class="token punctuation">.</span><span class="token property-access">quantity</span> <span class="token operator">+</span> <span class="token number">1</span><span class="token punctuation">}</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">;</span></code></pre>
+          <p>למידע נוסף, עיינו:</p>
+          <ul>
+            <li><a href="./state-and-lifecycle.html">State and Lifecycle guide</a></li>
+            <li><a href="https://stackoverflow.com/a/48610973/458193">In depth: When and why are <code>setState()</code> calls batched?</a></li>
+            <li><a href="https://github.com/facebook/react/issues/11527#issuecomment-360199710">In depth: Why isn't <code>this.state</code> updated immediately?</a></li>
+          </ul>
+          <hr>
+        </section>
+        <section id="forceupdate-forceupdate" class="level3">
+          <h3><code>forceUpdate()</code> {#forceupdate}</h3>
+          <pre class="language-javascript"><code class="language-javascript">component<span class="token punctuation">.</span><span class="token method function property-access">forceUpdate</span><span class="token punctuation">(</span>callback<span class="token punctuation">)</span></code></pre>
+          <p>בתור ברירת מחדל, כאשר ה-state או ה-props של הקומפוננטה שלכם משתנים, הקומפוננטה שלכם תרונדר מחדש. אם מתודת ה- <code>render()</code> שלכם תלויה במידע נוסף אחר, אתם יכולים להגיד ל-React שהקומפוננטה זקוקה לרינדור מחדש על-ידי קריאה ל- <code>forceUpdate()</code>.</p>
+          <p>קריאה ל- <code>forceUpdate()</code> תגרום לכך שתתבצע קריאה ל- <code>render()</code> בקומפוננטה, תוך כדי דילוג על <code>shouldComponentUpdate()</code>. זה יעורר תגובה של מתודות מעגל-החיים הרגיל לקומפוננטות ילד, לרבות מתודת ה- <code>shouldComponentUpdate()</code> של כל ילד. React עדיין רק תעדכן את ה-DOM ה-markup ישתנה.</p>
+          <p>הדרך הנכונה היא לנסות להמנע משימוש ב- <code>forceUpdate()</code> ורק לקרוא מ- <code>this.props</code> ו- <code>this.state</code> ב- <code>render()</code>.</p>
+          <hr>
+        </section>
+      </section>
+      <section id="class-properties-1" class="level2">
+        <h2>Properties של מחלקות (Class Properties)</h2>
+        <section id="defaultprops-defaultprops" class="level3">
+          <h3><code>defaultProps</code> {#defaultprops}</h3>
+          <p><code>defaultProps</code> יכול להיות מוגדר כ-property במחלקת הקומפוננטה עצמה, כדי להגדיר את props ברירת-המחדל עבור המחלקה. השימוש בזה הוא עבור props שהם <code>undefined</code>, אבל לא עבור props שהם <code>null</code>. לדוגמא:</p>
+          <pre class="language-js"><code class="language-js"><span class="token keyword">class</span> <span class="token class-name">CustomButton</span> <span class="token keyword">extends</span> <span class="token class-name">React<span class="token punctuation">.</span>Component</span> <span class="token punctuation">{</span>
+  <span class="token comment">// ...</span>
+<span class="token punctuation">}</span>
+
+<span class="token maybe-class-name">CustomButton</span><span class="token punctuation">.</span><span class="token property-access">defaultProps</span> <span class="token operator">=</span> <span class="token punctuation">{</span>
+  <span class="token literal-property property">color</span><span class="token operator">:</span> <span class="token string">'blue'</span>
+<span class="token punctuation">}</span><span class="token punctuation">;</span></code></pre>
+          <p>אם אין ערך ל-<code>props.color</code>, ערכו ייקבע לפי ברירת המחדל <code>'blue'</code>:</p>
+          <pre class="language-js"><code class="language-js">  <span class="token function">render</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token keyword control-flow">return</span> <span class="token operator">&#x3C;</span><span class="token maybe-class-name">CustomButton</span> <span class="token operator">/</span><span class="token operator">></span> <span class="token punctuation">;</span> <span class="token comment">// props.color ייקבע להיות כחול</span>
+  <span class="token punctuation">}</span></code></pre>
+          <p>אם <code>props.color</code> מוגדר להיות <code>null</code>, הוא יישאר <code>null</code>:</p>
+          <pre class="language-js"><code class="language-js">  <span class="token function">render</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token keyword control-flow">return</span> <span class="token operator">&#x3C;</span><span class="token maybe-class-name">CustomButton</span> color<span class="token operator">=</span><span class="token punctuation">{</span><span class="token keyword null nil">null</span><span class="token punctuation">}</span> <span class="token operator">/</span><span class="token operator">></span> <span class="token punctuation">;</span> <span class="token comment">// props.color ישאר null</span>
+  <span class="token punctuation">}</span></code></pre>
+          <hr>
+        </section>
+        <section id="displayname-displayname" class="level3">
+          <h3><code>displayName</code> {#displayname}</h3>
+          <p>המחרוזת <code>displayName</code> בשימוש בהודעות דיבאגינג. בדרך כלל, אנחנו לא צריכים להגדיר אותה באופן מפורש בגלל שהשם שלה נגזר מהשם של הפונקציה או המחלקה שמגדירה את הקומפוננטה. ייתכן שנרצה להגדיר אותה מפורשות אם נרצה להציג שם אחר עבור מטרות דיבאגינג או כאשר ניצור קומפוננטה מסדר גבוה יותר, עיינו ב-<a href="./higher-order-components.html#convention-wrap-the-display-name-for-easy-debugging">לעטוף את שם התצוגה עבור דיבאגינג פשוט</a> בשביל מידע נוסף.</p>
+          <hr>
+        </section>
+      </section>
+      <section id="instance-properties-1" class="level2">
+        <h2>Properties של מופע (Instance Properties)</h2>
+        <section id="props-props" class="level3">
+          <h3><code>props</code> {#props}</h3>
+          <p><code>this.props</code> מכין את ה-props שהוגדרו על ידי המפעיל של הקומפוננטה הזו. עיינו ב-<a href="./components-and-props.html">קומפוננטות ו-props</a> עבור הקדמה ל-props.</p>
+          <p><code>this.props.children</code> הוא prop מיוחד, בדרך כלל מוגדר על ידי הטאגים של הילד בביטוי ה-JSX מאשר בטאג עצמו.</p>
+        </section>
+        <section id="state-state" class="level3">
+          <h3><code>state</code> {#state}</h3>
+          <p>ה-state מכיל מידע ספציפי לקומפוננטה הזאת שעשוי להשתנות במהלך הזמן. ה-state מוגדר על-ידי המשתמש, והוא אמור להיות אוביקט JavaScript פשוט.</p>
+          <p>אם ערך כלשהו לא בשימוש עבור רינדור או עבור זרימת מידע (לדוגמא, timer ID), אין חובה לשים אותו בתוך ה-state. ערכים כאלו יכולים להיות מוגדרים כשדות בקומפוננטת המופע.</p>
+          <p>עיינו ב-<a href="./state-and-lifecycle.html">State ומחזור חיים</a> עבור מידע נוסף על ה-state.</p>
+          <p>
+            לעולם אל תשנו את <code>this.state</code> ישירות, מכיוון שקריאה ל- <code>setState()</code> לאחר מכן עלולה להחליף את השינוי שביצעתם. התייחסו ל- <code>this.state</code> כאילו היה אימיוטבל.
+            <span style="float: footnote;"><a href="./index.html#toc">Go to TOC</a></span>
+          </p>
+        </section>
+      </section>
+    </section>
+  </body>
+</html>

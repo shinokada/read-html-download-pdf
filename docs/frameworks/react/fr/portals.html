@@ -1,0 +1,140 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="utf-8">
+    <title>Les portails</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="https://raw.githubusercontent.com/shinokada/prism-coy-theme/main/theme_common.css">
+  </head>
+  <body>
+    <section id="les-portails" class="level1">
+      <h1>Les portails</h1>
+      <p>Les portails fournissent une excellente solution pour afficher des composants enfants dans un nœud DOM qui existe en dehors de la hiérarchie DOM du composant parent.</p>
+      <pre class="language-js"><code class="language-js"><span class="token maybe-class-name">ReactDOM</span><span class="token punctuation">.</span><span class="token method function property-access">createPortal</span><span class="token punctuation">(</span>child<span class="token punctuation">,</span> container<span class="token punctuation">)</span></code></pre>
+      <p>Le premier argument (<code>child</code>) peut être n'importe quel <a href="./react-component.html#render">enfant affichable par React</a>, comme un élément, une chaine de caractères ou un fragment. Le second argument (<code>container</code>) est un élément du DOM.</p>
+      <section id="usage" class="level2">
+        <h2>Utilisation</h2>
+        <p>D’habitude, lorsque vous renvoyez un élément depuis le rendu d'un composant, cet élément est monté dans le DOM en tant qu'enfant du plus proche parent :</p>
+        <pre class="language-js{4,6}"><code class="language-js{4,6}">render() {
+  // React monte une nouvelle div et affiche les enfants à l’intérieur de celle-ci
+  return (
+    &#x3C;div>
+      {this.props.children}
+    &#x3C;/div>
+  );
+}</code></pre>
+        <p>Cependant il est parfois utile d'insérer un enfant à un autre emplacement du DOM :</p>
+        <pre class="language-js{6}"><code class="language-js{6}">render() {
+  // React *ne crée pas* une nouvelle div, mais affiche les enfants dans `domNode`.
+  // `domNode` peut être n’importe quel élément valide du DOM, peu importe sa position.
+  return ReactDOM.createPortal(
+    this.props.children,
+    domNode
+  );
+}</code></pre>
+        <p>Un cas typique d'utilisation des portails survient lorsqu'un composant parent possède un style <code>overflow: hidden</code> ou <code>z-index</code> et que l'enfant a besoin de « sortir de son conteneur » visuellement. C’est par exemple le cas des boîtes de dialogues, des pop-ups ou encore des infobulles.</p>
+        <blockquote>
+          <p>Remarque</p>
+          <p>Lorsque vous travaillez avec les portails, gardez en tête que la <a href="./accessibility.html#programmatically-managing-focus">gestion du focus du clavier</a> devient très importante.</p>
+          <p>Pour les fenêtres modales, assurez-vous que tout le monde puisse interagir avec celles-ci en suivant les règles <a href="https://www.w3.org/TR/wai-aria-practices-1.1/#dialog_modal">WAI-ARIA Modal Authoring Practices du W3C</a> (en anglais).</p>
+        </blockquote>
+        <p><a href="https://codepen.io/gaearon/pen/yzMaBd"><strong>Essayer dans CodePen</strong></a></p>
+      </section>
+      <section id="event-bubbling-through-portals" class="level2">
+        <h2>La propagation des événements dans les portails</h2>
+        <p>Même si un portail peut être placé n'importe où dans l'arborescence DOM, il se comporte comme un enfant React normal à tous les autres points de vue. Les fonctionnalités comme le contexte se comportent exactement de la même façon, indépendamment du fait que l'enfant soit un portail, car le portail existe toujours dans <em>l'arborescence React</em>, indépendamment de sa position dans <em>l'arborescence DOM</em>.</p>
+        <p>Ça concerne aussi la propagation montante des événements. Un événement déclenché à l'intérieur d'un portail sera propagé aux ancêtres dans <em>l'arborescence React</em>, même si ces éléments ne sont pas ses ancêtres dans <em>l'arborescence DOM</em>. Prenons par exemple le code HTML suivant :</p>
+        <pre class="language-html"><code class="language-html"><span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;</span>html</span><span class="token punctuation">></span></span>
+  <span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;</span>body</span><span class="token punctuation">></span></span>
+    <span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;</span>div</span> <span class="token attr-name">id</span><span class="token attr-value"><span class="token punctuation attr-equals">=</span><span class="token punctuation">"</span>app-root<span class="token punctuation">"</span></span><span class="token punctuation">></span></span><span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;/</span>div</span><span class="token punctuation">></span></span>
+    <span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;</span>div</span> <span class="token attr-name">id</span><span class="token attr-value"><span class="token punctuation attr-equals">=</span><span class="token punctuation">"</span>modal-root<span class="token punctuation">"</span></span><span class="token punctuation">></span></span><span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;/</span>div</span><span class="token punctuation">></span></span>
+  <span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;/</span>body</span><span class="token punctuation">></span></span>
+<span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;/</span>html</span><span class="token punctuation">></span></span></code></pre>
+        <p>Un composant <code>Parent</code> dans <code>#app-root</code> pourrait attraper un événement montant non-intercepté provenant du nœud frère <code>#modal-root</code>.</p>
+        <pre class="language-js{28-31,42-49,53,60-62,69-70,73}"><code class="language-js{28-31,42-49,53,60-62,69-70,73}">// Ces deux conteneurs sont frères dans le DOM
+const appRoot = document.getElementById('app-root');
+const modalRoot = document.getElementById('modal-root');
+
+class Modal extends React.Component {
+  constructor(props) {
+    super(props);
+    this.el = document.createElement('div');
+  }
+
+  componentDidMount() {
+    // L’élément portail est inséré dans l’arborescence DOM une fois
+    // que les enfants du Modal sont montés, ce qui signifie que
+    // les enfants seront montés sur un nœud DOM détaché.
+    // Si un composant enfant nécessite d’être attaché au DOM
+    // dès le montage, par exemple pour mesurer un nœud DOM ou
+    // utiliser 'autoFocus' dans un nœud descendant, ajoutez un état
+    // à la modale et affichez uniquement les enfants une fois la
+    // modale insérée dans le DOM.
+    modalRoot.appendChild(this.el);
+  }
+
+  componentWillUnmount() {
+    modalRoot.removeChild(this.el);
+  }
+
+  render() {
+    return ReactDOM.createPortal(
+      this.props.children,
+      this.el
+    );
+  }
+}
+
+class Parent extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = {clicks: 0};
+    this.handleClick = this.handleClick.bind(this);
+  }
+
+  handleClick() {
+    // La fonction se déclenchera lorsque le bouton dans l’enfant sera cliqué,
+    // permettant la mise à jour de l’état du parent, même si le bouton
+    // n’en est pas un descendant direct dans le DOM.
+    this.setState(state => ({
+      clicks: state.clicks + 1
+    }));
+  }
+
+  render() {
+    return (
+      &#x3C;div onClick={this.handleClick}>
+        &#x3C;p>Nombre de clics : {this.state.clicks}&#x3C;/p>
+        &#x3C;p>
+          Ouvrez les outils de développement de votre navigateur
+          pour observer que ce bouton n’est pas un enfant de la div
+          qui écoute les événements de clic.
+        &#x3C;/p>
+        &#x3C;Modal>
+          &#x3C;Child />
+        &#x3C;/Modal>
+      &#x3C;/div>
+    );
+  }
+}
+
+function Child() {
+  // Lors de clics sur ce bouton, l’événement sera propagé au parent
+  // car il n’y a pas d'attribut 'onClick' défini ici.
+  return (
+    &#x3C;div className="modal">
+      &#x3C;button>Cliquez ici&#x3C;/button>
+    &#x3C;/div>
+  );
+}
+
+ReactDOM.render(&#x3C;Parent />, appRoot);</code></pre>
+        <p><a href="https://codepen.io/gaearon/pen/jGBWpE"><strong>Essayer dans CodePen</strong></a></p>
+        <p>
+          Attraper un événement en cours de propagation depuis un portail dans un composant parent autorise le développement d'abstractions plus flexibles qui ne sont pas forcément liées aux portails. Par exemple, si vous affichez un composant <code>&#x3C;Modal /></code>, le parent peut capturer ses événements, que le parent soit implémenté à base de portails ou non.
+          <span style="float: footnote;"><a href="./index.html#toc">Go to TOC</a></span>
+        </p>
+      </section>
+    </section>
+  </body>
+</html>

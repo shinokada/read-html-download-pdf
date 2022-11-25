@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="pl">
+  <head>
+    <meta charset="utf-8">
+    <title>Fragmenty z kluczami</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="https://raw.githubusercontent.com/shinokada/prism-coy-theme/main/theme_common.css">
+  </head>
+  <body>
+    <section id="fragmenty-z-kluczami" class="level1">
+      <h1>Fragmenty z kluczami</h1>
+      <blockquote>
+        <p>Uwaga:</p>
+        <p>Punkt wejścia <code>React.addons</code> jest przestarzały od wersji Reacta 15.5. Mamy teraz natywne wsparcie dla fragmentów, o których możesz przeczytać <a href="./fragments.html">tutaj</a>.</p>
+      </blockquote>
+      <section id="importing" class="level2">
+        <h2>Importowanie</h2>
+        <pre class="language-javascript"><code class="language-javascript"><span class="token keyword module">import</span> <span class="token imports">createFragment</span> <span class="token keyword module">from</span> <span class="token string">'react-addons-create-fragment'</span><span class="token punctuation">;</span> <span class="token comment">// ES6</span>
+<span class="token keyword">var</span> createFragment <span class="token operator">=</span> <span class="token function">require</span><span class="token punctuation">(</span><span class="token string">'react-addons-create-fragment'</span><span class="token punctuation">)</span><span class="token punctuation">;</span> <span class="token comment">// ES5 z npm</span></code></pre>
+      </section>
+      <section id="overview" class="level2">
+        <h2>Informacje ogólne</h2>
+        <p>W większości przypadków możesz użyć właściwości <code>key</code>, aby określić klucze w elementach zwracanych z metody <code>render</code>. Problem pojawia się jednak w sytuacji, gdy masz dwa zestawy komponentów potomnych, które musisz zamienić miejscami. Nie ma sposobu, aby umieścić klucz na każdym zestawie bez dodania elementu opakowującego.</p>
+        <p>Przykładowo, masz następujący komponent:</p>
+        <pre class="language-js"><code class="language-js"><span class="token keyword">function</span> <span class="token function"><span class="token maybe-class-name">Swapper</span></span><span class="token punctuation">(</span><span class="token parameter">props</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  <span class="token keyword">let</span> children<span class="token punctuation">;</span>
+  <span class="token keyword control-flow">if</span> <span class="token punctuation">(</span>props<span class="token punctuation">.</span><span class="token property-access">swapped</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    children <span class="token operator">=</span> <span class="token punctuation">[</span>props<span class="token punctuation">.</span><span class="token property-access">rightChildren</span><span class="token punctuation">,</span> props<span class="token punctuation">.</span><span class="token property-access">leftChildren</span><span class="token punctuation">]</span><span class="token punctuation">;</span>
+  <span class="token punctuation">}</span> <span class="token keyword control-flow">else</span> <span class="token punctuation">{</span>
+    children <span class="token operator">=</span> <span class="token punctuation">[</span>props<span class="token punctuation">.</span><span class="token property-access">leftChildren</span><span class="token punctuation">,</span> props<span class="token punctuation">.</span><span class="token property-access">rightChildren</span><span class="token punctuation">]</span><span class="token punctuation">;</span>
+  <span class="token punctuation">}</span>
+  <span class="token keyword control-flow">return</span> <span class="token operator">&#x3C;</span>div<span class="token operator">></span><span class="token punctuation">{</span>children<span class="token punctuation">}</span><span class="token operator">&#x3C;</span><span class="token operator">/</span>div<span class="token operator">></span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span></code></pre>
+        <p>Gdy zmienisz wartość właściwości <code>swapped</code> na inną, komponenty potomne odmontują się i ponownie zamontują, ponieważ żadna z grup potomków nie ma ustawionego klucza.</p>
+        <p>Aby rozwiązać ten problem, możesz użyć dodatku <code>createFragment</code>, dzięki któremu możesz przekazać klucze do zestawów komponentów potomnych.</p>
+        <section id="arrayreactnode-createfragmentobject-children-arrayreactnode-createfragmentobject-children" class="level4">
+          <h4><code>Array&#x3C;ReactNode> createFragment(object children)</code> {#arrayreactnode-createfragmentobject-children}</h4>
+          <p>Zamiast tworzyć tablice, piszemy:</p>
+          <pre class="language-javascript"><code class="language-javascript"><span class="token keyword module">import</span> <span class="token imports">createFragment</span> <span class="token keyword module">from</span> <span class="token string">'react-addons-create-fragment'</span><span class="token punctuation">;</span>
+
+<span class="token keyword">function</span> <span class="token function"><span class="token maybe-class-name">Swapper</span></span><span class="token punctuation">(</span><span class="token parameter">props</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  <span class="token keyword">let</span> children<span class="token punctuation">;</span>
+  <span class="token keyword control-flow">if</span> <span class="token punctuation">(</span>props<span class="token punctuation">.</span><span class="token property-access">swapped</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    children <span class="token operator">=</span> <span class="token function">createFragment</span><span class="token punctuation">(</span><span class="token punctuation">{</span>
+      <span class="token literal-property property">right</span><span class="token operator">:</span> props<span class="token punctuation">.</span><span class="token property-access">rightChildren</span><span class="token punctuation">,</span>
+      <span class="token literal-property property">left</span><span class="token operator">:</span> props<span class="token punctuation">.</span><span class="token property-access">leftChildren</span>
+    <span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token punctuation">}</span> <span class="token keyword control-flow">else</span> <span class="token punctuation">{</span>
+    children <span class="token operator">=</span> <span class="token function">createFragment</span><span class="token punctuation">(</span><span class="token punctuation">{</span>
+      <span class="token literal-property property">left</span><span class="token operator">:</span> props<span class="token punctuation">.</span><span class="token property-access">leftChildren</span><span class="token punctuation">,</span>
+      <span class="token literal-property property">right</span><span class="token operator">:</span> props<span class="token punctuation">.</span><span class="token property-access">rightChildren</span>
+    <span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token punctuation">}</span>
+  <span class="token keyword control-flow">return</span> <span class="token operator">&#x3C;</span>div<span class="token operator">></span><span class="token punctuation">{</span>children<span class="token punctuation">}</span><span class="token operator">&#x3C;</span><span class="token operator">/</span>div<span class="token operator">></span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span></code></pre>
+          <p>Klucze przekazanego obiektu (czyli <code>left</code> i <code>right</code>) są używane jako klucze dla całej grupy potomków, a kolejność kluczy obiektu jest używana do określenia kolejności renderowanych grup. Dzięki tej zmianie, obydwa zestawy elementów zostaną odpowiednio uporządkowane w DOM bez odmontowywania.</p>
+          <p>
+            Wartość zwracaną funkcji <code>createFragment</code> należy traktować jako obiekt nieprzezroczysty; możesz użyć funkcji <a href="./react-api.html#react.children"><code>React.Children</code></a> do iterowania fragmentu, ale nie zaglądaj bezpośrednio do niego. Zauważ również, że polegamy tu na silniku JavaScript zachowującym kolejność wyliczania obiektów, która nie jest gwarantowana przez specyfikację, ale jest implementowana przez wszystkie główne przeglądarki i maszyny wirtualne dla obiektów z kluczami nienumerycznymi.
+            <span style="float: footnote;"><a href="./index.html#toc">Go to TOC</a></span>
+          </p>
+        </section>
+      </section>
+    </section>
+  </body>
+</html>

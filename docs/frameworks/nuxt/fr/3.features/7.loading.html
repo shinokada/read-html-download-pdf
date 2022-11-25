@@ -1,0 +1,180 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="utf-8">
+    <title>Chargement</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="Nuxt fournit sa propre barre de chargement lors de la navigation entre les routes. Nous pouvons la personnaliser, la désactiver ou même créer la notre.">
+    <meta name="category" content="features">
+    <meta name="csb_link" content="https://codesandbox.io/embed/github/nuxt-academy/guides-examples/tree/master/03_features/08_loading?fontsize=14&#x26;hidenavigation=1&#x26;theme=dark">
+    <link rel="stylesheet" href="https://raw.githubusercontent.com/shinokada/prism-coy-theme/main/theme_common.css">
+  </head>
+  <body>
+    <section id="chargement" class="level1">
+      <h1>Chargement</h1>
+      <p>Nuxt fournit sa propre barre de chargement lors de la navigation entre les routes. Nous pouvons la personnaliser, la désactiver ou même créer la notre.</p>
+      <hr>
+      <section id="personnaliser-la-barre-de-progression" class="level2">
+        <h2>Personnaliser la barre de progression</h2>
+        <p>Parmi les propriétés que nous pouvons modifier, on peut lister la couleur, la taille, la durée et la direction de la barre de progression, cela afin de correspondre aux besoins de notre application. Cela peut être fait en mettant à jour la propriété <code>loading</code> du fichier <code>nuxt.config.js</code> avec les propriétés correspondantes (<code>color</code>, <code>size</code>, <code>duration</code>, <code>direction</code>).</p>
+        <p>Par exemple, pour définir une barre de progression bleue d'une hauteur de 5 pixels, nous pouvons mettre à jour le fichier <code>nuxt.config.js</code> avec:</p>
+        <pre class="language-js"><code class="language-js"><span class="token keyword module">export</span> <span class="token keyword module">default</span> <span class="token punctuation">{</span>
+  <span class="token literal-property property">loading</span><span class="token operator">:</span> <span class="token punctuation">{</span>
+    <span class="token literal-property property">color</span><span class="token operator">:</span> <span class="token string">'blue'</span><span class="token punctuation">,</span>
+    <span class="token literal-property property">height</span><span class="token operator">:</span> <span class="token string">'5px'</span>
+  <span class="token punctuation">}</span>
+<span class="token punctuation">}</span></code></pre>
+        <p>Voici la liste des propriétés que nous pouvons utiliser pour personnaliser la barre de progression.</p>
+        <p>
+          | Propriété | Type | Défaut | Description |
+          | |
+          | color | String | 'black' | Couleur CSS de la barre de progression |
+          | failedColor | String | 'red' | Couleur CSS de la barre de progression lors d'une erreur lors du render d'une route (ex: de la data ou un fetch ont échoué). |
+          | height | String | '2px' | Hauteur de la barre de progression (utilisé dans la propriété <code>style</code> de la barre de progression) |
+          | throttle | Number | 200 | En millisecondes, le temps a attendre avant que la barre de navigation ne soit affichée. Utile pour éviter de créer des flashs. |
+          | duration | Number | 5000 | En millisecondes, la durée maximum de la barre de progression, Nuxt assume que la route sera render en moins de 5 secondes. |
+          | continuous | Boolean | false | Continuer d'animer la barre de progression lorsque le chargement prends plus de temps que la valeur de la propriété <code>duration</code>. |
+          | css | Boolean | true | Définir à <code>false</code> pour enlever tous les styles appliqués à la barre de progression (y compris les vôtres). |
+          | rtl | Boolean | false | Définit la direction de la barre de progression, de droite à gauche. |
+        </p>
+      </section>
+      <section id="désactiver-la-barre-de-progression" class="level2">
+        <h2>Désactiver la barre de progression</h2>
+        <p>Si nous ne voulons pas afficher la barre de progression entre les routes, il suffit d'ajouter <code>loading: false</code> à notre fichier <code>nuxt.config.js</code>:</p>
+        <pre class="language-js{}[nuxt.config.js]"><code class="language-js{}[nuxt.config.js]">export default {
+  loading: false
+}</code></pre>
+        <p>La propriété <code>loading</code> nous donne l'option de désactiver la barre de progression sur une page spécifique.</p>
+        <pre class="language-html{}[pages/index.vue]"><code class="language-html{}[pages/index.vue]">&#x3C;template>
+  &#x3C;h1>Ma page&#x3C;/h1>
+&#x3C;/template>
+
+&#x3C;script>
+  export default {
+    loading: false
+  }
+&#x3C;/script></code></pre>
+      </section>
+      <section id="lancer-la-barre-de-progression-de-manière-programmatique" class="level2">
+        <h2>Lancer la barre de progression de manière programmatique</h2>
+        <p>La barre de progression peut aussi être lancée de manière programmatique dans nos composants en appelant <code>this.$nuxt.$loading.start()</code> pour lancer le chargement et <code>this.$nuxt.$loading.finish()</code> pour le finir.</p>
+        <p>Durant le process de montage du composant page, la propriété <code>$loading</code> peut ne pas être immédiatement accessible. Pour remédier à cette problématique et nous permettre de commencer la progression dans la méthode <code>mounted</code>, il faut enrouler notre méthode <code>$loading</code> dans un <code>this.$nextTick</code> comme montré ci-dessous:</p>
+        <pre class="language-js"><code class="language-js"><span class="token keyword module">export</span> <span class="token keyword module">default</span> <span class="token punctuation">{</span>
+  <span class="token function">mounted</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token keyword">this</span><span class="token punctuation">.</span><span class="token method function property-access">$nextTick</span><span class="token punctuation">(</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token arrow operator">=></span> <span class="token punctuation">{</span>
+      <span class="token keyword">this</span><span class="token punctuation">.</span><span class="token property-access">$nuxt</span><span class="token punctuation">.</span><span class="token property-access">$loading</span><span class="token punctuation">.</span><span class="token method function property-access">start</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+      <span class="token function">setTimeout</span><span class="token punctuation">(</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token arrow operator">=></span> <span class="token keyword">this</span><span class="token punctuation">.</span><span class="token property-access">$nuxt</span><span class="token punctuation">.</span><span class="token property-access">$loading</span><span class="token punctuation">.</span><span class="token method function property-access">finish</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">,</span> <span class="token number">500</span><span class="token punctuation">)</span>
+    <span class="token punctuation">}</span><span class="token punctuation">)</span>
+  <span class="token punctuation">}</span>
+<span class="token punctuation">}</span></code></pre>
+      </section>
+      <section id="les-rouages-de-la-barre-de-progression" class="level2">
+        <h2>Les rouages de la barre de progression</h2>
+        <p>Malheureusement, il n'est pas possible pour le composant de chargement de connaître en avance le temps que va mettre une page pour charger. Ainsi, il n'est pas possible d'animer la barre de progression de manière adéquate pour correspondre au temps de chargement.</p>
+        <p>Le composant de chargement de Nuxt résout ce problème en nous laissant la possibilité de définir une durée (<code>duration</code>), nous permettant de définir une estimation de la durée de chargement que cela devrait prendre. À moins que nous n'utilisions un composant de chargement personnalisé, la barre de progression ira toujours de 0 à 100% de la durée (<code>duration</code>), peu importe la progression actuelle. Lorsque le chargement réel prend plus de temps que la durée définie, la barre de progression va rester à 100% jusqu'à ce que le chargement soit fini.</p>
+        <p>Nous pouvons changer le comportement par défaut en passant la propriété <code>continuous</code> à <code>true</code>. Ainsi, la barre de progression reviendra à 0% de nouveau, après avoir atteint les 100%. L'animation va se répéter (de 0 à 100%) jusqu'à ce que le chargement ne soit fini.</p>
+        <pre class="language-js"><code class="language-js"><span class="token keyword module">export</span> <span class="token keyword module">default</span> <span class="token punctuation">{</span>
+  <span class="token literal-property property">loading</span><span class="token operator">:</span> <span class="token punctuation">{</span>
+    <span class="token literal-property property">continuous</span><span class="token operator">:</span> <span class="token boolean">true</span>
+  <span class="token punctuation">}</span>
+<span class="token punctuation">}</span></code></pre>
+        <p><em>Exemple d'une barre de progression continue:</em></p>
+        <figure>
+          <img src="/img/docs/api-continuous-loading.gif" alt="../docs/api-continuous-loading.gif">
+          <figcaption aria-hidden="true">../docs/api-continuous-loading.gif</figcaption>
+        </figure>
+      </section>
+      <section id="utiliser-un-composant-de-chargement-personnalisé" class="level2">
+        <h2>Utiliser un composant de chargement personnalisé</h2>
+        <p>Nous pouvons aussi créer notre propre composant que Nuxt se chargera d'appeler au lieu d'utiliser celui par défaut. Pour ce faire, nous aurons besoin de spécifier le chemin de du composant dans l'option <code>loading</code>.</p>
+        <p>Notre composant devra fournir certaines des méthodes suivantes:</p>
+        <p>
+          | Méthode | Requis | Description |
+          | |
+          | start() | Requis | Appelé lors d'un changement de route, c'est à ce moment là que nous affichons notre composant. |
+          | finish() | Requis | Appelé lorsqu'une route est chargée (et la data collectée), c'est à ce moment là que nous cachons notre composant. |
+          | fail(error) | Optionnel | Appelé lorsqu'une de nos routes n'a pas pu être chargée (ex: le chargement de la data a échoué) |
+          | increase(num) | Optionnel | Appelé durant le chargement du composant de la route, <code>num</code> est un <code>Integer</code> &#x3C; 100. |
+        </p>
+        <p>Nous pouvons créer notre composant personnalisé dans <code>components/LoadingBar.vue</code>:</p>
+        <pre class="language-html{}[components/LoadingBar.vue]"><code class="language-html{}[components/LoadingBar.vue]">&#x3C;template>
+  &#x3C;div v-if="loading" class="loading-page">
+    &#x3C;p>Chargement...&#x3C;/p>
+  &#x3C;/div>
+&#x3C;/template>
+
+&#x3C;script>
+  export default {
+    data: () => ({
+      loading: false
+    }),
+    methods: {
+      start() {
+        this.loading = true
+      },
+      finish() {
+        this.loading = false
+      }
+    }
+  }
+&#x3C;/script>
+
+&#x3C;style scoped>
+  .loading-page {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(255, 255, 255, 0.8);
+    text-align: center;
+    padding-top: 200px;
+    font-size: 30px;
+    font-family: sans-serif;
+  }
+&#x3C;/style></code></pre>
+        <p>Ensuite, il faut mettre à jour le fichier <code>nuxt.config.js</code> pour dire à Nuxt d'utiliser notre composant:</p>
+        <pre class="language-js{}[nuxt.config.js]"><code class="language-js{}[nuxt.config.js]">export default {
+  loading: '~/components/LoadingBar.vue'
+}</code></pre>
+      </section>
+      <section id="la-propriété-du-tourniquet-de-chargement" class="level2">
+        <h2>La propriété du tourniquet de chargement</h2>
+        <p>Lorsque nous utilisons Nuxt en mode SPA, il n'y a pas de contenu provenant du serveur lors du premier chargement de la page. Ainsi, au lieu d'afficher une page vide pendant que la page charge, Nuxt nous permet d'utiliser un tourniquet que nous pouvons personnaliser afin d'ajouter nos propres couleurs, notre background et même changer le tourniquet lui même.</p>
+        <pre class="language-js{}[nuxt.config.js]"><code class="language-js{}[nuxt.config.js]">export default {
+  loadingIndicator: {
+    name: 'circle',
+    color: '#3B8070',
+    background: 'white'
+  }
+}</code></pre>
+      </section>
+      <section id="tourniquets-intégrés" class="level2">
+        <h2>Tourniquets intégrés</h2>
+        <p>Ces tourniquets sont importés depuis le projet génial qu'est <a href="http://tobiasahlin.com/spinkit">Spinkit</a>. Nous pouvons regarder la page de démonstration pour avoir un aperçu des tourniquets disponibles. Afin d'utiliser l'un des tourniquets, tout ce nous avons à faire est d'ajouter son nom à la propriété <code>name</code>. Pas besoin d'importer ou d'installer quoi que ce soit. Voici la liste de tous les tourniquets intégrés que nous pouvons utiliser:</p>
+        <ul>
+          <li>circle</li>
+          <li>cube-grid</li>
+          <li>fading-circle</li>
+          <li>folding-cube</li>
+          <li>chasing-dots</li>
+          <li>nuxt</li>
+          <li>pulse</li>
+          <li>rectangle-bounce</li>
+          <li>rotating-plane</li>
+          <li>three-bounce</li>
+          <li>wandering-cubes</li>
+        </ul>
+        <p>Les tourniquets intégrés supportent les options <code>color</code> et <code>background</code>.</p>
+      </section>
+      <section id="tourniquets-personnalisés" class="level2">
+        <h2>Tourniquets personnalisés</h2>
+        <p>Si nous souhaitons avoir notre propre tourniquet, une chaîne de caractères ou un nom peuvent aussi être un chemin vers un template de tourniquet. Toutes les options seront ainsi passées au template.</p>
+        <p>
+          Si nous voulons nous inspirer du tourniquet de base de Nuxt, nous pouvons retrouver le code <a href="https://github.com/nuxt/nuxt.js/tree/dev/packages/vue-app/template/views/loading">ici</a> !
+          <span style="float: footnote;"><a href="../index.html#toc">Go to TOC</a></span>
+        </p>
+      </section>
+    </section>
+  </body>
+</html>

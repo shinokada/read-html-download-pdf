@@ -1,0 +1,258 @@
+<!doctype html>
+<html lang="he">
+  <head>
+    <meta charset="utf-8">
+    <title>הרמת ה-State למעלה</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="https://raw.githubusercontent.com/shinokada/prism-coy-theme/main/theme_common.css">
+  </head>
+  <body>
+    <section id="הרמת-ה-state-למעלה" class="level1">
+      <h1>הרמת ה-State למעלה</h1>
+      <p>לעתים קרובות, מספר קומפוננטות צריכות לשקף את אותם נתונים משתנים. אנו ממליצים להרים את ה-state המשותף עד לאב הקדמון הקרוב ביותר. בואו נראה איך זה עובד.</p>
+      <p>בחלק זה, ניצור מחשבון טמפרטורה המחשב אם המים ירתחו בטמפרטורה נתונה.</p>
+      <p>נתחיל עם קומפוננטה שנקראת <code>BoilingVerdict</code>. היא מקבלת את הטמפרטורה ב-<code>celsius</code> בתור props, ומדפיסה אם הטמפרטורה מספיקה כדי להרתיח את המים:</p>
+      <pre class="language-js{3,5}"><code class="language-js{3,5}">function BoilingVerdict(props) {
+  if (props.celsius >= 100) {
+    return &#x3C;p>המים ירתחו.&#x3C;/p>;
+  }
+  return &#x3C;p>המים לא ירתחו.&#x3C;/p>;
+}</code></pre>
+      <p>לאחר מכן, ניצור קומפוננטה שנקראת <code>Calculator</code>. היא מרנדרת <code>&#x3C;input></code> המאפשר לכם להזין את הטמפרטורה, ושומר על הערך שלה ב-<code>this.state.temperature</code>.</p>
+      <p>בנוסף, היא מרנדרת את <code>BoilingVerdict</code> עבור ערך הקלט הנוכחי.</p>
+      <pre class="language-js{5,9,13,17-21}"><code class="language-js{5,9,13,17-21}">class Calculator extends React.Component {
+  constructor(props) {
+    super(props);
+    this.handleChange = this.handleChange.bind(this);
+    this.state = {temperature: ''};
+  }
+
+  handleChange(e) {
+    this.setState({temperature: e.target.value});
+  }
+
+  render() {
+    const temperature = this.state.temperature;
+    return (
+      &#x3C;fieldset>
+        &#x3C;legend>הכנס טמפרטורה בצלזיוס:&#x3C;/legend>
+        &#x3C;input
+          value={temperature}
+          onChange={this.handleChange} />
+        &#x3C;BoilingVerdict
+          celsius={parseFloat(temperature)} />
+      &#x3C;/fieldset>
+    );
+  }
+}</code></pre>
+      <p><a href="https://codepen.io/gaearon/pen/ZXeOBm?editors=0010"><strong>נסו זאת ב-CodePen</strong></a></p>
+      <section id="adding-a-second-input" class="level2">
+        <h2>הוספת קלט שני</h2>
+        <p>הדרישה החדשה שלנו היא, בנוסף לקלט בצלזיוס, אנו מספקים קלט בפרנהייט, והם נשארים מסונכרנים.</p>
+        <p>אנחנו יכולים להתחיל על ידי חילוץ קומפוננטת <code>TemperatureInput</code> מתוך <code>Calculator</code>. אנו נוסיף אליה prop חדש <code>scale</code> שיכול להיות <code>"c"</code> או <code>"f"</code>:</p>
+        <pre class="language-js{1-4,19,22}"><code class="language-js{1-4,19,22}">const scaleNames = {
+  c: 'צלזיוס',
+  f: 'פרנהייט'
+};
+
+class TemperatureInput extends React.Component {
+  constructor(props) {
+    super(props);
+    this.handleChange = this.handleChange.bind(this);
+    this.state = {temperature: ''};
+  }
+
+  handleChange(e) {
+    this.setState({temperature: e.target.value});
+  }
+
+  render() {
+    const temperature = this.state.temperature;
+    const scale = this.props.scale;
+    return (
+      &#x3C;fieldset>
+        &#x3C;legend>הכנס טמפרטורה ב{scaleNames[scale]}:&#x3C;/legend>
+        &#x3C;input value={temperature}
+               onChange={this.handleChange} />
+      &#x3C;/fieldset>
+    );
+  }
+}</code></pre>
+        <p>כעת אנו יכולים לשנות את <code>Calculator</code> כדי שירנדר שתי קלטי טמפרטורה נפרדים:</p>
+        <pre class="language-js{5,6}"><code class="language-js{5,6}">class Calculator extends React.Component {
+  render() {
+    return (
+      &#x3C;div>
+        &#x3C;TemperatureInput scale="c" />
+        &#x3C;TemperatureInput scale="f" />
+      &#x3C;/div>
+    );
+  }
+}</code></pre>
+        <p><a href="https://codepen.io/gaearon/pen/jGBryx?editors=0010"><strong>נסו זאת ב-CodePen</strong></a></p>
+        <p>יש לנו שני קלטים עכשיו, אבל כאשר אתם מכניסים את הטמפרטורה באחד מהם, השני אינו מתעדכן. זה סותר את הדרישה שלנו: אנחנו רוצים לשמור אותם מסונכרנים.</p>
+        <p>אנחנו גם לא יכולים להציג את <code>BoilingVerdict</code> מ-<code>Calculator</code>. ה-<code>Calculator</code> אינו יודע את הטמפרטורה הנוכחית משום שהיא מוסתרת בתוך ה-<code>TemperatureInput</code>.</p>
+      </section>
+      <section id="writing-conversion-functions" class="level2">
+        <h2>כתיבת פונקציית המרה</h2>
+        <p>ראשית, נכתוב שתי פונקציות כדי להמיר מצלזיוס לפרנהייט ובחזרה:</p>
+        <pre class="language-js"><code class="language-js"><span class="token keyword">function</span> <span class="token function">toCelsius</span><span class="token punctuation">(</span><span class="token parameter">fahrenheit</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  <span class="token keyword control-flow">return</span> <span class="token punctuation">(</span>fahrenheit <span class="token operator">-</span> <span class="token number">32</span><span class="token punctuation">)</span> <span class="token operator">*</span> <span class="token number">5</span> <span class="token operator">/</span> <span class="token number">9</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+
+<span class="token keyword">function</span> <span class="token function">toFahrenheit</span><span class="token punctuation">(</span><span class="token parameter">celsius</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  <span class="token keyword control-flow">return</span> <span class="token punctuation">(</span>celsius <span class="token operator">*</span> <span class="token number">9</span> <span class="token operator">/</span> <span class="token number">5</span><span class="token punctuation">)</span> <span class="token operator">+</span> <span class="token number">32</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span></code></pre>
+        <p>שתי הפונקציות ממירות מספרים. נכתוב פונקציה אחרת שלוקחת מחרוזת <code>temperature</code> ופונקציית המרה כארגומנטים ומחזירה מחרוזת. נשתמש בה כדי לחשב את הערך של קלט אחד על סמך קלט אחר.</p>
+        <p>היא מחזירה מחרוזת ריקה עבור טמפרטורה (<code>temperature</code>) לא חוקית, והיא שומרת את הפלט מעוגל לספרה העשרונית השלישית לאחר הנקודה:</p>
+        <pre class="language-js"><code class="language-js"><span class="token keyword">function</span> <span class="token function">tryConvert</span><span class="token punctuation">(</span><span class="token parameter">temperature<span class="token punctuation">,</span> convert</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  <span class="token keyword">const</span> input <span class="token operator">=</span> <span class="token function">parseFloat</span><span class="token punctuation">(</span>temperature<span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token keyword control-flow">if</span> <span class="token punctuation">(</span><span class="token known-class-name class-name">Number</span><span class="token punctuation">.</span><span class="token method function property-access">isNaN</span><span class="token punctuation">(</span>input<span class="token punctuation">)</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token keyword control-flow">return</span> <span class="token string">''</span><span class="token punctuation">;</span>
+  <span class="token punctuation">}</span>
+  <span class="token keyword">const</span> output <span class="token operator">=</span> <span class="token function">convert</span><span class="token punctuation">(</span>input<span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token keyword">const</span> rounded <span class="token operator">=</span> <span class="token known-class-name class-name">Math</span><span class="token punctuation">.</span><span class="token method function property-access">round</span><span class="token punctuation">(</span>output <span class="token operator">*</span> <span class="token number">1000</span><span class="token punctuation">)</span> <span class="token operator">/</span> <span class="token number">1000</span><span class="token punctuation">;</span>
+  <span class="token keyword control-flow">return</span> rounded<span class="token punctuation">.</span><span class="token method function property-access">toString</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span></code></pre>
+        <p>לדוגמה, <code>tryConvert('abc', toCelsius)</code> מחזיר מחרוזת ריקה, ו-<code>tryConvert('10.22', toFahrenheit)</code> מחזיר <code>'50.396'</code>.</p>
+      </section>
+      <section id="lifting-state-up" class="level2">
+        <h2>הרמת ה-State למעלה</h2>
+        <p>כרגע, שתי קומפוננטות ה-<code>TemperatureInput</code> מחזיקות את הערך שלהן באופן עצמאי ב-state מקומי:</p>
+        <pre class="language-js{5,9,13}"><code class="language-js{5,9,13}">class TemperatureInput extends React.Component {
+  constructor(props) {
+    super(props);
+    this.handleChange = this.handleChange.bind(this);
+    this.state = {temperature: ''};
+  }
+
+  handleChange(e) {
+    this.setState({temperature: e.target.value});
+  }
+
+  render() {
+    const temperature = this.state.temperature;
+    // ...  </code></pre>
+        <p>למרות זאת, אנחנו רוצים ששני הקלטים האלו יהיו מסונכרנים אחד עם השני. כאשר אנו מעדכנים את קלט צלזיוס, קלט פרנהייט צריך לשקף את הטמפרטורה המומרת, ואותו דבר בכיוון השני.</p>
+        <p>ב-React, שיתוף ה-state נעשה על ידי העברתו אל האב הקדמון המשותף הקרוב ביותר של הקומפוננטות הזקוקות לו. זה נקרא "הרמת ה-state למעלה". אנו נסיר את ה-state המקומי מ-<code>TemperatureInput</code> ולנעביר אותו לתוך <code>Calculator</code> במקום.</p>
+        <p>אם <code>Calculator</code> הוא הבעלים של ה-state המשותף, הוא הופך להיות "מקור האמת" ("source of truth") לטמפרטורה הנוכחית בשני הקלטים. זה יכול להנחות את שניהם להשתמש בערכים כך שיהיו עקביים אחד עם השני. מכיוון שה-props של שתי קומפוננטות <code>TemperatureInput</code> מגיעים מאותה קומפוננטת אב <code>Calculator</code>, שני הקלטים יהיו תמיד מסונכרנים.</p>
+        <p>בואו נראה איך זה עובד צעד אחר צעד.</p>
+        <p>ראשית, אנו מחליפים את <code>this.state.temperature</code> עם <code>this.props.temperature</code> בקומפוננטת <code>TemperatureInput</code>. לעת עתה, בואו נמשיך להעמיד פנים ש<code>this.props.temperature</code> כבר קיים, למרות שנצטרך להעביר אותו מ-<code>Calculator</code> בעתיד:</p>
+        <pre class="language-js{3}"><code class="language-js{3}">  render() {
+    // קודם לכן: const temperature = this.state.temperature;
+    const temperature = this.props.temperature;
+    // ...</code></pre>
+        <p>אנחנו יודעים ש-<a href="./components-and-props.html#props-are-read-only">props הם לקריאה בלבד</a>. כאשר ה-<code>temperature</code> היה ב-state המקומי, ה-<code>TemperatureInput</code> יכל פשוט לקרוא ל-<code>this.setState()</code> כדי לשנות אותו. למרות זאת, עכשיו כאשר <code>temperature</code> מגיע מההורה בתור prop, ל-<code>TemperatureInput</code> אין שליטה עליו.</p>
+        <p>ב-React, זה בדרך כלל נעשה על ידי הפיכת קומפוננטה ל-"נשלטת". בדיוק כמו ב-DOM <code>&#x3C;input></code> מקבל גם <code>value</code> וגם prop של <code>onChange</code>, כך יכול גם ה-<code>TemperatureInput</code> המותאם אישית לקבל גם <code>temperature</code> וגם props של <code>onTemperatureChange</code> מההורה שלו <code>Calculator</code>.</p>
+        <p>עכשיו, שה-<code>TemperatureInput</code> רוצה לעדכן את הטמפרטורה שלו, הוא יקרא ל-<code>this.props.onTemperatureChange</code>:</p>
+        <pre class="language-js{3}"><code class="language-js{3}">  handleChange(e) {
+    // קודם לכן: this.setState({temperature: e.target.value});
+    this.props.onTemperatureChange(e.target.value);
+    // ...</code></pre>
+        <blockquote>
+          <p>שימו לב:</p>
+          <p>אין משמעות מיוחדת לשמות ה-props <code>temperature</code> או <code>onTemperatureChange</code> בקומפוננטות מותאמות אישית. יכולנו לקרוא להם כל דבר אחר, כמו לקרוא להם <code>value</code> ו-<code>onChange</code> שהיא קונבנציה נפוצה.</p>
+        </blockquote>
+        <p>ה-prop <code>onTemperatureChange</code> יועבר יחד עם ה-prop <code>temperature</code> על ידי קומפוננטת ההורה <code>Calculator</code>. היא תטפל בשינוי על ידי שינוי ה-state המקומי שלה, ובכך תרנדר מחדש את שני הקלטים עם ערכים חדשים. אנו נסתכל על המימוש החדש של <code>Calculator</code> בקרוב מאוד.</p>
+        <p>לפני שנצלול לתוך השינויים ב-<code>Calculator</code>, בואו נסכם את השינויים שלנו לקומפוננטת <code>TemperatureInput</code>. הסרנו ממנו את ה-state המקומי, ובמקום לקרוא את <code>this.state.temperature</code>, אנחנו קוראים עכשיו את <code>this.props.temperature</code>. במקום לקרוא ל-<code>this.setState()</code> כאשר אנחנו רוצים לעשות שינוי, עכשיו אנחנו קוראים ל-<code>this.props.onTemperatureChange()</code>, אשר יסופק על ידי <code>Calculator</code>:</p>
+        <pre class="language-js{8,12}"><code class="language-js{8,12}">class TemperatureInput extends React.Component {
+  constructor(props) {
+    super(props);
+    this.handleChange = this.handleChange.bind(this);
+  }
+
+  handleChange(e) {
+    this.props.onTemperatureChange(e.target.value);
+  }
+
+  render() {
+    const temperature = this.props.temperature;
+    const scale = this.props.scale;
+    return (
+      &#x3C;fieldset>
+        &#x3C;legend>הכנס טמפרטורה ב{scaleNames[scale]}:&#x3C;/legend>
+        &#x3C;input value={temperature}
+               onChange={this.handleChange} />
+      &#x3C;/fieldset>
+    );
+  }
+}</code></pre>
+        <p>עכשיו בואו נפנה לקומפוננטת <code>Calculator</code>.</p>
+        <p>אנו נשמור את הקלטים הנוכחיים <code>temperature</code> ו-<code>scale</code> ב-state המקומי שלה. זהו ה-state ש-"הרמנו" מהקלטים, והוא ישמש "מקור האמת" עבור שניהם. זהו ייצוג מינימלי של כל הנתונים שאנחנו צריכים לדעת על מנת לרנדר את שני הקלטים.</p>
+        <p>לדוגמה, אם נכניס 37 לתוך הקלט של צלזיוס, ה-state של קומפוננטת <code>Calculator</code> יהיה:</p>
+        <pre class="language-js"><code class="language-js"><span class="token punctuation">{</span>
+  <span class="token literal-property property">temperature</span><span class="token operator">:</span> <span class="token string">'37'</span><span class="token punctuation">,</span>
+  <span class="token literal-property property">scale</span><span class="token operator">:</span> <span class="token string">'c'</span>
+<span class="token punctuation">}</span></code></pre>
+        <p>אם מאוחר יותר נערוך את השדה פרנהייט כך שיהיה 212, ה-state של <code>Calculator</code> יהיה:</p>
+        <pre class="language-js"><code class="language-js"><span class="token punctuation">{</span>
+  <span class="token literal-property property">temperature</span><span class="token operator">:</span> <span class="token string">'212'</span><span class="token punctuation">,</span>
+  <span class="token literal-property property">scale</span><span class="token operator">:</span> <span class="token string">'f'</span>
+<span class="token punctuation">}</span></code></pre>
+        <p>היינו יכולים לאחסן את הערך של שני הקלטים אבל מסתבר שזה יהיה מיותר. זה מספיק לאחסן את הערך של הקלט האחרון שהשתנה, ואת המדד שהוא מייצג. לאחר מכן אנו יכולים להסיק את הערך של הקלט האחר בהתבסס על ערכי <code>temperature</code> ו-<code>scale</code> הנוכחיים בלבד.</p>
+        <p>הקלטים נשארים מסונכרנים מכיוון שהערכים שלהם מחושבים מאותו state:</p>
+        <pre class="language-js{6,10,14,18-21,27-28,31-32,34}"><code class="language-js{6,10,14,18-21,27-28,31-32,34}">class Calculator extends React.Component {
+  constructor(props) {
+    super(props);
+    this.handleCelsiusChange = this.handleCelsiusChange.bind(this);
+    this.handleFahrenheitChange = this.handleFahrenheitChange.bind(this);
+    this.state = {temperature: '', scale: 'c'};
+  }
+
+  handleCelsiusChange(temperature) {
+    this.setState({scale: 'c', temperature});
+  }
+
+  handleFahrenheitChange(temperature) {
+    this.setState({scale: 'f', temperature});
+  }
+
+  render() {
+    const scale = this.state.scale;
+    const temperature = this.state.temperature;
+    const celsius = scale === 'f' ? tryConvert(temperature, toCelsius) : temperature;
+    const fahrenheit = scale === 'c' ? tryConvert(temperature, toFahrenheit) : temperature;
+
+    return (
+      &#x3C;div>
+        &#x3C;TemperatureInput
+          scale="c"
+          temperature={celsius}
+          onTemperatureChange={this.handleCelsiusChange} />
+        &#x3C;TemperatureInput
+          scale="f"
+          temperature={fahrenheit}
+          onTemperatureChange={this.handleFahrenheitChange} />
+        &#x3C;BoilingVerdict
+          celsius={parseFloat(celsius)} />
+      &#x3C;/div>
+    );
+  }
+}</code></pre>
+        <p><a href="https://codepen.io/gaearon/pen/WZpxpz?editors=0010"><strong>נסו זאת ב-CodePen</strong></a></p>
+        <p>עכשיו, לא משנה איזה קלט אתם עורכים, <code>this.state.temperature</code> ו-<code>this.state.scale</code> ב-<code>Calculator</code> מתעדכנים. אחד הקלטים מקבל את הערך כפי שהוא, ולכן כל קלט משתמש נשמר, וערך הקלט האחר תמיד מחושב מחדש על בסיס הערך.</p>
+        <p>בואו נסכם את מה שקורה בעת עריכת קלט:</p>
+        <ul>
+          <li>React קוראת לפונקציה שצוינה כ-<code>onChange</code> על ה-<code>&#x3C;input></code> ב-DOM. במקרה שלנו, זוהי המתודה <code>handleChange</code> בקומפוננטה <code>TemperatureInput</code>.</li>
+          <li>המתודה <code>handleChange</code> בקומפוננטה <code>TemperatureInput</code> קוראת ל-<code>this.props.onTemperatureChange()</code> עם הערך הרצוי החדש. ה-props שלה, כולל <code>onTemperatureChange</code>, סופקו על ידי רכיב האב שלה, <code>Calculator</code>.</li>
+          <li>כאשר הוא רונדר קודם לכן, <code>Calculator</code> ציין כי <code>onTemperatureChange</code> של <code>TemperatureInput</code> צלזיוס היא המתודה <code>handleCelsiusChange</code> של <code>Calculator</code>, ו-<code>onTemperatureChange</code> של <code>TemperatureInput</code> פרנהייט היא המתודה <code>handleFahrenheitChange</code> של <code>Calculator</code>. אז אחת משתי מתודות אלה של <code>Calculator</code> תקרא כתלות בקלט אשר ערכנו.</li>
+          <li>בתוך המתודות הללו, הקומפוננטה <code>Calculator</code> מבקשת מ-React לרנדר מחדש את עצמה על ידי קריאה ל-<code>this.setState()</code> עם ערך הקלט החדש והמדד הנוכחי של הקלט שערכנו זה עתה.</li>
+          <li>React קוראת למתודת <code>render</code> של קומפוננטת <code>Calculator</code>כדי ללמוד איך ממשק המשתמש צריך להיראות. הערכים של שני הקלטים מחושבים מחדש בהתאם לטמפרטורה הנוכחית ולמדד הפעיל. ההמרה של הטמפרטורה מבוצעת כאן.</li>
+          <li>React קוראת למתודות <code>render</code> של כל אחת מקומפוננטות <code>TemperatureInput</code> עם ה-props החדשים שלהן שמצויינים על ידי <code>Calculator</code>. היא לומדת איך ממשק המשתמש שלהם צריך להיראות.</li>
+          <li>React קוראת למתודת <code>render</code> של קומפוננטת <code>BoilingVerdict</code>, כשהיא מעבירה את הטמפרטורה בצלזיוס כ-props שלה.</li>
+          <li>React DOM מעדכן את ה-DOM עם הכרעת מצב הרתיחה ועם התאמת הערכים הרצויים בקלט. הקלט שערכנו זה עתה מקבל את הערך הנוכחי שלו, והקלט האחר מתעדכן לטמפרטורה לאחר ההמרה.</li>
+        </ul>
+        <p>כל עדכון עובר את אותם השלבים כך שהקלטים יישארו מסונכרנים.</p>
+      </section>
+      <section id="lessons-learned" class="level2">
+        <h2>לקחים שנלמדו</h2>
+        <p>צריך להיות "מקור אמת" יחיד עבור כל נתון המשתנה באפליקציית React. בדרך כלל, ה-state מתווסף לראשונה לקומפוננטה הזקוקה לו. לאחר מכן, אם קומפוננטות אחרות גם צריכות אותו, אתם יכולים להרים אותו אל האב הקדמון המשותף הקרוב ביותר. במקום לנסות לסנכרן את ה-state בין קומפוננטות שונות, עליכם להסתמך על <a href="./state-and-lifecycle.html#the-data-flows-down">זרימת הנתונים מלמעלה למטה</a>.</p>
+        <p>הרמת ה-state כרוכה יותר בכתיבת קוד "boilerplate" מאשר בגישות binding דו-כיווני, אך הרווח הוא שנדרשת פחות עבודה כדי לאתר ולבודד באגים. מאחר שכל state "חי" בתוך איזשהי קומפוננטה וקומפוננטה זו בלבד יכולה לשנות אותו, שטח הפנים לבאגים מופחת באופן משמעותי. בנוסף, באפשרותכם לממש כל לוגיקה מותאמת אישית כדי לדחות או לשנות קלט משתמש.</p>
+        <p>אם אנחנו יכולים לגזור משהו מה-props או מה-state, זה כנראה לא צריך להיות ב-state. לדוגמה, במקום לאחסן גם את <code>celsiusValue</code> וגם את <code>fahrenheitValue</code>, אנו מאחסנים רק את הטמפרטורה (<code>temperature</code>) האחרונה ואת המדד (<code>scale</code>) שלה. הערך של הקלט האחר יכול תמיד להיות מחושב מהם במתודה <code>render()</code>. זה מאפשר לנו לנקות או להחיל עיגול לשדה האחר מבלי לאבד כל דיוק בקלט המשתמש.</p>
+        <p>כאשר אתם רואים משהו שגוי בממשק המשתמש, תוכלו להשתמש ב<a href="https://github.com/facebook/react/tree/main/packages/react-devtools">כלי הפיתוח של React</a> כדי לבדוק את ה-props ולעבור למעלה בעץ עד שתמצאו את הקומפוננטה האחראית לעדכון ה-state. זה מאפשר לכם לעקוב אחר הבאגים עד למקור שלהם:</p>
+        <img src="./docs/react-devtools-state.gif" alt="מעקב אחר State ב-React DevTools" max-width="100%" height="100%">
+        <p><span style="float: footnote;"><a href="./index.html#toc">Go to TOC</a></span></p>
+      </section>
+    </section>
+  </body>
+</html>

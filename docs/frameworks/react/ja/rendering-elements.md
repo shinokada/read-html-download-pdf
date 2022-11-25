@@ -62,7 +62,7 @@ React DOM は要素とその子要素を以前のものと比較し、DOM を望
 
 このことは、[最後の例](https://codepen.io/gaearon/pen/gwoJZk?editors=1010)をブラウザツールで調査すれば確認できます：
 
-![DOM inspector showing granular updates](../images/docs/granular-dom-updates.gif)
+![DOM inspector showing granular updates](./docs/granular-dom-updates.gif)
 
 毎秒ごとに UI ツリー全体を表す要素を作成しているにも関わらず、内容が変更されたテキストノードのみが React DOM により更新されます。
 

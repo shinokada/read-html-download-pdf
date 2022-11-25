@@ -1,0 +1,506 @@
+<!doctype html>
+<html lang="pl">
+  <head>
+    <meta charset="utf-8">
+    <title>React.Component</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="https://raw.githubusercontent.com/shinokada/prism-coy-theme/main/theme_common.css">
+  </head>
+  <body>
+    <section id="reactcomponent" class="level1">
+      <h1>React.Component</h1>
+      <p>Ta strona zawiera szegółowe odniesienie do definicji klasy reactowego komponentu. Zakłada ona, że znasz fundamentalne zagadnienia Reacta, takie jak <a href="./components-and-props.html">komponenty i właściwości</a>, i <a href="./state-and-lifecycle.html">stan i cykl życia</a>. Jeśli nie, zapoznaj się najpierw z nimi.</p>
+      <section id="overview" class="level2">
+        <h2>Ogólne informacje</h2>
+        <p>React pozwala na zdefiniowanie komponentów jako klasy lub funkcje. Komponenty zdefiniowane jako klasy obecnie zapewniają więcej funkcjonalności, które szczegółowo opiszemy na tej stronie. Aby komponent mógł być zdefiniowany jako klasa, musi on dziedziczyć po klasie <code>React.Component</code>:</p>
+        <pre class="language-js"><code class="language-js"><span class="token keyword">class</span> <span class="token class-name">Welcome</span> <span class="token keyword">extends</span> <span class="token class-name">React<span class="token punctuation">.</span>Component</span> <span class="token punctuation">{</span>
+  <span class="token function">render</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token keyword control-flow">return</span> <span class="token operator">&#x3C;</span>h1<span class="token operator">></span><span class="token maybe-class-name">Cześć</span><span class="token punctuation">,</span> <span class="token punctuation">{</span><span class="token keyword">this</span><span class="token punctuation">.</span><span class="token property-access">props</span><span class="token punctuation">.</span><span class="token property-access">name</span><span class="token punctuation">}</span><span class="token operator">&#x3C;</span><span class="token operator">/</span>h1<span class="token operator">></span><span class="token punctuation">;</span>
+  <span class="token punctuation">}</span>
+<span class="token punctuation">}</span></code></pre>
+        <p>Jedyna metoda, która <em>musi</em> być zdefiniowana w klasie dziedziczącej po <code>React.Component</code> nazywa się <a href="#render"><code>render()</code></a>. Wszystkie inne metody opisane na tej stronie są opcjonalne.</p>
+        <p><strong>Stanowczo odradadzamy tworzenie własnych klas bazowych komponentów.</strong> W Reactowych komponentach <a href="./composition-vs-inheritance.html">wielokrotne użycie kodu jest osiągane przede wszystkim przez kompozycję, a nie dziedziczenie</a>.</p>
+        <blockquote>
+          <p>Uwaga:</p>
+          <p>React nie zmusza cię do stosowania składni klasy ze standardu ES6. Jeśli wolisz jej uniknąć, możesz zamiast niej użyć modułu <code>create-react-class</code> lub podobnej niestandardowej abstrakcji. Aby dowiedzieć się więcej, zobacz rozdział <a href="./react-without-es6.html">React bez ES6</a>.</p>
+        </blockquote>
+        <section id="the-component-lifecycle" class="level3">
+          <h3>Cykl życia komponentu</h3>
+          <p>Każdy komponent ma kilka "metod cyklu życia", które możesz nadpisać, aby uruchomić kod w szczególnych momentach programu. <strong>Możesz użyć <a href="https://projects.wojtekmaj.pl/react-lifecycle-methods-diagram/">tego diagramu cyklu życia</a> jako ściągawki.</strong> Na liście poniżej, często używane metody cyklu życia zostały <strong>pogrubione</strong>. Reszta z nich istnieje dla stosunkowo rzadkich przypadków użycia.</p>
+          <section id="mounting" class="level4">
+            <h4>Montowanie</h4>
+            <p>Podczas, gdy instancja komponentu zostaje stworzona i włożona do drzewa DOM, w podanej kolejności wywołwane są poniższe metody:</p>
+            <ul>
+              <li><a href="#constructor"><strong><code>constructor()</code></strong></a></li>
+              <li><a href="#static-getderivedstatefromprops"><code>static getDerivedStateFromProps()</code></a></li>
+              <li><a href="#render"><strong><code>render()</code></strong></a></li>
+              <li><a href="#componentdidmount"><strong><code>componentDidMount()</code></strong></a></li>
+            </ul>
+            <blockquote>
+              <p>Uwaga:</p>
+              <p>Ta metoda jest uznawana za przestarzałą (ang. <em>legacy</em>) i powinno się <a href="/blog/2018/03/27/update-on-async-rendering.html">jej unikać</a> w nowym kodzie:</p>
+              <ul>
+                <li><a href="#unsafe_componentwillmount"><code>UNSAFE_componentWillMount()</code></a></li>
+              </ul>
+            </blockquote>
+          </section>
+          <section id="updating" class="level4">
+            <h4>Aktualizacja</h4>
+            <p>Aktualizacja może być spowodowana zmianami we właściwościach lub stanie komponentu. Kiedy komponent zostaje ponownie wyrenderowany, w podanej kolejności wywołane zostają poniższe metody:</p>
+            <ul>
+              <li><a href="#static-getderivedstatefromprops"><code>static getDerivedStateFromProps()</code></a></li>
+              <li><a href="#shouldcomponentupdate"><code>shouldComponentUpdate()</code></a></li>
+              <li><a href="#render"><strong><code>render()</code></strong></a></li>
+              <li><a href="#getsnapshotbeforeupdate"><code>getSnapshotBeforeUpdate()</code></a></li>
+              <li><a href="#componentdidupdate"><strong><code>componentDidUpdate()</code></strong></a></li>
+            </ul>
+            <blockquote>
+              <p>Uwaga:</p>
+              <p>Te metody są uznawane za przestarzałe i powinno się <a href="/blog/2018/03/27/update-on-async-rendering.html">ich unikać</a> w nowym kodzie:</p>
+              <ul>
+                <li><a href="#unsafe_componentwillupdate"><code>UNSAFE_componentWillUpdate()</code></a></li>
+                <li><a href="#unsafe_componentwillreceiveprops"><code>UNSAFE_componentWillReceiveProps()</code></a></li>
+              </ul>
+            </blockquote>
+          </section>
+          <section id="unmounting" class="level4">
+            <h4>Odmontowywanie</h4>
+            <p>Kiedy komponent zostaje usunięty z drzewa DOM, wywołana zostaje poniższa metoda:</p>
+            <ul>
+              <li><a href="#componentwillunmount"><strong><code>componentWillUnmount()</code></strong></a></li>
+            </ul>
+          </section>
+          <section id="error-handling" class="level4">
+            <h4>Obsługa wyjątków</h4>
+            <p>Poniższe metody zostają wywołane w razie wystąpienia wyjątku podczas renderowania, w metodzie cyklu życia, lub w konstruktorze dowolnych komponentów potomnych.</p>
+            <ul>
+              <li><a href="#static-getderivedstatefromerror"><code>static getDerivedStateFromError()</code></a></li>
+              <li><a href="#componentdidcatch"><code>componentDidCatch()</code></a></li>
+            </ul>
+          </section>
+        </section>
+        <section id="other-apis" class="level3">
+          <h3>Inne API</h3>
+          <p>Każdy komponent zapewnia też kilka innych API:</p>
+          <ul>
+            <li><a href="#setstate"><code>setState()</code></a></li>
+            <li><a href="#forceupdate"><code>forceUpdate()</code></a></li>
+          </ul>
+        </section>
+        <section id="class-properties" class="level3">
+          <h3>Właściwości klasy</h3>
+          <ul>
+            <li><a href="#defaultprops"><code>defaultProps</code></a></li>
+            <li><a href="#displayname"><code>displayName</code></a></li>
+          </ul>
+        </section>
+        <section id="instance-properties" class="level3">
+          <h3>Właściwości instancji</h3>
+          <ul>
+            <li><a href="#props"><code>props</code></a></li>
+            <li><a href="#state"><code>state</code></a></li>
+          </ul>
+          <hr>
+        </section>
+      </section>
+      <section id="reference" class="level2">
+        <h2>Dokumentacja</h2>
+        <section id="commonly-used-lifecycle-methods" class="level3">
+          <h3>Powszechnie używane metody cyklu życia</h3>
+          <p>Metody opisane w tym rozdziale pokrywają zdecydowaną większość przypadków użycia, na które natkniesz się tworząc reactowe komponenty. <strong>Dla wizualnego odniesienia, zobacz <a href="https://projects.wojtekmaj.pl/react-lifecycle-methods-diagram/">ten diagram cyklu życia</a>.</strong></p>
+        </section>
+        <section id="render-render" class="level3">
+          <h3><code>render()</code> {#render}</h3>
+          <pre class="language-javascript"><code class="language-javascript"><span class="token function">render</span><span class="token punctuation">(</span><span class="token punctuation">)</span></code></pre>
+          <p>Metoda <code>render()</code> jest jedyną metodą wymaganą w komponencie klasowym.</p>
+          <p>Wywołana, powinna sprawdzić <code>this.props</code> i <code>this.state</code> oraz zwrócić jeden z poniższych typów:</p>
+          <ul>
+            <li><strong>Reactowe elementy.</strong> Zwykle tworzone poprzez <a href="./introducing-jsx.html">JSX</a>. Na przykład, <code>&#x3C;div /></code> i <code>&#x3C;MyComponent /></code> są reactowymi elementami, które instruują Reacta, aby, odpowiednio, wyrenderował węzeł drzewa DOM, lub inny zdefiniowany przez użytkownika komponent.</li>
+            <li><strong>Tablice i fragmenty.</strong> Pozwalają na zwrócenie wielu elementów z metody render. Po więcej szczegółów odwiedź dokumentację <a href="./fragments.html">fragmentów</a>.</li>
+            <li><strong>Portale</strong>. Pozwalają na wyrenderowanie elementów potomnych w innym poddrzewie DOM. Po więcej szczegółów odwiedź dokumentację <a href="./portals.html">portali</a>.</li>
+            <li><strong>Łańcuchy znaków i liczby.</strong> Zostają wyrenderowane jako węzły tekstowe w drzewie DOM.</li>
+            <li><strong>Typ logiczny lub <code>null</code></strong>. Nie renderuje nic. (Istnieje głównie, aby wspierać wzorzec <code>return test &#x26;&#x26; &#x3C;Child /></code>, gdzie <code>test</code> jest wartością logiczną.)</li>
+          </ul>
+          <p>Funkcja <code>render()</code> powinna być czysta, to znaczy, że nie modyfikuje stanu komponentu, zwraca ten sam wynik przy każdym wywołaniu, i nie wchodzi w bezpośrednią interakcję z przeglądarką.</p>
+          <p>Jeśli potrzebujesz wejść w interakcję z przeglądarką, zamiast tego wykonaj swoje instrukcje w <code>componentDidMount()</code> lub innych metodach cyklu życia. Utrzymywanie funkcji <code>render()</code> w czystości sprawia, że łatwiej jest myśleć o komponentach.</p>
+          <blockquote>
+            <p>Uwaga</p>
+            <p>Funkcja <code>render()</code> nie zostanie wywołana, jeśli <a href="#shouldcomponentupdate"><code>shouldComponentUpdate()</code></a> zwróci <code>false</code>.</p>
+          </blockquote>
+          <hr>
+        </section>
+        <section id="constructor-constructor" class="level3">
+          <h3><code>constructor()</code> {#constructor}</h3>
+          <pre class="language-javascript"><code class="language-javascript"><span class="token function">constructor</span><span class="token punctuation">(</span>props<span class="token punctuation">)</span></code></pre>
+          <p><strong>Jeśli nie inicjalizujesz stanu i nie wiążesz (ang. <em>bind</em>) metod, nie ma potrzeby, abyś implementował konstruktor w swoim reactowym komponencie.</strong></p>
+          <p>Konstruktor reactowego komponentu jest wywoływany przed jego zamontowaniem. Kiedy implementujesz konstruktor w klasie dziedziczącej po klasie <code>React.Component</code>, powinieneś wywołać metodę <code>super(props)</code> przed jakąkolwiek inną instrukcją. W innym wypadku, <code>this.props</code> będzie miało w konstruktorze wartość <code>undefined</code>, co może prowadzić do błędów.</p>
+          <p>Zazwyczaj, konstruktory są używane tylko w dwóch celach:</p>
+          <ul>
+            <li>Inicjalizacji <a href="./state-and-lifecycle.html">stanu lokalnego</a> przez przypisanie obiektu do <code>this.state</code>.</li>
+            <li>Związania <a href="./handling-events.html">metody obsługującej zdarzenia</a> z instancją komponentu.</li>
+          </ul>
+          <p><strong>Nie powinieneś wywoływać metody <code>setState()</code></strong> w funkcji <code>constructor()</code>. Zamiast tego, jeśli potrzebujesz użyć w komponencie stanu lokalnego, <strong>przydziel początkowy stan do <code>this.state</code></strong> bezpośrednio w konstruktorze:</p>
+          <pre class="language-js"><code class="language-js"><span class="token function">constructor</span><span class="token punctuation">(</span><span class="token parameter">props</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  <span class="token keyword">super</span><span class="token punctuation">(</span>props<span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token comment">// Nie wywołuj tutaj this.setState()!</span>
+  <span class="token keyword">this</span><span class="token punctuation">.</span><span class="token property-access">state</span> <span class="token operator">=</span> <span class="token punctuation">{</span> <span class="token literal-property property">counter</span><span class="token operator">:</span> <span class="token number">0</span> <span class="token punctuation">}</span><span class="token punctuation">;</span>
+  <span class="token keyword">this</span><span class="token punctuation">.</span><span class="token property-access">handleClick</span> <span class="token operator">=</span> <span class="token keyword">this</span><span class="token punctuation">.</span><span class="token method function property-access">handleClick</span><span class="token punctuation">.</span><span class="token method function property-access">bind</span><span class="token punctuation">(</span><span class="token keyword">this</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span></code></pre>
+          <p>Konstruktor jest jedynym miejscem, w którym powinieneś przypisywać <code>this.state</code> bezpośrednio. Natomiast we wszystkich innych metodach powinieneś używać <code>this.setState()</code>.</p>
+          <p>Unikaj wprowadzania efektów ubocznych lub subskrypcji w konstruktorze. Używaj zamiast tego <code>componentDidMount()</code> dla tych przypadków użycia.</p>
+          <blockquote>
+            <p>Uwaga</p>
+            <p><strong>Unikaj kopiowania właściwości do stanu! Jest to częsty błąd:</strong></p>
+            <pre class="language-js"><code class="language-js"><span class="token function">constructor</span><span class="token punctuation">(</span><span class="token parameter">props</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+ <span class="token keyword">super</span><span class="token punctuation">(</span>props<span class="token punctuation">)</span><span class="token punctuation">;</span>
+ <span class="token comment">// Nie rób tego!</span>
+ <span class="token keyword">this</span><span class="token punctuation">.</span><span class="token property-access">state</span> <span class="token operator">=</span> <span class="token punctuation">{</span> <span class="token literal-property property">color</span><span class="token operator">:</span> props<span class="token punctuation">.</span><span class="token property-access">color</span> <span class="token punctuation">}</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span></code></pre>
+            <p>Problem w tym, że jest to jednocześnie niepotrzebne (zamiast tego możesz użyć <code>this.props.color</code> bezpośrednio), i jest przyczyną błędów (aktualizacje właściwości <code>color</code> nie będą odzwierciedlane w stanie).</p>
+            <p><strong>Używaj tego wzorca tylko jeśli chcesz celowo ignorować aktualizacje właściwości.</strong> W tym wypadku, bedzie miała sens zmiana nazwy właściwości na <code>initialColor</code> (ang. <em>początkowy kolor</em>) lub <code>defaultColor</code> (ang. <em>domyślny kolor</em>). Możesz wtedy zmusić komponent do "zresetowania" swojego wewnętrznego stanu przez <a href="/blog/2018/06/07/you-probably-dont-need-derived-state.html#recommendation-fully-uncontrolled-component-with-a-key">zmianę jego właściwości <code>key</code></a> w razie potrzeby.</p>
+            <p>Przeczytaj nasz <a href="/blog/2018/06/07/you-probably-dont-need-derived-state.html">wpis na blogu na temat unikania stanu pochodnego</a>, aby dowiedzieć się co należy zrobić, jeśli wydaje ci się, że potrzebujesz stanu zależnego od właściwości.</p>
+          </blockquote>
+          <hr>
+        </section>
+        <section id="componentdidmount-componentdidmount" class="level3">
+          <h3><code>componentDidMount()</code> {#componentdidmount}</h3>
+          <pre class="language-javascript"><code class="language-javascript"><span class="token function">componentDidMount</span><span class="token punctuation">(</span><span class="token punctuation">)</span></code></pre>
+          <p>Metoda <code>componentDidMount()</code> jest wywołowana bezpośrednio po zamontowaniu komponentu (po jego włożeniu do drzewa). Inicjalizacja, która wymaga węzłów drzewa DOM powinna się tam znaleźć. Jeśli potrzebujesz załadować dane ze zdalnego zasobu, jest to dobre miejsce do wykonania zapytania sieciowego.</p>
+          <p>Ta metoda jest dobrym miejscem na przygotowanie dowolnych subskrypcji. Jeśli to zrobisz, nie zapomnij ich zakończyć w metodzie <code>componentWillUnmount()</code>.</p>
+          <p><strong>Możesz wywołać metodę <code>setState()</code> od razu</strong> w <code>componentDidMount()</code>. Spowoduje to dodatkowe renderowanie, ale zostanie ono wykonane zanim przeglądarka zaktualizuje ekran. Jest to gwarancją, że pomimo, iż metoda <code>render()</code> będzie w tym przypadku wywołana dwa razy, użytkownik nie zobaczy pośredniego stanu. Używaj tego wzorca uważnie, ponieważ często powoduje on problemy z wydajnością. W większości przypadków, powinieneś zamiast tego mieć możliwość przypisania stanu początkowego w konstruktorze. Może to być natomiast konieczne w przypadkach takich jak okna modalne i okienka podpowiedzi, kiedy przed wyrenderowaniem czegoś trzeba zmierzyć węzeł drzewa DOM.</p>
+          <hr>
+        </section>
+        <section id="componentdidupdate-componentdidupdate" class="level3">
+          <h3><code>componentDidUpdate()</code> {#componentdidupdate}</h3>
+          <pre class="language-javascript"><code class="language-javascript"><span class="token function">componentDidUpdate</span><span class="token punctuation">(</span>prevProps<span class="token punctuation">,</span> prevState<span class="token punctuation">,</span> snapshot<span class="token punctuation">)</span></code></pre>
+          <p>Metoda <code>componentDidUpdate()</code> jest wywoływana bezpośrednio po wystąpieniu aktualizacji. Nie jest ona wywoływana po początkowym wyrenderowaniu.</p>
+          <p>Używaj tego jako okazji do operacji na drzewie DOM kiedy komponent został zaktualizowany. Jest to także dobre miejsce na wykonywanie zapytań sieciowych tak długo jak porównujesz obecne właściwości z poprzednimi (na przykład, zapytanie może być niepotrzebne jeśli właściwości się nie zmieniły).</p>
+          <pre class="language-js"><code class="language-js"><span class="token function">componentDidUpdate</span><span class="token punctuation">(</span><span class="token parameter">prevProps</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  <span class="token comment">// Typowy sposób użycia (nie zapomnij porównać właściwości):</span>
+  <span class="token keyword control-flow">if</span> <span class="token punctuation">(</span><span class="token keyword">this</span><span class="token punctuation">.</span><span class="token property-access">props</span><span class="token punctuation">.</span><span class="token property-access">userID</span> <span class="token operator">!==</span> prevProps<span class="token punctuation">.</span><span class="token property-access">userID</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token keyword">this</span><span class="token punctuation">.</span><span class="token method function property-access">fetchData</span><span class="token punctuation">(</span><span class="token keyword">this</span><span class="token punctuation">.</span><span class="token property-access">props</span><span class="token punctuation">.</span><span class="token property-access">userID</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token punctuation">}</span>
+<span class="token punctuation">}</span></code></pre>
+          <p><strong>Możesz wywołać metodę <code>setState()</code> od razu</strong> w <code>componentDidUpdate()</code>, ale weź pod uwagę, że <strong>musi ona być owinięta instrukcją warunkową</strong> jak w przykładzie powyżej, albo spowodujesz nieskończoną pętlę. Spowodowałoby to również dodatkowe renderowanie które, pomimo że niedostrzegalne dla użytkownika, może negatywnie wpłynąć na wydajność komponentu. Jeśli próbujesz "odzwierciedlić" pewien stan z właściwością pochodzącą z góry, rozważ zamiast tego użycie tej właściwości bezpośrednio. Dowiedz się więcej o tym <a href="/blog/2018/06/07/you-probably-dont-need-derived-state.html">dlaczego kopiowanie właściwości do stanu powoduje błędy</a>.</p>
+          <p>Jeśli twój komponent ma zaimplementowaną metodę cyklu życia <code>getSnapshotBeforeUpdate()</code> (co jest rzadkie), wartość którą ona zwróci, będzie przekazana jako trzeci parametr ("zrzut" (ang.<em>snapshot</em>)) do metody <code>componentDidUpdate()</code>. W innym wypadku ten parametr będzie miał wartość <code>undefined</code>.</p>
+          <blockquote>
+            <p>Uwaga</p>
+            <p>Metoda <code>componentDidUpdate()</code> nie będzie wywołana jeśli <a href="#shouldcomponentupdate"><code>shouldComponentUpdate()</code></a> zwróci <code>false</code>.</p>
+          </blockquote>
+          <hr>
+        </section>
+        <section id="componentwillunmount-componentwillunmount" class="level3">
+          <h3><code>componentWillUnmount()</code> {#componentwillunmount}</h3>
+          <pre class="language-javascript"><code class="language-javascript"><span class="token function">componentWillUnmount</span><span class="token punctuation">(</span><span class="token punctuation">)</span></code></pre>
+          <p>Metoda <code>componentWillUnmount()</code> jest wywoływana zaraz przed odmontowaniem i zniszczeniem komponentu. Przeprowadź potrzebne czyszczenie w tej metodzie, takie jak unieważnienie liczników czasu, anulowanie zapytań sieciowych, lub czyszczenie subskrypcji, które były rozpoczęte w <code>componentDidMount()</code>.</p>
+          <p><strong>Nie powinieneś wywoływać metody <code>setState()</code></strong> w <code>componentWillUnmount()</code>, ponieważ ten komponent nie zostanie ponownie wyrenderowany. Kiedy instancja komponentu zostaje odmonotowana, nigdy nie będzie zamontowana ponownie.</p>
+          <hr>
+        </section>
+        <section id="rarely-used-lifecycle-methods" class="level3">
+          <h3>Rzadko używane metody cyklu życia</h3>
+          <p>Metody zawarte w tej sekcji odpowiadają rzadkim przypadkom użycia. Czasem są przydatne, ale większość twoich komponentów najprawdopodobniej nie będzie ich potrzebowała. <strong>Większość poniższych metod możesz zobaczyć na <a href="https://projects.wojtekmaj.pl/react-lifecycle-methods-diagram/">tym diagramie cyklu życia</a> po kliknięciu na checkbox "Pokaż rzadziej używane metody" u góry.</strong></p>
+        </section>
+        <section id="shouldcomponentupdate-shouldcomponentupdate" class="level3">
+          <h3><code>shouldComponentUpdate()</code> {#shouldcomponentupdate}</h3>
+          <pre class="language-javascript"><code class="language-javascript"><span class="token function">shouldComponentUpdate</span><span class="token punctuation">(</span>nextProps<span class="token punctuation">,</span> nextState<span class="token punctuation">)</span></code></pre>
+          <p>Używaj metody <code>shouldComponentUpdate()</code>, aby dać znać Reactowi, czy obecna zmiana stanu lub właściwości komponentu nie wpłynęła na jego wynik. Domyślnym zachowaniem, na którym powinieneś polegać w większości przypadków, jest ponowne renderowanie przy każdej zmianie stanu.</p>
+          <p>Metoda <code>shouldComponentUpdate()</code> jest wywoływana przed renderowaniem, gdy otrzymywane są nowe właściwości lub stan. Domylnie wartość zwracana to <code>true</code>. Ta metoda nie jest wywoływana przy początkowym renderowaniu lub kiedy została użyta metoda <code>forceUpdate()</code>.</p>
+          <p>Ta metoda istnieje tylko jako <strong><a href="./optimizing-performance.html">optymalizacja wydajności</a>.</strong> Nie polegaj na niej aby "zapobiegać" renderowaniu, co może prowadzić do błędów. Zamiast pisania <code>shouldComponentUpdate()</code> własnoręcznie, <strong>rozważ użycie wbudowanej klasy <a href="./react-api.html#reactpurecomponent"><code>PureComponent</code></a></strong>. <code>PureComponent</code> przeprowadza płytkie porównanie właściwości i stanu, i obniża szansę na pominięcie niezbędnej aktualizacji.</p>
+          <p>Jeśli jesteś pewny, że chcesz ją napisać własnoręcznie, możesz porównać <code>this.props</code> z <code>nextProps</code> i <code>this.state</code> z <code>nextState</code> oraz zwrócić <code>false</code>, aby powiadomić Reacta, że aktualizacja może zostać pominięta. Zauważ, że zwrócenie <code>false</code> nie zapobiega ponownemu wyrenderowaniu komponentów potomnych, gdy <em>ich</em> stan się zmienia.</p>
+          <p>Nie zalecamy wykonywania głębokich porównań lub używania <code>JSON.stringify()</code> w metodzie <code>shouldComponentUpdate()</code>. Jest to bardzo nieefektywne i negatywnie odbije się na wydajności.</p>
+          <p>Obecnie, jeśli <code>shouldComponentUpdate()</code> zwróci <code>false</code>, <a href="#unsafe_componentwillupdate"><code>UNSAFE_componentWillUpdate()</code></a>, <a href="#render"><code>render()</code></a> i <a href="#componentdidupdate"><code>componentDidUpdate()</code></a> nie zostana wywołane. W przyszłosci React może traktować <code>shouldComponentUpdate()</code> jako wskazówkę, a nie jako ścisłą dyrektywę, a zwrócenie <code>false</code> może mimo wszytko skutkować ponownym wyrenderowaniem komponentu.</p>
+          <hr>
+        </section>
+        <section id="static-getderivedstatefromprops-static-getderivedstatefromprops" class="level3">
+          <h3><code>static getDerivedStateFromProps()</code> {#static-getderivedstatefromprops}</h3>
+          <pre class="language-js"><code class="language-js"><span class="token keyword">static</span> <span class="token function">getDerivedStateFromProps</span><span class="token punctuation">(</span>props<span class="token punctuation">,</span> state<span class="token punctuation">)</span></code></pre>
+          <p>Metoda <code>getDerivedStateFromProps</code> jest wywoływana zaraz przed wywołaniem metody render, zarówno przy początkowym montowaniu, jak i przy dalszych aktualizacjach. Powinna zwrócić obiekt, aby zaktualizować stan, lub zwrócić <code>null</code>, aby nie aktualizować nic.</p>
+          <p>Ta metoda istnieje dla <a href="/blog/2018/06/07/you-probably-dont-need-derived-state.html#when-to-use-derived-state">rzadkich przypadków użycia</a>, w których stan zależy od zmian właściwości w czasie. Na przykład, może okazać się przydatnym komponent <code>&#x3C;Transition></code>, który porównuje swoje obecne komponenty potomne z poprzednimi, aby zdecydować, króre z nich mają pojawić się z animacją, a które zniknąć.</p>
+          <p>
+            Derywowanie stanu sprawia, że kod jest rozwlekły i trudno myśli się o komponentach.
+            <a href="/blog/2018/06/07/you-probably-dont-need-derived-state.html">Upewnij się, że znasz prostsze alternatywy:</a>
+          </p>
+          <ul>
+            <li>
+              <p>Jeśli potrzebujesz <strong>spowodować efekt uboczny</strong> (na przykład pobranie danych, albo animację) w odpowiedzi na zmianę właściwości, zamiast tego użyj metody cyklu życia <a href="#componentdidupdate"><code>componentDidUpdate</code></a>.</p>
+            </li>
+            <li>
+              <p>Jeśli chcesz <strong>ponownie obliczyć pewne dane tylko, kiedy zmieni się właściwość</strong>, <a href="/blog/2018/06/07/you-probably-dont-need-derived-state.html#what-about-memoization">zamiast tego użyj pomocniczych technik memoizacyjnych</a>.</p>
+            </li>
+            <li>
+              <p>Jeśli chcesz <strong>"zresetować" stan przy zmianie właściwości</strong>, rozważ zamiast tego uczynienie komponentu <a href="/blog/2018/06/07/you-probably-dont-need-derived-state.html#recommendation-fully-controlled-component">całkowicie kontrolowanym</a> lub <a href="/blog/2018/06/07/you-probably-dont-need-derived-state.html#recommendation-fully-uncontrolled-component-with-a-key">całkowicie niekontrolowanym z właściwością <code>key</code></a>.</p>
+            </li>
+          </ul>
+          <p>Ta metoda nie ma dostępu do instancji komponentu. Jeśli chcesz, możesz używać ponownie kod pomiędzy <code>getDerivedStateFromProps()</code> innymi metodami klasy poprzez wyodrębnienie czystych funkcji właściwości i stanu komponentu poza definicję klasy.</p>
+          <p>Zauważ, że metoda ta wywoływana jest przy <em>każdym</em> renderowaniu, bez względu na przyczynę. Jest to kontrastem dla metody <code>UNSAFE_componentWillReceiveProps</code>, która zostaje wywołana tylko, kiedy komponent nadrzędny powoduje ponowne wyrenderowanie, a nie jako wynik lokalnego wywołania metody <code>setState</code>.</p>
+          <hr>
+        </section>
+        <section id="getsnapshotbeforeupdate-getsnapshotbeforeupdate" class="level3">
+          <h3><code>getSnapshotBeforeUpdate()</code> {#getsnapshotbeforeupdate}</h3>
+          <pre class="language-javascript"><code class="language-javascript"><span class="token function">getSnapshotBeforeUpdate</span><span class="token punctuation">(</span>prevProps<span class="token punctuation">,</span> prevState<span class="token punctuation">)</span></code></pre>
+          <p>Metoda <code>getSnapshotBeforeUpdate()</code> jest wywoływana zaraz przed tym, gdy ostatnio wyrenderowany wynik zostaje zatwierdzony do np. drzewa DOM. Pozwala to twojemu komponentowi na przejęcie pewnych informacji z drzewa DOM (np. pozycje scrolla) przed ich potencjalną zmianą. Każda wartość zwrócona przez metodę cyklu życia zostanie przekazana jako parametr do metody <code>componentDidUpdate()</code>.</p>
+          <p>Ten przypadek użycia nie jest powszechny, ale może wystąpić w interfejsach użytkownika takich jak wątki czatu, które potrzebują możliwości zarządzania pozycją scrolla w specjalny sposób.</p>
+          <p>Powinna być zwrócona wartość snapshotu (lub <code>null</code>).</p>
+          <p>Dla przykładu:</p>
+          <p><code>embed:react-component-reference/get-snapshot-before-update.js</code></p>
+          <p>W powyższych przykładach, ważne jest odczytanie własności <code>scrollHeight</code> w metodzie <code>getSnapshotBeforeUpdate</code>, ponieważ mogą wystąpić opóźnienia pomiędzy metodami cyklu życia w fazie "render" (takimi jak <code>render</code>), a metodami fazy "commit" (takimi jak <code>getSnapshotBeforeUpdate</code> i <code>componentDidUpdate</code>).</p>
+          <hr>
+        </section>
+        <section id="error-boundaries" class="level3">
+          <h3>Granice błędu</h3>
+          <p><a href="./error-boundaries.html">Granice błędów</a> to reactowe komponenty, które wychwytują javascriptowe wyjątki w dowolnych miejscach swojego drzewa komponentów potomnych, zapisują te wyjątki, i pokazują awaryjny interfejs użytkownika zamiast drzewa komponentów, które rzuciło tym wyjątkiem. Granice błędów wychwytują wyjątki podczas renderowania, w metodach cyklu życia, i w konstruktorach całego drzewa potomnego.</p>
+          <p>Komponent klasowy staje się granicą błędu, jeśli ma zdefiniowaną jedną z (lub obie) metod cyklu życia <code>static getDerivedStateFromError()</code> lub <code>componentDidCatch()</code>. Aktualizacja stanu z tych metod pozwala na wychwycenie nieobsłużonego javascriptowego wyjątku w drzewie komponentów potomnych i pokazać rezerwowy interfejs użytkownika.</p>
+          <p>Używaj granic błędów tylko do rekonwalescencji po nieoczekiwanych wyjątkach; <strong>nie próbuj używać ich do kontrolowania przebiegu programu.</strong></p>
+          <p>Po więcej szczegółów, odwiedź <a href="/blog/2017/07/26/error-handling-in-react-16.html"><em>Obsługa wyjątków w Reakcie 16</em></a>.</p>
+          <blockquote>
+            <p>Uwaga</p>
+            <p>Granice błędów wychwytują tylko wyjątki w komponentach z drzewa <strong>pod</strong> nimi. Granica błędów nie może wychwycić wyjątku, który wystąpił w niej samej.</p>
+          </blockquote>
+        </section>
+        <section id="static-getderivedstatefromerror-static-getderivedstatefromerror" class="level3">
+          <h3><code>static getDerivedStateFromError()</code> {#static-getderivedstatefromerror}</h3>
+          <pre class="language-javascript"><code class="language-javascript"><span class="token keyword">static</span> <span class="token function">getDerivedStateFromError</span><span class="token punctuation">(</span>error<span class="token punctuation">)</span></code></pre>
+          <p>
+            Ta metoda cyklu życia jest wywoływana po wyrzuceniu wyjątku przez komponent potomny.
+            Wyrzucony wyjątek zostaje do niej przekazany jako argument, jej wynikiem powinna być wartość, która pozwoli na zaktualizowanie stanu.
+          </p>
+          <pre class="language-js{7-10,13-16}"><code class="language-js{7-10,13-16}">class ErrorBoundary extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = { hasError: false };
+  }
+
+  static getDerivedStateFromError(error) {
+    // Aktualizacja stanu, aby kolejne wyrenderowanie pokazało awaryjny interfejs użytkownika.
+    return { hasError: true };
+  }
+
+  render() {
+    if (this.state.hasError) {
+      // Możesz wyrenderować dowolny awaryjny interfejs użytkownika
+      return &#x3C;h1>Something went wrong.&#x3C;/h1>;
+    }
+
+    return this.props.children;
+  }
+}</code></pre>
+          <blockquote>
+            <p>Uwaga</p>
+            <p>
+              Metoda <code>getDerivedStateFromError()</code> jest wywoływana podczas fazy "render", więc nie są w niej dozwolone skutki uboczne.
+              Zamiast tego, dla tych przypadków użycia użyj metody <code>componentDidCatch()</code>.
+            </p>
+          </blockquote>
+          <hr>
+        </section>
+        <section id="componentdidcatch-componentdidcatch" class="level3">
+          <h3><code>componentDidCatch()</code> {#componentdidcatch}</h3>
+          <pre class="language-javascript"><code class="language-javascript"><span class="token function">componentDidCatch</span><span class="token punctuation">(</span>error<span class="token punctuation">,</span> info<span class="token punctuation">)</span></code></pre>
+          <p>
+            Ta metoda cyklu życia jest wywoływana po wyrzuceniu wyjątku przez komponent potomny.
+            Otrzymuje on dwa argumenty:
+          </p>
+          <ol>
+            <li><code>error</code> - Wyjątek, który został wyrzucony.</li>
+            <li><code>info</code> - Obiekt z kluczem <code>componentStack</code> zawierający <a href="./error-boundaries.html#component-stack-traces">informację o tym, który komponent wyrzucił ten wyjątek</a>.</li>
+          </ol>
+          <p>
+            Metoda <code>componentDidCatch()</code> jest wywoływana w fazie "commit", więc dozwolone są w niej skutki uboczne.
+            Powinna być używana do czynności takich jak zapisywanie błędów:
+          </p>
+          <pre class="language-js{12-19}"><code class="language-js{12-19}">class ErrorBoundary extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = { hasError: false };
+  }
+
+  static getDerivedStateFromError(error) {
+    // Aktualizacja stanu, aby kolejne wyrenderowanie pokazało awaryjny interfejs użytkownika.
+    return { hasError: true };
+  }
+
+  componentDidCatch(error, info) {
+    // Przykładowy "componentStack":
+    //   in ComponentThatThrows (created by App)
+    //   in ErrorBoundary (created by App)
+    //   in div (created by App)
+    //   in App
+    logComponentStackToMyService(info.componentStack);
+  }
+
+  render() {
+    if (this.state.hasError) {
+      // Możesz wyrenderować dowolny awaryjny interfejs użytkownika
+      return &#x3C;h1>Coś poszło nie tak.&#x3C;/h1>;
+    }
+
+    return this.props.children;
+  }
+}</code></pre>
+          <p>Zbudowana paczka deweloperska będzie nieco różnić się od produkcyjnej pod względem sposobu obsługiwania błędów przez <code>componentDidCatch()</code>.</p>
+          <p>W środowisku deweloperskim błędy wędrują aż do <code>window</code>, co oznacza, że wszelkie procedury zarejestrowane za pomocą <code>window.onerror</code> lub <code>window.addEventListener('error', callback)</code> również przechwycą te błędy, które złapie <code>componentDidCatch()</code>.</p>
+          <p>Inaczej jest na produkcji, gdzie błędy nie wędrują aż na samą górę. Oznacza to, że nadrzędne granice błędów otrzymają błąd tylko wtedy, gdy ich potomkowie wcześniej ich nie przechwycą za pomocą <code>componentDidCatch()</code>.</p>
+          <blockquote>
+            <p>Uwaga</p>
+            <p>
+              W razie wyjątku, możesz wyrenderować awaryjny interfejs użytkownika za pomocą metody <code>componentDidCatch()</code> poprzez wywołanie metody <code>setState</code>, ale możliwość ta będzie przestarzała w przyszłych wersjach.
+              Do obsługi renderowania awaryjnego używaj zamiast tego metody <code>static getDerivedStateFromError()</code>.
+            </p>
+          </blockquote>
+          <hr>
+        </section>
+        <section id="legacy-lifecycle-methods" class="level3">
+          <h3>Przestarzałe metody cyklu życia</h3>
+          <p>Poniższe metody cyklu życia są oznaczone jako "przestarzałe". Wciąż działają, zalecamy jednak nie używać ich w nowym kodzie. Możesz dowiedzieć się więcej o migracji od przestarzałych metod cyklu życia <a href="/blog/2018/03/27/update-on-async-rendering.html">w tym wpisie na blogu</a>.</p>
+        </section>
+        <section id="unsafe_componentwillmount-unsafe_componentwillmount" class="level3">
+          <h3><code>UNSAFE_componentWillMount()</code> {#unsafe_componentwillmount}</h3>
+          <pre class="language-javascript"><code class="language-javascript"><span class="token function"><span class="token maybe-class-name">UNSAFE_componentWillMount</span></span><span class="token punctuation">(</span><span class="token punctuation">)</span></code></pre>
+          <blockquote>
+            <p>Uwaga</p>
+            <p>Ta metoda cyklu życia była wcześniej nazwana <code>componentWillMount</code>. Ta nazwa będzie działać do wersji 17. Użyj <a href="https://github.com/reactjs/react-codemod#rename-unsafe-lifecycles">codemoda <code>rename-unsafe-lifecycles</code></a>, aby automatycznie zaktualizować swoje komponenty.</p>
+          </blockquote>
+          <p>Metoda <code>UNSAFE_componentWillMount()</code> jest wywoływana zaraz przed nastąpieniem montowania. Jest wywoływana przed <code>render()</code>, zatem synchroniczne wywoływanie <code>setState()</code> w tej metodzie nie spowoduje dodatkowego renderowania. Generalnie, zamiast tego do inicjalizacji stanu zalecamy używania konstruktora.</p>
+          <p>Unikaj wprowadzania skutków ubocznych lub inicjalizowania subskrypcji w tej metodzie. Dla tych przypadków użycia, używaj zamiast tego metody <code>componentDidMount()</code>.</p>
+          <p>Jest to jedyna metoda cyklu życia wywoływana przy renderowaniu na serwerze.</p>
+          <hr>
+        </section>
+        <section id="unsafe_componentwillreceiveprops-unsafe_componentwillreceiveprops" class="level3">
+          <h3><code>UNSAFE_componentWillReceiveProps()</code> {#unsafe_componentwillreceiveprops}</h3>
+          <pre class="language-javascript"><code class="language-javascript"><span class="token function"><span class="token maybe-class-name">UNSAFE_componentWillReceiveProps</span></span><span class="token punctuation">(</span>nextProps<span class="token punctuation">)</span></code></pre>
+          <blockquote>
+            <p>Uwaga</p>
+            <p>Ta metoda cyklu życia była wcześniej nazwana <code>componentWillReceiveProps</code>. Ta nazwa będzie działać do wersji 17. Użyj <a href="https://github.com/reactjs/react-codemod#rename-unsafe-lifecycles">codemoda <code>rename-unsafe-lifecycles</code></a>, aby automatycznie zaktualizować swoje komponenty.</p>
+          </blockquote>
+          <blockquote>
+            <p>Uwaga:</p>
+            <p>Używanie tej metody cyklu życia często prowadzi do błędów i niespójności</p>
+            <ul>
+              <li>Jeśli potrzebujesz <strong>wykonać efekt uboczny</strong> (na przykład, pobieranie danych lub animację) w odpowiedzi na zmianę właściwości, zamiast tego użyj metody cyklu życia <a href="#componentdidupdate"><code>componentDidUpdate</code></a>.</li>
+              <li>Jeśli używałeś <code>componentWillReceiveProps</code> do <strong>ponownego obliczania pewnych danych tylko w przypadku zmiany właściwości</strong>, <a href="/blog/2018/06/07/you-probably-dont-need-derived-state.html#what-about-memoization">zamiast tego użyj pomocniczych technik memoizacyjnych</a>.</li>
+              <li>Jeśli używałeś <code>componentWillReceiveProps</code> do <strong>"resetowania" stanu w przypadku zmiany właściwości</strong>, zamiast tego rozważ uczynienie komponentu <a href="/blog/2018/06/07/you-probably-dont-need-derived-state.html#recommendation-fully-controlled-component">całkowicie kontrolowanym</a> lub <a href="/blog/2018/06/07/you-probably-dont-need-derived-state.html#recommendation-fully-uncontrolled-component-with-a-key">całkowicie niekontrolowanym z właściwością <code>key</code></a>.</li>
+            </ul>
+            <p>Dla innych przypadków użycia, <a href="/blog/2018/06/07/you-probably-dont-need-derived-state.html">śledź rekomendacje w tym wpisie na blogu na temat stanu pochodnego</a>.</p>
+          </blockquote>
+          <p>Metoda <code>UNSAFE_componentWillReceiveProps()</code> jest wywoływana przed tym, jak zamontowany komponent otrzymuje nowe właściwości. Jeśli potrzebujesz zaktualizować stan w odpowiedzi na zmiany właściwości (na przykład, zresetować go), możesz porównać <code>this.props</code> i <code>nextProps</code> i wykonać przejście stanu w tej metodzie za pomocą <code>this.setState()</code>.</p>
+          <p>Zauważ, że jeśli komponent nadrzędny powoduje ponowne wyrenderowanie twojego komponentu, ta metoda będzie wywołana nawet jeśli właściwości nie uległy zmianie. Jeśli chcesz tylko obsłużyć zmiany, upewnij się, że porównujesz poprzednie i obecne wartości.</p>
+          <p>React nie wywołuje metody <code>UNSAFE_componentWillReceiveProps()</code> z początkowymi właściwościami podczas <a href="#mounting">montowania</a>. Wywołuje ją tylko, kiedy właściwości któregoś z komponentów mogą zostać zaktualizowane. Wywołanie metody <code>this.setState()</code> przeważnie nie powoduje wywołania <code>UNSAFE_componentWillReceiveProps()</code>.</p>
+          <hr>
+        </section>
+        <section id="unsafe_componentwillupdate-unsafe_componentwillupdate" class="level3">
+          <h3><code>UNSAFE_componentWillUpdate()</code> {#unsafe_componentwillupdate}</h3>
+          <pre class="language-javascript"><code class="language-javascript"><span class="token function"><span class="token maybe-class-name">UNSAFE_componentWillUpdate</span></span><span class="token punctuation">(</span>nextProps<span class="token punctuation">,</span> nextState<span class="token punctuation">)</span></code></pre>
+          <blockquote>
+            <p>Uwaga</p>
+            <p>Ta metoda cyklu życia była wcześniej nazwana <code>componentWillUpdate</code>. Ta nazwa będzie działać do wersji 17. Użyj <a href="https://github.com/reactjs/react-codemod#rename-unsafe-lifecycles">codemoda <code>rename-unsafe-lifecycles</code></a>, aby automatycznie zaktualizować swoje komponenty.</p>
+          </blockquote>
+          <p>Metoda <code>UNSAFE_componentWillUpdate()</code> jest wywoływana zaraz przed renderowaniem, kiedy komponent uzyskuje nowe właściwości lub stan. Używaj tego jako okazji do przygotowania przed nastąpieniem aktualizacji. Ta metoda nie jest wywoływana przy początkowym renderowaniu.</p>
+          <p>Zauważ, że nie możesz tutaj wywołać <code>this.setState()</code>; nie powinieneś też robić niczego innego (np. wysyłania Reduxowych akcji), co spowodowałoby aktualizację reactowego komponentu przed powrotem z metody <code>UNSAFE_componentWillUpdate()</code>.</p>
+          <p>Metoda ta, zazwyczaj może być zastąpiona metodą <code>componentDidUpdate()</code>. Jeśli zczytywałeś w tej metodzie informacje z drzewa DOM (np. żeby zapisać pozycje scrolla), możesz przenieść tą logikę do getSnapshotBeforeUpdate().</p>
+          <blockquote>
+            <p>Uwaga</p>
+            <p>Metoda <code>UNSAFE_componentWillUpdate()</code> nie będzie wywołana jeśli <a href="#shouldcomponentupdate"><code>shouldComponentUpdate()</code></a> zwróci <code>false</code>.</p>
+          </blockquote>
+          <hr>
+        </section>
+      </section>
+      <section id="other-apis-1" class="level2">
+        <h2>Inne API</h2>
+        <p>W przeciwieństwie do metod cyklu życia powyżej (które wywołuje dla ciebie React), metody poniżej możesz wywołać <em>ty</em> ze swoich komponentów.</p>
+        <p>Są tylko dwie takie metody: <code>setState()</code> i <code>forceUpdate()</code>.</p>
+        <section id="setstate-setstate" class="level3">
+          <h3><code>setState()</code> {#setstate}</h3>
+          <pre class="language-javascript"><code class="language-javascript"><span class="token function">setState</span><span class="token punctuation">(</span>updater<span class="token punctuation">[</span><span class="token punctuation">,</span> callback<span class="token punctuation">]</span><span class="token punctuation">)</span></code></pre>
+          <p><code>setState()</code> ustawia w kolejce zmiany stanu komponentu i daje znać Reactowi, że komponent i jego komponenty potomne powinny zostać ponownie wyrenderowane ze zaktualizowanym stanem. Jest to podstawowa metoda używana do aktualizacji interfejsu użytkownika w odpowiedzi na procedury obsługi zdarzeń i odpowiedzi z serwera.</p>
+          <p>Myśl o metodzie <code>setState()</code> bardziej jako o <em>prośbie</em> niż o natychmiastowym poleceniu aktualizacji komponentu. Dla lepszej postrzeganej wydajności, React może ją opóźnić, a potem zaktualizować kilka komponentów za jednym zamachem. W rzadkich sytuacjach, kiedy potrzebujesz wymusić synchroniczną aktualizację DOM, możesz opakować ją w <a href="./react-dom.html#flushsync"><code>flushSync</code></a>. Ale pamiętaj, że może na tym ucierpieć wydajność aplikacji.</p>
+          <p>Metoda <code>setState()</code> nie zawsze od razu aktualizuje komponent. Może ona złączyć lub odłożyć aktualizację na później. Sprawia to, że odczytywanie <code>this.state</code> zaraz po wywołaniu <code>setState()</code> jest potencjalną pułapką. Zamiast tego, użyj metody <code>componentDidUpdate</code> lub funkcji zwrotnej (ang. <em>callback</em>) <code>setState</code> (<code>setState(updater, callback)</code>), które są wywoływane po zastosowaniu aktualizacji. Jeśli potrzebujesz zmienić stan w oparciu o poprzedni stan, zapoznaj się z poniższym argumentem <code>updater</code>.</p>
+          <p><code>setState()</code> zawsze powoduje ponowne renderowanie komponentu, chyba że <code>shouldComponentUpdate()</code> zwróci <code>false</code>. Jeśli przechowujemy mutowalne obiekty, a logiki decydującej o potrzebie ponownego renderowania nie da się zawrzeć w metodzie <code>shouldComponentUpdate()</code>, możemy uniknąć zbędnego renderowania wywołując <code>setState()</code> tylko wtedy, gdy nowy stan różni się od poprzedniego.</p>
+          <p>Pierwszym argumentem jest funkcja <code>updater</code> posiadająca poniższą sygnaturę:</p>
+          <pre class="language-javascript"><code class="language-javascript"><span class="token punctuation">(</span><span class="token parameter">state<span class="token punctuation">,</span> props</span><span class="token punctuation">)</span> <span class="token arrow operator">=></span> stateChange</code></pre>
+          <p><code>state</code> jest referencją stanu komponentu w momencie, w którym zmiana zostaje zastosowana. Nie powinien on być bezpośrednio zmieniany. Zamiast tego, zmiany powinny być reprezentowane poprzez zbudowanie nowego obiektu na podstawie <code>state</code> and <code>props</code>. Na przykład załóżmy, że chcemy powiększyć pewną wartość w stanie o <code>props.step</code>:</p>
+          <pre class="language-javascript"><code class="language-javascript"><span class="token keyword">this</span><span class="token punctuation">.</span><span class="token method function property-access">setState</span><span class="token punctuation">(</span><span class="token punctuation">(</span><span class="token parameter">state<span class="token punctuation">,</span> props</span><span class="token punctuation">)</span> <span class="token arrow operator">=></span> <span class="token punctuation">{</span>
+  <span class="token keyword control-flow">return</span> <span class="token punctuation">{</span><span class="token literal-property property">counter</span><span class="token operator">:</span> state<span class="token punctuation">.</span><span class="token property-access">counter</span> <span class="token operator">+</span> props<span class="token punctuation">.</span><span class="token property-access">step</span><span class="token punctuation">}</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">;</span></code></pre>
+          <p>Zarówno <code>state</code>, jak i <code>props</code> otrzymywane przez funkcję aktualizującą są aktualne. Wynik aktualizatora zostaje płytko scalony ze stanem.</p>
+          <p>Drugi parametrem metody <code>setState()</code> jest opcjonalna funkcja zwrotna, która zostanie wywołana kiedy <code>setState</code> ukończy swój przebieg i komponent zostanie ponownie wyrenderowany. Ogólnie rzecz biorąc, do tego typu logiki zalecamy zamiast tego używać metody <code>componentDidUpdate()</code>.</p>
+          <p>Opcjonalnie, jako pierwszy argument do metody <code>setState()</code> zamiast funkcji możesz przekazać obiekt:</p>
+          <pre class="language-javascript"><code class="language-javascript"><span class="token function">setState</span><span class="token punctuation">(</span>stateChange<span class="token punctuation">[</span><span class="token punctuation">,</span> callback<span class="token punctuation">]</span><span class="token punctuation">)</span></code></pre>
+          <p>Powoduje to przeprowadzenie płytkiego scalenia argumentu <code>stateChange</code> do nowego stanu, np., w celu dostosowania ilości przedmiotów w koszyku:</p>
+          <pre class="language-javascript"><code class="language-javascript"><span class="token keyword">this</span><span class="token punctuation">.</span><span class="token method function property-access">setState</span><span class="token punctuation">(</span><span class="token punctuation">{</span><span class="token literal-property property">quantity</span><span class="token operator">:</span> <span class="token number">2</span><span class="token punctuation">}</span><span class="token punctuation">)</span></code></pre>
+          <p>Ta forma metody <code>setState()</code> także jest asynchroniczna, a wywołanie jej wiele razy podczas jednego cyklu może spowodować ich złączenie. Na przykład, jeśli spróbujesz zwiększyć ilość przedmiotów więcej niż jeden raz w tym samym cyklu, rezultatem tego będzie ekwiwalent:</p>
+          <pre class="language-javaScript"><code class="language-javaScript">Object.assign(
+  previousState,
+  {quantity: state.quantity + 1},
+  {quantity: state.quantity + 1},
+  ...
+)</code></pre>
+          <p>Następujące wywołania nadpiszą wartości z poprzednich w tym samym cyklu, więc ilość będzie zwiększona tylko raz. Jeśli kolejny stan zależy od poprzedniego, zamiast tego zalecamy używania formy z funkcją aktualizującą:</p>
+          <pre class="language-js"><code class="language-js"><span class="token keyword">this</span><span class="token punctuation">.</span><span class="token method function property-access">setState</span><span class="token punctuation">(</span><span class="token punctuation">(</span><span class="token parameter">state</span><span class="token punctuation">)</span> <span class="token arrow operator">=></span> <span class="token punctuation">{</span>
+  <span class="token keyword control-flow">return</span> <span class="token punctuation">{</span><span class="token literal-property property">quantity</span><span class="token operator">:</span> state<span class="token punctuation">.</span><span class="token property-access">quantity</span> <span class="token operator">+</span> <span class="token number">1</span><span class="token punctuation">}</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">;</span></code></pre>
+          <p>Po więcej szczegółów, odwiedź:</p>
+          <ul>
+            <li><a href="./state-and-lifecycle.html">Przewodnik po stanie i cyklu życia</a></li>
+            <li><a href="https://stackoverflow.com/a/48610973/458193">Dogłębnie: Kiedy i dlaczego wywołania <code>setState()</code> są łączone?</a></li>
+            <li><a href="https://github.com/facebook/react/issues/11527#issuecomment-360199710">Dogłębnie: Dlaczego this.state nie jest aktualizowany od razu?</a></li>
+          </ul>
+          <hr>
+        </section>
+        <section id="forceupdate-forceupdate" class="level3">
+          <h3><code>forceUpdate()</code> {#forceupdate}</h3>
+          <pre class="language-javascript"><code class="language-javascript">component<span class="token punctuation">.</span><span class="token method function property-access">forceUpdate</span><span class="token punctuation">(</span>callback<span class="token punctuation">)</span></code></pre>
+          <p>Domyślnie, kiedy zmienia się stan lub właściwości twojego komponentu, zrenderuje się on ponownie. Jeśli twoja metoda <code>render()</code> polega na innych danych, możesz powiadomić Reacta, że komponent potrzebuje ponownego wyrenderowania, poprzez wywołanie metody <code>forceUpdate()</code>.</p>
+          <p>Wywołanie <code>forceUpdate()</code> spowoduje, że na komponencie zostanie wywołana metoda <code>render()</code>, z pominięciem metody <code>shouldComponentUpdate()</code>. Spowoduje to wywołanie normalnych metod cyklu życia komponentów potomnych, włączając w to metodę <code>shouldComponentUpdate()</code> każdego z nich. React wciąż zaktualizuje drzewo DOM tylko w wypadku zmiany znaczników.</p>
+          <p>Przeważnie powinieneś unikać jakichkolwiek form użycia <code>forceUpdate()</code> i odczytywać dane jedynie z <code>this.props</code> i <code>this.state</code> w metodzie <code>render()</code>.</p>
+          <hr>
+        </section>
+      </section>
+      <section id="class-properties-1" class="level2">
+        <h2>Właściwości Klasy</h2>
+        <section id="defaultprops-defaultprops" class="level3">
+          <h3><code>defaultProps</code> {#defaultprops}</h3>
+          <p><code>defaultProps</code> może być zdefiniowana jako własność na samej klasie komponentu, aby ustawić domyślne właściwości dla tej klasy. Jest ona używana dla właściwości równych <code>undefined</code>, ale nie <code>null</code>. Dla przykładu:</p>
+          <pre class="language-js"><code class="language-js"><span class="token keyword">class</span> <span class="token class-name">CustomButton</span> <span class="token keyword">extends</span> <span class="token class-name">React<span class="token punctuation">.</span>Component</span> <span class="token punctuation">{</span>
+  <span class="token comment">// ...</span>
+<span class="token punctuation">}</span>
+
+<span class="token maybe-class-name">CustomButton</span><span class="token punctuation">.</span><span class="token property-access">defaultProps</span> <span class="token operator">=</span> <span class="token punctuation">{</span>
+  <span class="token literal-property property">color</span><span class="token operator">:</span> <span class="token string">'blue'</span>
+<span class="token punctuation">}</span><span class="token punctuation">;</span></code></pre>
+          <p>Jeśli <code>props.color</code> nie jest podany, zostanie domyślnie ustawiony na <code>'blue'</code>:</p>
+          <pre class="language-js"><code class="language-js">  <span class="token function">render</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token keyword control-flow">return</span> <span class="token operator">&#x3C;</span><span class="token maybe-class-name">CustomButton</span> <span class="token operator">/</span><span class="token operator">></span> <span class="token punctuation">;</span> <span class="token comment">// props.color zostanie ustawiony na blue</span>
+  <span class="token punctuation">}</span></code></pre>
+          <p>Jeśli <code>props.color</code> zostanie ustawiony jako <code>null</code>, pozostanie nim:</p>
+          <pre class="language-js"><code class="language-js">  <span class="token function">render</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token keyword control-flow">return</span> <span class="token operator">&#x3C;</span><span class="token maybe-class-name">CustomButton</span> color<span class="token operator">=</span><span class="token punctuation">{</span><span class="token keyword null nil">null</span><span class="token punctuation">}</span> <span class="token operator">/</span><span class="token operator">></span> <span class="token punctuation">;</span> <span class="token comment">// props.color pozostanie równy null</span>
+  <span class="token punctuation">}</span></code></pre>
+          <hr>
+        </section>
+        <section id="displayname-displayname" class="level3">
+          <h3><code>displayName</code> {#displayname}</h3>
+          <p>Napis <code>displayName</code> jest używany w komunikatach debugowania. Przeważnie, nie musisz jawnie go definiować, ponieważ jest on wywnioskowany z nazwy funkcji lub klasy, w której zdefiniowany jest ten komponent. Możesz chcieć jawnie go zdefiniować, jeśli chcesz wyświetlić inną nazwę komponentu przy debugowaniu lub kiedy stworzysz komponent wyższego rzędu, po szczegóły odwiedź <a href="./higher-order-components.html#convention-wrap-the-display-name-for-easy-debugging">Owiń nazwę wyświetlenia dla łatwego debugowania</a>.</p>
+          <hr>
+        </section>
+      </section>
+      <section id="instance-properties-1" class="level2">
+        <h2>Właściwości instancji</h2>
+        <section id="props-props" class="level3">
+          <h3><code>props</code> {#props}</h3>
+          <p><code>this.props</code> zawiera właściwości, które zostały zdefiniowane przez przywołującego tego komponentu. Po wprowadzenie do właściwości, odwiedź <a href="./components-and-props.html">Komponenty i właściwości</a>.</p>
+          <p>W szczególności, <code>this.props.children</code> jest specjalną właściwością, zazwyczaj zdefiniowaną poprzez potomne tagi w wyrażeniu JSX, a nie w samym tagu instancji.</p>
+        </section>
+        <section id="state-state" class="level3">
+          <h3><code>state</code> {#state}</h3>
+          <p>Stan zawiera dane specyficzne dla tego komponentu, które mogą zmieniać się w czasie. Stan jest definiowany przez użytkownika i powinien być zwykłym javascriptowym obiektem.</p>
+          <p>Jeśli jakaś wartość nie jest używana do renderowania ani przepływu danych (na przykład, ID licznika czasu), nie musisz umieszczać jej w stanie. Wartości tego typu mogą być zdefiniowane jako pola składowe instancji komponentu.</p>
+          <p>Po informacje na temat stanu, odwiedź <a href="./state-and-lifecycle.html">Stan i cykl życia</a>.</p>
+          <p>
+            Nigdy nie zmieniaj <code>this.state</code> bezpośrednio, gdyż późniejsze wywołanie <code>setState()</code> może zastąpić wykonaną przez ciebie zmianę. Traktuj <code>this.state</code> jako niezmienny.
+            <span style="float: footnote;"><a href="./index.html#toc">Go to TOC</a></span>
+          </p>
+        </section>
+      </section>
+    </section>
+  </body>
+</html>

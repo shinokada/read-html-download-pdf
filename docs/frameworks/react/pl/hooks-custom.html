@@ -1,0 +1,200 @@
+<!doctype html>
+<html lang="pl">
+  <head>
+    <meta charset="utf-8">
+    <title>Tworzenie własnych hooków</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="https://raw.githubusercontent.com/shinokada/prism-coy-theme/main/theme_common.css">
+  </head>
+  <body>
+    <section id="tworzenie-własnych-hooków" class="level1">
+      <h1>Tworzenie własnych hooków</h1>
+      <p><em>Hooki</em> są nowym dodatkiem w Reakcie 16.8. Pozwalają one na wykorzystanie stanu i innych funkcjonalności Reacta, bez użycia klas.</p>
+      <p>Tworzenie własnych hooków pozwala wydzielić logikę z komponentów do funkcji.</p>
+      <p>Podczas nauki o <a href="./hooks-effect.html#example-using-hooks-1">używaniu hooka efektów</a> poznaliśmy przedstawiony poniżej komponent aplikacji czatu. Komponent ten wyświetla wiadomość informującą o tym, czy znajomy jest dostępny, czy nie:</p>
+      <pre class="language-js{4-15}"><code class="language-js{4-15}">import React, { useState, useEffect } from 'react';
+
+function FriendStatus(props) {
+  const [isOnline, setIsOnline] = useState(null);
+
+  useEffect(() => {
+    function handleStatusChange(status) {
+      setIsOnline(status.isOnline);
+    }
+
+    ChatAPI.subscribeToFriendStatus(props.friend.id, handleStatusChange);
+    return () => {
+      ChatAPI.unsubscribeFromFriendStatus(props.friend.id, handleStatusChange);
+    };
+  });
+
+  if (isOnline === null) {
+    return 'Ładowanie...';
+  }
+  return isOnline ? 'Dostępny' : 'Niedostępny';
+}</code></pre>
+      <p>Załóżmy, że nasza aplikacja posiada też listę kontaktów i chcemy wyświetlać imiona dostępnych użytkowników w kolorze zielonym. Moglibyśmy skopiować i wkleić powyższą logikę do naszego komponentu <code>FriendListItem</code>, ale nie byłoby to idealne rozwiązanie:</p>
+      <pre class="language-js{4-15}"><code class="language-js{4-15}">import React, { useState, useEffect } from 'react';
+
+function FriendListItem(props) {
+  const [isOnline, setIsOnline] = useState(null);
+
+  useEffect(() => {
+    function handleStatusChange(status) {
+      setIsOnline(status.isOnline);
+    }
+
+    ChatAPI.subscribeToFriendStatus(props.friend.id, handleStatusChange);
+    return () => {
+      ChatAPI.unsubscribeFromFriendStatus(props.friend.id, handleStatusChange);
+    };
+  });
+
+  return (
+    &#x3C;li style={{ color: isOnline ? 'green' : 'black' }}>
+      {props.friend.name}
+    &#x3C;/li>
+  );
+}</code></pre>
+      <p>Zamiast tego chcielibyśmy współdzielić logikę pomiędzy komponentami <code>FriendStatus</code> i <code>FriendListItem</code>.</p>
+      <p>W tradycyjnym podejściu mieliśmy do dyspozycji dwa popularne rozwiązania tego problemu: <a href="./higher-order-components.html">komponenty wyższego rzędu (ang. <em>higher-order components</em>)</a> i <a href="./render-props.html">właściwości renderujące (ang. <em>render props</em>)</a>. Przyjrzyjmy się teraz, jak hooki rozwiązują wiele z tych samych problemów, nie zmuszając przy tym do dodawania kolejnych komponentów do drzewa.</p>
+      <section id="extracting-a-custom-hook" class="level2">
+        <h2>Wyodrębnianie logiki własnego hooka</h2>
+        <p>Kiedy chcemy współdzielić logikę pomiędzy dwoma javascriptowymi funkcjami, wyodrębniamy ją do trzeciej funkcji. Zarówno komponenty, jak i hooki są funkcjami, więc zadziała to także dla nich!</p>
+        <p><strong>Własny hook to po prostu javascriptowa funkcja, której nazwa zaczyna się od <code>use</code> i która może wywoływać inne hooki.</strong> Poniższy przykład <code>useFriendStatus</code> to nasz pierwszy własny hook:</p>
+        <pre class="language-js{3}"><code class="language-js{3}">import { useState, useEffect } from 'react';
+
+function useFriendStatus(friendID) {
+  const [isOnline, setIsOnline] = useState(null);
+
+  useEffect(() => {
+    function handleStatusChange(status) {
+      setIsOnline(status.isOnline);
+    }
+
+    ChatAPI.subscribeToFriendStatus(friendID, handleStatusChange);
+    return () => {
+      ChatAPI.unsubscribeFromFriendStatus(friendID, handleStatusChange);
+    };
+  });
+
+  return isOnline;
+}</code></pre>
+        <p>Wewnątrz nie znajdziemy nic nowego -- logika została skopiowana z komponentów powyżej. Pamiętaj żeby, tak jak w komponentach, wywoływać inne hooki tylko z najwyższego poziomu kodu twoich własnych hooków.</p>
+        <p>W przeciwieństwie do reactowych komponentów, własny hook nie ma narzuconego określonego kształtu. Sami decydujemy, jakie przyjmuje argumenty i jaką, jeśli jakąkolwiek, wartość zwróci. Innymi słowy, zachowuje się jak zwykła funkcja. Jego nazwa powinna zawsze zaczynać się od <code>use</code>, aby można było już na pierwszy rzut oka stwierdzić, czy mają dla niego zastosowanie <a href="./hooks-rules.html">zasady korzystania z hooków</a>.</p>
+        <p>Celem naszego hooka <code>useFriendStatus</code> jest zasubskrybowanie się do statusu dostępności znajomego. Dlatego przyjmuje on wartość <code>friendID</code> jako argument i zwraca informację, czy znajomy jest dostępny:</p>
+        <pre class="language-js"><code class="language-js"><span class="token keyword">function</span> <span class="token function">useFriendStatus</span><span class="token punctuation">(</span><span class="token parameter">friendID</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  <span class="token keyword">const</span> <span class="token punctuation">[</span>isOnline<span class="token punctuation">,</span> setIsOnline<span class="token punctuation">]</span> <span class="token operator">=</span> <span class="token function">useState</span><span class="token punctuation">(</span><span class="token keyword null nil">null</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+  <span class="token comment">// ...</span>
+
+  <span class="token keyword control-flow">return</span> isOnline<span class="token punctuation">;</span>
+<span class="token punctuation">}</span></code></pre>
+        <p>Teraz przyjrzymy się, jak możemy używać własnych hooków.</p>
+      </section>
+      <section id="using-a-custom-hook" class="level2">
+        <h2>Używanie własnych hooków</h2>
+        <p>Przypomnijmy, że naszym celem było usunięcie powielonej logiki z komponentów <code>FriendStatus</code> i <code>FriendListItem</code>. Oba oczekują informacji o tym, czy nasz znajomy jest dostępny.</p>
+        <p>Teraz, kiedy już wyodrębniliśmy tę logikę do hooka <code>useFriendStatus</code>, możemy go <em>po prostu użyć:</em></p>
+        <pre class="language-js{2}"><code class="language-js{2}">function FriendStatus(props) {
+  const isOnline = useFriendStatus(props.friend.id);
+
+  if (isOnline === null) {
+    return 'Ładowanie...';
+  }
+  return isOnline ? 'Dostępny' : 'Niedostępny';
+}</code></pre>
+        <pre class="language-js{2}"><code class="language-js{2}">function FriendListItem(props) {
+  const isOnline = useFriendStatus(props.friend.id);
+
+  return (
+    &#x3C;li style={{ color: isOnline ? 'green' : 'black' }}>
+      {props.friend.name}
+    &#x3C;/li>
+  );
+}</code></pre>
+        <p><strong>Czy ten kod jest równoważny oryginalnym przykładom?</strong> Tak, działa on dokładnie w ten sam sposób. Jeśli przyjrzysz się uważniej, zauważysz, że nie dokonaliśmy żadnej zmiany w zachowaniu. Wszystko co zrobiliśmy, to wyodrębnienie wspólnego kodu z dwóch funkcji do jednej, osobnej funkcji. <strong>Własne hooki są konwencją, która wynika naturalnie ze sposobu, w jaki zostały zaprojektowane hooki. Nie są one osobną funkcjonalnością Reacta.</strong></p>
+        <p><strong>Czy nazwy moich własnych hooków muszą zaczynać się od „<code>use</code>”?</strong> Bardzo prosimy. Ta konwencja jest bardzo ważna. Bez niej nie moglibyśmy automatycznie sprawdzać, czy zostały naruszone <a href="./hooks-rules.html">zasady korzystania z hooków</a>, ponieważ nie bylibyśmy w stanie stwierdzić, czy w danej funkcji znajdują się wywołania hooków.</p>
+        <p><strong>Czy dwa komponenty, korzystające z tego samego hooka, współdzielą stan?</strong> Nie. Własne hooki to mechanizm pozwalający na współdzielenie <em>logiki związanej ze stanem</em> (takiej jak tworzenie subskrypcji i zapamiętywanie bieżącej wartości), ale za każdym razem, kiedy używasz własnego hooka, cały stan i efekty wewnątrz niego są całkowicie odizolowane od siebie nawzajem.</p>
+        <p><strong>W jaki sposób własny hook otrzymuje odizolowany stan?</strong> Każde <em>wywołanie</em> hooka tworzy odizolowany stan. Ponieważ wywołujemy <code>useFriendStatus</code> bezpośrednio, z punktu widzenia Reacta nasze komponenty wywołują po prostu funkcje <code>useState</code> i <code>useEffect</code>. A jak <a href="./hooks-state.html#tip-using-multiple-state-variables">dowiedzieliśmy się</a> już <a href="./hooks-effect.html#tip-use-multiple-effects-to-separate-concerns">wcześniej</a>, możemy w jednym komponencie wielokrotnie wywoływać funkcje <code>useState</code> oraz <code>useEffect</code> i będą one całkowicie niezależne.</p>
+        <section id="tip-pass-information-between-hooks" class="level3">
+          <h3>Porada: Przekazywanie informacji pomiędzy hookami</h3>
+          <p>Jako że hooki to funkcje, możemy pomiędzy nimi przekazywać informacje.</p>
+          <p>Aby to zilustrować, użyjemy kolejnego komponentu z naszego hipotetycznego przykładu czatu. Jest to rozwijane pole wyboru odbiorcy wiadomości, które wyświetla też, czy aktualnie wybrany znajomy jest dostępny:</p>
+          <pre class="language-js{8-9,13}"><code class="language-js{8-9,13}">const friendList = [
+];
+
+function ChatRecipientPicker() {
+  const [recipientID, setRecipientID] = useState(1);
+  const isRecipientOnline = useFriendStatus(recipientID);
+
+  return (
+    &#x3C;>
+      &#x3C;Circle color={isRecipientOnline ? 'green' : 'red'} />
+      &#x3C;select
+        value={recipientID}
+        onChange={e => setRecipientID(Number(e.target.value))}
+      >
+        {friendList.map(friend => (
+          &#x3C;option key={friend.id} value={friend.id}>
+            {friend.name}
+          &#x3C;/option>
+        ))}
+      &#x3C;/select>
+    &#x3C;/>
+  );
+}</code></pre>
+          <p>Przechowujemy aktualnie wybrany identyfikator znajomego w zmiennej stanu <code>recipientID</code> i aktualizujemy ją, gdy użytkownik wybierze innego znajomego z rozwijanego pola wyboru <code>&#x3C;select></code>.</p>
+          <p>Jako że wywołanie hooka <code>useState</code> zwraca najnowszą wartość zmiennej stanu <code>recipientID</code>, możemy przekazać ją do naszego własnego hooka <code>useFriendStatus</code> jako argument:</p>
+          <pre class="language-js"><code class="language-js">  <span class="token keyword">const</span> <span class="token punctuation">[</span>recipientID<span class="token punctuation">,</span> setRecipientID<span class="token punctuation">]</span> <span class="token operator">=</span> <span class="token function">useState</span><span class="token punctuation">(</span><span class="token number">1</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token keyword">const</span> isRecipientOnline <span class="token operator">=</span> <span class="token function">useFriendStatus</span><span class="token punctuation">(</span>recipientID<span class="token punctuation">)</span><span class="token punctuation">;</span></code></pre>
+          <p>Dzięki temu wiemy, czy <em>aktualnie wybrany</em> znajomy jest dostępny. Jeżeli wybierzemy innego znajomego, a tym samym zaktualizujemy zmienną stanu <code>recipientID</code>, nasz hook <code>useFriendStatus</code> anuluje subskrypcję dla poprzednio wybranego znajomego i zasubskrybuje się do statusu nowo wybranego.</p>
+        </section>
+      </section>
+      <section id="useyourimagination" class="level2">
+        <h2>Użyj wyobraźni</h2>
+        <p>Własne hooki dają możliwość współdzielenia logiki w sposób, w jaki dotychczas nie było to możliwe w reactowych komponentach. Możesz pisać własne hooki, które obejmują szereg różnych przypadków użycia - od obsługi formularzy, animacji, deklaratywnych subskrypcji, liczników, po wiele innych, których jeszcze nie wymyślono. Co więcej, możesz tworzyć hooki, które są równie łatwe w użyciu, jak wbudowane funkcje Reacta.</p>
+        <p>Spróbuj jednak powstrzymać się od zbyt wczesnego wprowadzania abstrakcji. Teraz, kiedy komponenty funkcyjne mogą znacznie więcej, twój kod źródłowy takich komponentów najprawdopodobniej zacznie „puchnąć”. To normalne, nie <em>zmuszaj się</em> od razu do dzielenia go na hooki. Ale zachęcamy też do tego, aby zacząć rozglądać się za przypadkami, gdzie własny hook mógłby ukryć skomplikowaną logikę za prostym interfejsem albo pomóc uprzątnąć zagmatwany komponent.</p>
+        <p>Załóżmy na przykład, że masz w swoim kodzie skomplikowany komponent z dużą ilością zmiennych stanu, zarządzanych w sposób doraźny. Hook <code>useState</code> nie jest wcale rozwiązaniem na łatwą centralizację tej logiki. Pewnie lepiej byłoby ci napisać <a href="https://redux.js.org/">reduxowy</a> reduktor (ang. <em>reducer</em>):</p>
+        <pre class="language-js"><code class="language-js"><span class="token keyword">function</span> <span class="token function">todosReducer</span><span class="token punctuation">(</span><span class="token parameter">state<span class="token punctuation">,</span> action</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  <span class="token keyword control-flow">switch</span> <span class="token punctuation">(</span>action<span class="token punctuation">.</span><span class="token property-access">type</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token keyword">case</span> <span class="token string">'add'</span><span class="token operator">:</span>
+      <span class="token keyword control-flow">return</span> <span class="token punctuation">[</span><span class="token spread operator">...</span>state<span class="token punctuation">,</span> <span class="token punctuation">{</span>
+        <span class="token literal-property property">text</span><span class="token operator">:</span> action<span class="token punctuation">.</span><span class="token property-access">text</span><span class="token punctuation">,</span>
+        <span class="token literal-property property">completed</span><span class="token operator">:</span> <span class="token boolean">false</span>
+      <span class="token punctuation">}</span><span class="token punctuation">]</span><span class="token punctuation">;</span>
+    <span class="token comment">// ... inne akcje ...</span>
+    <span class="token keyword module">default</span><span class="token operator">:</span>
+      <span class="token keyword control-flow">return</span> state<span class="token punctuation">;</span>
+  <span class="token punctuation">}</span>
+<span class="token punctuation">}</span></code></pre>
+        <p>Reduktory są bardzo wygodne do testowania w izolacji i skalowania w celu wyrażenia skomplikowanej logiki aktualizacji. W razie potrzeby możesz je rozbić na mniejsze reduktory. Tym niemniej, być może wolisz korzystać z zalet lokalnego stanu Reacta albo po prostu nie chcesz instalować kolejnej biblioteki.</p>
+        <p>A co jeśli moglibyśmy napisać hook <code>useReducer</code>, który pozwala na zarządzanie <em>lokalnym</em> stanem komponentu przy użyciu reduktora? Jego uproszczona wersja mogłaby wyglądać następująco:</p>
+        <pre class="language-js"><code class="language-js"><span class="token keyword">function</span> <span class="token function">useReducer</span><span class="token punctuation">(</span><span class="token parameter">reducer<span class="token punctuation">,</span> initialState</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  <span class="token keyword">const</span> <span class="token punctuation">[</span>state<span class="token punctuation">,</span> setState<span class="token punctuation">]</span> <span class="token operator">=</span> <span class="token function">useState</span><span class="token punctuation">(</span>initialState<span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+  <span class="token keyword">function</span> <span class="token function">dispatch</span><span class="token punctuation">(</span><span class="token parameter">action</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token keyword">const</span> nextState <span class="token operator">=</span> <span class="token function">reducer</span><span class="token punctuation">(</span>state<span class="token punctuation">,</span> action<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token function">setState</span><span class="token punctuation">(</span>nextState<span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token punctuation">}</span>
+
+  <span class="token keyword control-flow">return</span> <span class="token punctuation">[</span>state<span class="token punctuation">,</span> dispatch<span class="token punctuation">]</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span></code></pre>
+        <p>Teraz możemy go użyć w naszym komponencie i pozwolić reduktorowi na zarządzanie jego stanem:</p>
+        <pre class="language-js{2}"><code class="language-js{2}">function Todos() {
+  const [todos, dispatch] = useReducer(todosReducer, []);
+
+  function handleAddClick(text) {
+    dispatch({ type: 'add', text });
+  }
+
+  // ...
+}</code></pre>
+        <p>
+          Potrzeba zarządzania lokalnym stanem złożonego komponentu za pomocą reduktora jest na tyle powszechna, że wbudowaliśmy hook <code>useReducer</code> bezpośrednio w Reacta. Jego opis, wraz z innymi wbudowanymi hookami, znajdziesz w rozdziale pt. <a href="./hooks-reference.html">„Hooki - interfejs API”</a>.
+          <span style="float: footnote;"><a href="./index.html#toc">Go to TOC</a></span>
+        </p>
+      </section>
+    </section>
+  </body>
+</html>

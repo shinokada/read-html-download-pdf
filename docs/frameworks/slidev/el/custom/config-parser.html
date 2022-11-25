@@ -1,0 +1,176 @@
+<!doctype html>
+<html lang="el">
+  <head>
+    <meta charset="utf-8">
+    <title>Ρυθμίστε και επεκτείνετε Parser</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="https://raw.githubusercontent.com/shinokada/prism-coy-theme/main/theme_common.css">
+  </head>
+  <body>
+    <section id="ρυθμίστε-και-επεκτείνετε-parser" class="level1">
+      <h1>Ρυθμίστε και επεκτείνετε Parser</h1>
+      <p>Το Slidev κάνει parse το αρχείο παρουσίασης (π.χ. <code>slides.md</code>) σε τρία βήματα:</p>
+      <ol>
+        <li>Πραγματοποιείται ένα βήμα "προετοιμασίας": το αρχείο χωρίζεται σε διαφάνειες χρησιμοποιώντας το διαχωριστικό <code>---</code> και λαμβάνοντας υπόψη τα πιθανά μπλοκ frontmatter.</li>
+        <li>Κάθε διαφάνεια γίνεται parsed με μια εξωτερική βιβλιοθήκη.</li>
+        <li>Το Slidev επιλύει την ειδική ιδιότητα frontmatter <code>src: ....</code>, η οποία επιτρέπει τη συμπερίληψη άλλων αρχείων md.</li>
+      </ol>
+      <section id="markdown-parser" class="level2">
+        <h2>Markdown Parser</h2>
+        <p>Η ρύθμιση του markdown parser που χρησιμοποιείται στο βήμα 2 μπορεί να γίνει <a href="custom/config-vite.html">ρυθμίζοντας τα εσωτερικά πρόσθετα του Vite</a></p>
+      </section>
+      <section id="επεκτάσεις-preparser" class="level2">
+        <h2>Επεκτάσεις Preparser</h2>
+        <blockquote>
+          <p>Διαθέσιμο από v0.37.0</p>
+        </blockquote>
+        <p>
+          :::warning
+          Σημαντικό: όταν τροποποιείτε τη ρύθμιση παραμέτρων του preparser, πρέπει να σταματήσετε και να εκκινήσετε ξανά το slidev (η επανεκκίνηση μπορεί να μην είναι αρκετή).
+          :::
+        </p>
+        <p>Ο preparser (βήμα 1 παραπάνω) είναι ιδιαίτερα επεκτάσιμος και επιτρέπει την εφαρμογή προσαρμοσμένων συντάξεων για τα αρχεία md σας. Η επέκταση του preparser θεωρείται <strong>μια προηγμένη λειτουργία</strong> και είναι πιθανό να χαλάσει τις <a href="guide/editors">ενσωματώσεις επεξεργαστών</a> λόγω των έμμεσων αλλαγών στη σύνταξη.</p>
+        <p>Για να το προσαρμόσετε, δημιουργήστε ένα αρχείο <code>./setup/preparser.ts</code> με το ακόλουθο περιεχόμενο:</p>
+        <pre class="language-ts"><code class="language-ts"><span class="token keyword module">import</span> <span class="token imports"><span class="token punctuation">{</span> definePreparserSetup <span class="token punctuation">}</span></span> <span class="token keyword module">from</span> <span class="token string">'@slidev/types'</span>
+
+<span class="token keyword module">export</span> <span class="token keyword module">default</span> <span class="token function">definePreparserSetup</span><span class="token punctuation">(</span><span class="token punctuation">(</span>filepath<span class="token punctuation">)</span> <span class="token arrow operator">=></span> <span class="token punctuation">{</span>
+  <span class="token keyword control-flow">return</span> <span class="token punctuation">[</span>
+    <span class="token punctuation">{</span>
+      <span class="token function">transformRawLines</span><span class="token punctuation">(</span>lines<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token keyword control-flow">for</span> <span class="token punctuation">(</span><span class="token keyword">const</span> i <span class="token keyword">in</span> lines<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+          <span class="token keyword control-flow">if</span> <span class="token punctuation">(</span>lines<span class="token punctuation">[</span>i<span class="token punctuation">]</span> <span class="token operator">===</span> <span class="token string">'@@@'</span><span class="token punctuation">)</span>
+            lines<span class="token punctuation">[</span>i<span class="token punctuation">]</span> <span class="token operator">=</span> <span class="token string">'ΓΕΙΑ'</span>
+        <span class="token punctuation">}</span>
+      <span class="token punctuation">}</span><span class="token punctuation">,</span>
+    <span class="token punctuation">}</span>
+  <span class="token punctuation">]</span>
+<span class="token punctuation">}</span><span class="token punctuation">)</span></code></pre>
+        <p>Αυτό το παράδειγμα αντικαθιστά συστηματικά κάθε σειρά με την ένδειξη <code>@@@</code> με μια σειρά με την ένδειξη <code>γεια</code>. Παρουσιάζει τη δομή ενός αρχείου ρυθμίσεων του preparser και μερικές από τις κύριες έννοιες που περιλαμβάνει ο preparser:</p>
+        <ul>
+          <li>Το <code>definePreparserSetup</code> πρέπει να κληθεί με μια συνάρτηση ως παράμετρο.</li>
+          <li>Η συνάρτηση λαμβάνει το path του αρχείου (του κεντρικού αρχείου παρουσίασης) και μπορεί να χρησιμοποιήσει αυτές τις πληροφορίες (π.χ. για να ενεργοποιήσει επεκτάσεις με βάση το αρχείο παρουσίασης).</li>
+          <li>Η συνάρτηση πρέπει να επιστρέφει μια λίστα επεκτάσεων του preparser.</li>
+          <li>Μια επέκταση μπορεί να περιέχει:
+            <ul>
+              <li>μια συνάρτηση <code>transformRawLines(lines)</code> που εκτελείται αμέσως μετά το parsing του frontmatter του αρχείου md και λαμβάνει μια λίστα όλων των σειρών (από το αρχείο md). Η συνάρτηση μπορεί να μεταλλάσσει τη λίστα αυθαίρετα.</li>
+              <li>μια συνάρτηση <code>transformSlide(content, frontmatter)</code> που καλείται για κάθε διαφάνεια, αμέσως μετά τη διάσπαση του αρχείου, και λαμβάνει το περιεχόμενο της διαφάνειας ως συμβολοσειρά και το frontmatter της διαφάνειας ως αντικείμενο. Η συνάρτηση μπορεί να μεταβάλλει το frontmatter και πρέπει να επιστρέφει τη συμβολοσειρά του περιεχομένου (ενδεχομένως τροποποιημένη, ενδεχομένως <code>undefined</code> αν δεν έχουν γίνει τροποποιήσεις).</li>
+              <li>ένα <code>name</code></li>
+            </ul>
+          </li>
+        </ul>
+      </section>
+      <section id="παράδειγμα-επεκτάσεων-preparser" class="level2">
+        <h2>Παράδειγμα επεκτάσεων Preparser</h2>
+        <section id="περίπτωση-χρήσης-1-συμπαγής-σύνταξη-παρουσίασης-σε-ανώτατο-επίπεδο" class="level3">
+          <h3>Περίπτωση χρήσης 1: συμπαγής σύνταξη παρουσίασης σε ανώτατο επίπεδο</h3>
+          <p>Φανταστείτε μια κατάσταση όπου (μέρος) της παρουσίασής σας παρουσιάζει κυρίως εικόνες εξωφύλλου και περιλαμβάνει άλλα αρχεία md. Μπορεί να θέλετε μια συμπαγή σημειογραφία όπου για παράδειγμα (μέρος του) <code>slides.md</code> έχει ως εξής:</p>
+          <pre class="language-md"><code class="language-md">
+@cover: /nice.jpg
+<span class="token title important"><span class="token punctuation">#</span> Καλώς ήρθατε</span>
+@src: page1.md
+@src: page2.md
+@cover: /break.jpg
+@src: pages3-4.md
+@cover: https://source.unsplash.com/collection/94734566/1920x1080
+<span class="token title important"><span class="token punctuation">#</span> Ερωτήσεις;</span>
+τα λέμε την επόμενη φορά
+</code></pre>
+          <p>Για να επιτρέψετε αυτά τα συντακτικά <code>@src:</code> και <code>@cover:</code>, δημιουργήστε ένα αρχείο <code>./setup/preparser.ts</code> με το ακόλουθο περιεχόμενο:</p>
+          <pre class="language-ts"><code class="language-ts"><span class="token keyword module">import</span> <span class="token imports"><span class="token punctuation">{</span> definePreparserSetup <span class="token punctuation">}</span></span> <span class="token keyword module">from</span> <span class="token string">'@slidev/types'</span>
+
+<span class="token keyword module">export</span> <span class="token keyword module">default</span> <span class="token function">definePreparserSetup</span><span class="token punctuation">(</span><span class="token punctuation">(</span>filepath<span class="token punctuation">)</span> <span class="token arrow operator">=></span> <span class="token punctuation">{</span>
+  <span class="token keyword control-flow">return</span> <span class="token punctuation">[</span>
+    <span class="token punctuation">{</span>
+      <span class="token function">transformRawLines</span><span class="token punctuation">(</span>lines<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token keyword">let</span> i <span class="token operator">=</span> <span class="token number">0</span>
+        <span class="token keyword control-flow">while</span> <span class="token punctuation">(</span>i <span class="token operator">&#x3C;</span> lines<span class="token punctuation">.</span><span class="token property-access">length</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+          <span class="token keyword">const</span> l <span class="token operator">=</span> lines<span class="token punctuation">[</span>i<span class="token punctuation">]</span>
+          <span class="token keyword control-flow">if</span> <span class="token punctuation">(</span>l<span class="token punctuation">.</span><span class="token method function property-access">match</span><span class="token punctuation">(</span><span class="token regex"><span class="token regex-delimiter">/</span><span class="token regex-source language-regex">^@cover:</span><span class="token regex-delimiter">/</span><span class="token regex-flags">i</span></span><span class="token punctuation">)</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+            lines<span class="token punctuation">.</span><span class="token method function property-access">splice</span><span class="token punctuation">(</span>i<span class="token punctuation">,</span> <span class="token number">1</span><span class="token punctuation">,</span>
+              <span class="token string">'---'</span><span class="token punctuation">,</span>
+              <span class="token string">'layout: cover'</span><span class="token punctuation">,</span>
+              <span class="token template-string"><span class="token template-punctuation string">`</span><span class="token string">background: </span><span class="token interpolation"><span class="token interpolation-punctuation punctuation">${</span>l<span class="token punctuation">.</span><span class="token method function property-access">replace</span><span class="token punctuation">(</span><span class="token regex"><span class="token regex-delimiter">/</span><span class="token regex-source language-regex">^@cover: *</span><span class="token regex-delimiter">/</span><span class="token regex-flags">i</span></span><span class="token punctuation">,</span> <span class="token string">''</span><span class="token punctuation">)</span><span class="token interpolation-punctuation punctuation">}</span></span><span class="token template-punctuation string">`</span></span><span class="token punctuation">,</span>
+              <span class="token string">'---'</span><span class="token punctuation">,</span>
+              <span class="token string">''</span><span class="token punctuation">)</span>
+            <span class="token keyword control-flow">continue</span>
+          <span class="token punctuation">}</span>
+          <span class="token keyword control-flow">if</span> <span class="token punctuation">(</span>l<span class="token punctuation">.</span><span class="token method function property-access">match</span><span class="token punctuation">(</span><span class="token regex"><span class="token regex-delimiter">/</span><span class="token regex-source language-regex">^@src:</span><span class="token regex-delimiter">/</span><span class="token regex-flags">i</span></span><span class="token punctuation">)</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+            lines<span class="token punctuation">.</span><span class="token method function property-access">splice</span><span class="token punctuation">(</span>i<span class="token punctuation">,</span> <span class="token number">1</span><span class="token punctuation">,</span>
+              <span class="token string">'---'</span><span class="token punctuation">,</span>
+              <span class="token template-string"><span class="token template-punctuation string">`</span><span class="token string">src: </span><span class="token interpolation"><span class="token interpolation-punctuation punctuation">${</span>l<span class="token punctuation">.</span><span class="token method function property-access">replace</span><span class="token punctuation">(</span><span class="token regex"><span class="token regex-delimiter">/</span><span class="token regex-source language-regex">^@src: *</span><span class="token regex-delimiter">/</span><span class="token regex-flags">i</span></span><span class="token punctuation">,</span> <span class="token string">''</span><span class="token punctuation">)</span><span class="token interpolation-punctuation punctuation">}</span></span><span class="token template-punctuation string">`</span></span><span class="token punctuation">,</span>
+              <span class="token string">'---'</span><span class="token punctuation">,</span>
+              <span class="token string">''</span><span class="token punctuation">)</span>
+            <span class="token keyword control-flow">continue</span>
+          <span class="token punctuation">}</span>
+          i<span class="token operator">++</span>
+        <span class="token punctuation">}</span>
+      <span class="token punctuation">}</span>
+    <span class="token punctuation">}</span><span class="token punctuation">,</span>
+  <span class="token punctuation">]</span>
+<span class="token punctuation">}</span><span class="token punctuation">)</span></code></pre>
+          <p>Και αυτό ήταν όλο.</p>
+        </section>
+        <section id="περίπτωση-χρήσης-2-χρήση-προσαρμοσμένου-frontmatter-για-το-περιτύλιγμα-των-διαφανειών" class="level3">
+          <h3>Περίπτωση χρήσης 2: χρήση προσαρμοσμένου frontmatter για το περιτύλιγμα των διαφανειών</h3>
+          <p>
+            Φανταστείτε μια περίπτωση όπου συχνά θέλετε να μεγεθύνετε ορισμένες διαφάνειες σας, αλλά εξακολουθείτε να θέλετε να χρησιμοποιήσετε μια ποικιλία από υπάρχουσες διατάξεις, οπότε η δημιουργία μιας νέας διάταξης δεν θα ήταν κατάλληλη.
+            Για παράδειγμα, μπορεί να θέλετε να γράψετε το <code>slides.md</code> σας ως εξής:
+          </p>
+          <pre class="language-md"><code class="language-md">
+
+
+<span class="token front-matter-block"><span class="token punctuation">---</span>
+<span class="token front-matter yaml language-yaml">layout: quote
+_scale: 0.75</span>
+<span class="token punctuation">---</span></span>
+
+<span class="token title important"><span class="token punctuation">#</span> Καλώς ήρθατε</span>
+
+<span class="token blockquote punctuation">></span> υπέροχα!
+
+<span class="token hr punctuation">---</span>
+<span class="token title important">_scale: 4
+<span class="token punctuation">---</span></span>
+<span class="token title important"><span class="token punctuation">#</span> Διάλειμμα</span>
+
+<span class="token hr punctuation">---</span>
+
+<span class="token title important"><span class="token punctuation">#</span> Οκ</span>
+
+<span class="token hr punctuation">---</span>
+layout: center
+<span class="token title important">_scale: 2.5
+<span class="token punctuation">---</span></span>
+<span class="token title important"><span class="token punctuation">#</span> Ερωτήσεις;</span>
+τα λέμε την επόμενη φορά
+</code></pre>
+          <p>Εδώ χρησιμοποιήσαμε μια κάτω παύλα στο <code>_scale</code> για να αποφύγουμε πιθανές συγκρούσεις με τις υπάρχουσες ιδιότητες του frontmatter (πράγματι, η περίπτωση του <code>scale</code>, χωρίς κάτω παύλα θα προκαλούσε πιθανά προβλήματα).</p>
+          <p>Για να χειριστείτε αυτή τη σύνταξη <code>_scale: ...</code> στο frontmatter, δημιουργήστε ένα αρχείο <code>./setup/preparser.ts</code> με το ακόλουθο περιεχόμενο:</p>
+          <pre class="language-ts"><code class="language-ts"><span class="token keyword module">import</span> <span class="token imports"><span class="token punctuation">{</span> definePreparserSetup <span class="token punctuation">}</span></span> <span class="token keyword module">from</span> <span class="token string">'@slidev/types'</span>
+
+<span class="token keyword module">export</span> <span class="token keyword module">default</span> <span class="token function">definePreparserSetup</span><span class="token punctuation">(</span><span class="token punctuation">(</span>filepath<span class="token punctuation">)</span> <span class="token arrow operator">=></span> <span class="token punctuation">{</span>
+  <span class="token keyword control-flow">return</span> <span class="token punctuation">[</span>
+    <span class="token punctuation">{</span>
+      <span class="token function">transformSlide</span><span class="token punctuation">(</span>content<span class="token punctuation">,</span> frontmatter<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token keyword control-flow">if</span> <span class="token punctuation">(</span><span class="token string">'_scale'</span> <span class="token keyword">in</span> frontmatter<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+          <span class="token keyword control-flow">return</span> <span class="token punctuation">[</span>
+            <span class="token template-string"><span class="token template-punctuation string">`</span><span class="token string">&#x3C;Transform :scale=</span><span class="token interpolation"><span class="token interpolation-punctuation punctuation">${</span>frontmatter<span class="token punctuation">[</span><span class="token string">'_scale'</span><span class="token punctuation">]</span><span class="token interpolation-punctuation punctuation">}</span></span><span class="token string">></span><span class="token template-punctuation string">`</span></span><span class="token punctuation">,</span>
+            <span class="token string">''</span><span class="token punctuation">,</span>
+            content<span class="token punctuation">,</span>
+            <span class="token string">''</span><span class="token punctuation">,</span>
+            <span class="token string">'&#x3C;/Transform>'</span>
+          <span class="token punctuation">]</span><span class="token punctuation">.</span><span class="token method function property-access">join</span><span class="token punctuation">(</span><span class="token string">'\n'</span><span class="token punctuation">)</span>
+        <span class="token punctuation">}</span>
+      <span class="token punctuation">}</span><span class="token punctuation">,</span>
+    <span class="token punctuation">}</span><span class="token punctuation">,</span>
+  <span class="token punctuation">]</span>
+<span class="token punctuation">}</span><span class="token punctuation">)</span></code></pre>
+          <p>
+            Και αυτό ήταν όλο.
+            <span style="float: footnote;"><a href="../index.html#toc">Go to TOC</a></span>
+          </p>
+        </section>
+      </section>
+    </section>
+  </body>
+</html>

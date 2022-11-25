@@ -1,0 +1,101 @@
+<!doctype html>
+<html lang="pt-br">
+  <head>
+    <meta charset="utf-8">
+    <title>The server Property</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="navigation.title" content="server">
+    <meta name="description" content="Nuxt let you define the server connection variables for your application inside nuxt.config.js.">
+    <meta name="menu" content="server">
+    <meta name="category" content="configuration-glossary">
+    <link rel="stylesheet" href="https://raw.githubusercontent.com/shinokada/prism-coy-theme/main/theme_common.css">
+  </head>
+  <body>
+    <section id="the-server-property" class="level1">
+      <h1>The server property</h1>
+      <p>Nuxt let you define the server connection variables for your application inside <code>nuxt.config.js</code>.</p>
+      <hr>
+      <ul>
+        <li>Type: <code>Object</code></li>
+      </ul>
+      <section id="basic-example" class="level2">
+        <h2>Basic example:</h2>
+        <pre class="language-js{}[nuxt.config.js]"><code class="language-js{}[nuxt.config.js]">export default {
+  server: {
+    port: 8000, // default: 3000
+    host: '0.0.0.0', // default: localhost,
+    timing: false
+  }
+}</code></pre>
+        <p>This lets you specify the <a href="./features/configuration#edit-host-and-port">host and port</a> for your Nuxt server instance.</p>
+      </section>
+      <section id="example-using-https-configuration" class="level2">
+        <h2>Example using HTTPS configuration</h2>
+        <pre class="language-js{}[nuxt.config.js]"><code class="language-js{}[nuxt.config.js]">import path from 'path'
+import fs from 'fs'
+
+export default {
+  server: {
+    https: {
+      key: fs.readFileSync(path.resolve(__dirname, 'server.key')),
+      cert: fs.readFileSync(path.resolve(__dirname, 'server.crt'))
+    }
+  }
+}</code></pre>
+        <p>You can find additional information on creating server keys and certificates on <code>localhost</code> on <a href="https://letsencrypt.org/docs/certificates-for-localhost/">certificates for localhost</a> article.</p>
+      </section>
+      <section id="example-using-sockets-configuration" class="level2">
+        <h2>Example using sockets configuration</h2>
+        <pre class="language-js{}[nuxt.config.js]"><code class="language-js{}[nuxt.config.js]">export default {
+  server: {
+    socket: '/tmp/nuxt.socket'
+  }
+}</code></pre>
+      </section>
+      <section id="timing" class="level2">
+        <h2>timing</h2>
+        <ul>
+          <li>Type: <code>Object</code> or <code>Boolean</code></li>
+          <li>Default: <code>false</code></li>
+        </ul>
+        <p>Enabling the <code>server.timing</code> option adds a middleware to measure the time elapsed during server-side rendering and adds it to the headers as 'Server-Timing'</p>
+        <section id="example-using-timing-configuration" class="level3">
+          <h3>Example using timing configuration</h3>
+          <p><code>server.timing</code> can be an object for providing options. Currently, only <code>total</code> is supported (which directly tracks the whole time spent on server-side rendering)</p>
+          <pre class="language-js{}[nuxt.config.js]"><code class="language-js{}[nuxt.config.js]">export default {
+  server: {
+    timing: {
+      total: true
+    }
+  }
+}</code></pre>
+        </section>
+        <section id="using-timing-api" class="level3">
+          <h3>Using timing API</h3>
+          <p>The <code>timing</code> API is also injected into the <code>response</code> on server-side when <code>server.time</code> is enabled.</p>
+          <section id="syntax" class="level4">
+            <h4>Syntax</h4>
+            <pre class="language-js"><code class="language-js">res<span class="token punctuation">.</span><span class="token property-access">timing</span><span class="token punctuation">.</span><span class="token method function property-access">start</span><span class="token punctuation">(</span>name<span class="token punctuation">,</span> description<span class="token punctuation">)</span>
+res<span class="token punctuation">.</span><span class="token property-access">timing</span><span class="token punctuation">.</span><span class="token method function property-access">end</span><span class="token punctuation">(</span>name<span class="token punctuation">)</span></code></pre>
+          </section>
+          <section id="example-using-timing-in-servermiddleware" class="level4">
+            <h4>Example using timing in serverMiddleware</h4>
+            <pre class="language-js"><code class="language-js"><span class="token keyword module">export</span> <span class="token keyword module">default</span> <span class="token keyword">function</span> <span class="token punctuation">(</span><span class="token parameter">req<span class="token punctuation">,</span> res<span class="token punctuation">,</span> next</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  res<span class="token punctuation">.</span><span class="token property-access">timing</span><span class="token punctuation">.</span><span class="token method function property-access">start</span><span class="token punctuation">(</span><span class="token string">'midd'</span><span class="token punctuation">,</span> <span class="token string">'Middleware timing description'</span><span class="token punctuation">)</span>
+  <span class="token comment">// server side operation..</span>
+  <span class="token comment">// ...</span>
+  res<span class="token punctuation">.</span><span class="token property-access">timing</span><span class="token punctuation">.</span><span class="token method function property-access">end</span><span class="token punctuation">(</span><span class="token string">'midd'</span><span class="token punctuation">)</span>
+  <span class="token function">next</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+<span class="token punctuation">}</span></code></pre>
+            <p>Then <code>server-timing</code> head will be included in response header like:</p>
+            <pre class="language-bash"><code class="language-bash">Server-Timing: midd<span class="token punctuation">;</span><span class="token assign-left variable">desc</span><span class="token operator">=</span><span class="token string">"Middleware timing description"</span><span class="token punctuation">;</span><span class="token assign-left variable">dur</span><span class="token operator">=</span><span class="token number">2.4</span></code></pre>
+            <p>
+              Please refer to <a href="https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Server-Timing">Server-Timing MDN</a> for more details.
+              <span style="float: footnote;"><a href="../index.html#toc">Go to TOC</a></span>
+            </p>
+          </section>
+        </section>
+      </section>
+    </section>
+  </body>
+</html>

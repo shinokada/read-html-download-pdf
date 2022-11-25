@@ -1,0 +1,170 @@
+<!doctype html>
+<html lang="pt">
+  <head>
+    <meta charset="utf-8">
+    <title>Nuxt Lifecycle</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="No matter which tool you use, you will always feel more confident when you understand how the tool works under the hood. The same applies to Nuxt.">
+    <meta name="category" content="concepts">
+    <meta name="img" content="/docs/nuxt-lifecycle.svg">
+    <meta name="imgAlt" content="understanding-nuxt-2-12-lifecycle-hooks">
+    <link rel="stylesheet" href="https://raw.githubusercontent.com/shinokada/prism-coy-theme/main/theme_common.css">
+  </head>
+  <body>
+    <section id="nuxt-lifecycle" class="level1">
+      <h1>Nuxt Lifecycle</h1>
+      <p>No matter which tool you use, you will always feel more confident when you understand how the tool works under the hood. The same applies to Nuxt.</p>
+      <hr>
+      <p>
+        <img src="../docs/nuxt-lifecycle.svg">
+      </p>
+      <p>The goal of this chapter is to give you a high-level overview of the different parts of the framework, their order of execution and how they work together.</p>
+      <p>The Nuxt lifecycle describes what happens after the build phase, where your application is bundled, chunked and minified. What happens after this phase depends on whether you have server-side rendering enabled or not. And if you do, it further depends on the type of server-side rendering you have chosen:</p>
+      <p>Dynamic SSR (<code>nuxt start</code>)</p>
+      <p>or Static Site Generation (<code>nuxt generate</code>).</p>
+      <section id="lifecycle" class="level2">
+        <h2>Lifecycle</h2>
+        <section id="server" class="level3">
+          <h3>Server</h3>
+          <p>For SSR, these steps will be executed for every initial request to your app</p>
+          <ul>
+            <li>The server starts (<code>nuxt start</code>)</li>
+          </ul>
+          <p>When using static site generation, the server steps are only executed on build time, but once for every page that will be generated</p>
+          <ul>
+            <li>
+              <p>The generation process starts (<code>nuxt generate</code>)</p>
+            </li>
+            <li>
+              <p>Nuxt hooks</p>
+            </li>
+            <li>
+              <p>serverMiddleware</p>
+            </li>
+            <li>
+              <p>Server-side Nuxt plugins</p>
+              <ul>
+                <li>in order as defined in nuxt.config.js</li>
+              </ul>
+            </li>
+            <li>
+              <p>nuxtServerInit</p>
+              <ul>
+                <li>Vuex action that is called only on server-side to pre-populate the store</li>
+                <li>First argument is the <strong>Vuex context</strong>, second argument is the <strong>Nuxt context</strong>
+                  <ul>
+                    <li>Dispatch other actions from here → only "entry point" for subsequent store actions on server-side</li>
+                  </ul>
+                </li>
+                <li>can only be defined in <code>store/index.js</code></li>
+              </ul>
+            </li>
+            <li>
+              <p>Middleware</p>
+              <ul>
+                <li>Global middleware</li>
+                <li>Layout middleware</li>
+                <li>Route middleware</li>
+              </ul>
+            </li>
+            <li>
+              <p>asyncData</p>
+            </li>
+            <li>
+              <p>beforeCreate (Vue lifecycle method)</p>
+            </li>
+            <li>
+              <p>created (Vue lifecycle method)</p>
+            </li>
+            <li>
+              <p>The new fetch (top to bottom, siblings = parallel)</p>
+            </li>
+            <li>
+              <p>Serialization of state (<code>render:routeContext</code> Nuxt hook)</p>
+            </li>
+            <li>
+              <p>the HTML rendering happens (<code>render:route</code> Nuxt hook)</p>
+            </li>
+            <li>
+              <p><code>render:routeDone</code> hook when HTML has been sent to the browser</p>
+            </li>
+            <li>
+              <p><code>generate:before</code> Nuxt hook</p>
+            </li>
+            <li>
+              <p>HTML files are generated</p>
+              <ul>
+                <li><strong>Full static generation</strong>
+                  <ul>
+                    <li>e.g. static payloads are extracted</li>
+                  </ul>
+                </li>
+                <li><code>generate:page</code> (HTML editable)</li>
+                <li><code>generate:routeCreated</code> (Route generated)</li>
+              </ul>
+            </li>
+            <li>
+              <p><code>generate:done</code> when all HTML files have been generated</p>
+            </li>
+          </ul>
+        </section>
+        <section id="client" class="level3">
+          <h3>Client</h3>
+          <p>This part of the lifecycle is fully executed in the browser, no matter which Nuxt mode you've chosen.</p>
+          <ul>
+            <li>Receives the HTML</li>
+            <li>Loading assets (e.g. JavaScript)</li>
+            <li>client-side Nuxt plugin
+              <ul>
+                <li>in order as defined in nuxt.config.js</li>
+              </ul>
+            </li>
+            <li>Vue Hydration</li>
+            <li>Middleware
+              <ul>
+                <li>Global middleware</li>
+                <li>Layout middleware</li>
+                <li>Route middleware</li>
+              </ul>
+            </li>
+            <li>asyncData (blocking)</li>
+            <li>beforeCreate (Vue lifecycle method)</li>
+            <li>created (Vue lifecycle method)</li>
+            <li>The new fetch (top to bottom, siblings = parallel) (non-blocking)</li>
+            <li>beforeMount (Vue lifecycle method)</li>
+            <li>mounted (Vue lifecycle method)</li>
+          </ul>
+        </section>
+        <section id="navigate-using-the-nuxtlink-component" class="level3">
+          <h3>Navigate using the NuxtLink component</h3>
+          <p>Same as for the <em>client</em> part, everything is happening in the browser but only when navigating via <code>&#x3C;NuxtLink></code>. Furthermore, no page content is displayed until all <em>blocking</em> tasks are fulfilled.</p>
+          <section id="info" class="level4">
+            <h4>Info</h4>
+            <p>Check out the component chapter to see more info on <a href="./features/nuxt-components#the-nuxtlink-component"><code>&#x3C;NuxtLink></code></a></p>
+            <ul>
+              <li>middleware (blocking)
+                <ul>
+                  <li>Global middleware</li>
+                  <li>Layout middleware</li>
+                  <li>Route middleware</li>
+                </ul>
+              </li>
+              <li>asyncData (blocking) [or full static payload loading]</li>
+              <li>beforeCreate &#x26; created (Vue lifecycle methods)</li>
+              <li>fetch (non-blocking)</li>
+              <li>beforeMount &#x26; mounted</li>
+            </ul>
+          </section>
+        </section>
+        <section id="whats-next" class="level3">
+          <h3>What's next</h3>
+          <section id="next" class="level4">
+            <h4>Next</h4>
+            <p>Check out the <a href="./features/rendering-modes">Features book</a></p>
+            <p><span style="float: footnote;"><a href="../index.html#toc">Go to TOC</a></span></p>
+          </section>
+        </section>
+      </section>
+    </section>
+  </body>
+</html>

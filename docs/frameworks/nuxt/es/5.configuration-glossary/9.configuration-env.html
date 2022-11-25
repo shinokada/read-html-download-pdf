@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8">
+    <title>The env property</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="navigation.title" content="env">
+    <meta name="description" content="Share environment variables between client and server.">
+    <meta name="menu" content="env">
+    <meta name="category" content="configuration-glossary">
+    <link rel="stylesheet" href="https://raw.githubusercontent.com/shinokada/prism-coy-theme/main/theme_common.css">
+  </head>
+  <body>
+    <section id="the-env-property" class="level1">
+      <h1>The env property</h1>
+      <p>Share environment variables between client and server.</p>
+      <hr>
+      <ul>
+        <li>Type: <code>Object</code></li>
+      </ul>
+      <blockquote>
+        <p>Nuxt lets you create environment variables client side, also to be shared from server side.</p>
+      </blockquote>
+      <p>The env property defines environment variables that should be available on the client side. They can be assigned using server side environment variables, the <a href="https://github.com/nuxt-community/dotenv-module">dotenv module</a> ones or similar.</p>
+      <p>
+        alert
+        For nuxt versions > 2.12+, in cases where environment variables are required at runtime (not build time) it is recommended to subsitute the <code>env</code> property with <a href="./configuration-glossary/configuration-runtime-config">runtimeConfig properties</a>: <code>publicRuntimeOptions</code> and <code>privateRuntimeOptions</code>.<br>Learn more with our tutorial about <a href="/tutorials/moving-from-nuxtjs-dotenv-to-runtime-config/">moving from @nuxtjs/dotenv to runtime config</a>.
+      </p>
+      <p><strong>Make sure to read about <code>process.env</code> and <code>process.env == {}</code> below for better troubleshooting.</strong></p>
+      <pre class="language-js{}[nuxt.config.js]"><code class="language-js{}[nuxt.config.js]">export default {
+  env: {
+    baseUrl: process.env.BASE_URL || 'http://localhost:3000'
+  }
+}</code></pre>
+      <p>This lets you create a <code>baseUrl</code> property that will be equal to the <code>BASE_URL</code> server side environment variable if available or defined. If not, <code>baseUrl</code> in client side will be equal to <code>'http://localhost:3000'</code>. The server side variable BASE_URL is therefore copied to the client side via the <code>env</code> property in the <code>nuxt.config.js</code>. Alternatively, the other value is defined (http://localhost:3000).</p>
+      <p>Then, I can access my <code>baseUrl</code> variable in 2 ways:</p>
+      <ol>
+        <li>Via <code>process.env.baseUrl</code>.</li>
+        <li>Via <code>context.env.baseUrl</code>, see <a href="./internals-glossary/context">context API</a>.</li>
+      </ol>
+      <p>You can use the <code>env</code> property for giving a public token for example.</p>
+      <p>For the example above, we can use it to configure <a href="https://github.com/mzabriskie/axios">axios</a>.</p>
+      <pre class="language-js{}[plugins/axios.js]"><code class="language-js{}[plugins/axios.js]">import axios from 'axios'
+
+export default axios.create({
+  baseURL: process.env.baseUrl
+})</code></pre>
+      <p>Then, in your pages, you can import axios like this: <code>import axios from '~/plugins/axios'</code></p>
+      <section id="automatic-injection-of-environment-variables" class="level2">
+        <h2>Automatic injection of environment variables</h2>
+        <p>If you define environment variables starting with <code>NUXT_ENV_</code> in the build phase (e.g. <code>NUXT_ENV_COOL_WORD=freezing nuxt build</code> or <code>SET NUXT_ENV_COOL_WORD=freezing &#x26; nuxt build</code> for the Windows console, they'll be automatically injected into the process environment. Be aware that they'll potentially take precedence over defined variables in your <code>nuxt.config.js</code> with the same name.</p>
+      </section>
+      <section id="processenv-" class="level2">
+        <h2>process.env ==</h2>
+        <p>Note that Nuxt uses webpack's <code>definePlugin</code> to define the environmental variable. This means that the actual <code>process</code> or <code>process.env</code> from Node.js is neither available nor defined. Each of the <code>env</code> properties defined in nuxt.config.js is individually mapped to <code>process.env.xxxx</code> and converted during compilation.</p>
+        <p>Meaning, <code>console.log(process.env)</code> will output <code>{}</code> but <code>console.log(process.env.your_var)</code> will still output your value. When webpack compiles your code, it replaces all instances of <code>process.env.your_var</code> with the value you've set it to, e.g.: <code>env.test = 'testing123'</code>. If you use <code>process.env.test</code> in your code somewhere, it is actually translated to 'testing123'.</p>
+        <p>before</p>
+        <pre class="language-js"><code class="language-js"><span class="token keyword control-flow">if</span> <span class="token punctuation">(</span>process<span class="token punctuation">.</span><span class="token property-access">env</span><span class="token punctuation">.</span><span class="token property-access">test</span> <span class="token operator">==</span> <span class="token string">'testing123'</span><span class="token punctuation">)</span></code></pre>
+        <p>after</p>
+        <pre class="language-js"><code class="language-js"><span class="token keyword control-flow">if</span> <span class="token punctuation">(</span><span class="token string">'testing123'</span> <span class="token operator">==</span> <span class="token string">'testing123'</span><span class="token punctuation">)</span></code></pre>
+      </section>
+      <section id="servermiddleware" class="level2">
+        <h2>serverMiddleware</h2>
+        <p>
+          As <a href="./configuration-glossary/configuration-servermiddleware">serverMiddleware</a> is decoupled from the main Nuxt build, <code>env</code> variables defined in <code>nuxt.config.js</code> are not available there.
+          <span style="float: footnote;"><a href="../index.html#toc">Go to TOC</a></span>
+        </p>
+      </section>
+    </section>
+  </body>
+</html>

@@ -12,11 +12,11 @@ React アプリケーションでベンチマークを行う場合やパフォ�
 
 ビルドプロセスが正しく設定されているか分からない場合、[React Developer Tools for Chrome](https://chrome.google.com/webstore/detail/react-developer-tools/fmkadmapgofadopljbjfkapdkoienihi) をインストールして確認できます。本番用モードの React のサイトを訪れた場合、アイコンは暗い背景となっています。
 
-<img src="../images/docs/devtools-prod.png" style="max-width:100%" alt="React DevTools on a website with production version of React">
+<img src="./docs/devtools-prod.png" style="max-width:100%" alt="React DevTools on a website with production version of React">
 
 開発モードの React のサイトを訪れた場合、アイコンは赤い背景となっています。
 
-<img src="../images/docs/devtools-dev.png" style="max-width:100%" alt="React DevTools on a website with development version of React">
+<img src="./docs/devtools-dev.png" style="max-width:100%" alt="React DevTools on a website with development version of React">
 
 アプリケーションに対して作業をしているときは開発モードを使用し、利用者に配布する場合には本番用モードを使用することをお勧めします。
 
@@ -202,7 +202,7 @@ shouldComponentUpdate(nextProps, nextState) {
 
 以下のようなコンポーネントのサブツリーがあるとします。それぞれ、`SCU` は `shouldComponentUpdate` が返した値（訳注：緑は true、赤は false）を示し、`vDOMEq` はレンダーされた React 要素が等しかったかどうか（訳注：緑は等しい、赤は等しくない）を示します。最後に、円の色はコンポーネントに対してツリーの差分を検出するリコンシリエーション処理を必要としたのかどうか（訳注：緑は不要、赤は必要）を示します。
 
-<figure><img src="../images/docs/should-component-update.png" style="max-width:100%" /></figure>
+<figure><img src="./docs/should-component-update.png" style="max-width:100%" /></figure>
 
 C2 をルートとするサブツリーでは `shouldComponentUpdate` が `false` を返したので、React は C2 をレンダーしようとしませんでした。したがって C4 と C5 については `shouldComponentUpdate` を実行する必要すらなかったわけです。
 

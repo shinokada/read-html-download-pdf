@@ -1,0 +1,340 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="utf-8">
+    <title>La propriété render</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="navigation.title" content="render">
+    <meta name="description" content="Nuxt permet de personnaliser les options au runtime pour le render des pages">
+    <meta name="menu" content="render">
+    <meta name="category" content="configuration-glossary">
+    <link rel="stylesheet" href="https://raw.githubusercontent.com/shinokada/prism-coy-theme/main/theme_common.css">
+  </head>
+  <body>
+    <section id="la-propriété-render" class="level1">
+      <h1>La propriété render</h1>
+      <p>Nuxt permet de personnaliser les options au runtime pour le render des pages</p>
+      <hr>
+      <section id="bundlerenderer" class="level2">
+        <h2>bundleRenderer</h2>
+        <ul>
+          <li>Type: <code>Object</code></li>
+        </ul>
+        <blockquote>
+          <p>On peut utiliser cette option pour personnaliser le render pour le bundle de <code>Vue SSR</code>. Cette option est ignorée lorsque l'on est en mode SPA.</p>
+        </blockquote>
+        <pre class="language-js{}[nuxt.config.js]"><code class="language-js{}[nuxt.config.js]">export default {
+  render: {
+    bundleRenderer: {
+      directives: {
+        personnalise1(el, dir) {
+          // quelque chose ...
+        }
+      }
+    }
+  }
+}</code></pre>
+        <p>Pour en savoir davantage sur les options disponibles, on peut consulter l'API de <a href="https://ssr.vuejs.org/en/api.html#renderer-options">Vue SSR</a>. Il est recommandé de ne pas utiliser cette option car Nuxt s'occupe déjà de fournir les meilleures valeurs par défaut pour le rendu côté serveur et, une mauvaise configuration pourrait mener à des problèmes de SSR.</p>
+      </section>
+      <section id="etag" class="level2">
+        <h2>etag</h2>
+        <ul>
+          <li>Type: <code>Object</code>
+            <ul>
+              <li>Par défaut: <code>{ weak: true }</code></li>
+            </ul>
+          </li>
+        </ul>
+        <p>Pour désactiver <code>etag</code> pour les pages, il faut définir <code>etag: false</code>.</p>
+        <p>Se référer à la documentation de <a href="https://www.npmjs.com/package/etag">etag</a> pour voir les options disponibles.</p>
+        <p>On peut utiliser notre propre fonction de hash en définissant <code>etag.hash</code>:</p>
+        <pre class="language-js{}[nuxt.config.js]"><code class="language-js{}[nuxt.config.js]">import { murmurHash128 } from 'murmurhash-native'
+
+export default {
+  render: {
+    etag: {
+      hash: html => murmurHash128(html)
+    }
+  }
+}</code></pre>
+        <p>Dans ce cas, nous utilisons <a href="https://github.com/royaltm/node-murmurhash-native">murmurhash-native</a>, qui est plus rapide pour des body HTML plus larges. À noter que l'option <code>weak</code> est ignorée lorsque l'on spécifie notre propre fonction de hachage.</p>
+      </section>
+      <section id="compressor" class="level2">
+        <h2>compressor</h2>
+        <ul>
+          <li>Type <code>Object</code>
+            <ul>
+              <li>Par défaut: <code>{ threshold: 0 }</code></li>
+            </ul>
+          </li>
+        </ul>
+        <p>Lorsque l'on fournit un objet, le middleware de <a href="https://www.npmjs.com/package/compression">compression</a> sera utilisé (avec les options adéquates).</p>
+        <p>Si l'on souhaite utiliser notre propre middleware de compression, on peut le désigner directement (ex: <code>otherComp({ myOptions: 'exemple' })</code>).</p>
+        <p>Pour désactiver la compression, on utilise <code>compressor: false</code>.</p>
+      </section>
+      <section id="fallback" class="level2">
+        <h2>fallback</h2>
+        <ul>
+          <li>Type <code>Object</code>
+            <ul>
+              <li>Par défaut: <code>{ dist: {}, static: { skipUnknown: true } }</code>
+                <ul>
+                  <li>la clé <code>dist</code> est utilisé pour les routes correspondant au <a href="./configuration-glossary/configuration-build#publicpath">publicPath</a> (ie: <code>/_nuxt/*</code>)</li>
+                  <li>la clé <code>static</code> est utilisé pour les routes correspondant à <code>/*</code></li>
+                </ul>
+              </li>
+            </ul>
+          </li>
+        </ul>
+        <blockquote>
+          <p>Options pour le middleware de <a href="https://github.com/nuxt/serve-placeholder">serve-placeholder</a>.</p>
+        </blockquote>
+        <p>Si on souhaite désactiver un des deux voire les deux, il suffit de passer une valeur <code>false</code>.</p>
+        <pre class="language-js"><code class="language-js"><span class="token keyword module">export</span> <span class="token keyword module">default</span> <span class="token punctuation">{</span>
+  <span class="token literal-property property">render</span><span class="token operator">:</span> <span class="token punctuation">{</span>
+    <span class="token literal-property property">fallback</span><span class="token operator">:</span> <span class="token punctuation">{</span>
+      <span class="token keyword">static</span><span class="token operator">:</span> <span class="token punctuation">{</span>
+        <span class="token comment">// Avoid sending 404 for these extensions</span>
+        <span class="token literal-property property">handlers</span><span class="token operator">:</span> <span class="token punctuation">{</span>
+          <span class="token string-property property">'.js'</span><span class="token operator">:</span> <span class="token boolean">false</span>
+        <span class="token punctuation">}</span>
+      <span class="token punctuation">}</span>
+    <span class="token punctuation">}</span>
+  <span class="token punctuation">}</span>
+<span class="token punctuation">}</span></code></pre>
+      </section>
+      <section id="http2" class="level2">
+        <h2>http2</h2>
+        <ul>
+          <li>Type <code>Object</code>
+            <ul>
+              <li>Par défaut: <code>{ push: false, pushAssets: null }</code></li>
+            </ul>
+          </li>
+        </ul>
+        <blockquote>
+          <p>Active les headers push en HTTP2.</p>
+        </blockquote>
+        <p>On peut surveiller les liens que l'on pousse en utilisant la fonction <code>pushAssets</code>.</p>
+        <p>Exemple:</p>
+        <pre class="language-js"><code class="language-js"><span class="token function-variable function">pushAssets</span><span class="token operator">:</span> <span class="token punctuation">(</span><span class="token parameter">req<span class="token punctuation">,</span> res<span class="token punctuation">,</span> publicPath<span class="token punctuation">,</span> preloadFiles</span><span class="token punctuation">)</span> <span class="token arrow operator">=></span>
+  preloadFiles
+    <span class="token punctuation">.</span><span class="token method function property-access">filter</span><span class="token punctuation">(</span><span class="token parameter">f</span> <span class="token arrow operator">=></span> f<span class="token punctuation">.</span><span class="token property-access">asType</span> <span class="token operator">===</span> <span class="token string">'script'</span> <span class="token operator">&#x26;&#x26;</span> f<span class="token punctuation">.</span><span class="token property-access">file</span> <span class="token operator">===</span> <span class="token string">'runtime.js'</span><span class="token punctuation">)</span>
+    <span class="token punctuation">.</span><span class="token method function property-access">map</span><span class="token punctuation">(</span><span class="token parameter">f</span> <span class="token arrow operator">=></span> <span class="token template-string"><span class="token template-punctuation string">`</span><span class="token string">&#x3C;</span><span class="token interpolation"><span class="token interpolation-punctuation punctuation">${</span>publicPath<span class="token interpolation-punctuation punctuation">}</span></span><span class="token interpolation"><span class="token interpolation-punctuation punctuation">${</span>f<span class="token punctuation">.</span><span class="token property-access">file</span><span class="token interpolation-punctuation punctuation">}</span></span><span class="token string">>; rel=preload; as=</span><span class="token interpolation"><span class="token interpolation-punctuation punctuation">${</span>f<span class="token punctuation">.</span><span class="token property-access">asType</span><span class="token interpolation-punctuation punctuation">}</span></span><span class="token template-punctuation string">`</span></span><span class="token punctuation">)</span></code></pre>
+        <p>On peut aussi ajouter nos propres ressources au tableau. En utilisant <code>req</code> et <code>res</code> on peut décider quels liens seront poussés en fonction des entêtes de la requête, par exemple en utilisant le cookie contenant le numéro de version de notre application.</p>
+        <p>Les ressources seront reliées entre elles par un <code>,</code> et passées en tant qu'un seul entête <code>Link</code>.</p>
+      </section>
+      <section id="asyncscripts" class="level2">
+        <h2>asyncScripts</h2>
+        <ul>
+          <li>Type: <code>Boolean</code>
+            <ul>
+              <li>Default: <code>false</code></li>
+            </ul>
+          </li>
+        </ul>
+        <blockquote>
+          <p>
+            Ajoutez un <code>async</code> attribut à <code>&#x3C;script></code> tags pour Nuxt bundles,
+            leur permettant d'être récupérés en parallèle de l'analyse (available with <code>2.14.8+</code>). <a href="https://developer.mozilla.org/en-US/docs/Web/HTML/Element/script">More information</a>.
+          </p>
+        </blockquote>
+      </section>
+      <section id="injectscripts" class="level2">
+        <h2>injectScripts</h2>
+        <ul>
+          <li>Type: <code>Boolean</code>
+            <ul>
+              <li>Par défaut: <code>true</code></li>
+            </ul>
+          </li>
+        </ul>
+        <blockquote>
+          <p>Ajoute le <code>&#x3C;script></code> pour les bundles de Nuxt, il faut le définir à <code>false</code> pour render du HTML pur, sans JS (disponible depuis la version <code>2.8.0</code>).</p>
+        </blockquote>
+      </section>
+      <section id="resourcehints" class="level2">
+        <h2>resourceHints</h2>
+        <ul>
+          <li>Type: <code>Boolean</code>
+            <ul>
+              <li>Par défaut: <code>true</code></li>
+            </ul>
+          </li>
+        </ul>
+        <blockquote>
+          <p>Ajoute des liens <code>prefetch</code> et <code>preload</code> pour un chargement de page initial plus rapide.</p>
+        </blockquote>
+        <p>On pourrait souhaiter désactiver cette option seulement si l'on possède beaucoup de pages et de routes.</p>
+      </section>
+      <section id="ssr" class="level2">
+        <h2>ssr</h2>
+        <ul>
+          <li>Type: <code>Boolean</code>
+            <ul>
+              <li>Par défaut: <code>true</code> en mode universel et <code>false</code> en mode SPA</li>
+            </ul>
+          </li>
+        </ul>
+        <blockquote>
+          <p>Active le render SSR</p>
+        </blockquote>
+        <p>Si non fournie, cette option est automatiquement définie en fonction de la valeur de <code>mode</code>. Elle peut être utile pour dynamiquement activer/désactiver le SSR lors du runtime après que les builds des images soient finis (avec Docker par exemple).</p>
+      </section>
+      <section id="crossorigin" class="level2">
+        <h2>crossorigin</h2>
+        <ul>
+          <li>Type: <code>String</code></li>
+          <li>Par défaut: <code>undefined</code></li>
+        </ul>
+        <blockquote>
+          <p>Permet de personnaliser l'attribut <code>crossorigin</code> dans les balises <code>&#x3C;link rel="stylesheet"></code> et <code>&#x3C;script></code> générées dans le HTML.</p>
+        </blockquote>
+        <p>Plus d'informations: <a href="https://developer.mozilla.org/en-US/docs/Web/HTML/CORS_settings_attributes">attributs des paramètres CORS</a>.</p>
+      </section>
+      <section id="ssrlog" class="level2">
+        <h2>ssrLog</h2>
+        <ul>
+          <li>Type: <code>Boolean</code> | <code>String</code>
+            <ul>
+              <li>Par défaut: <code>true</code> en mode développement et <code>false</code> en production</li>
+            </ul>
+          </li>
+        </ul>
+        <blockquote>
+          <p>Transmet les logs du serveur au navigateur pour un meilleur débogage (disponible uniquement en développement).</p>
+        </blockquote>
+        <p>Pour réduire (rendu visuel) les logs, on peut utiliser la valeur <code>'collapsed'</code>.</p>
+      </section>
+      <section id="static" class="level2">
+        <h2>static</h2>
+        <ul>
+          <li>Type: <code>Object</code>
+            <ul>
+              <li>Par défaut: <code>{}</code></li>
+            </ul>
+          </li>
+        </ul>
+        <blockquote>
+          <p>Permet de personnaliser le comportement du répertoire <code>static/</code></p>
+        </blockquote>
+        <p>Se référer à la documentation de <a href="https://www.npmjs.com/package/serve-static">serve-static</a> pour voir les options disponibles.</p>
+        <p>En plus de celles-ci, nous avons introduit une option <code>prefix</code> qui est à <code>true</code> par défaut. Cela a pour but d'ajouter la base du routeur à nos ressources statiques.</p>
+        <p><strong>Exemple:</strong></p>
+        <ul>
+          <li>Ressource: <code>favicon.ico</code></li>
+          <li>Base du routeur: <code>/t</code></li>
+          <li>Avec <code>prefix: true</code> (par défaut): <code>/t/favicon.ico</code></li>
+          <li>Avec <code>prefix: false</code>: <code>/favicon.ico</code></li>
+        </ul>
+        <p><strong>Mise en garde</strong>:</p>
+        <p>Certaines ré-écritures d'URL peuvent ne pas respecter le préfixe.</p>
+      </section>
+      <section id="dist" class="level2">
+        <h2>dist</h2>
+        <ul>
+          <li>Type: <code>Object</code>
+            <ul>
+              <li>Par défaut: <code>{ maxAge: '1y', index: false }</code></li>
+            </ul>
+          </li>
+        </ul>
+        <blockquote>
+          <p>Options utilisées pour les fichiers distribués. Applicable seulement en production.</p>
+        </blockquote>
+        <p>Se référer à la documentation de <a href="https://www.npmjs.com/package/serve-static">serve-static</a> pour voir les options disponibles.</p>
+      </section>
+      <section id="csp" class="level2">
+        <h2>csp</h2>
+        <ul>
+          <li>Type: <code>Boolean</code> ou <code>Object</code>
+            <ul>
+              <li>Par défaut: <code>false</code></li>
+            </ul>
+          </li>
+        </ul>
+        <blockquote>
+          <p>On peut utiliser ceci pour configurer le Content-Security-Policy afin de charger des ressources externes.</p>
+        </blockquote>
+        <p><strong>Pré-requis</strong>:</p>
+        <p>Ces paramètres CSP sont effectifs seulement quand on utilise Nuxt avec <code>target: 'server'</code> pour servir notre application SSR. Les <code>Policies</code> définies dans <code>csp.policies</code> sont ajoutées à la réponse de l'entête HTTP <code>Content-Security-Policy</code>.</p>
+        <p><strong>Mise à jour des paramètres</strong>:</p>
+        <p>Ces paramètres sont lus directement par le serveur Nuxt à partir du fichier <code>nuxt.config.js</code>. Cela veut dire que des changements à ces paramètres prendront effet lorsque le serveur sera relancé. Il n'y a pas besoin de re-build l'application pour mettre à jour les paramètres CSP.</p>
+        <p><strong>Méta-balises HTML</strong>:</p>
+        <p>Dans l'objectif d'ajouter <a href="https://developer.mozilla.org/en-US/docs/Web/HTTP/CSP"><code>&#x3C;meta http-equiv="Content-Security-Policy"/></code></a> au <code>head</code>, on aura besoin de passer <code>csp.addMeta</code> à <code>true</code>. À noter que cette fonctionnalité est indépendante de la configuration des <code>csp.policies</code>:</p>
+        <ul>
+          <li>cela ajoute seulement un <code>script-src</code> type policy</li>
+          <li>le <code>script-src</code> policy contient seulement les hashs des balises <code>&#x3C;script></code> qui ont été inline.</li>
+        </ul>
+        <p>Lorsque <code>csp.addMeta</code> est à <code>true</code>, la liste complète des policies définies est toujours ajoutée à l'entête de réponse HTTP.</p>
+        <p>À noter que les hashs CSP ne seront pas ajoutés en tant que <code>&#x3C;meta></code> si la policy <code>script-src</code> contient <code>'unsafe-inline'</code>. Cela est dû au fait que le navigateur ignore <code>'unsafe-inline'</code> si des hashs sont présents. Il faut passer l'option <code>unsafeInlineCompatibility</code> à <code>true</code> si on veut que les hashs et <code>'unsafe-inline'</code> soient compatibles avec CSPv1. Dans ce cas, la balise <code>&#x3C;meta></code> ne contiendra toujours que les hashs des des balises <code>&#x3C;script></code> inline, et les policies définies dans <code>csp.policies</code> seront utilisées dans l'entête de réponse HTTP.</p>
+        <pre class="language-js{}[nuxt.config.js]"><code class="language-js{}[nuxt.config.js]">export default {
+  render: {
+    csp: true
+  }
+}
+
+// OU
+
+export default {
+  render: {
+    csp: {
+      hashAlgorithm: 'sha256',
+      policies: {
+        'script-src': [
+          'https://www.google-analytics.com',
+          'https://name.example.com'
+        ],
+        'report-uri': ['https://report.example.com/report-csp-violations']
+      },
+      addMeta: true
+    }
+  }
+}
+
+// OU
+/*
+  L'exemple suivant permet à Google Analytics, LogRocket.io, et Sentry.io
+  de permettre des logs ainsi qu'un tracking analytique.
+
+  Plus d'informations sont disponibles sur cet article de Sentry.io
+  afin de comprendre quel lien de tracking nous devrions utiliser.
+  https://blog.sentry.io/2018/09/04/how-sentry-captures-csp-violations
+*/
+const PRIMARY_HOSTS = `loc.example-website.com`
+export default {
+  render: {
+    csp: {
+      reportOnly: true,
+      hashAlgorithm: 'sha256',
+      policies: {
+        'default-src': ["'self'"],
+        'img-src': ['https:', '*.google-analytics.com'],
+        'worker-src': ["'self'", `blob:`, PRIMARY_HOSTS, '*.logrocket.io'],
+        'style-src': ["'self'", "'unsafe-inline'", PRIMARY_HOSTS],
+        'script-src': [
+          "'self'",
+          "'unsafe-inline'",
+          PRIMARY_HOSTS,
+          'sentry.io',
+          '*.sentry-cdn.com',
+          '*.google-analytics.com',
+          '*.logrocket.io'
+        ],
+        'connect-src': [PRIMARY_HOSTS, 'sentry.io', '*.google-analytics.com'],
+        'form-action': ["'self'"],
+        'frame-ancestors': ["'none'"],
+        'object-src': ["'none'"],
+        'base-uri': [PRIMARY_HOSTS],
+        'report-uri': [
+          `https://sentry.io/api/&#x3C;project>/security/?sentry_key=&#x3C;key>`
+        ]
+      }
+    }
+  }
+}</code></pre>
+        <p><span style="float: footnote;"><a href="../index.html#toc">Go to TOC</a></span></p>
+      </section>
+    </section>
+  </body>
+</html>

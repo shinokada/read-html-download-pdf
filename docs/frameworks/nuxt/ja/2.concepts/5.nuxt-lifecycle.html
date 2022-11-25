@@ -1,0 +1,171 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="utf-8">
+    <title>Nuxt ライフサイクル</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="どのツールを使う場合でも、ツールが内部でどのように機能するかを理解すると常に自信が持てるようになります。同じことが Nuxt にも当てはまります。">
+    <meta name="category" content="concepts">
+    <meta name="img" content="/docs/nuxt-lifecycle.svg">
+    <meta name="imgAlt" content="understanding-nuxt-2-12-lifecycle-hooks">
+    <link rel="stylesheet" href="https://raw.githubusercontent.com/shinokada/prism-coy-theme/main/theme_common.css">
+  </head>
+  <body>
+    <section id="nuxt-ライフサイクル" class="level1">
+      <h1>Nuxt ライフサイクル</h1>
+      <p>どのツールを使う場合でも、ツールが内部でどのように機能するかを理解すると常に自信が持てるようになります。同じことが Nuxt にも当てはまります。</p>
+      <hr>
+      <p>
+        <img src="../docs/nuxt-lifecycle.svg">
+      </p>
+      <p>この章の目的は、フレームワークのさまざまな部分とそれらの実行順序、およびどのように連携するかについての概要を説明することです。</p>
+      <p>Nuxt ライフサイクルはアプリケーションがバンドルされ、チャンク化され、縮小されるビルドフェーズの後に何が起こるかを説明します。このフェーズの後に何が起こるかは、サーバーサイドのレンダリングが有効になっているかどうかによって異なります。有効になっている場合は、選択したサーバーサイドレンダリングのタイプによってさらに異なります:</p>
+      <p>動的な SSR（<code>nuxt start</code>）</p>
+      <p>または、静的サイト生成（<code>nuxt generate</code>）</p>
+      <section id="ライフサイクル" class="level2">
+        <h2>ライフサイクル</h2>
+        <section id="サーバー" class="level3">
+          <h3>サーバー</h3>
+          <p>SSR の場合、これらのステップはアプリケーションへの最初のリクエストごとに実行されます。</p>
+          <ul>
+            <li>サーバーを起動します（<code>nuxt start</code>）</li>
+          </ul>
+          <p>静的サイトの生成を行う場合、サーバーステップはビルド時にのみ実行されますが、生成されるページごとに 1 回実行されます。</p>
+          <ul>
+            <li>
+              <p>生成処理を開始します（<code>nuxt generate</code>）</p>
+            </li>
+            <li>
+              <p>Nuxt フック</p>
+            </li>
+            <li>
+              <p>サーバーミドルウェア</p>
+            </li>
+            <li>
+              <p>サーバーサイドの Nuxt プラグイン</p>
+              <ul>
+                <li>nuxt.config.js で定義されている順序</li>
+              </ul>
+            </li>
+            <li>
+              <p>nuxtServerInit</p>
+              <ul>
+                <li>ストアに事前にデータを詰めるためにサーバーサイドでのみ呼び出される Vuex アクション</li>
+                <li>第 1 引数は <strong>Vuex context</strong>、 第 2 引数は <strong>Nuxt context</strong> です
+                  <ul>
+                    <li>ここから他のアクションをディスパッチします → サーバーサイドの後続ストアアクションの「エントリポイント」のみです</li>
+                  </ul>
+                </li>
+                <li><code>store/index.js</code> でのみ定義できます</li>
+              </ul>
+            </li>
+            <li>
+              <p>ミドルウェア</p>
+              <ul>
+                <li>グローバルミドルウェア</li>
+                <li>レイアウトミドルウェア</li>
+                <li>ルートミドルウェア</li>
+              </ul>
+            </li>
+            <li>
+              <p>asyncData</p>
+            </li>
+            <li>
+              <p>beforeCreate（Vue ライフサイクルメソッド）</p>
+            </li>
+            <li>
+              <p>created（Vue ライフサイクルメソッド）</p>
+            </li>
+            <li>
+              <p>新しい fetch（上から下、ノード = 並列）</p>
+            </li>
+            <li>
+              <p>状態のシリアライズ（<code>render:routeContext</code> Nuxt フック）</p>
+            </li>
+            <li>
+              <p>HTML レンダリングの開始（<code>render:route</code> Nuxt フック）</p>
+            </li>
+            <li>
+              <p><code>render:routeDone</code> フック、HTML がブラウザに送信されたとき</p>
+            </li>
+            <li>
+              <p><code>generate:before</code> Nuxt フック</p>
+            </li>
+            <li>
+              <p>HTML ファイルの生成</p>
+              <ul>
+                <li><strong>完全な静的生成</strong>
+                  <ul>
+                    <li>例えば静的ペイロードが抽出された場合</li>
+                  </ul>
+                </li>
+                <li><code>generate:page</code>（HTML が編集可能）</li>
+                <li><code>generate:routeCreated</code>（ルートが生成されます）</li>
+              </ul>
+            </li>
+            <li>
+              <p><code>generate:done</code> すべての HTML ファイルが生成されたとき</p>
+            </li>
+          </ul>
+        </section>
+        <section id="クライアント" class="level3">
+          <h3>クライアント</h3>
+          <p>ライフサイクルのこの部分は選択した Nuxt モードに関係なくブラウザーで完全に実行されます。</p>
+          <ul>
+            <li>HTML を受け取り</li>
+            <li>アセットのロード（例えば JavaScript）</li>
+            <li>Vue ハイドレーション</li>
+            <li>ミドルウェア
+              <ul>
+                <li>グローバルミドルウェア</li>
+                <li>レイアウトミドルウェア</li>
+                <li>ルートミドルウェア</li>
+              </ul>
+            </li>
+            <li>クライアントサイド Nuxt プラグイン
+              <ul>
+                <li>nuxt.config.js で定義されている順序</li>
+              </ul>
+            </li>
+            <li>asyncData（ブロッキング）</li>
+            <li>beforeCreate（Vue ライフサイクルメソッド）</li>
+            <li>created（Vue ライフサイクルメソッド）</li>
+            <li>あたらしい fetch（上から下、ノード = 並列）（ノンブロッキング）</li>
+            <li>beforeMount（Vue ライフサイクルメソッド）</li>
+            <li>mounted（Vue ライフサイクルメソッド）</li>
+          </ul>
+        </section>
+        <section id="nuxtlink-コンポーネントを使って遷移する" class="level3">
+          <h3>NuxtLink コンポーネントを使って遷移する</h3>
+          <p><em>クライアント</em> の章と同様に <code>&#x3C;NuxtLink></code> を介して遷移する場合だけすべてのステップがブラウザで発生します。さらにすべての <em>ブロッキング</em> タスクが実行されるまでページコンテントは表示されません。</p>
+          <section id="info" class="level4">
+            <h4>Info</h4>
+            <p><a href="./features/nuxt-components#the-nuxtlink-component"><code>&#x3C;NuxtLink></code></a> のドキュメントで詳細を確認してください</p>
+            <ul>
+              <li>ミドルウェア
+                <ul>
+                  <li>グローバルミドルウェア</li>
+                  <li>レイアウトミドルウェア</li>
+                  <li>ルートミドルウェア</li>
+                </ul>
+              </li>
+              <li>asyncData（ブロッキング）</li>
+              <li>asyncData（ブロッキングまたは完全静的なペイロードをロードします）</li>
+              <li>beforeCreate &#x26; created（Vue ライフサイクルメソッド）</li>
+              <li>fetch（ノンブロッキング）</li>
+              <li>beforeMount &#x26; mounted</li>
+            </ul>
+          </section>
+        </section>
+      </section>
+      <section id="この次は" class="level2">
+        <h2>この次は？</h2>
+        <section id="next" class="level4">
+          <h4>Next</h4>
+          <p><a href="./features/rendering-modes">機能</a> について確認しましょう。</p>
+          <p><span style="float: footnote;"><a href="../index.html#toc">Go to TOC</a></span></p>
+        </section>
+      </section>
+    </section>
+  </body>
+</html>

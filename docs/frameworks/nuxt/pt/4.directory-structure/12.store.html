@@ -1,0 +1,231 @@
+<!doctype html>
+<html lang="pt">
+  <head>
+    <meta charset="utf-8">
+    <title>O diretório store</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="navigation.title" content="store">
+    <meta name="description" content="O diretório store contém seus ficheiros de memória do Vuex. A memória do Vuex vem fora da caixa com o Nuxt mas está desativada por padrão. A criação de um ficheiro index.js dentro deste diretório ativa a memória.">
+    <meta name="category" content="directory-structure">
+    <meta name="csb_link" content="https://codesandbox.io/embed/github/nuxt-academy/guides-examples/tree/master/04_directory_structure/14_store?fontsize=14&#x26;hidenavigation=1&#x26;theme=dark">
+    <link rel="stylesheet" href="https://raw.githubusercontent.com/shinokada/prism-coy-theme/main/theme_common.css">
+  </head>
+  <body>
+    <section id="o-diretório-store" class="level1">
+      <h1>O diretório store</h1>
+      <p>O diretório <code>store</code> contém seus ficheiros de memória do Vuex. A memória do Vuex vem fora da caixa com o Nuxt mas está desativada por padrão. A criação de um ficheiro index.js dentro deste diretório ativa a memória.</p>
+      <hr>
+      <section id="warning" class="level4">
+        <h4>Warning</h4>
+        <p>Este diretório não pode ser renomeado sem configuração extra.</p>
+        <p>Usar uma memória para gerir o estado é importante para toda grande aplicação. Isto é o porquê do Nuxt implementar o Vuex dentro do seu núcleo.</p>
+      </section>
+      <section id="ativar-a-memória" class="level2">
+        <h2>Ativar a memória</h2>
+        <p>O Nuxt irá procurar pelo diretório <code>store</code>. Se ele conter um ficheiro, que não seja um ficheiro oculto ou um ficheiro <code>README.md</code>, então a memória será ativada. Isto significa que o Nuxt irá:</p>
+        <ol>
+          <li>Importar o Vuex</li>
+          <li>Adicionar a opção <code>store</code> à instância raíz do Vue.</li>
+        </ol>
+      </section>
+      <section id="os-módulos" class="level2">
+        <h2>Os módulos</h2>
+        <p>Todo ficheiro <code>.js</code> dentro do diretório <code>store</code> é transformado em um <a href="http://vuex.vuejs.org/en/modules.html">módulo com nome reservado</a>(com o <code>index</code> sendo a raiz do módulo). O seu valor de <code>state</code> sempre será uma <code>function</code> para evitar estado <em>partilhado</em> indesejado no lado do servidor.</p>
+        <p>Para começar, exporte o estado (state) como uma função, e as mutações (mutations) e ações (actions) como objetos.</p>
+        <pre class="language-js{}[store/index.js]"><code class="language-js{}[store/index.js]">export const state = () => ({
+  counter: 0
+})
+
+export const mutations = {
+  increment(state) {
+    state.counter++
+  }
+}</code></pre>
+        <p>Depois, você pode ter um ficheiro <code>store/todos.js</code>:</p>
+        <pre class="language-js{}[store/todos.js]"><code class="language-js{}[store/todos.js]">export const state = () => ({
+  list: []
+})
+
+export const mutations = {
+  add(state, text) {
+    state.list.push({
+      text,
+      done: false
+    })
+  },
+  remove(state, { todo }) {
+    state.list.splice(state.list.indexOf(todo), 1)
+  },
+  toggle(state, todo) {
+    todo.done = !todo.done
+  }
+}</code></pre>
+        <p>A memória será criada tal e qual:</p>
+        <pre class="language-js"><code class="language-js"><span class="token keyword">new</span> <span class="token class-name">Vuex<span class="token punctuation">.</span>Store</span><span class="token punctuation">(</span><span class="token punctuation">{</span>
+  <span class="token function-variable function">state</span><span class="token operator">:</span> <span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token arrow operator">=></span> <span class="token punctuation">(</span><span class="token punctuation">{</span>
+    <span class="token literal-property property">counter</span><span class="token operator">:</span> <span class="token number">0</span>
+  <span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">,</span>
+  <span class="token literal-property property">mutations</span><span class="token operator">:</span> <span class="token punctuation">{</span>
+    <span class="token function">increment</span><span class="token punctuation">(</span><span class="token parameter">state</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+      state<span class="token punctuation">.</span><span class="token property-access">counter</span><span class="token operator">++</span>
+    <span class="token punctuation">}</span>
+  <span class="token punctuation">}</span><span class="token punctuation">,</span>
+  <span class="token literal-property property">modules</span><span class="token operator">:</span> <span class="token punctuation">{</span>
+    <span class="token literal-property property">todos</span><span class="token operator">:</span> <span class="token punctuation">{</span>
+      <span class="token literal-property property">namespaced</span><span class="token operator">:</span> <span class="token boolean">true</span><span class="token punctuation">,</span>
+      <span class="token function-variable function">state</span><span class="token operator">:</span> <span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token arrow operator">=></span> <span class="token punctuation">(</span><span class="token punctuation">{</span>
+        <span class="token literal-property property">list</span><span class="token operator">:</span> <span class="token punctuation">[</span><span class="token punctuation">]</span>
+      <span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">,</span>
+      <span class="token literal-property property">mutations</span><span class="token operator">:</span> <span class="token punctuation">{</span>
+        <span class="token function">add</span><span class="token punctuation">(</span><span class="token parameter">state<span class="token punctuation">,</span> <span class="token punctuation">{</span> text <span class="token punctuation">}</span></span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+          state<span class="token punctuation">.</span><span class="token property-access">list</span><span class="token punctuation">.</span><span class="token method function property-access">push</span><span class="token punctuation">(</span><span class="token punctuation">{</span>
+            text<span class="token punctuation">,</span>
+            <span class="token literal-property property">done</span><span class="token operator">:</span> <span class="token boolean">false</span>
+          <span class="token punctuation">}</span><span class="token punctuation">)</span>
+        <span class="token punctuation">}</span><span class="token punctuation">,</span>
+        <span class="token function">remove</span><span class="token punctuation">(</span><span class="token parameter">state<span class="token punctuation">,</span> <span class="token punctuation">{</span> todo <span class="token punctuation">}</span></span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+          state<span class="token punctuation">.</span><span class="token property-access">list</span><span class="token punctuation">.</span><span class="token method function property-access">splice</span><span class="token punctuation">(</span>state<span class="token punctuation">.</span><span class="token property-access">list</span><span class="token punctuation">.</span><span class="token method function property-access">indexOf</span><span class="token punctuation">(</span>todo<span class="token punctuation">)</span><span class="token punctuation">,</span> <span class="token number">1</span><span class="token punctuation">)</span>
+        <span class="token punctuation">}</span><span class="token punctuation">,</span>
+        <span class="token function">toggle</span><span class="token punctuation">(</span><span class="token parameter">state<span class="token punctuation">,</span> <span class="token punctuation">{</span> todo <span class="token punctuation">}</span></span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+          todo<span class="token punctuation">.</span><span class="token property-access">done</span> <span class="token operator">=</span> <span class="token operator">!</span>todo<span class="token punctuation">.</span><span class="token property-access">done</span>
+        <span class="token punctuation">}</span>
+      <span class="token punctuation">}</span>
+    <span class="token punctuation">}</span>
+  <span class="token punctuation">}</span>
+<span class="token punctuation">}</span><span class="token punctuation">)</span></code></pre>
+        <p>E dentro do seu <code>pages/todos.vue</code>, ao usar o módulo <code>todos</code>:</p>
+        <pre class="language-js{}[pages/todos.vue]"><code class="language-js{}[pages/todos.vue]">&#x3C;template>
+  &#x3C;ul>
+    &#x3C;li v-for="todo in todos" :key="todo.text">
+      &#x3C;input :checked="todo.done" @change="toggle(todo)" type="checkbox">
+      &#x3C;span :class="{ done: todo.done }">{{ todo.text }}&#x3C;/span>
+    &#x3C;/li>
+    &#x3C;li>&#x3C;input @keyup.enter="addTodo" placeholder="What needs to be done?">&#x3C;/li>
+  &#x3C;/ul>
+&#x3C;/template>
+
+&#x3C;script>
+import { mapMutations } from 'vuex'
+
+export default {
+  computed: {
+    todos () {
+      return this.$store.state.todos.list
+    }
+  },
+  methods: {
+    addTodo (e) {
+      this.$store.commit('todos/add', e.target.value)
+      e.target.value = ''
+    },
+    ...mapMutations({
+      toggle: 'todos/toggle'
+    })
+  }
+}
+&#x3C;/script>
+
+&#x3C;style>
+.done {
+  text-decoration: line-through;
+}
+&#x3C;/style></code></pre>
+        <p>O método do módulo também funciona para definições de alto-nível sem a implementação de um sub-diretório dentro do diretório store.</p>
+        <p>Exemplo para estado (state): você cria um ficheiro <code>store/state.js</code> e adiciona o seguinte.</p>
+        <pre class="language-js"><code class="language-js"><span class="token keyword module">export</span> <span class="token keyword module">default</span> <span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token arrow operator">=></span> <span class="token punctuation">(</span><span class="token punctuation">{</span>
+  <span class="token literal-property property">counter</span><span class="token operator">:</span> <span class="token number">0</span>
+<span class="token punctuation">}</span><span class="token punctuation">)</span></code></pre>
+        <p>E os recuperadores (getters) podem estar no ficheiro <code>store/getter.js</code>:</p>
+        <pre class="language-js{}[store/getter.js]"><code class="language-js{}[store/getter.js]">export default {
+  getCounter(state) {
+    return state.counter
+  }
+}</code></pre>
+        <p>E as mutações (mutations) correspondentes podem estar no ficheiro <code>store/mutations.js</code></p>
+        <pre class="language-js{}[store/mutations.js]"><code class="language-js{}[store/mutations.js]">export default {
+  increment(state) {
+    state.counter++
+  }
+}</code></pre>
+        <p>E as ações (actions) correspondentes podem estar no ficheiro <code>store/actions.js</code>:</p>
+        <pre class="language-js{}[store/actions.js]"><code class="language-js{}[store/actions.js]">export default {
+  async fetchCounter({ state }) {
+    // fazer requisição
+    const response = { data: 10 };
+    state.counter = response.data;
+    return response.data;
+  }
+}</code></pre>
+        <section id="exemplo-de-estrutura-de-pasta" class="level3">
+          <h3>Exemplo de estrutura de pasta</h3>
+          <p>Uma configuração complexa da estrutura de ficheiro/pasta memória pode parecer com isto:</p>
+          <pre class="language-text"><code class="language-text"> store/
+--| index.js
+--| ui.js
+--| shop/
+----| cart/
+| actions.js
+| getters.js
+| mutations.js
+| state.js
+----| products/
+| mutations.js
+| state.js
+| itemsGroup1/
+| state.js</code></pre>
+        </section>
+      </section>
+      <section id="os-plugins-na-memória" class="level2">
+        <h2>Os plugins na memória</h2>
+        <p>Você pode adicionar plugins adicionais à memória ao por eles dentro do ficheiro <code>store/index.js</code>:</p>
+        <pre class="language-js{}[store/index.js]"><code class="language-js{}[store/index.js]">import myPlugin from 'myPlugin'
+
+export const plugins = [myPlugin]
+
+export const state = () => ({
+  counter: 0
+})
+
+export const mutations = {
+  increment(state) {
+    state.counter++
+  }
+}</code></pre>
+        <p>Mais informações sobre os plugins na: <a href="https://vuex.vuejs.org/en/plugins.html">documentação do Vuex</a>.</p>
+      </section>
+      <section id="a-ação-nuxtserverinit" class="level2">
+        <h2>A ação nuxtServerInit</h2>
+        <p>Se a ação <code>nuxtServerInit</code> estiver definida dentro da memória (store) e o modo estiver em <code>universal</code>, o Nuxt irá chamar ele com o contexto (apenas a partir do lado do servidor). É útil quando nós temos algum dado no servidor que nós queremos dar diretamente para o lado do cliente.</p>
+        <p>Por exemplo, vamos dizer que temos sessões no lado do servidor e podemos acessar o usuário conectado através do <code>req.session.user</code>. Para adicionar o usuário autenticado a nossa memória (store), nós atualizamos o nosso <code>store/index.js</code> para o seguinte:</p>
+        <pre class="language-js{}[store/index.js]"><code class="language-js{}[store/index.js]">actions: {
+  nuxtServerInit ({ commit }, { req }) {
+    if (req.session.user) {
+      commit('user', req.session.user)
+    }
+  }
+}</code></pre>
+        <section id="warning-1" class="level4">
+          <h4>Warning</h4>
+          <p>Somente o módulo primário (dentro do <code>store/index.js</code>) será receber esta ação. Você precisará encadear as ações do módulo a partir de lá.</p>
+          <p>O <a href="./concepts/context-helpers">contexto</a> é dado ao <code>nuxtServerInit</code> como o segundo argumento dentro do método <code>asyncData</code>.</p>
+          <p>Se o <code>nuxt generate</code> for executado, o <code>nuxtServerInit</code> será executado para cada rota dinâmica gerada.</p>
+        </section>
+        <section id="info" class="level4">
+          <h4>Info</h4>
+          <p>Ações do <code>nuxtServerInit</code> assíncronas devem retornar uma promessa (Promise) ou usar o async/await para permitir o servidor do nuxt esperar neles.</p>
+          <pre class="language-js{}[store/index.js]"><code class="language-js{}[store/index.js]">actions: {
+  async nuxtServerInit({ dispatch }) {
+    await dispatch('core/load')
+  }
+}</code></pre>
+        </section>
+      </section>
+      <section id="o-modo-estrito-do-vuex" class="level2">
+        <h2>O modo estrito do Vuex</h2>
+        <p>O modo estrito está ativado por padrão no modo de desenvolvimento e desativado no modo de produção. Para desativar o modo estrito em desenvolvimento, siga o exemplo abaixo dentro do <code>store/index.js</code>:</p>
+        <pre class="language-js"><code class="language-js"><span class="token keyword module">export</span> <span class="token keyword">const</span> strict <span class="token operator">=</span> <span class="token boolean">false</span></code></pre>
+        <p><span style="float: footnote;"><a href="../index.html#toc">Go to TOC</a></span></p>
+      </section>
+    </section>
+  </body>
+</html>

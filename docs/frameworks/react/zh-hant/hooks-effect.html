@@ -1,0 +1,403 @@
+<!doctype html>
+<html lang="zh-hant">
+  <head>
+    <meta charset="utf-8">
+    <title>使用 Effect Hook</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="https://raw.githubusercontent.com/shinokada/prism-coy-theme/main/theme_common.css">
+  </head>
+  <body>
+    <section id="使用-effect-hook" class="level1">
+      <h1>使用 Effect Hook</h1>
+      <p><em>Hook</em> 是 React 16.8 中增加的新功能。它讓你不必寫 class 就能使用 state 以及其他 React 的功能。</p>
+      <p><em>Effect Hook</em> 讓你可以使用 function component 中的 side effect：</p>
+      <pre class="language-js{1,6-10}"><code class="language-js{1,6-10}">import React, { useState, useEffect } from 'react';
+
+function Example() {
+  const [count, setCount] = useState(0);
+
+  // 相似於 componentDidMount 和 componentDidUpdate:
+  useEffect(() => {
+    // 使用瀏覽器 API 更新文件標題
+    document.title = `You clicked ${count} times`;
+  });
+
+  return (
+    &#x3C;div>
+      &#x3C;p>You clicked {count} times&#x3C;/p>
+      &#x3C;button onClick={() => setCount(count + 1)}>
+        Click me
+      &#x3C;/button>
+    &#x3C;/div>
+  );
+}</code></pre>
+      <p>這個範例基於<a href="./hooks-state.html">上一頁的計數器範例</a>，但是我們增加了一個新的功能：我們把網頁標題設定為包含點擊次數的自訂訊息。</p>
+      <p>資料 fetch、設定 subscription、或手動改變 React component 中的 DOM 都是 side effect 的範例。無論你是否習慣將這些操作稱為「side effect」（或簡稱「effect」），你之前可能已經在 component 中執行了這些操作。</p>
+      <blockquote>
+        <p>提示</p>
+        <p>如果你熟悉 React class 的生命週期方法，你可以把 <code>useEffect</code> 視為 <code>componentDidMount</code>，<code>componentDidUpdate</code> 和 <code>componentWillUnmount</code> 的組合。</p>
+      </blockquote>
+      <p>React component 有兩種常見的 side effect：一種不需要執行清除，另一種則需要。讓我們仔細看看它們區別。</p>
+      <section id="effects-without-cleanup" class="level2">
+        <h2>無需清除的 Effect</h2>
+        <p>有時候，我們希望<strong>在 React 更新 DOM 之後執行一些額外的程式碼。</strong>網路請求、手動變更 DOM、和 logging，它們都是無需清除 effect 的常見範例。我們之所以這樣說，是因為我們可以執行它們，並立即忘記它們。讓我們比較一下 class 和 Hooks 如何讓我們表達這樣的 side effect。</p>
+        <section id="example-using-classes" class="level3">
+          <h3>使用 Class 的範例</h3>
+          <p>在 React class component 中，<code>render</code> 方法本身不應該觸發 side effect。這太早了 — 我們通常希望在 React 更新 DOM <em>之後</em>執行我們的 effect。</p>
+          <p>這就是為什麼在 React class 中，我們將 side effect 放入 <code>componentDidMount</code> 和 <code>componentDidUpdate</code>。回到我們的範例，這是一個 React class component 的計數器，它在 React 對 DOM 進行變更後立即更新網頁標題：</p>
+          <pre class="language-js{9-15}"><code class="language-js{9-15}">class Example extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = {
+      count: 0
+    };
+  }
+
+  componentDidMount() {
+    document.title = `You clicked ${this.state.count} times`;
+  }
+
+  componentDidUpdate() {
+    document.title = `You clicked ${this.state.count} times`;
+  }
+
+  render() {
+    return (
+      &#x3C;div>
+        &#x3C;p>You clicked {this.state.count} times&#x3C;/p>
+        &#x3C;button onClick={() => this.setState({ count: this.state.count + 1 })}>
+          Click me
+        &#x3C;/button>
+      &#x3C;/div>
+    );
+  }
+}</code></pre>
+          <p>注意<strong>我們如何必須在 class 中複製這兩個生命週期方法之間的程式碼。</strong></p>
+          <p>這是因為在許多情況下，我們希望執行相同的 side effect，無論 component 是剛被 mount 還是已經被更新。概念上，我們希望它在每次 render 之後發生 — 但是 React class component 沒有這樣的方法。我們可以提取一個單獨的方法，但我們仍然需要在兩個地方呼叫它。</p>
+          <p>現在來看看我們可以如何使用 <code>useEffect</code> Hook 做同樣的事情。</p>
+        </section>
+        <section id="example-using-hooks" class="level3">
+          <h3>使用 Hook 的範例</h3>
+          <p>我們已經在本頁頂部看到了這個範例，但讓我們來仔細看看它：</p>
+          <pre class="language-js{1,6-8}"><code class="language-js{1,6-8}">import React, { useState, useEffect } from 'react';
+
+function Example() {
+  const [count, setCount] = useState(0);
+
+  useEffect(() => {
+    document.title = `You clicked ${count} times`;
+  });
+
+  return (
+    &#x3C;div>
+      &#x3C;p>You clicked {count} times&#x3C;/p>
+      &#x3C;button onClick={() => setCount(count + 1)}>
+        Click me
+      &#x3C;/button>
+    &#x3C;/div>
+  );
+}</code></pre>
+          <p><strong><code>useEffect</code> 有什麼作用？</strong> 透過使用這個 Hook，你告訴 React 你的 component 需要在 render 後做一些事情。React 將記住你傳遞的 function（我們將其稱為「effect」），並在執行 DOM 更新之後呼叫它。 在這個 effect 中，我們設定了網頁的標題，但我們也可以執行資料提取或呼叫其他命令式 API。</p>
+          <p><strong>為什麼在 component 內部呼叫 <code>useEffect</code>？</strong> 在 component 中放置 <code>useEffect</code> 讓我們可以直接從 effect 中存取 <code>count</code> state 變數（或任何 props）。我們不需要特殊的 API 來讀取它 — 它已經在 function 範圍內了。 Hook 擁抱 JavaScript closure，並避免在 JavaScript 已經提供解決方案的情況下引入 React 特定的 API。</p>
+          <p><strong>每次 render 後都會執行 <code>useEffect</code> 嗎？</strong> 是的！預設情況下，它在第一個 render <em>和</em>隨後每一個更新之後執行。（我們稍後會談到<a href="#tip-optimizing-performance-by-skipping-effects">如何自定義</a>。）你可能會發現把 effect 想成發生在「render 之後」更為容易，而不是考慮「mount」和「更新」。 React 保證 DOM 在執行 effect 時已被更新。</p>
+        </section>
+        <section id="detailed-explanation" class="level3">
+          <h3>詳細說明</h3>
+          <p>現在我們對 effect 有了更多的了解，應該可以理解這幾行程式碼：</p>
+          <pre class="language-js"><code class="language-js"><span class="token keyword">function</span> <span class="token function"><span class="token maybe-class-name">Example</span></span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  <span class="token keyword">const</span> <span class="token punctuation">[</span>count<span class="token punctuation">,</span> setCount<span class="token punctuation">]</span> <span class="token operator">=</span> <span class="token function">useState</span><span class="token punctuation">(</span><span class="token number">0</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+  <span class="token function">useEffect</span><span class="token punctuation">(</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token arrow operator">=></span> <span class="token punctuation">{</span>
+    <span class="token dom variable">document</span><span class="token punctuation">.</span><span class="token property-access">title</span> <span class="token operator">=</span> <span class="token template-string"><span class="token template-punctuation string">`</span><span class="token string">You clicked </span><span class="token interpolation"><span class="token interpolation-punctuation punctuation">${</span>count<span class="token interpolation-punctuation punctuation">}</span></span><span class="token string"> times</span><span class="token template-punctuation string">`</span></span><span class="token punctuation">;</span>
+  <span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span></code></pre>
+          <p>我們宣告 <code>count</code> state 變數，然後告訴 React 我們需要使用一個 effect。我們將一個 function 傳入給 <code>useEffect</code> Hook。我們傳入的這個 function <em>就是</em>我們的 effect。在 effect 內部，我們使用瀏覽器 API <code>document.title</code> 設定了網頁標題。我們可以讀取 effect 中最新的 <code>count</code>，因為它在我們 function 的範圍內。當 React render 我們的 component 時，它會記住我們使用的 effect，然後在更新 DOM 後執行我們的 effect。每次 render 都是這樣，包括第一次。</p>
+          <p>有經驗的 JavaScript 開發人員可能會注意到，傳遞給 <code>useEffect</code> 的 function 在每次 render 時都會有所不同。這是刻意的。實際上，這是讓我們可以從 effect 內部讀取 <code>count</code> 數值，且不必擔心數值過時的原因。每次重新 render 時，我們都會安排一個 <em>different</em> effect 來替代上一個。在某種程度上，這使 effect 的行為更像是 render 結果的一部分 — 每個 effect 都「屬於」特定的 render。我們將<a href="#explanation-why-effects-run-on-each-update">在本頁稍後</a>更清楚地看到為什麼這很有用。</p>
+          <blockquote>
+            <p>提示</p>
+            <p>與 <code>componentDidMount</code> 或 <code>componentDidUpdate</code> 不同，使用 <code>useEffect</code> 安排的 effect 不會阻止瀏覽器更新螢幕。這使你的應用程式感覺起來響應更快。大多數 effect 不需要同步發生。在少見的需要同步發生的情況下（例如測量 layout），有另外一個 <a href="./hooks-reference.html#uselayouteffect"><code>useLayoutEffect</code></a> Hook，它的 API 與 <code>useEffect</code> 相同。</p>
+          </blockquote>
+        </section>
+      </section>
+      <section id="effects-with-cleanup" class="level2">
+        <h2>需要清除的 Effect</h2>
+        <p>先前，我們理解了怎樣表達不需要任何清除的 side effect。但是，有些 effect 需要。例如，<strong>我們可能想要設定</strong>對某些外部資料來源的 subscription。在這種情況下，請務必進行清除，以免造成 memory leak！讓我們比較一下我們可以如何用 class 和 Hook 做到這一點。</p>
+        <section id="example-using-classes-1" class="level3">
+          <h3>使用 Class 的範例</h3>
+          <p>在 React class 中，你通常會在 <code>componentDidMount</code> 中設定一個 subscription，然後在 <code>componentWillUnmount</code> 中把它清除。例如，假設我們有一個 <code>ChatAPI</code> module 可讓我們訂閱朋友的線上狀態。我們可能會這樣用 class 來訂閱和顯示該狀態：</p>
+          <pre class="language-js{8-26}"><code class="language-js{8-26}">class FriendStatus extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = { isOnline: null };
+    this.handleStatusChange = this.handleStatusChange.bind(this);
+  }
+
+  componentDidMount() {
+    ChatAPI.subscribeToFriendStatus(
+      this.props.friend.id,
+      this.handleStatusChange
+    );
+  }
+
+  componentWillUnmount() {
+    ChatAPI.unsubscribeFromFriendStatus(
+      this.props.friend.id,
+      this.handleStatusChange
+    );
+  }
+
+  handleStatusChange(status) {
+    this.setState({
+      isOnline: status.isOnline
+    });
+  }
+
+  render() {
+    if (this.state.isOnline === null) {
+      return 'Loading...';
+    }
+    return this.state.isOnline ? 'Online' : 'Offline';
+  }
+}</code></pre>
+          <p>請注意 <code>componentDidMount</code> 和 <code>componentWillUnmount</code> 需要如何相互呼應。生命週期方法迫使我們拆開這個邏輯，即使概念上它們的程式碼都與同一個 effect 相關。</p>
+          <blockquote>
+            <p>注意</p>
+            <p>敏銳的讀者可能會注意到，要做到完全正確，這個範例還需要 <code>componentDidUpdate</code>。我們現在將暫時忽略這一點，但在這頁的<a href="#explanation-why-effects-run-on-each-update">稍後部分</a>我們會再次討論這點。</p>
+          </blockquote>
+        </section>
+        <section id="example-using-hooks-1" class="level3">
+          <h3>使用 Hook 的範例</h3>
+          <p>讓我們看看如何使用 Hook 撰寫這個 component。</p>
+          <p>你可能會認為我們需要一個單獨的 effect 來執行清除。但是新增和移除 subscription 的程式碼緊密相關，因此 <code>useEffect</code> 的設計在將其保持在一起。如果你的 effect 回傳了一個 function，React 將在需要清除時執行它：</p>
+          <pre class="language-js{6-16}"><code class="language-js{6-16}">import React, { useState, useEffect } from 'react';
+
+function FriendStatus(props) {
+  const [isOnline, setIsOnline] = useState(null);
+
+  useEffect(() => {
+    function handleStatusChange(status) {
+      setIsOnline(status.isOnline);
+    }
+
+    ChatAPI.subscribeToFriendStatus(props.friend.id, handleStatusChange);
+    // 指定如何在這個 effect 之後執行清除：
+    return function cleanup() {
+      ChatAPI.unsubscribeFromFriendStatus(props.friend.id, handleStatusChange);
+    };
+  });
+
+  if (isOnline === null) {
+    return 'Loading...';
+  }
+  return isOnline ? 'Online' : 'Offline';
+}</code></pre>
+          <p><strong>為什麼我們從 effect 中回傳一個 function？</strong> 這是 effect 的可選清除機制。每個 effect 都可以回傳一個會在它之後執行清除的 function。這使我們可以把新增和移除 subscription 的邏輯彼此保持靠近。它們都屬於同一個 effect！</p>
+          <p><strong>React 到底什麼時候會清除 effect？</strong> 在 component unmount 時，React 會執行清除。但是，正如我們之前看到的，effect 會在每個 render 中執行，而不僅僅是一次。這是為什麼 React <em>還</em>可以在下次執行 effect 之前清除前一個 render 的 effect 的原因。我們會在下面討論<a href="#explanation-why-effects-run-on-each-update">為什麼這有助於避免 bug</a> 以及<a href="#tip-optimizing-performance-by-skipping-effects">如果出現效能問題，如何選擇退出此行為</a>。</p>
+          <blockquote>
+            <p>注意</p>
+            <p>我們不必從 effect 中回傳命名了的 function。我們在這裡將其稱為 <code>cleanup</code> 以明確它的目的，但是你可以回傳 arrow function 或者叫它別的名字。</p>
+          </blockquote>
+        </section>
+      </section>
+      <section id="recap" class="level2">
+        <h2>總結</h2>
+        <p>我們看到了 <code>useEffect</code> 可以讓我們在 component render 後表達不同類型的 side effect。某些 effect 可能需要進行清除，因此它們回傳一個 function：</p>
+        <pre class="language-js"><code class="language-js">  <span class="token function">useEffect</span><span class="token punctuation">(</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token arrow operator">=></span> <span class="token punctuation">{</span>
+    <span class="token keyword">function</span> <span class="token function">handleStatusChange</span><span class="token punctuation">(</span><span class="token parameter">status</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+      <span class="token function">setIsOnline</span><span class="token punctuation">(</span>status<span class="token punctuation">.</span><span class="token property-access">isOnline</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+
+    <span class="token maybe-class-name">ChatAPI</span><span class="token punctuation">.</span><span class="token method function property-access">subscribeToFriendStatus</span><span class="token punctuation">(</span>props<span class="token punctuation">.</span><span class="token property-access">friend</span><span class="token punctuation">.</span><span class="token property-access">id</span><span class="token punctuation">,</span> handleStatusChange<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token keyword control-flow">return</span> <span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token arrow operator">=></span> <span class="token punctuation">{</span>
+      <span class="token maybe-class-name">ChatAPI</span><span class="token punctuation">.</span><span class="token method function property-access">unsubscribeFromFriendStatus</span><span class="token punctuation">(</span>props<span class="token punctuation">.</span><span class="token property-access">friend</span><span class="token punctuation">.</span><span class="token property-access">id</span><span class="token punctuation">,</span> handleStatusChange<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span><span class="token punctuation">;</span>
+  <span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">;</span></code></pre>
+        <p>其他 effect 可能沒有清除的階段，並且不回傳任何內容。</p>
+        <pre class="language-js"><code class="language-js">  <span class="token function">useEffect</span><span class="token punctuation">(</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token arrow operator">=></span> <span class="token punctuation">{</span>
+    <span class="token dom variable">document</span><span class="token punctuation">.</span><span class="token property-access">title</span> <span class="token operator">=</span> <span class="token template-string"><span class="token template-punctuation string">`</span><span class="token string">You clicked </span><span class="token interpolation"><span class="token interpolation-punctuation punctuation">${</span>count<span class="token interpolation-punctuation punctuation">}</span></span><span class="token string"> times</span><span class="token template-punctuation string">`</span></span><span class="token punctuation">;</span>
+  <span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">;</span></code></pre>
+        <p>Effect Hook 通過單個 API 統一了這兩種使用情境。</p>
+        <hr>
+        <p><strong>如果你對 Effect Hook 的執行方式有不錯的理解，或者感到不知所措，你可以立即跳到<a href="./hooks-rules.html">下一頁有關 Hook 的規則</a>。</strong></p>
+        <hr>
+      </section>
+      <section id="tips-for-using-effects" class="level2">
+        <h2>使用 Effect 的提示</h2>
+        <p>我們將在這一頁繼續深入研究 <code>useEffect</code> 的某些方面，有經驗的 React 使用者可能會對這些感到好奇。不要覺得現在一定要去研究它們。你可以隨時回來此頁面來了解有關 Effect Hook 的更多詳細資訊。</p>
+        <section id="tip-use-multiple-effects-to-separate-concerns" class="level3">
+          <h3>提示: 使用多個 Effect 來分離關注點</h3>
+          <p>對於 Hook，我們在<a href="./hooks-intro.html#complex-components-become-hard-to-understand">動機</a>中概述的問題之一是 class 生命週期方法通常包含不相關的邏輯，但是相關的邏輯卻被分成了幾個方法。這是一個結合了前面範例中的計數器和好友狀態指示器邏輯的 component：</p>
+          <pre class="language-js"><code class="language-js"><span class="token keyword">class</span> <span class="token class-name">FriendStatusWithCounter</span> <span class="token keyword">extends</span> <span class="token class-name">React<span class="token punctuation">.</span>Component</span> <span class="token punctuation">{</span>
+  <span class="token function">constructor</span><span class="token punctuation">(</span><span class="token parameter">props</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token keyword">super</span><span class="token punctuation">(</span>props<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token keyword">this</span><span class="token punctuation">.</span><span class="token property-access">state</span> <span class="token operator">=</span> <span class="token punctuation">{</span> <span class="token literal-property property">count</span><span class="token operator">:</span> <span class="token number">0</span><span class="token punctuation">,</span> <span class="token literal-property property">isOnline</span><span class="token operator">:</span> <span class="token keyword null nil">null</span> <span class="token punctuation">}</span><span class="token punctuation">;</span>
+    <span class="token keyword">this</span><span class="token punctuation">.</span><span class="token property-access">handleStatusChange</span> <span class="token operator">=</span> <span class="token keyword">this</span><span class="token punctuation">.</span><span class="token method function property-access">handleStatusChange</span><span class="token punctuation">.</span><span class="token method function property-access">bind</span><span class="token punctuation">(</span><span class="token keyword">this</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token punctuation">}</span>
+
+  <span class="token function">componentDidMount</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token dom variable">document</span><span class="token punctuation">.</span><span class="token property-access">title</span> <span class="token operator">=</span> <span class="token template-string"><span class="token template-punctuation string">`</span><span class="token string">You clicked </span><span class="token interpolation"><span class="token interpolation-punctuation punctuation">${</span><span class="token keyword">this</span><span class="token punctuation">.</span><span class="token property-access">state</span><span class="token punctuation">.</span><span class="token property-access">count</span><span class="token interpolation-punctuation punctuation">}</span></span><span class="token string"> times</span><span class="token template-punctuation string">`</span></span><span class="token punctuation">;</span>
+    <span class="token maybe-class-name">ChatAPI</span><span class="token punctuation">.</span><span class="token method function property-access">subscribeToFriendStatus</span><span class="token punctuation">(</span>
+      <span class="token keyword">this</span><span class="token punctuation">.</span><span class="token property-access">props</span><span class="token punctuation">.</span><span class="token property-access">friend</span><span class="token punctuation">.</span><span class="token property-access">id</span><span class="token punctuation">,</span>
+      <span class="token keyword">this</span><span class="token punctuation">.</span><span class="token property-access">handleStatusChange</span>
+    <span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token punctuation">}</span>
+
+  <span class="token function">componentDidUpdate</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token dom variable">document</span><span class="token punctuation">.</span><span class="token property-access">title</span> <span class="token operator">=</span> <span class="token template-string"><span class="token template-punctuation string">`</span><span class="token string">You clicked </span><span class="token interpolation"><span class="token interpolation-punctuation punctuation">${</span><span class="token keyword">this</span><span class="token punctuation">.</span><span class="token property-access">state</span><span class="token punctuation">.</span><span class="token property-access">count</span><span class="token interpolation-punctuation punctuation">}</span></span><span class="token string"> times</span><span class="token template-punctuation string">`</span></span><span class="token punctuation">;</span>
+  <span class="token punctuation">}</span>
+
+  <span class="token function">componentWillUnmount</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token maybe-class-name">ChatAPI</span><span class="token punctuation">.</span><span class="token method function property-access">unsubscribeFromFriendStatus</span><span class="token punctuation">(</span>
+      <span class="token keyword">this</span><span class="token punctuation">.</span><span class="token property-access">props</span><span class="token punctuation">.</span><span class="token property-access">friend</span><span class="token punctuation">.</span><span class="token property-access">id</span><span class="token punctuation">,</span>
+      <span class="token keyword">this</span><span class="token punctuation">.</span><span class="token property-access">handleStatusChange</span>
+    <span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token punctuation">}</span>
+
+  <span class="token function">handleStatusChange</span><span class="token punctuation">(</span><span class="token parameter">status</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token keyword">this</span><span class="token punctuation">.</span><span class="token method function property-access">setState</span><span class="token punctuation">(</span><span class="token punctuation">{</span>
+      <span class="token literal-property property">isOnline</span><span class="token operator">:</span> status<span class="token punctuation">.</span><span class="token property-access">isOnline</span>
+    <span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token punctuation">}</span>
+  <span class="token comment">// ...</span></code></pre>
+          <p>注意設定 <code>document.title</code> 的邏輯是如何在 <code>componentDidMount</code> 和 <code>componentDidUpdate</code> 之間分配的。subscription 的邏輯也分佈在 <code>componentDidMount</code> 和 <code>componentWillUnmount</code> 之間。而且 <code>componentDidMount</code> 包含了兩個工作的程式碼。</p>
+          <p>那麼，Hook 可以怎麼解決這個問題？就像<a href="./hooks-state.html#tip-using-multiple-state-variables">你可以多次使用 <em>State</em> Hook</a>，你同樣可以用多個 effect。這使我們可以將無關的邏輯分為不同的 effect：</p>
+          <pre class="language-js{3,8}"><code class="language-js{3,8}">function FriendStatusWithCounter(props) {
+  const [count, setCount] = useState(0);
+  useEffect(() => {
+    document.title = `You clicked ${count} times`;
+  });
+
+  const [isOnline, setIsOnline] = useState(null);
+  useEffect(() => {
+    function handleStatusChange(status) {
+      setIsOnline(status.isOnline);
+    }
+
+    ChatAPI.subscribeToFriendStatus(props.friend.id, handleStatusChange);
+    return () => {
+      ChatAPI.unsubscribeFromFriendStatus(props.friend.id, handleStatusChange);
+    };
+  });
+  // ...
+}</code></pre>
+          <p><strong>Hook 讓我們根據程式碼的作用來拆分程式碼</strong>，而不是用生命週期方法的名字。React 將按照指定的順序執行 component 所使用的<em>每一個</em> effect。</p>
+        </section>
+        <section id="explanation-why-effects-run-on-each-update" class="level3">
+          <h3>解釋：為什麼 Effect 在每次更新時執行</h3>
+          <p>如果你習慣了 class，那麼你可能想知道為什麼 effect 的清除階段會在每次重新 render 後發生，而不僅僅是在 unmounting 過程中發生一次。讓我們看一個實際的範例，看看為什麼這種設計可以幫我們寫出 bug 更少的 component。</p>
+          <p>在<a href="#example-using-classes-1">本頁前面</a>，我們介紹了一個 <code>FriendStatus</code> component 的範例，這個 component 顯示朋友是否在線上。我們的 class 從 <code>this.props</code> 中抓取 <code>friend.id</code>，在 component mount 後訂閱好友狀態，並在 unmount 期間取消訂閱：</p>
+          <pre class="language-js"><code class="language-js">  <span class="token function">componentDidMount</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token maybe-class-name">ChatAPI</span><span class="token punctuation">.</span><span class="token method function property-access">subscribeToFriendStatus</span><span class="token punctuation">(</span>
+      <span class="token keyword">this</span><span class="token punctuation">.</span><span class="token property-access">props</span><span class="token punctuation">.</span><span class="token property-access">friend</span><span class="token punctuation">.</span><span class="token property-access">id</span><span class="token punctuation">,</span>
+      <span class="token keyword">this</span><span class="token punctuation">.</span><span class="token property-access">handleStatusChange</span>
+    <span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token punctuation">}</span>
+
+  <span class="token function">componentWillUnmount</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token maybe-class-name">ChatAPI</span><span class="token punctuation">.</span><span class="token method function property-access">unsubscribeFromFriendStatus</span><span class="token punctuation">(</span>
+      <span class="token keyword">this</span><span class="token punctuation">.</span><span class="token property-access">props</span><span class="token punctuation">.</span><span class="token property-access">friend</span><span class="token punctuation">.</span><span class="token property-access">id</span><span class="token punctuation">,</span>
+      <span class="token keyword">this</span><span class="token punctuation">.</span><span class="token property-access">handleStatusChange</span>
+    <span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token punctuation">}</span></code></pre>
+          <p><strong>但是如果 component 顯示在螢幕上時，<code>friend</code> prop 發生變化</strong>，會發生什麼呢？我們的 component 將繼續顯示其他好友的線上狀態。這是一個 bug。Unmount 時，由於取消訂閱的呼叫會使用錯誤的朋友 ID，因此也會導致 memory leak 或 crash。</p>
+          <p>在 class component 中，我們需要加入 <code>componentDidUpdate</code> 來處理這種情況：</p>
+          <pre class="language-js{8-19}"><code class="language-js{8-19}">  componentDidMount() {
+    ChatAPI.subscribeToFriendStatus(
+      this.props.friend.id,
+      this.handleStatusChange
+    );
+  }
+
+  componentDidUpdate(prevProps) {
+    // 從先前的 friend.id 取消訂閱
+    ChatAPI.unsubscribeFromFriendStatus(
+      prevProps.friend.id,
+      this.handleStatusChange
+    );
+    // 訂閱下一個 friend.id
+    ChatAPI.subscribeToFriendStatus(
+      this.props.friend.id,
+      this.handleStatusChange
+    );
+  }
+
+  componentWillUnmount() {
+    ChatAPI.unsubscribeFromFriendStatus(
+      this.props.friend.id,
+      this.handleStatusChange
+    );
+  }</code></pre>
+          <p>忘記正確處理 <code>componentDidUpdate</code> 是 React 應用程式中常見的 bug 來源。</p>
+          <p>現在考慮這個使用 Hook 的 component 版本：</p>
+          <pre class="language-js"><code class="language-js"><span class="token keyword">function</span> <span class="token function"><span class="token maybe-class-name">FriendStatus</span></span><span class="token punctuation">(</span><span class="token parameter">props</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  <span class="token comment">// ...</span>
+  <span class="token function">useEffect</span><span class="token punctuation">(</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token arrow operator">=></span> <span class="token punctuation">{</span>
+    <span class="token comment">// ...</span>
+    <span class="token maybe-class-name">ChatAPI</span><span class="token punctuation">.</span><span class="token method function property-access">subscribeToFriendStatus</span><span class="token punctuation">(</span>props<span class="token punctuation">.</span><span class="token property-access">friend</span><span class="token punctuation">.</span><span class="token property-access">id</span><span class="token punctuation">,</span> handleStatusChange<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token keyword control-flow">return</span> <span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token arrow operator">=></span> <span class="token punctuation">{</span>
+      <span class="token maybe-class-name">ChatAPI</span><span class="token punctuation">.</span><span class="token method function property-access">unsubscribeFromFriendStatus</span><span class="token punctuation">(</span>props<span class="token punctuation">.</span><span class="token property-access">friend</span><span class="token punctuation">.</span><span class="token property-access">id</span><span class="token punctuation">,</span> handleStatusChange<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span><span class="token punctuation">;</span>
+  <span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">;</span></code></pre>
+          <p>它沒有受這個 bug 的困擾。（但我們也沒有對它進行任何更改。）</p>
+          <p>因為 <code>useEffect</code> 會<em>預設</em>處理更新，所以沒有專門用於處理更新的程式碼。在應用下一個 effect 之前，它將清除之前的 effect。為了說明這一點，下面是這個 component 隨時間推移可能產生的一系列訂閱和取消訂閱的呼叫：</p>
+          <pre class="language-js"><code class="language-js"><span class="token maybe-class-name">ChatAPI</span><span class="token punctuation">.</span><span class="token method function property-access">subscribeToFriendStatus</span><span class="token punctuation">(</span><span class="token number">100</span><span class="token punctuation">,</span> handleStatusChange<span class="token punctuation">)</span><span class="token punctuation">;</span>     <span class="token comment">// 執行第一個 effect</span>
+
+<span class="token maybe-class-name">ChatAPI</span><span class="token punctuation">.</span><span class="token method function property-access">unsubscribeFromFriendStatus</span><span class="token punctuation">(</span><span class="token number">100</span><span class="token punctuation">,</span> handleStatusChange<span class="token punctuation">)</span><span class="token punctuation">;</span> <span class="token comment">// 清除前一個 effect</span>
+<span class="token maybe-class-name">ChatAPI</span><span class="token punctuation">.</span><span class="token method function property-access">subscribeToFriendStatus</span><span class="token punctuation">(</span><span class="token number">200</span><span class="token punctuation">,</span> handleStatusChange<span class="token punctuation">)</span><span class="token punctuation">;</span>     <span class="token comment">// 執行下一個 effect</span>
+
+<span class="token maybe-class-name">ChatAPI</span><span class="token punctuation">.</span><span class="token method function property-access">unsubscribeFromFriendStatus</span><span class="token punctuation">(</span><span class="token number">200</span><span class="token punctuation">,</span> handleStatusChange<span class="token punctuation">)</span><span class="token punctuation">;</span> <span class="token comment">// 清除前一個 effect</span>
+<span class="token maybe-class-name">ChatAPI</span><span class="token punctuation">.</span><span class="token method function property-access">subscribeToFriendStatus</span><span class="token punctuation">(</span><span class="token number">300</span><span class="token punctuation">,</span> handleStatusChange<span class="token punctuation">)</span><span class="token punctuation">;</span>     <span class="token comment">// 執行下一個 effect</span>
+
+<span class="token comment">// Unmount</span>
+<span class="token maybe-class-name">ChatAPI</span><span class="token punctuation">.</span><span class="token method function property-access">unsubscribeFromFriendStatus</span><span class="token punctuation">(</span><span class="token number">300</span><span class="token punctuation">,</span> handleStatusChange<span class="token punctuation">)</span><span class="token punctuation">;</span> <span class="token comment">// 清除最後一個 effect</span></code></pre>
+          <p>此行為預設確保程式碼一致性，並防止 class component 中常見的由於缺少更新邏輯而導致的 bug。</p>
+        </section>
+        <section id="tip-optimizing-performance-by-skipping-effects" class="level3">
+          <h3>提示：通過忽略 Effect 來最佳化效能</h3>
+          <p>在某些情況下，每次 render 後清除或執行 effect 可能會導致效能問題。在 class component 中，我們可以通過在 <code>componentDidUpdate</code> 內部的 <code>prevProps</code> 或 <code>prevState</code> 撰寫一個額外的比對條件來解決此問題：</p>
+          <pre class="language-js"><code class="language-js"><span class="token function">componentDidUpdate</span><span class="token punctuation">(</span><span class="token parameter">prevProps<span class="token punctuation">,</span> prevState</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  <span class="token keyword control-flow">if</span> <span class="token punctuation">(</span>prevState<span class="token punctuation">.</span><span class="token property-access">count</span> <span class="token operator">!==</span> <span class="token keyword">this</span><span class="token punctuation">.</span><span class="token property-access">state</span><span class="token punctuation">.</span><span class="token property-access">count</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token dom variable">document</span><span class="token punctuation">.</span><span class="token property-access">title</span> <span class="token operator">=</span> <span class="token template-string"><span class="token template-punctuation string">`</span><span class="token string">You clicked </span><span class="token interpolation"><span class="token interpolation-punctuation punctuation">${</span><span class="token keyword">this</span><span class="token punctuation">.</span><span class="token property-access">state</span><span class="token punctuation">.</span><span class="token property-access">count</span><span class="token interpolation-punctuation punctuation">}</span></span><span class="token string"> times</span><span class="token template-punctuation string">`</span></span><span class="token punctuation">;</span>
+  <span class="token punctuation">}</span>
+<span class="token punctuation">}</span></code></pre>
+          <p>這個要求很常見，所以已內建在 <code>useEffect</code> 的 Hook API 中。如果在重新 render 之間某些值沒有改變，你可以讓 React 忽略 effect。為此，請將 array 作為可選的第二個參數傳遞給 <code>useEffect</code>：</p>
+          <pre class="language-js{3}"><code class="language-js{3}">useEffect(() => {
+  document.title = `You clicked ${count} times`;
+}, [count]); // 僅在計數更改時才重新執行 effect</code></pre>
+          <p>在上面的範例中，我們將 <code>[count]</code> 作為第二個參數傳遞。這是什麼意思？如果 <code>count</code> 是 <code>5</code>，然後我們的 component 重新 render，<code>count</code> 仍然等於 <code>5</code>，React 將比對前一個 render 的 <code>[5]</code> 和下一個 render 的 <code>[5]</code>。因為 array 中的每一項都相同（<code>5 === 5</code>），所以 React 將忽略這個 effect。那就是我們的最佳化。</p>
+          <p>當我們 render 時將 <code>count</code> 更新為 <code>6</code>，React 將比對前一個 render 的 array <code>[5]</code> 與下一個 render 的 array <code>[6]</code>。這次，React 將重新執行 effect，因為 <code>5 !== 6</code>。如果 array 中有多個項目，即使其中一項不同，React 也會重新執行 effect。</p>
+          <p>這也適用於有清除階段的 effect：</p>
+          <pre class="language-js{10}"><code class="language-js{10}">useEffect(() => {
+  function handleStatusChange(status) {
+    setIsOnline(status.isOnline);
+  }
+
+  ChatAPI.subscribeToFriendStatus(props.friend.id, handleStatusChange);
+  return () => {
+    ChatAPI.unsubscribeFromFriendStatus(props.friend.id, handleStatusChange);
+  };
+}, [props.friend.id]); // 僅在 props.friend.id 改變時重新訂閱</code></pre>
+          <p>未來，第二個參數可能會透過 build-time transformation 自動被加入。</p>
+          <blockquote>
+            <p>注意</p>
+            <p>如果你使用此最佳化，請確保 array 包括了 <strong>component 範圍內隨時間變化並被 effect 用到的所有值（例如 props 和 state）</strong>。否則，你的程式碼將引用先前 render 中的舊值。了解更多<a href="./hooks-faq.html#is-it-safe-to-omit-functions-from-the-list-of-dependencies">如何處理 function</a> 和<a href="./hooks-faq.html#what-can-i-do-if-my-effect-dependencies-change-too-often">如果 array 經常變化的話該怎麼辦</a>。</p>
+            <p>如果你想執行一個 effect 並且僅（在 mount 和 unmount 時）將其清除一次，則可以傳遞一個空 array（<code>[]</code>）作為第二個參數。這告訴 React 你的 effect 不依賴於<em>任何</em> props 或 state 的值，因此它不需要重新執行。這不屬於特殊情況 — 依賴項目 array 一直這樣工作。</p>
+            <blockquote>
+              <p>如果你傳遞一個空 array（<code>[]</code>），effect 中的 props 和 state 始終具有其初始值。儘管將 <code>[]</code>作為第二個參數傳遞更接近於我們熟悉的 <code>componentDidMount</code> 和 <code>componentWillUnmount</code> 的模式，但通常有<a href="./hooks-faq.html#is-it-safe-to-omit-functions-from-the-list-of-dependencies">更好的</a><a href="./hooks-faq.html#what-can-i-do-if-my-effect-dependencies-change-too-often">解決方案</a>可以避免過於頻繁地重新執行 effect。另外，別忘了 React 在瀏覽器繪製完成之後才延遲執行 <code>useEffect</code>，所以做額外的工作沒有很大的問題。</p>
+            </blockquote>
+            <p>我們建議使用 <a href="https://github.com/facebook/react/issues/14920"><code>exhaustive-deps</code></a> 規則作為我們 <a href="https://www.npmjs.com/package/eslint-plugin-react-hooks#installation"><code>eslint-plugin-react-hooks</code></a> package 的一部分。當不正確地指定依賴時，它會發出警告，並提出修改建議。</p>
+          </blockquote>
+        </section>
+      </section>
+      <section id="next-steps" class="level2">
+        <h2>下一步</h2>
+        <p>恭喜！這一頁很長，但是希望讀到最後，你絕大多數的問題都有了答案。你已經學過 State Hook 和 Effect Hook，把兩者結合起來，你已經能做到<em>很多</em>東西。它們涵蓋了 class 的絕大多數的使用案例 — 如果沒有涵蓋到，<a href="./hooks-reference.html">額外的 Hook</a> 或許會幫到你。</p>
+        <p>我們也開始看到 Hook 如何解決<a href="./hooks-intro.html#motivation">動機</a>中概述的問題。我們已經看到了 effect 清除如何避免在 <code>componentDidUpdate</code> 和 <code>componentWillUnmount</code> 中重複，如何使相關程式碼更緊密地結合在一起，並幫助我們避免 bug。我們還看到了我們可以如何根據 effect 的目的來區分 effect，這是我們在 class 中根本無法做到的。</p>
+        <p>
+          現在，你可能會質疑 Hook 的工作方式。 React 怎麼知道哪個 <code>useState</code> 呼叫對應於 re-render 之間的哪個 state 變數？React 如何在每次更新中「匹配」上一個和下一個 effect？<strong>在下一頁，我們會學習 <a href="./hooks-rules.html">Hook 的規則</a> — 它們對於 Hook 的正常執行至關重要。</strong>
+          <span style="float: footnote;"><a href="./index.html#toc">Go to TOC</a></span>
+        </p>
+      </section>
+    </section>
+  </body>
+</html>

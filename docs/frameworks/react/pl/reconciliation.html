@@ -1,0 +1,154 @@
+<!doctype html>
+<html lang="pl">
+  <head>
+    <meta charset="utf-8">
+    <title>Rekoncyliacja</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="https://raw.githubusercontent.com/shinokada/prism-coy-theme/main/theme_common.css">
+  </head>
+  <body>
+    <section id="rekoncyliacja" class="level1">
+      <h1>Rekoncyliacja</h1>
+      <p>Deklaratywność API Reacta sprawia, że nie musisz się martwić, co dokładnie zmienia się przy każdej aktualizacji, dzięki czemu pisanie aplikacji staje się dużo prostsze. Dokładna implementacja nie jest jednak tak oczywista. W tym artykule wyjaśniamy decyzje, które podjęliśmy przy projektowaniu algorytmu różnicującego w Reakcie, mając na celu zapewnienie przewidywalności aktualizacji komponentów przy zachowaniu wysokiej wydajności.</p>
+      <section id="motivation" class="level2">
+        <h2>Motywacja</h2>
+        <p>Podczas korzystania z Reacta, w danym momencie możesz potraktować funkcję <code>render()</code> jako tworzącą drzewo elementów Reacta. Podczas następnej zmiany stanu bądź aktualizacji właściwości funkcja <code>render()</code> zwróci inne drzewo elementów. Zadaniem Reacta jest wtedy opracować wydajny sposób na aktualizację UI, tak by dopasować je do najświeższego drzewa elementów.</p>
+        <p>Istnieją ogólne rozwiązania algorytmicznego problemu generowania najmniejszej liczby operacji wymaganych do przekształcenia drzew elementów. Jednakże nawet <a href="https://grfia.dlsi.ua.es/ml/algorithms/references/editsurvey_bille.pdf">najlepsze znane algorytmy</a> mają złożoność rzędu O(n<sup>3</sup>), gdzie n jest liczbą elementów w drzewie.</p>
+        <p>Gdybyśmy wykorzystali ten algorytm w Reakcie, wyświetlenie 1000 elementów wymagałoby miliarda porównań. Byłoby to stanowczo zbyt kosztowne. Zamiast tego, React implementuje heurystyczny algorytm o złożoności O(n), bazujący na dwóch założeniach:</p>
+        <ol>
+          <li>Dwa elementy różnych typów produkują różne drzewa.</li>
+          <li>Programista może wskazać, które elementy drzewa mogą być stabilne pomiędzy kolejnymi renderowaniami, używając właściwości <code>key</code>.</li>
+        </ol>
+        <p>W praktyce te założenia sprawdzają się w prawie wszystkich zastosowaniach.</p>
+      </section>
+      <section id="the-diffing-algorithm" class="level2">
+        <h2>Algorytm różnicujący</h2>
+        <p>Podczas różnicowania dwóch drzew React najpierw porównuje elementy nadrzędne. Dalsze kroki zależą od typów elementów nadrzędnych.</p>
+        <section id="elements-of-different-types" class="level3">
+          <h3>Elementy różnych typów</h3>
+          <p>Zawsze, gdy elementy nadrzędne różnią się typem, React pozbywa się starego drzewa i buduje nowe od podstaw. Zamiana <code>&#x3C;a></code> na <code>&#x3C;img></code>, czy <code>&#x3C;Article></code> na <code>&#x3C;Comment></code> lub <code>&#x3C;Button></code> na <code>&#x3C;div></code> - każda z tych zmian spowoduje całkowite przebudowanie drzewa.</p>
+          <p>Gdy React pozbywa się starego drzewa, wszystkie przypisane do niego węzły DOM są niszczone. W instancjach komponentów wywoływane jest <code>componentWillUnmount()</code>. Podczas budowania nowego drzewa do DOM-u dodawane są nowe węzły. W instancjach komponentów wywoływane jest <code>UNSAFE_componentWillMount()</code>, a następnie <code>componentDidMount()</code>. Jakikolwiek stan przypisany do starego drzewa jest bezpowrotnie tracony.</p>
+          <p>Jakiekolwiek komponenty poniżej elementu nadrzędnego również zostają odmontowane, a ich stan zniszczony. Na przykład, przy zmianie:</p>
+          <pre class="language-xml"><code class="language-xml"><span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;</span>div</span><span class="token punctuation">></span></span>
+  <span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;</span>Counter</span> <span class="token punctuation">/></span></span>
+<span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;/</span>div</span><span class="token punctuation">></span></span>
+
+<span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;</span>span</span><span class="token punctuation">></span></span>
+  <span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;</span>Counter</span> <span class="token punctuation">/></span></span>
+<span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;/</span>span</span><span class="token punctuation">></span></span></code></pre>
+          <p>Stary <code>Counter</code> zostanie zniszczony i zamontowany zostanie nowy.</p>
+          <blockquote>
+            <p>Uwaga:</p>
+            <p>Ta metoda jest przestarzała i powinno się jej <a href="/blog/2018/03/27/update-on-async-rendering.html">unikać</a> w nowym kodzie.</p>
+            <ul>
+              <li><code>UNSAFE_componentWillMount()</code></li>
+            </ul>
+          </blockquote>
+        </section>
+        <section id="dom-elements-of-the-same-type" class="level3">
+          <h3>Elementy DOM tego samego typu</h3>
+          <p>
+            Przy porównywaniu dwóch elementów tego samego typu React patrzy na atrybuty obu elementów, zachowuje stary węzeł i aktualizuje jedynie atrybuty, które tego wymagają.
+            Na przykład:
+          </p>
+          <pre class="language-xml"><code class="language-xml"><span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;</span>div</span> <span class="token attr-name">className</span><span class="token attr-value"><span class="token punctuation attr-equals">=</span><span class="token punctuation">"</span>before<span class="token punctuation">"</span></span> <span class="token attr-name">title</span><span class="token attr-value"><span class="token punctuation attr-equals">=</span><span class="token punctuation">"</span>stuff<span class="token punctuation">"</span></span> <span class="token punctuation">/></span></span>
+
+<span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;</span>div</span> <span class="token attr-name">className</span><span class="token attr-value"><span class="token punctuation attr-equals">=</span><span class="token punctuation">"</span>after<span class="token punctuation">"</span></span> <span class="token attr-name">title</span><span class="token attr-value"><span class="token punctuation attr-equals">=</span><span class="token punctuation">"</span>stuff<span class="token punctuation">"</span></span> <span class="token punctuation">/></span></span></code></pre>
+          <p>Porównując te dwa elementy, React wie, że należy zmienić jedynie <code>className</code> na istniejącym węźle DOM-u.</p>
+          <p>Aktualizując <code>style</code>, React wie również, by aktualizować jedynie te właściwości, które uległy zmianie. Na przykład:</p>
+          <pre class="language-xml"><code class="language-xml"><span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;</span>div</span> <span class="token attr-name">style</span><span class="token attr-value"><span class="token punctuation attr-equals">=</span>{{color:</span> <span class="token attr-name">'red',</span> <span class="token attr-name"><span class="token namespace">fontWeight:</span></span> <span class="token attr-name">'bold'}}</span> <span class="token punctuation">/></span></span>
+
+<span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;</span>div</span> <span class="token attr-name">style</span><span class="token attr-value"><span class="token punctuation attr-equals">=</span>{{color:</span> <span class="token attr-name">'green',</span> <span class="token attr-name"><span class="token namespace">fontWeight:</span></span> <span class="token attr-name">'bold'}}</span> <span class="token punctuation">/></span></span></code></pre>
+          <p>Przy aktualizacji tych elementów React wie, by zmodyfikować jedynie <code>color</code>, a nie również <code>fontWeight</code>.</p>
+          <p>Po obsłużeniu danego węzła DOM-u React rekursywnie wywołuje algorytm na kolejnych potomkach w drzewie.</p>
+        </section>
+        <section id="component-elements-of-the-same-type" class="level3">
+          <h3>Komponenty tego samego typu</h3>
+          <p>Gdy komponent jest aktualizowany, jego instancja pozostaje bez zmian, dzięki czemu stan jest zachowany pomiędzy kolejnymi renderowaniami. React aktualizuje właściwości instancji zgodnie z nowym elementem i wywołuje na niej <code>UNSAFE_componentWillReceiveProps()</code>, <code>UNSAFE_componentWillUpdate()</code> oraz <code>componentDidUpdate()</code>.</p>
+          <p>Następnie wywołana zostaje metoda <code>render()</code>, a algorytm różnicujący sięga dalej w głąb drzewa.</p>
+          <blockquote>
+            <p>Uwaga:</p>
+            <p>Te metody są przestarzałe i powinno się ich <a href="/blog/2018/03/27/update-on-async-rendering.html">unikać</a> w nowym kodzie.</p>
+            <ul>
+              <li><code>UNSAFE_componentWillUpdate()</code></li>
+              <li><code>UNSAFE_componentWillReceiveProps()</code></li>
+            </ul>
+          </blockquote>
+        </section>
+        <section id="recursing-on-children" class="level3">
+          <h3>Rekurencja po potomkach</h3>
+          <p>Podczas rekurencji przez potomstwo (ang. <em>children</em>) węzła DOM-u React iteruje po obu drzewach jednocześnie (starym i nowym), generując zmiany, gdy napotka na różnicę.</p>
+          <p>Na przykład, gdy dodamy element na koniec potomstwa, przejście pomiędzy tymi drzewami działa poprawnie:</p>
+          <pre class="language-xml"><code class="language-xml"><span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;</span>ul</span><span class="token punctuation">></span></span>
+  <span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;</span>li</span><span class="token punctuation">></span></span>pierwszy<span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;/</span>li</span><span class="token punctuation">></span></span>
+  <span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;</span>li</span><span class="token punctuation">></span></span>drugi<span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;/</span>li</span><span class="token punctuation">></span></span>
+<span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;/</span>ul</span><span class="token punctuation">></span></span>
+
+<span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;</span>ul</span><span class="token punctuation">></span></span>
+  <span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;</span>li</span><span class="token punctuation">></span></span>pierwszy<span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;/</span>li</span><span class="token punctuation">></span></span>
+  <span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;</span>li</span><span class="token punctuation">></span></span>drugi<span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;/</span>li</span><span class="token punctuation">></span></span>
+  <span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;</span>li</span><span class="token punctuation">></span></span>trzeci<span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;/</span>li</span><span class="token punctuation">></span></span>
+<span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;/</span>ul</span><span class="token punctuation">></span></span></code></pre>
+          <p>React dopasuje do siebie drzewa <code>&#x3C;li>pierwszy&#x3C;/li></code>, dopasuje drzewa <code>&#x3C;li>drugi&#x3C;/li></code>, następnie napotkawszy różnicę doda drzewo <code>&#x3C;li>trzeci&#x3C;/li></code>.</p>
+          <p>Przy naiwnej implementacji algorytmu dodanie elementu na początek będzie miało gorszą wydajność. Na przykład, przejście pomiędzy tymi dwoma drzewami jest mało wydajne:</p>
+          <pre class="language-xml"><code class="language-xml"><span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;</span>ul</span><span class="token punctuation">></span></span>
+  <span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;</span>li</span><span class="token punctuation">></span></span>Duke<span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;/</span>li</span><span class="token punctuation">></span></span>
+  <span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;</span>li</span><span class="token punctuation">></span></span>Villanova<span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;/</span>li</span><span class="token punctuation">></span></span>
+<span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;/</span>ul</span><span class="token punctuation">></span></span>
+
+<span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;</span>ul</span><span class="token punctuation">></span></span>
+  <span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;</span>li</span><span class="token punctuation">></span></span>Connecticut<span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;/</span>li</span><span class="token punctuation">></span></span>
+  <span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;</span>li</span><span class="token punctuation">></span></span>Duke<span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;/</span>li</span><span class="token punctuation">></span></span>
+  <span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;</span>li</span><span class="token punctuation">></span></span>Villanova<span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;/</span>li</span><span class="token punctuation">></span></span>
+<span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;/</span>ul</span><span class="token punctuation">></span></span></code></pre>
+          <p>React dokona zmian przy każdym potomku, gdyż nie jest świadomy, że <code>&#x3C;li>Duke&#x3C;/li></code> oraz <code>&#x3C;li>Villanova&#x3C;/li></code> nie uległy zmianie, a jedynie przesunięciu. Może się to okazać problematyczne.</p>
+        </section>
+        <section id="keys" class="level3">
+          <h3>Klucze</h3>
+          <p>
+            W celu rozwiązania powyższego problemu React wprowadził atrybut <code>key</code>. Gdy potomstwo posiada klucz (ang. <em>key</em>), React używa go przy porównaniu poprzedniego drzewa z nowym.
+            Na przykład, dodając <code>key</code> do poprzedniego przykładu pozbędziemy się problemu z wydajnością:
+          </p>
+          <pre class="language-xml"><code class="language-xml"><span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;</span>ul</span><span class="token punctuation">></span></span>
+  <span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;</span>li</span> <span class="token attr-name">key</span><span class="token attr-value"><span class="token punctuation attr-equals">=</span><span class="token punctuation">"</span>2015<span class="token punctuation">"</span></span><span class="token punctuation">></span></span>Duke<span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;/</span>li</span><span class="token punctuation">></span></span>
+  <span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;</span>li</span> <span class="token attr-name">key</span><span class="token attr-value"><span class="token punctuation attr-equals">=</span><span class="token punctuation">"</span>2016<span class="token punctuation">"</span></span><span class="token punctuation">></span></span>Villanova<span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;/</span>li</span><span class="token punctuation">></span></span>
+<span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;/</span>ul</span><span class="token punctuation">></span></span>
+
+<span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;</span>ul</span><span class="token punctuation">></span></span>
+  <span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;</span>li</span> <span class="token attr-name">key</span><span class="token attr-value"><span class="token punctuation attr-equals">=</span><span class="token punctuation">"</span>2014<span class="token punctuation">"</span></span><span class="token punctuation">></span></span>Connecticut<span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;/</span>li</span><span class="token punctuation">></span></span>
+  <span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;</span>li</span> <span class="token attr-name">key</span><span class="token attr-value"><span class="token punctuation attr-equals">=</span><span class="token punctuation">"</span>2015<span class="token punctuation">"</span></span><span class="token punctuation">></span></span>Duke<span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;/</span>li</span><span class="token punctuation">></span></span>
+  <span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;</span>li</span> <span class="token attr-name">key</span><span class="token attr-value"><span class="token punctuation attr-equals">=</span><span class="token punctuation">"</span>2016<span class="token punctuation">"</span></span><span class="token punctuation">></span></span>Villanova<span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;/</span>li</span><span class="token punctuation">></span></span>
+<span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;/</span>ul</span><span class="token punctuation">></span></span></code></pre>
+          <p>Teraz React wie, że element z kluczem <code>'2014'</code> jest nowy, a elementy o kluczach <code>'2015'</code> oraz <code>'2016'</code> jedynie zmieniły pozycję.</p>
+          <p>Dobranie stosownego klucza zazwyczaj nie przysparza trudności. Element, który wyświetlamy, może już posiadać unikalny ID, więc klucz może pochodzić bezpośrednio od twoich danych:</p>
+          <pre class="language-js"><code class="language-js"><span class="token operator">&#x3C;</span>li key<span class="token operator">=</span><span class="token punctuation">{</span>item<span class="token punctuation">.</span><span class="token property-access">id</span><span class="token punctuation">}</span><span class="token operator">></span><span class="token punctuation">{</span>item<span class="token punctuation">.</span><span class="token property-access">name</span><span class="token punctuation">}</span><span class="token operator">&#x3C;</span><span class="token operator">/</span>li<span class="token operator">></span></code></pre>
+          <p>W przeciwnym wypadku można dodać nowe ID do modelu danych bądź wykorzystać funkcję skrótu (ang. <em>hash function</em>) do wygenerowania klucza. Klucz musi być unikalny jedynie względem swego rodzeństwa.</p>
+          <p>W ostateczności jako klucza można użyć indeksu elementu w tablicy. Rozwiązanie to sprawdzi się, jeśli kolejność elementów w tablicy jest stała; w przypadku zmiennej kolejności różnicowanie będzie mniej wydajne.</p>
+          <p>W przypadku użycia indeksu jako klucza, zmiany w kolejności elementów tablicy mogą również powodować problemy ze stanem komponentów. Instancje komponentów są aktualizowane bądź nie na podstawie klucza. Jeśli klucz jest indeksem, każda zmiana pozycji elementu w tablicy powoduje zmianę klucza. W rezultacie stan komponentów może zostać zaktualizowany w nieprzewidywalny sposób i powodować trudne do zidentyfikowania błędy.</p>
+          <p>Na podanym CodePenie można zapoznać się z <a href="codepen://reconciliation/index-used-as-key">przykładowym problemem, jaki stwarza stosowanie indeksów jako kluczy</a>, a z kolei tutaj pokazany jest <a href="codepen://reconciliation/no-index-used-as-key">sposób, w jaki unikanie indeksów w kluczu rozwiązuje problemy z wstawianiem, sortowaniem oraz zmianą pozycji elementów</a>.</p>
+        </section>
+      </section>
+      <section id="tradeoffs" class="level2">
+        <h2>Kompromisy</h2>
+        <p>
+          Należy pamiętać, że algorytm rekoncyliacji to szczegół implementacyjny. React mógłby ponownie renderować całą aplikację przy każdej akcji; rezultat byłby ten sam.
+          Dla jasności: przez ponowne renderowanie w tym kontekście rozumiemy wywołanie <code>render</code> dla wszystkich komponentów; nie oznacza to, że zostaną one odmontowane i zamontowane ponownie.
+          Oznacza jedynie zaaplikowanie zmian według reguł, które dotychczas przedstawiliśmy.
+        </p>
+        <p>Regularnie usprawniamy algorytm heurystyczny, by zoptymalizować wydajność w najczęstszych przypadkach. W aktualnej implementacji możemy wyrazić fakt, iż poddrzewo zmieniło pozycję względem rodzeństwa, nie jesteśmy jednak w stanie wskazać, że zostało bez zmian przeniesione gdzie indziej. Algorytm wymusi ponowne renderowanie całego poddrzewa.</p>
+        <p>Ponieważ React opiera się na heurystyce, tracimy na wydajności zawsze wtedy, gdy nie spełniamy jej założeń.</p>
+        <ol>
+          <li>
+            <p>Algorytm nie będzie dopasowywał poddrzew komponentów różnych typów. Jeśli naprzemiennie używasz komponentów różnego typu, a zwracających bardzo podobny wynik - sugerujemy ujednolicić typ. W praktyce nie przysporzyło nam to nigdy problemów.</p>
+          </li>
+          <li>
+            <p>
+              Klucze powinny być stabilne, przewidywalne i unikalne. Niestabilne klucze (na przykład generowane przez <code>Math.random()</code>) będą skutkować niepotrzebną przebudową wielu instancji komponentów i węzłów DOM-u, powodując spadek wydajności i utratę stanu w komponentach potomnych.
+              <span style="float: footnote;"><a href="./index.html#toc">Go to TOC</a></span>
+            </p>
+          </li>
+        </ol>
+      </section>
+    </section>
+  </body>
+</html>

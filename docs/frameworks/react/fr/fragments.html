@@ -1,0 +1,121 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="utf-8">
+    <title>Fragments</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="https://raw.githubusercontent.com/shinokada/prism-coy-theme/main/theme_common.css">
+  </head>
+  <body>
+    <section id="fragments" class="level1">
+      <h1>Fragments</h1>
+      <p>En React, il est courant pour un composant de renvoyer plusieurs éléments. Les fragments nous permettent de grouper une liste d'enfants sans ajouter de nœud supplémentaire au DOM.</p>
+      <pre class="language-js"><code class="language-js"><span class="token function">render</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  <span class="token keyword control-flow">return</span> <span class="token punctuation">(</span>
+    <span class="token operator">&#x3C;</span><span class="token maybe-class-name">React</span><span class="token punctuation">.</span><span class="token property-access"><span class="token maybe-class-name">Fragment</span></span><span class="token operator">></span>
+      <span class="token operator">&#x3C;</span><span class="token maybe-class-name">ChildA</span> <span class="token operator">/</span><span class="token operator">></span>
+      <span class="token operator">&#x3C;</span><span class="token maybe-class-name">ChildB</span> <span class="token operator">/</span><span class="token operator">></span>
+      <span class="token operator">&#x3C;</span><span class="token maybe-class-name">ChildC</span> <span class="token operator">/</span><span class="token operator">></span>
+    <span class="token operator">&#x3C;</span><span class="token operator">/</span><span class="token maybe-class-name">React</span><span class="token punctuation">.</span><span class="token property-access"><span class="token maybe-class-name">Fragment</span></span><span class="token operator">></span>
+  <span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span></code></pre>
+      <p>Il existe aussi une nouvelle <a href="#short-syntax">syntaxe concise</a> pour les déclarer.</p>
+      <section id="motivation" class="level2">
+        <h2>Motivation</h2>
+        <p>Il est courant qu’un composant renvoie une liste d'enfants. Prenez cette exemple de bout de code React :</p>
+        <pre class="language-jsx"><code class="language-jsx"><span class="token keyword">class</span> <span class="token class-name">Table</span> <span class="token keyword">extends</span> <span class="token class-name">React<span class="token punctuation">.</span>Component</span> <span class="token punctuation">{</span>
+  <span class="token function">render</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token keyword control-flow">return</span> <span class="token punctuation">(</span>
+      <span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;</span>table</span><span class="token punctuation">></span></span><span class="token plain-text">
+        </span><span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;</span>tr</span><span class="token punctuation">></span></span><span class="token plain-text">
+          </span><span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;</span><span class="token class-name">Columns</span></span> <span class="token punctuation">/></span></span><span class="token plain-text">
+        </span><span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;/</span>tr</span><span class="token punctuation">></span></span><span class="token plain-text">
+      </span><span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;/</span>table</span><span class="token punctuation">></span></span>
+    <span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token punctuation">}</span>
+<span class="token punctuation">}</span></code></pre>
+        <p><code>&#x3C;Columns /></code> aurait besoin de renvoyer plusieurs éléments <code>&#x3C;td></code> pour que le HTML obtenu soit valide. Mais si une div parente était utilisée dans le <code>render()</code> de <code>&#x3C;Columns /></code>, alors le HTML résultat serait invalide.</p>
+        <pre class="language-jsx"><code class="language-jsx"><span class="token keyword">class</span> <span class="token class-name">Columns</span> <span class="token keyword">extends</span> <span class="token class-name">React<span class="token punctuation">.</span>Component</span> <span class="token punctuation">{</span>
+  <span class="token function">render</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token keyword control-flow">return</span> <span class="token punctuation">(</span>
+      <span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;</span>div</span><span class="token punctuation">></span></span><span class="token plain-text">
+        </span><span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;</span>td</span><span class="token punctuation">></span></span><span class="token plain-text">Bonjour</span><span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;/</span>td</span><span class="token punctuation">></span></span><span class="token plain-text">
+        </span><span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;</span>td</span><span class="token punctuation">></span></span><span class="token plain-text">Monde</span><span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;/</span>td</span><span class="token punctuation">></span></span><span class="token plain-text">
+      </span><span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;/</span>div</span><span class="token punctuation">></span></span>
+    <span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token punctuation">}</span>
+<span class="token punctuation">}</span></code></pre>
+        <p>Ce code donne en sortie le <code>&#x3C;Table /></code> suivant :</p>
+        <pre class="language-jsx"><code class="language-jsx"><span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;</span>table</span><span class="token punctuation">></span></span><span class="token plain-text">
+  </span><span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;</span>tr</span><span class="token punctuation">></span></span><span class="token plain-text">
+    </span><span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;</span>div</span><span class="token punctuation">></span></span><span class="token plain-text">
+      </span><span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;</span>td</span><span class="token punctuation">></span></span><span class="token plain-text">Bonjour</span><span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;/</span>td</span><span class="token punctuation">></span></span><span class="token plain-text">
+      </span><span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;</span>td</span><span class="token punctuation">></span></span><span class="token plain-text">Monde</span><span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;/</span>td</span><span class="token punctuation">></span></span><span class="token plain-text">
+    </span><span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;/</span>div</span><span class="token punctuation">></span></span><span class="token plain-text">
+  </span><span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;/</span>tr</span><span class="token punctuation">></span></span><span class="token plain-text">
+</span><span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;/</span>table</span><span class="token punctuation">></span></span></code></pre>
+        <p>Les fragments résolvent ce problème.</p>
+      </section>
+      <section id="usage" class="level2">
+        <h2>Usage</h2>
+        <pre class="language-jsx{4,7}"><code class="language-jsx{4,7}">class Columns extends React.Component {
+  render() {
+    return (
+      &#x3C;React.Fragment>
+        &#x3C;td>Bonjour&#x3C;/td>
+        &#x3C;td>Monde&#x3C;/td>
+      &#x3C;/React.Fragment>
+    );
+  }
+}</code></pre>
+        <p>Ce qui donne en sortie le <code>&#x3C;Table /></code> correct suivant :</p>
+        <pre class="language-jsx"><code class="language-jsx"><span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;</span>table</span><span class="token punctuation">></span></span><span class="token plain-text">
+  </span><span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;</span>tr</span><span class="token punctuation">></span></span><span class="token plain-text">
+    </span><span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;</span>td</span><span class="token punctuation">></span></span><span class="token plain-text">Hello</span><span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;/</span>td</span><span class="token punctuation">></span></span><span class="token plain-text">
+    </span><span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;</span>td</span><span class="token punctuation">></span></span><span class="token plain-text">World</span><span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;/</span>td</span><span class="token punctuation">></span></span><span class="token plain-text">
+  </span><span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;/</span>tr</span><span class="token punctuation">></span></span><span class="token plain-text">
+</span><span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;/</span>table</span><span class="token punctuation">></span></span></code></pre>
+        <section id="short-syntax" class="level3">
+          <h3>Syntaxe concise</h3>
+          <p>Il existe une nouvelle syntaxe plus concise, que vous pouvez utiliser pour déclarer des fragments. Ça ressemble à des balises vides :</p>
+          <pre class="language-jsx{4,7}"><code class="language-jsx{4,7}">class Columns extends React.Component {
+  render() {
+    return (
+      &#x3C;>
+        &#x3C;td>Bonjour&#x3C;/td>
+        &#x3C;td>Monde&#x3C;/td>
+      &#x3C;/>
+    );
+  }
+}</code></pre>
+          <p>Vous pouvez utiliser <code>&#x3C;>…&#x3C;/></code> de la même manière que n'importe quel élément, à ceci près que cette syntaxe n’accepte ni clés ni attributs.</p>
+        </section>
+        <section id="keyed-fragments" class="level3">
+          <h3>Les fragments à clé</h3>
+          <p>Les fragments déclarés explicitement avec la syntaxe <code>&#x3C;React.Fragment></code> peuvent avoir des clés <em>(key, NdT)</em>. Un cas d'utilisation consisterait à faire correspondre une collection à un tableau de fragments—par exemple pour créer une liste de descriptions :</p>
+          <pre class="language-jsx"><code class="language-jsx"><span class="token keyword">function</span> <span class="token function"><span class="token maybe-class-name">Glossary</span></span><span class="token punctuation">(</span><span class="token parameter">props</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  <span class="token keyword control-flow">return</span> <span class="token punctuation">(</span>
+    <span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;</span>dl</span><span class="token punctuation">></span></span><span class="token plain-text">
+      </span><span class="token punctuation">{</span>props<span class="token punctuation">.</span><span class="token property-access">items</span><span class="token punctuation">.</span><span class="token method function property-access">map</span><span class="token punctuation">(</span><span class="token parameter">item</span> <span class="token arrow operator">=></span> <span class="token punctuation">(</span>
+        <span class="token comment">// Sans la `key`, React produira un avertissement spécifique</span>
+        <span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;</span><span class="token class-name">React.Fragment</span></span> <span class="token attr-name">key</span><span class="token script language-javascript"><span class="token script-punctuation punctuation">=</span><span class="token punctuation">{</span>item<span class="token punctuation">.</span><span class="token property-access">id</span><span class="token punctuation">}</span></span><span class="token punctuation">></span></span><span class="token plain-text">
+          </span><span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;</span>dt</span><span class="token punctuation">></span></span><span class="token punctuation">{</span>item<span class="token punctuation">.</span><span class="token property-access">term</span><span class="token punctuation">}</span><span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;/</span>dt</span><span class="token punctuation">></span></span><span class="token plain-text">
+          </span><span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;</span>dd</span><span class="token punctuation">></span></span><span class="token punctuation">{</span>item<span class="token punctuation">.</span><span class="token property-access">description</span><span class="token punctuation">}</span><span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;/</span>dd</span><span class="token punctuation">></span></span><span class="token plain-text">
+        </span><span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;/</span><span class="token class-name">React.Fragment</span></span><span class="token punctuation">></span></span>
+      <span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">}</span><span class="token plain-text">
+    </span><span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;/</span>dl</span><span class="token punctuation">></span></span>
+  <span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span></code></pre>
+          <p><code>key</code> est le seul attribut qui peut être passé à <code>Fragment</code>. À l'avenir, nous prendrons peut-être en charge des attributs supplémentaires, tels que des gestionnaires d'événements .</p>
+        </section>
+        <section id="live-demo" class="level3">
+          <h3>Démo interactive</h3>
+          <p>
+            Vous pouvez essayer la nouvelle syntaxe JSX de fragment avec ce <a href="https://codepen.io/reactjs/pen/VrEbjE?editors=1000">CodePen</a>.
+            <span style="float: footnote;"><a href="./index.html#toc">Go to TOC</a></span>
+          </p>
+        </section>
+      </section>
+    </section>
+  </body>
+</html>

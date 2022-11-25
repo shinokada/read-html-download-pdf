@@ -1,0 +1,148 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="utf-8">
+    <title>hooks プロパティ</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="navigation.title" content="hooks">
+    <meta name="description" content="フックは Nuxt モジュールで一般的に使われる Nuxt イベントリスナーだけでなく nuxt.config.js でも利用できます。">
+    <meta name="menu" content="hooks">
+    <meta name="category" content="configuration-glossary">
+    <link rel="stylesheet" href="https://raw.githubusercontent.com/shinokada/prism-coy-theme/main/theme_common.css">
+  </head>
+  <body>
+    <section id="hooks-プロパティ" class="level1">
+      <h1>hooks プロパティ</h1>
+      <p>フックは Nuxt モジュールで一般的に使われる <a href="./internals-glossary/internals">Nuxt イベントリスナー</a>だけでなく <code>nuxt.config.js</code> でも利用できます。</p>
+      <hr>
+      <ul>
+        <li>型: <code>Object</code></li>
+      </ul>
+      <pre class="language-js{}[nuxt.config.js]"><code class="language-js{}[nuxt.config.js]">import fs from 'fs'
+import path from 'path'
+
+export default {
+  hooks: {
+    build: {
+      done(builder) {
+        const extraFilePath = path.join(
+          builder.nuxt.options.buildDir,
+          'extra-file'
+        )
+        fs.writeFileSync(extraFilePath, 'Something extra')
+      }
+    }
+  }
+}</code></pre>
+      <p>内部的には、フックはコロン（例えば <code>build:done</code>）を使った命名パターンに従います。設定を簡単にするため、上記の例のように独自のフックを <code>nuxt.config.js</code> に設定すると、それらを階層オブジェクトとして構造化できます。仕組みの詳細については <a href="./internals-glossary/internals">Nuxt の内部</a>を参照してください。</p>
+      <section id="フックのリスト" class="level2">
+        <h2>フックのリスト</h2>
+        <ul>
+          <li><a href="./internals-glossary/internals-nuxt#hooks">Nuxt フック</a></li>
+          <li><a href="./internals-glossary/internals-renderer#hooks">Renderer フック</a></li>
+          <li><a href="./internals-glossary/internals-module-container#hooks">ModulesContainer フック</a></li>
+          <li><a href="./internals-glossary/internals-builder#hooks">Builder フック</a></li>
+          <li><a href="./internals-glossary/internals-generator#hooks">Generator フック</a></li>
+        </ul>
+      </section>
+      <section id="例" class="level2">
+        <h2>例</h2>
+        <section id="root-でない場合は-routerbase-にリダイレクトさせる" class="level3">
+          <h3>root でない場合は router.base にリダイレクトさせる</h3>
+          <p>ページを <code>/</code> のかわりに <code>/portal</code> として提供するとします。</p>
+          <p>これはおそらくエッジケースであり、<em>nuxt.config.js</em> の <code>router.base</code> のポイントは web サーバーがドメインルート以外の場所で Nuxt を提供するときのためのものです。</p>
+          <p>しかしローカル開発中に <em>localhost</em> にアクセスすると router.base が / でない場合は 404 が返されます。フックを設定することでこれを防げます。</p>
+          <p>リダイレクトはプロダクション用の Web サイトでは最適なユースケースではないかもしれませんがフックを活用するのに役立ちます。</p>
+          <p>まずはじめに、<a href="./configuration-glossary/configuration-router#base"><code>router.base</code> を変更できます</a>。<code>nuxt.config.js</code> を更新してみましょう：</p>
+          <pre class="language-js{}[nuxt.config.js]"><code class="language-js{}[nuxt.config.js]">import hooks from './hooks'
+export default {
+  router: {
+    base: '/portal'
+  }
+  hooks: hooks(this)
+}</code></pre>
+          <p>そしていくつかファイルを作成します。</p>
+          <ol>
+            <li>
+              <p>フックモジュールである <code>hooks/index.js</code></p>
+              <pre class="language-js{}[hooks/index.js]"><code class="language-js{}[hooks/index.js]">import render from './render'
+
+export default nuxtConfig => ({
+  render: render(nuxtConfig)
+})</code></pre>
+            </li>
+            <li>
+              <p>レンダーフックである <code>hooks/render.js</code></p>
+              <pre class="language-js{}[hooks/render.js]"><code class="language-js{}[hooks/render.js]">import redirectRootToPortal from './route-redirect-portal'
+
+export default nuxtConfig => {
+  const router = Reflect.has(nuxtConfig, 'router') ? nuxtConfig.router : {}
+  const base = Reflect.has(router, 'base') ? router.base : '/portal'
+
+  return {
+    /**
+     * 'render:setupMiddleware'
+     * {@link node_modules/nuxt/lib/core/renderer.js}
+     */
+    setupMiddleware(app) {
+      app.use('/', redirectRootToPortal(base))
+    }
+  }
+}</code></pre>
+            </li>
+            <li>
+              <p>ミドルウェア自体である <code>hooks/route-redirect-portal.js</code></p>
+              <pre class="language-js{}[hooks/route-redirect-portal.js]"><code class="language-js{}[hooks/route-redirect-portal.js]">/**
+ *  /portalから / へリダイレクトするための Nuxt ミドルウェアフック（または nuxt.config.js の router.base で設定したもの）
+ *
+ * connect と同じバージョンにしてください
+ * {@link node_modules/connect/package.json}
+ */
+import parseurl from 'parseurl'
+
+/**
+ * 目的の Web アプリケーションコンテキストルートへのリダイレクト処理をするためのミドルウェアに接続します。
+ *
+ * Nuxt のドキュメントにはフックの使い方の説明が欠けていることに注意してください
+ * これは補足説明として役立つルーターのサンプルです。
+ *
+ * インスピレーションのために素晴らしい実装を見てみましょう:
+ * - https://github.com/nuxt/nuxt.js/blob/dev/examples/with-cookies/plugins/cookies.js
+ * - https://github.com/yyx990803/launch-editor/blob/master/packages/launch-editor-middleware/index.js
+ *
+ * [http_class_http_clientrequest]: https://nodejs.org/api/http.html#http_class_http_clientrequest
+ * [http_class_http_serverresponse]: https://nodejs.org/api/http.html#http_class_http_serverresponse
+ *
+ * @param {http.ClientRequest} req Node.jsの内部的なクライアントリクエストオブジェクト [http_class_http_clientrequest]
+ * @param {http.ServerResponse} res Node.jsの内部的なレスポンス [http_class_http_serverresponse]
+ * @param {Function} next ミドルウェアのコールバック
+ */
+export default desiredContextRoot =>
+  function projectHooksRouteRedirectPortal(req, res, next) {
+    const desiredContextRootRegExp = new RegExp(`^${desiredContextRoot}`)
+    const _parsedUrl = Reflect.has(req, '_parsedUrl') ? req._parsedUrl : null
+    const url = _parsedUrl !== null ? _parsedUrl : parseurl(req)
+    const startsWithDesired = desiredContextRootRegExp.test(url.pathname)
+    const isNotProperContextRoot = desiredContextRoot !== url.pathname
+    if (isNotProperContextRoot &#x26;&#x26; startsWithDesired === false) {
+      const pathname = url.pathname === null ? '' : url.pathname
+      const search = url.search === null ? '' : url.search
+      const Location = desiredContextRoot + pathname + search
+      res.writeHead(302, {
+        Location
+      })
+      res.end()
+    }
+    next()
+  }</code></pre>
+            </li>
+          </ol>
+          <p>
+            これで、開発中の Web サービスで同僚が誤って <code>/</code> にアクセスしても Nuxt は自動的に <code>/portal</code> にリダイレクトするでしょう。
+            <span style="float: footnote;"><a href="../index.html#toc">Go to TOC</a></span>
+          </p>
+        </section>
+      </section>
+    </section>
+  </body>
+</html>

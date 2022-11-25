@@ -1,0 +1,350 @@
+<!doctype html>
+<html lang="zh-hant">
+  <head>
+    <meta charset="utf-8">
+    <title>State 和生命週期</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="https://raw.githubusercontent.com/shinokada/prism-coy-theme/main/theme_common.css">
+  </head>
+  <body>
+    <section id="state-和生命週期" class="level1">
+      <h1>State 和生命週期</h1>
+      <p>這個章節會介紹在 React component 中 state 以及生命週期的概念。你可以在<a href="./react-component.html">這裡找到 component API 詳細的參考</a>。</p>
+      <p>思考<a href="./rendering-elements.html#updating-the-rendered-element">前一章節</a>的 ticking clock 的範例。在 <a href="./rendering-elements.html#rendering-an-element-into-the-dom">Rendering Elements</a> 中，我們只學習到一種方式來更新 UI。 我們呼叫 <code>root.render()</code> 來改變 render 的輸出：</p>
+      <pre class="language-js{10}"><code class="language-js{10}">const root = ReactDOM.createRoot(document.getElementById('root'));
+
+function tick() {
+  const element = (
+    &#x3C;div>
+      &#x3C;h1>Hello, world!&#x3C;/h1>
+      &#x3C;h2>It is {new Date().toLocaleTimeString()}.&#x3C;/h2>
+    &#x3C;/div>
+  );
+  root.render(element);
+}
+
+setInterval(tick, 1000);</code></pre>
+      <p><a href="http://codepen.io/gaearon/pen/gwoJZk?editors=0010"><strong>在 CodePen 上試試看吧！</strong></a></p>
+      <p>在這個章節中，我們將會學習如何封裝 <code>Clock</code> component 讓它可以真正的被重複使用。它將會設定本身的 timer 並且每秒更新一次。</p>
+      <p>我們可以像這樣封裝 clock 做為開始：</p>
+      <pre class="language-js{5-8,13}"><code class="language-js{5-8,13}">const root = ReactDOM.createRoot(document.getElementById('root'));
+
+function Clock(props) {
+  return (
+    &#x3C;div>
+      &#x3C;h1>Hello, world!&#x3C;/h1>
+      &#x3C;h2>It is {props.date.toLocaleTimeString()}.&#x3C;/h2>
+    &#x3C;/div>
+  );
+}
+
+function tick() {
+  root.render(&#x3C;Clock date={new Date()} />);
+}
+
+setInterval(tick, 1000);</code></pre>
+      <p><a href="https://codepen.io/gaearon/pen/dpdoYR?editors=0010"><strong>在 CodePen 上試試看吧！</strong></a></p>
+      <p>然而，它缺少了一個重要的需求：<code>Clock</code> 設定 timer 並在每秒更新 UI 應該是 <code>Clock</code> 實作的細節的事實。</p>
+      <p>理想情況下，我們想要撰寫一次 <code>Clock</code> 並且它會自己更新：</p>
+      <pre class="language-js{2}"><code class="language-js{2}">root.render(&#x3C;Clock />);</code></pre>
+      <p>如果要實現這個理想情況，我們需要加入「state」到 <code>Clock</code> component。</p>
+      <p>State 類似於 prop，但它是私有且由 component 完全控制的。</p>
+      <p>我們<a href="./components-and-props.html#functional-and-class-components">在先前提到過</a>，component 被定義為 class 有一些額外的特性。Local state 就是 class 其中的一個特性。</p>
+      <section id="converting-a-function-to-a-class" class="level2">
+        <h2>轉換 Function 成 Class</h2>
+        <p>你可以透過以下 5 個步驟轉換一個 function component 像是 <code>Clock</code> 成為 class：</p>
+        <ol>
+          <li>
+            <p>建立一個相同名稱並且繼承 <code>React.Component</code> 的 <a href="https://developer.mozilla.org/en/docs/Web/JavaScript/Reference/Classes">ES6 class</a>。</p>
+          </li>
+          <li>
+            <p>加入一個 <code>render()</code> 的空方法。</p>
+          </li>
+          <li>
+            <p>將 function 的內容搬到 <code>render()</code> 方法。</p>
+          </li>
+          <li>
+            <p>將 <code>render()</code> 內的 <code>props</code> 替換成 <code>this.props</code>。</p>
+          </li>
+          <li>
+            <p>刪除剩下空的 function 宣告。</p>
+          </li>
+        </ol>
+        <pre class="language-js"><code class="language-js"><span class="token keyword">class</span> <span class="token class-name">Clock</span> <span class="token keyword">extends</span> <span class="token class-name">React<span class="token punctuation">.</span>Component</span> <span class="token punctuation">{</span>
+  <span class="token function">render</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token keyword control-flow">return</span> <span class="token punctuation">(</span>
+      <span class="token operator">&#x3C;</span>div<span class="token operator">></span>
+        <span class="token operator">&#x3C;</span>h1<span class="token operator">></span><span class="token maybe-class-name">Hello</span><span class="token punctuation">,</span> world<span class="token operator">!</span><span class="token operator">&#x3C;</span><span class="token operator">/</span>h1<span class="token operator">></span>
+        <span class="token operator">&#x3C;</span>h2<span class="token operator">></span><span class="token maybe-class-name">It</span> is <span class="token punctuation">{</span><span class="token keyword">this</span><span class="token punctuation">.</span><span class="token property-access">props</span><span class="token punctuation">.</span><span class="token property-access">date</span><span class="token punctuation">.</span><span class="token method function property-access">toLocaleTimeString</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">}</span><span class="token punctuation">.</span><span class="token operator">&#x3C;</span><span class="token operator">/</span>h2<span class="token operator">></span>
+      <span class="token operator">&#x3C;</span><span class="token operator">/</span>div<span class="token operator">></span>
+    <span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token punctuation">}</span>
+<span class="token punctuation">}</span></code></pre>
+        <p><a href="https://codepen.io/gaearon/pen/zKRGpo?editors=0010"><strong>在 CodePen 上試試看吧！</strong></a></p>
+        <p><code>Clock</code> 現在被定義成 class 而不是 function。</p>
+        <p>在每次發生更新時，<code>render</code> 方法都會被呼叫，但我們只要 render <code>&#x3C;Clock /></code> 到相同的 DOM node 中，只有 <code>Clock</code> class 這個實例會被用到。這讓我們可以使用像是 local state 和生命週期方法這些額外的特性。</p>
+      </section>
+      <section id="adding-local-state-to-a-class" class="level2">
+        <h2>加入 Local State 到 Class</h2>
+        <p>我們會透過以下 3 個步驟將 <code>date</code> 從搬移到 <code>state</code>：</p>
+        <ol>
+          <li>將 <code>render()</code> 方法內的 <code>this.props.date</code> 替換成 <code>this.state.date</code>：</li>
+        </ol>
+        <pre class="language-js{6}"><code class="language-js{6}">class Clock extends React.Component {
+  render() {
+    return (
+      &#x3C;div>
+        &#x3C;h1>Hello, world!&#x3C;/h1>
+        &#x3C;h2>It is {this.state.date.toLocaleTimeString()}.&#x3C;/h2>
+      &#x3C;/div>
+    );
+  }
+}</code></pre>
+        <ol start="2">
+          <li>加入一個 <a href="https://developer.mozilla.org/en/docs/Web/JavaScript/Reference/Classes#Constructor">class constructor</a> 並分配初始的 <code>this.state</code>：</li>
+        </ol>
+        <pre class="language-js{4}"><code class="language-js{4}">class Clock extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = {date: new Date()};
+  }
+
+  render() {
+    return (
+      &#x3C;div>
+        &#x3C;h1>Hello, world!&#x3C;/h1>
+        &#x3C;h2>It is {this.state.date.toLocaleTimeString()}.&#x3C;/h2>
+      &#x3C;/div>
+    );
+  }
+}</code></pre>
+        <p>注意，我們將傳送 <code>props</code> 到基礎 constructor：</p>
+        <pre class="language-js{2}"><code class="language-js{2}">  constructor(props) {
+    super(props);
+    this.state = {date: new Date()};
+  }</code></pre>
+        <p>Class component 應該總是要呼叫基礎 constructor 和 <code>props</code>。</p>
+        <ol start="3">
+          <li>從 <code>&#x3C;Clock /></code> element 中移除 <code>date</code> prop：</li>
+        </ol>
+        <pre class="language-js{2}"><code class="language-js{2}">root.render(&#x3C;Clock />);</code></pre>
+        <p>之後我們將會把 timer 的程式碼加入到 component 本身。</p>
+        <p>結果看起來會像是：</p>
+        <pre class="language-js{2-5,11,18}"><code class="language-js{2-5,11,18}">class Clock extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = {date: new Date()};
+  }
+
+  render() {
+    return (
+      &#x3C;div>
+        &#x3C;h1>Hello, world!&#x3C;/h1>
+        &#x3C;h2>It is {this.state.date.toLocaleTimeString()}.&#x3C;/h2>
+      &#x3C;/div>
+    );
+  }
+}
+
+const root = ReactDOM.createRoot(document.getElementById('root'));
+root.render(&#x3C;Clock />);</code></pre>
+        <p><a href="https://codepen.io/gaearon/pen/KgQpJd?editors=0010"><strong>在 CodePen 上試試看吧！</strong></a></p>
+        <p>接下來，我們會讓 <code>Clock</code> 設定它本身的 timer 並且每秒更新一次。</p>
+      </section>
+      <section id="adding-lifecycle-methods-to-a-class" class="level2">
+        <h2>加入生命週期方法到 Class</h2>
+        <p>在具有許多 component 的應用程式中，當 component 被 destroy 時，釋放所佔用的資源是非常重要的。</p>
+        <p>每當 <code>Clock</code> render 到 DOM 的時候，我們想要<a href="https://developer.mozilla.org/en-US/docs/Web/API/WindowTimers/setInterval">設定一個 timer</a>。在 React 中稱為「mount」。</p>
+        <p>每當產生的 <code>Clock</code> DOM 被移除時，我們想要<a href="https://developer.mozilla.org/en-US/docs/Web/API/WindowTimers/clearInterval">清除 timer</a>。在 React 中稱為「unmount」。</p>
+        <p>每當 component 在 mount 或是 unmount 的時候，我們可以在 component class 上宣告一些特別的方法來執行一些程式碼：</p>
+        <pre class="language-js{7-9,11-13}"><code class="language-js{7-9,11-13}">class Clock extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = {date: new Date()};
+  }
+
+  componentDidMount() {
+
+  }
+
+  componentWillUnmount() {
+
+  }
+
+  render() {
+    return (
+      &#x3C;div>
+        &#x3C;h1>Hello, world!&#x3C;/h1>
+        &#x3C;h2>It is {this.state.date.toLocaleTimeString()}.&#x3C;/h2>
+      &#x3C;/div>
+    );
+  }
+}</code></pre>
+        <p>這些方法被稱為「生命週期方法」。</p>
+        <p><code>componentDidMount()</code> 方法會在 component 被 render 到 DOM 之後才會執行。這是設定 timer 的好地方：</p>
+        <pre class="language-js{2-5}"><code class="language-js{2-5}">  componentDidMount() {
+    this.timerID = setInterval(
+      () => this.tick(),
+      1000
+    );
+  }</code></pre>
+        <p>注意我們是如何正確的在 <code>this</code>（<code>this.timerID</code>） 儲存 timer ID。</p>
+        <p>雖然 <code>this.props</code> 是由 React 本身設定的，而且 <code>this.state</code> 具有特殊的意義，如果你需要儲存一些不相關於資料流的內容（像是 timer ID），你可以自由的手動加入。</p>
+        <p>我們將會在 <code>componentWillUnmount()</code> 生命週期方法內移除 timer：</p>
+        <pre class="language-js{2}"><code class="language-js{2}">  componentWillUnmount() {
+    clearInterval(this.timerID);
+  }</code></pre>
+        <p>最後，我們將會實作一個 <code>tick()</code> 的方法，<code>Clock</code> component 將會在每秒執行它。</p>
+        <p>它將會使用 <code>this.setState()</code> 來安排 component local state 的更新：</p>
+        <pre class="language-js{18-22}"><code class="language-js{18-22}">class Clock extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = {date: new Date()};
+  }
+
+  componentDidMount() {
+    this.timerID = setInterval(
+      () => this.tick(),
+      1000
+    );
+  }
+
+  componentWillUnmount() {
+    clearInterval(this.timerID);
+  }
+
+  tick() {
+    this.setState({
+      date: new Date()
+    });
+  }
+
+  render() {
+    return (
+      &#x3C;div>
+        &#x3C;h1>Hello, world!&#x3C;/h1>
+        &#x3C;h2>It is {this.state.date.toLocaleTimeString()}.&#x3C;/h2>
+      &#x3C;/div>
+    );
+  }
+}
+
+const root = ReactDOM.createRoot(document.getElementById('root'));
+root.render(&#x3C;Clock />);</code></pre>
+        <p><a href="https://codepen.io/gaearon/pen/amqdNA?editors=0010"><strong>在 CodePen 上試試看吧！</strong></a></p>
+        <p>現在我們的 clock 每秒鐘都會滴答作響。</p>
+        <p>讓我們快速的回顧一下發生了哪些事情，以及呼叫這些方法的順序：</p>
+        <ol>
+          <li>
+            <p>當 <code>&#x3C;Clock /></code> 被傳入到 <code>root.render()</code> 時，React 會呼叫 <code>Clock</code> component 的constructor。由於 <code>Clock</code> 需要顯示目前的時間，它使用包含目前時間的 object 初始化 <code>this.state</code>。我們會在之後更新這個 state。</p>
+          </li>
+          <li>
+            <p>React 接著呼叫 <code>Clock</code> component 的 <code>render()</code> 方法。這就是 React 如何了解應該要在螢幕上顯示什麼內容。React 接著更新 DOM 來符合 <code>Clock</code> 的 render 輸出。</p>
+          </li>
+          <li>
+            <p>每當 <code>Clock</code> 輸出被插入到 DOM 時，React 會呼叫 <code>componentDidMount()</code> 生命週期方法。在 <code>Clock</code> component 生命週期方法內，會要求瀏覽器設定 timer 每秒去呼叫 component 的 <code>tick()</code> 方法。</p>
+          </li>
+          <li>
+            <p>瀏覽器每秒呼叫 <code>tick()</code> 方法。其中，<code>Clock</code> component 透過包含目前時間的 object 呼叫 <code>setState()</code> 來調度 UI 更新。感謝 <code>setState()</code>，React 現在知道 state 有所改變，並且再一次呼叫 <code>render()</code> 方法來了解哪些內容該呈現在螢幕上。這時候，在 <code>render()</code> 方法內的 <code>this.state.date</code> 將會有所不同，因此 render 輸出將會是更新的時間。React 相應地更新 DOM。</p>
+          </li>
+          <li>
+            <p>如果 <code>Clock</code> component 從 DOM 被移除了，React 會呼叫 <code>componentWillUnmount()</code> 生命週期方法，所以 timer 會被停止。</p>
+          </li>
+        </ol>
+      </section>
+      <section id="using-state-correctly" class="level2">
+        <h2>正確的使用 State</h2>
+        <p>有三件關於 <code>setState()</code> 的事情你應該要知道。</p>
+        <section id="do-not-modify-state-directly" class="level3">
+          <h3>請不要直接修改 State</h3>
+          <p>例如，這將不會重新 render component：</p>
+          <pre class="language-js"><code class="language-js"><span class="token comment">// 錯誤</span>
+<span class="token keyword">this</span><span class="token punctuation">.</span><span class="token property-access">state</span><span class="token punctuation">.</span><span class="token property-access">comment</span> <span class="token operator">=</span> <span class="token string">'Hello'</span><span class="token punctuation">;</span></code></pre>
+          <p>相反的，使用 <code>setState()</code>：</p>
+          <pre class="language-js"><code class="language-js"><span class="token comment">// 正確</span>
+<span class="token keyword">this</span><span class="token punctuation">.</span><span class="token method function property-access">setState</span><span class="token punctuation">(</span><span class="token punctuation">{</span><span class="token literal-property property">comment</span><span class="token operator">:</span> <span class="token string">'Hello'</span><span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">;</span></code></pre>
+          <p>你唯一可以指定 <code>this.state</code> 值的地方是在 constructor。</p>
+        </section>
+        <section id="state-updates-may-be-asynchronous" class="level3">
+          <h3>State 的更新可能是非同步的</h3>
+          <p>React 可以將多個 <code>setState()</code> 呼叫批次處理為單一的更新，以提高效能。</p>
+          <p>因為 <code>this.props</code> 和 <code>this.state</code> 可能是非同步的被更新，你不應該依賴它們的值來計算新的 state。</p>
+          <p>例如，這個程式碼可能無法更新 counter：</p>
+          <pre class="language-js"><code class="language-js"><span class="token comment">// 錯誤</span>
+<span class="token keyword">this</span><span class="token punctuation">.</span><span class="token method function property-access">setState</span><span class="token punctuation">(</span><span class="token punctuation">{</span>
+  <span class="token literal-property property">counter</span><span class="token operator">:</span> <span class="token keyword">this</span><span class="token punctuation">.</span><span class="token property-access">state</span><span class="token punctuation">.</span><span class="token property-access">counter</span> <span class="token operator">+</span> <span class="token keyword">this</span><span class="token punctuation">.</span><span class="token property-access">props</span><span class="token punctuation">.</span><span class="token property-access">increment</span><span class="token punctuation">,</span>
+<span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">;</span></code></pre>
+          <p>要修正這個問題，使用第二種形式的 <code>setState()</code>，它接受一個 function 而不是一個 object。Function 將接收先前的 state 作為第一個參數，並且將更新的 props 作為第二個參數：</p>
+          <pre class="language-js"><code class="language-js"><span class="token comment">// 正確</span>
+<span class="token keyword">this</span><span class="token punctuation">.</span><span class="token method function property-access">setState</span><span class="token punctuation">(</span><span class="token punctuation">(</span><span class="token parameter">state<span class="token punctuation">,</span> props</span><span class="token punctuation">)</span> <span class="token arrow operator">=></span> <span class="token punctuation">(</span><span class="token punctuation">{</span>
+  <span class="token literal-property property">counter</span><span class="token operator">:</span> state<span class="token punctuation">.</span><span class="token property-access">counter</span> <span class="token operator">+</span> props<span class="token punctuation">.</span><span class="token property-access">increment</span>
+<span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span></code></pre>
+          <p>在上面我們使用 <a href="https://developer.mozilla.org/en/docs/Web/JavaScript/Reference/Functions/Arrow_functions">arrow function</a>，但它也可以適用於正常的 function：</p>
+          <pre class="language-js"><code class="language-js"><span class="token comment">// 正確</span>
+<span class="token keyword">this</span><span class="token punctuation">.</span><span class="token method function property-access">setState</span><span class="token punctuation">(</span><span class="token keyword">function</span><span class="token punctuation">(</span><span class="token parameter">state<span class="token punctuation">,</span> props</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  <span class="token keyword control-flow">return</span> <span class="token punctuation">{</span>
+    <span class="token literal-property property">counter</span><span class="token operator">:</span> state<span class="token punctuation">.</span><span class="token property-access">counter</span> <span class="token operator">+</span> props<span class="token punctuation">.</span><span class="token property-access">increment</span>
+  <span class="token punctuation">}</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">;</span></code></pre>
+        </section>
+        <section id="state-updates-are-merged" class="level3">
+          <h3>State 的更新將會被 Merge</h3>
+          <p>當你呼叫 <code>setState()</code> 時，React 會 merge 你提供的 object 到目前的 state。</p>
+          <p>例如，你的 state 可能包含幾個單獨的變數：</p>
+          <pre class="language-js{4,5}"><code class="language-js{4,5}">  constructor(props) {
+    super(props);
+    this.state = {
+      posts: [],
+      comments: []
+    };
+  }</code></pre>
+          <p>然後你可以單獨的呼叫 <code>setState()</code> 更新它們：</p>
+          <pre class="language-js{4,10}"><code class="language-js{4,10}">  componentDidMount() {
+    fetchPosts().then(response => {
+      this.setState({
+        posts: response.posts
+      });
+    });
+
+    fetchComments().then(response => {
+      this.setState({
+        comments: response.comments
+      });
+    });
+  }</code></pre>
+          <p>這個 merge 是 shallow 的，所以 <code>this.setState({comments})</code> 保持 <code>this.state.posts</code> 的完整，但它完全取代了 <code>this.state.comments</code>。</p>
+        </section>
+      </section>
+      <section id="the-data-flows-down" class="level2">
+        <h2>向下資料流</h2>
+        <p>Parent 和 child component 不會知道某個 component 是 stateful 或 stateless 的 component，而且它們不在意它是透過 function 或是 class 被定義的。</p>
+        <p>這就是 state 通常被稱為 local state 或被封裝的原因。除了擁有和可以設定它之外的任何 component 都不能訪問它。</p>
+        <p>Component 可以選擇將它的 state 做為 props 往下傳遞到它的 child component：</p>
+        <pre class="language-js"><code class="language-js"><span class="token operator">&#x3C;</span><span class="token maybe-class-name">FormattedDate</span> date<span class="token operator">=</span><span class="token punctuation">{</span><span class="token keyword">this</span><span class="token punctuation">.</span><span class="token property-access">state</span><span class="token punctuation">.</span><span class="token property-access">date</span><span class="token punctuation">}</span> <span class="token operator">/</span><span class="token operator">></span></code></pre>
+        <p><code>FormattedDate</code> component 會在它的 props 接收到 <code>date</code>，但他不知道它是從 <code>Clock</code> 的 state 傳遞過來的，從 <code>Clock</code> 的 props 或者是透過手動輸入：</p>
+        <pre class="language-js"><code class="language-js"><span class="token keyword">function</span> <span class="token function"><span class="token maybe-class-name">FormattedDate</span></span><span class="token punctuation">(</span><span class="token parameter">props</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  <span class="token keyword control-flow">return</span> <span class="token operator">&#x3C;</span>h2<span class="token operator">></span><span class="token maybe-class-name">It</span> is <span class="token punctuation">{</span>props<span class="token punctuation">.</span><span class="token property-access">date</span><span class="token punctuation">.</span><span class="token method function property-access">toLocaleTimeString</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">}</span><span class="token punctuation">.</span><span class="token operator">&#x3C;</span><span class="token operator">/</span>h2<span class="token operator">></span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span></code></pre>
+        <p><a href="https://codepen.io/gaearon/pen/zKRqNB?editors=0010"><strong>在 CodePen 上試試看吧！</strong></a></p>
+        <p>這通常被稱作為「上至下」或「單向」的資料流。任何 state 總是由某個特定的 component 所擁有，任何從 state 得到的資料或 UI，state 只能影響在 tree「以下」的 component。</p>
+        <p>如果你想像一個 component tree 是一個 props 的瀑布，每個 component 的 state 像是一個額外的水流源頭，它在任意的某個地方而且往下流。</p>
+        <p>為了表示所有 component 真的都是被獨立的，我們可以建立一個 <code>App</code> component 來 render 三個 <code>&#x3C;Clock></code>：</p>
+        <pre class="language-js{4-6}"><code class="language-js{4-6}">function App() {
+  return (
+    &#x3C;div>
+      &#x3C;Clock />
+      &#x3C;Clock />
+      &#x3C;Clock />
+    &#x3C;/div>
+  );
+}</code></pre>
+        <p><a href="https://codepen.io/gaearon/pen/vXdGmd?editors=0010"><strong>在 CodePen 上試試看吧！</strong></a></p>
+        <p>每個 <code>Clock</code> 設定它本身的 timer 並獨立的更新。</p>
+        <p>
+          在 React 應用程式中，不論 component 是 stateful 或 stateless 都被視為是實作 component 的細節，它可能隨著時間而改變。你可以在 stateful component 內使用 stateless component，反之亦然。
+          <span style="float: footnote;"><a href="./index.html#toc">Go to TOC</a></span>
+        </p>
+      </section>
+    </section>
+  </body>
+</html>

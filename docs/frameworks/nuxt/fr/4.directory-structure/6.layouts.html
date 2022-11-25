@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="utf-8">
+    <title>layouts</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="navigation.title" content="layouts">
+    <meta name="description" content="Les &#x60;layouts&#x60; sont d&#x27;une grande aide lorsque vous souhaitez modifier l&#x27;aspect et la présentation de votre application Nuxt. Vous pouvez inclure une barre latérale ou avoir des pages différentes entre une version mobile et web.">
+    <meta name="category" content="directory-structure">
+    <meta name="csb_link" content="https://codesandbox.io/embed/github/nuxt-academy/guides-examples/tree/master/04_directory_structure/07_layouts?fontsize=14&#x26;hidenavigation=1&#x26;theme=dark">
+    <link rel="stylesheet" href="https://raw.githubusercontent.com/shinokada/prism-coy-theme/main/theme_common.css">
+  </head>
+  <body>
+    <section id="layouts" class="level1">
+      <h1>layouts</h1>
+      <p>Les <code>layouts</code> sont d'une grande aide lorsque vous souhaitez modifier l'aspect et la présentation de votre application Nuxt. Vous pouvez inclure une barre latérale ou avoir des pages différentes entre une version mobile et web.</p>
+      <hr>
+      <section id="warning" class="level4">
+        <h4>Warning</h4>
+        <p><em>Ce répertoire ne peut pas être renommé sans configuration supplémentaire.</em></p>
+      </section>
+      <section id="layout-par-défaut" class="level2">
+        <h2>Layout par défaut</h2>
+        <p>Vous pouvez étendre la présentation principale en ajoutant un fichier <code>layout/default.vue</code>. Il sera utilisé pour toutes les pages qui n'ont pas de <code>layout</code> défini. Assurez-vous d'ajouter le composant <code>&#x3C;Nuxt></code> lors de la création d'un <code>layout</code> pour inclure le composant de la page.</p>
+        <p>Tout ce dont vous avez besoin dans votre layout, c'est de ces trois lignes de code qui effectueront le rendu du composant de la page.</p>
+        <pre class="language-html{}[layouts/default.vue]"><code class="language-html{}[layouts/default.vue]">&#x3C;template>
+  &#x3C;Nuxt />
+&#x3C;/template></code></pre>
+        <p>Vous pouvez ajouter ici d'autres éléments tels que : Navigation, Header, Footer etc.</p>
+        <pre class="language-html{}[layouts/default.vue]"><code class="language-html{}[layouts/default.vue]">&#x3C;template>
+  &#x3C;div>
+    &#x3C;TheHeader />
+    &#x3C;Nuxt />
+    &#x3C;TheFooter />
+  &#x3C;/div>
+&#x3C;/template></code></pre>
+        <section id="info" class="level4">
+          <h4>Info</h4>
+          <p>Si vos <a href="./directory-structure/components">composants sont réglés sur true</a> alors il n'est pas nécessaire de déclarer l'importation pour vos composants.</p>
+        </section>
+      </section>
+      <section id="layout-personnalisé" class="level2">
+        <h2>Layout personnalisé</h2>
+        <p>Tous les fichiers du répertoire <code>layouts</code> créeront un <code>layout</code> personnalisé accessible avec la propriété <code>layout</code> dans les composants de la page.</p>
+        <p>Disons que nous voulons créer un layout de blog et le sauvegarder sous <code>layouts/blog.vue</code>:</p>
+        <pre class="language-html{}[layouts/blog.vue]"><code class="language-html{}[layouts/blog.vue]">&#x3C;template>
+  &#x3C;div>
+    &#x3C;div>La barre de navigation de mon blog ici&#x3C;/div>
+    &#x3C;Nuxt />
+  &#x3C;/div>
+&#x3C;/template></code></pre>
+        <p>Ensuite, vous devez indiquer aux pages d'utiliser votre layout personnalisé</p>
+        <pre class="language-js{}[pages/posts.vue]"><code class="language-js{}[pages/posts.vue]">&#x3C;script>
+export default {
+  layout: 'blog',
+  // OR
+  layout (context) {
+    return 'blog'
+  }
+}
+&#x3C;/script></code></pre>
+      </section>
+      <section id="page-derreur" class="level2">
+        <h2>Page d'erreur</h2>
+        <p>La page d'erreur est un composant (<em>page component</em>) qui est toujours affiché lorsqu'une erreur se produit (qui ne s'est pas lancée du côté du serveur).</p>
+        <section id="warning-1" class="level4">
+          <h4>Warning</h4>
+          <p>Bien que ce fichier soit placé dans le répertoire <code>layouts</code>, il doit être traité comme une page.</p>
+          <p>Comme mentionné ci-dessus, ce <code>layout</code> est spécial et vous ne devez pas inclure <code>&#x3C;Nuxt></code> dans son modèle. Vous devez voir ce <code>layout</code> comme un composant affiché lorsqu'une erreur se produit (<code>404</code>, <code>500</code>, etc.). Comme pour les autres composants de la page, vous pouvez également définir un <code>layout</code> personnalisé pour la page d'erreur de la manière habituelle.</p>
+          <p>Vous pouvez personnaliser la page d'erreur en ajoutant un fichier <code>layouts/error.vue</code> :</p>
+          <pre class="language-js{}[layouts/error.vue]"><code class="language-js{}[layouts/error.vue]">&#x3C;template>
+  &#x3C;div class="container">
+    &#x3C;h1 v-if="error.statusCode === 404">Page non trouvée&#x3C;/h1>
+    &#x3C;h1 v-else>Une erreur est survenue&#x3C;/h1>
+    &#x3C;NuxtLink to="/">Page d'accueil&#x3C;/NuxtLink>
+  &#x3C;/div>
+&#x3C;/template>
+
+&#x3C;script>
+export default {
+  props: ['error'],
+  layout: 'blog' // vous pouvez customiser l'affichage pour une page d'erreur
+}
+&#x3C;/script></code></pre>
+        </section>
+        <section id="info-1" class="level4">
+          <h4>Info</h4>
+          <p>Le code source de la page d'erreur par défaut est <a href="https://github.com/nuxt/nuxt.js/blob/dev/packages/vue-app/template/components/nuxt-error.vue">disponible sur GitHub</a>.</p>
+          <p><span style="float: footnote;"><a href="../index.html#toc">Go to TOC</a></span></p>
+        </section>
+      </section>
+    </section>
+  </body>
+</html>

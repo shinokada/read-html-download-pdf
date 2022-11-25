@@ -1,0 +1,280 @@
+<!doctype html>
+<html lang="de">
+  <head>
+    <meta charset="utf-8">
+    <title>Test-Utilities</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="https://raw.githubusercontent.com/shinokada/prism-coy-theme/main/theme_common.css">
+  </head>
+  <body>
+    <section id="test-utilities" class="level1">
+      <h1>Test-Utilities</h1>
+      <p><strong>Import</strong></p>
+      <pre class="language-javascript"><code class="language-javascript"><span class="token keyword module">import</span> <span class="token imports"><span class="token maybe-class-name">ReactTestUtils</span></span> <span class="token keyword module">from</span> <span class="token string">'react-dom/test-utils'</span><span class="token punctuation">;</span> <span class="token comment">// ES6</span>
+<span class="token keyword">var</span> <span class="token maybe-class-name">ReactTestUtils</span> <span class="token operator">=</span> <span class="token function">require</span><span class="token punctuation">(</span><span class="token string">'react-dom/test-utils'</span><span class="token punctuation">)</span><span class="token punctuation">;</span> <span class="token comment">// ES5 mit npm</span></code></pre>
+      <section id="overview" class="level2">
+        <h2>Übersicht</h2>
+        <p><code>ReactTestUtils</code> bieten eine einfache Möglichkeit, React-Komponenten in einem Test-Framework deiner Wahl zu testen. Bei Facebook benutzen wir <a href="https://facebook.github.io/jest/">Jest</a> für schmerzfreie Javascript-Tests. Du kannst das <a href="https://jestjs.io/docs/tutorial-react">React-Tutorial</a> auf Jest's Webseite besuchen, um Jest zu lernen.</p>
+        <blockquote>
+          <p>Hinweis:</p>
+          <p>Wir empfehlen die Verwendung der <a href="https://testing-library.com/react">React Testing Library</a>, die konzipiert wurde, um das Schreiben von Tests zu ermöglichen, in denen Komponenten auf die gleiche Weise verwendet werden wie von Endnutzern.</p>
+          <p>Für React-Versionen &#x3C;= 16 macht es die <a href="https://airbnb.io/enzyme/">Enzyme</a> Bibliothek einfach, die Ausgabe deiner React-Komponenten zu prüfen, zu manipulieren und zu durchlaufen.</p>
+        </blockquote>
+        <ul>
+          <li><a href="#act"><code>act()</code></a></li>
+          <li><a href="#mockcomponent"><code>mockComponent()</code></a></li>
+          <li><a href="#iselement"><code>isElement()</code></a></li>
+          <li><a href="#iselementoftype"><code>isElementOfType()</code></a></li>
+          <li><a href="#isdomcomponent"><code>isDOMComponent()</code></a></li>
+          <li><a href="#iscompositecomponent"><code>isCompositeComponent()</code></a></li>
+          <li><a href="#iscompositecomponentwithtype"><code>isCompositeComponentWithType()</code></a></li>
+          <li><a href="#findallinrenderedtree"><code>findAllInRenderedTree()</code></a></li>
+          <li><a href="#scryrendereddomcomponentswithclass"><code>scryRenderedDOMComponentsWithClass()</code></a></li>
+          <li><a href="#findrendereddomcomponentwithclass"><code>findRenderedDOMComponentWithClass()</code></a></li>
+          <li><a href="#scryrendereddomcomponentswithtag"><code>scryRenderedDOMComponentsWithTag()</code></a></li>
+          <li><a href="#findrendereddomcomponentwithtag"><code>findRenderedDOMComponentWithTag()</code></a></li>
+          <li><a href="#scryrenderedcomponentswithtype"><code>scryRenderedComponentsWithType()</code></a></li>
+          <li><a href="#findrenderedcomponentwithtype"><code>findRenderedComponentWithType()</code></a></li>
+          <li><a href="#renderintodocument"><code>renderIntoDocument()</code></a></li>
+          <li><a href="#simulate"><code>Simulate</code></a></li>
+        </ul>
+      </section>
+      <section id="reference" class="level2">
+        <h2>Referenz</h2>
+        <section id="act-act" class="level3">
+          <h3><code>act()</code> {#act}</h3>
+          <p>Um eine Komponente für Assertionen vorzubereiten, setze den Code, der sie rendert und aktualisiert, in einen <code>act()</code>-Aufruf. Damit läuft der Test so ähnlich ab, wie React auch im Browser funktioniert.</p>
+          <blockquote>
+            <p>Hinweis</p>
+            <p>Falls du <code>react-test-renderer</code> verwendest, kannst du dessen <code>act</code>-Export verwenden, der sich gleich verhält.</p>
+          </blockquote>
+          <p>Stelle dir als Beispiel vor, du hast diese <code>Counter</code>-Komponente:</p>
+          <pre class="language-js"><code class="language-js"><span class="token keyword">class</span> <span class="token class-name">Counter</span> <span class="token keyword">extends</span> <span class="token class-name">React<span class="token punctuation">.</span>Component</span> <span class="token punctuation">{</span>
+  <span class="token function">constructor</span><span class="token punctuation">(</span><span class="token parameter">props</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token keyword">super</span><span class="token punctuation">(</span>props<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token keyword">this</span><span class="token punctuation">.</span><span class="token property-access">state</span> <span class="token operator">=</span> <span class="token punctuation">{</span><span class="token literal-property property">count</span><span class="token operator">:</span> <span class="token number">0</span><span class="token punctuation">}</span><span class="token punctuation">;</span>
+    <span class="token keyword">this</span><span class="token punctuation">.</span><span class="token property-access">handleClick</span> <span class="token operator">=</span> <span class="token keyword">this</span><span class="token punctuation">.</span><span class="token method function property-access">handleClick</span><span class="token punctuation">.</span><span class="token method function property-access">bind</span><span class="token punctuation">(</span><span class="token keyword">this</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token punctuation">}</span>
+  <span class="token function">componentDidMount</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token dom variable">document</span><span class="token punctuation">.</span><span class="token property-access">title</span> <span class="token operator">=</span> <span class="token template-string"><span class="token template-punctuation string">`</span><span class="token string">Du hast </span><span class="token interpolation"><span class="token interpolation-punctuation punctuation">${</span><span class="token keyword">this</span><span class="token punctuation">.</span><span class="token property-access">state</span><span class="token punctuation">.</span><span class="token property-access">count</span><span class="token interpolation-punctuation punctuation">}</span></span><span class="token string"> Mal geklickt</span><span class="token template-punctuation string">`</span></span><span class="token punctuation">;</span>
+  <span class="token punctuation">}</span>
+  <span class="token function">componentDidUpdate</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token dom variable">document</span><span class="token punctuation">.</span><span class="token property-access">title</span> <span class="token operator">=</span> <span class="token template-string"><span class="token template-punctuation string">`</span><span class="token string">Du hast </span><span class="token interpolation"><span class="token interpolation-punctuation punctuation">${</span><span class="token keyword">this</span><span class="token punctuation">.</span><span class="token property-access">state</span><span class="token punctuation">.</span><span class="token property-access">count</span><span class="token interpolation-punctuation punctuation">}</span></span><span class="token string"> Mal geklickt</span><span class="token template-punctuation string">`</span></span><span class="token punctuation">;</span>
+  <span class="token punctuation">}</span>
+  <span class="token function">handleClick</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token keyword">this</span><span class="token punctuation">.</span><span class="token method function property-access">setState</span><span class="token punctuation">(</span><span class="token parameter">state</span> <span class="token arrow operator">=></span> <span class="token punctuation">(</span><span class="token punctuation">{</span>
+      <span class="token literal-property property">count</span><span class="token operator">:</span> state<span class="token punctuation">.</span><span class="token property-access">count</span> <span class="token operator">+</span> <span class="token number">1</span><span class="token punctuation">,</span>
+    <span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token punctuation">}</span>
+  <span class="token function">render</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token keyword control-flow">return</span> <span class="token punctuation">(</span>
+      <span class="token operator">&#x3C;</span>div<span class="token operator">></span>
+        <span class="token operator">&#x3C;</span>p<span class="token operator">></span><span class="token maybe-class-name">Du</span> hast <span class="token punctuation">{</span><span class="token keyword">this</span><span class="token punctuation">.</span><span class="token property-access">state</span><span class="token punctuation">.</span><span class="token property-access">count</span><span class="token punctuation">}</span> <span class="token maybe-class-name">Mal</span> geklickt<span class="token operator">&#x3C;</span><span class="token operator">/</span>p<span class="token operator">></span>
+        <span class="token operator">&#x3C;</span>button onClick<span class="token operator">=</span><span class="token punctuation">{</span><span class="token keyword">this</span><span class="token punctuation">.</span><span class="token property-access">handleClick</span><span class="token punctuation">}</span><span class="token operator">></span>
+          <span class="token maybe-class-name">Klick</span> mich
+        <span class="token operator">&#x3C;</span><span class="token operator">/</span>button<span class="token operator">></span>
+      <span class="token operator">&#x3C;</span><span class="token operator">/</span>div<span class="token operator">></span>
+    <span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token punctuation">}</span>
+<span class="token punctuation">}</span></code></pre>
+          <p>So können wir sie testen:</p>
+          <pre class="language-js{3,20-22,29-31}"><code class="language-js{3,20-22,29-31}">import React from 'react';
+import ReactDOM from 'react-dom/client';
+import { act } from 'react-dom/test-utils';
+import Counter from './Counter';
+
+let container;
+
+beforeEach(() => {
+  container = document.createElement('div');
+  document.body.appendChild(container);
+});
+
+afterEach(() => {
+  document.body.removeChild(container);
+  container = null;
+});
+
+it('kann einen Counter rendern und updaten', () => {
+  // Erstes Rendern und componentDidMount testen
+  act(() => {
+    ReactDOM.createRoot(container).render(&#x3C;Counter />);
+  });
+  const button = container.querySelector('button');
+  const label = container.querySelector('p');
+  expect(label.textContent).toBe('Du hast 0 Mal geklickt');
+  expect(document.title).toBe('Du hast 0 Mal geklickt');
+
+  // Zweites Rendern und componentDidUpdate testen
+  act(() => {
+    button.dispatchEvent(new MouseEvent('click', {bubbles: true}));
+  });
+  expect(label.textContent).toBe('Du hast 1 Mal geklickt');
+  expect(document.title).toBe('Du hast 1 Mal geklickt');
+});</code></pre>
+          <ul>
+            <li>
+              <p>Vergiss nicht, dass das Abschicken von DOM-Events nur funktioniert, wenn der DOM-Container zum <code>document</code> hinzugefügt wurde. Du kannst <a href="https://testing-library.com/react"><code>React Testing Library</code></a> zur Hilfe nehmen, um Boilerplate-Code zu reduzieren.</p>
+            </li>
+            <li>
+              <p>Das <a href="./testing-recipes.html"><code>recipes</code></a> Dokument enthält mehr Details dazu, wie sich <code>act()</code> verhält, mit Beispiele und Anwendungsgebieten.</p>
+            </li>
+          </ul>
+          <hr>
+        </section>
+        <section id="mockcomponent-mockcomponent" class="level3">
+          <h3><code>mockComponent()</code> {#mockcomponent}</h3>
+          <pre class="language-javascript"><code class="language-javascript"><span class="token function">mockComponent</span><span class="token punctuation">(</span>
+  componentClass<span class="token punctuation">,</span>
+  <span class="token punctuation">[</span>mockTagName<span class="token punctuation">]</span>
+<span class="token punctuation">)</span></code></pre>
+          <p>Übergebe dieser Methode ein gemocktes Komponenten-Modul, um es mit nützlichen Methoden zu erweitern, mit denen es als Dummy-React-Komponente verwendet werden kann. Anstatt wie üblich zu rendern, wird die Komponente zu einem einfachen <code>&#x3C;div></code> (oder zu einem anderen <code>Tag</code>, falls <code>mockTagName</code> angegeben wurde), das die ihr übergegebenen Children-Elemente enthält.</p>
+          <blockquote>
+            <p>Hinweis:</p>
+            <p><code>mockComponent()</code> ist eine veraltete API. Wir empfehlen, stattdessen <a href="https://jestjs.io/docs/tutorial-react-native#mock-native-modules-using-jestmock"><code>jest.mock()</code></a> zu verwenden.</p>
+          </blockquote>
+          <hr>
+        </section>
+        <section id="iselement-iselement" class="level3">
+          <h3><code>isElement()</code> {#iselement}</h3>
+          <pre class="language-javascript"><code class="language-javascript"><span class="token function">isElement</span><span class="token punctuation">(</span>element<span class="token punctuation">)</span></code></pre>
+          <p>Gibt <code>true</code> zurück, falls <code>element</code> ein React-Element ist.</p>
+          <hr>
+        </section>
+        <section id="iselementoftype-iselementoftype" class="level3">
+          <h3><code>isElementOfType()</code> {#iselementoftype}</h3>
+          <pre class="language-javascript"><code class="language-javascript"><span class="token function">isElementOfType</span><span class="token punctuation">(</span>
+  element<span class="token punctuation">,</span>
+  componentClass
+<span class="token punctuation">)</span></code></pre>
+          <p>Gibt <code>true</code> zurück, falls <code>element</code> ein React-Element vom Typ React <code>componentClass</code> ist.</p>
+          <hr>
+        </section>
+        <section id="isdomcomponent-isdomcomponent" class="level3">
+          <h3><code>isDOMComponent()</code> {#isdomcomponent}</h3>
+          <pre class="language-javascript"><code class="language-javascript"><span class="token function">isDOMComponent</span><span class="token punctuation">(</span>instance<span class="token punctuation">)</span></code></pre>
+          <p>Gibt <code>true</code> zurück, falls <code>instance</code> eine DOM-Komponente (z. B. ein <code>&#x3C;div></code> oder <code>&#x3C;span></code>) ist.</p>
+          <hr>
+        </section>
+        <section id="iscompositecomponent-iscompositecomponent" class="level3">
+          <h3><code>isCompositeComponent()</code> {#iscompositecomponent}</h3>
+          <pre class="language-javascript"><code class="language-javascript"><span class="token function">isCompositeComponent</span><span class="token punctuation">(</span>instance<span class="token punctuation">)</span></code></pre>
+          <p>Gibt <code>true</code> zurück, falls <code>instance</code> eine benutzerdefinierte Komponente, z. B. eine Klasse oder Funktion, ist.</p>
+          <hr>
+        </section>
+        <section id="iscompositecomponentwithtype-iscompositecomponentwithtype" class="level3">
+          <h3><code>isCompositeComponentWithType()</code> {#iscompositecomponentwithtype}</h3>
+          <pre class="language-javascript"><code class="language-javascript"><span class="token function">isCompositeComponentWithType</span><span class="token punctuation">(</span>
+  instance<span class="token punctuation">,</span>
+  componentClass
+<span class="token punctuation">)</span></code></pre>
+          <p>Gibt <code>true</code> zurück, falls <code>instance</code> eine Komponente vom Typ React <code>componentClass</code> ist.</p>
+          <hr>
+        </section>
+        <section id="findallinrenderedtree-findallinrenderedtree" class="level3">
+          <h3><code>findAllInRenderedTree()</code> {#findallinrenderedtree}</h3>
+          <pre class="language-javascript"><code class="language-javascript"><span class="token function">findAllInRenderedTree</span><span class="token punctuation">(</span>
+  tree<span class="token punctuation">,</span>
+  test
+<span class="token punctuation">)</span></code></pre>
+          <p>Durchläuft alle Komponenten in <code>tree</code> und sammelt alle Komponenten, bei denen <code>test(component)</code> <code>true</code> ist. Das ist für sich allein genommen nicht besonders nützlich, wird aber als Primitive für andere Test-Utilities verwendet.</p>
+          <hr>
+        </section>
+        <section id="scryrendereddomcomponentswithclass-scryrendereddomcomponentswithclass" class="level3">
+          <h3><code>scryRenderedDOMComponentsWithClass()</code> {#scryrendereddomcomponentswithclass}</h3>
+          <pre class="language-javascript"><code class="language-javascript"><span class="token function">scryRenderedDOMComponentsWithClass</span><span class="token punctuation">(</span>
+  tree<span class="token punctuation">,</span>
+  className
+<span class="token punctuation">)</span></code></pre>
+          <p>Findet alle DOM-Elemente von Komponenten im gerenderten Baum, bei denen der Klassennamen der Komponenten mit <code>className</code> übereinstimmt.</p>
+          <hr>
+        </section>
+        <section id="findrendereddomcomponentwithclass-findrendereddomcomponentwithclass" class="level3">
+          <h3><code>findRenderedDOMComponentWithClass()</code> {#findrendereddomcomponentwithclass}</h3>
+          <pre class="language-javascript"><code class="language-javascript"><span class="token function">findRenderedDOMComponentWithClass</span><span class="token punctuation">(</span>
+  tree<span class="token punctuation">,</span>
+  className
+<span class="token punctuation">)</span></code></pre>
+          <p>Verhält sich wie <a href="#scryrendereddomcomponentswithclass"><code>scryRenderedDOMComponentsWithClass()</code></a>, erwartet aber genau ein Resultat und gibt dieses zurück. Gibt einen Fehler aus, falls es mehr oder weniger als eine Übereinstimmung gibt.</p>
+          <hr>
+        </section>
+        <section id="scryrendereddomcomponentswithtag-scryrendereddomcomponentswithtag" class="level3">
+          <h3><code>scryRenderedDOMComponentsWithTag()</code> {#scryrendereddomcomponentswithtag}</h3>
+          <pre class="language-javascript"><code class="language-javascript"><span class="token function">scryRenderedDOMComponentsWithTag</span><span class="token punctuation">(</span>
+  tree<span class="token punctuation">,</span>
+  tagName
+<span class="token punctuation">)</span></code></pre>
+          <p>Findet alle DOM-Elemente von Komponenten im gerenderten Baum, bei denen der Tagname der Komponenten mit <code>tagName</code> übereinstimmt.</p>
+          <hr>
+        </section>
+        <section id="findrendereddomcomponentwithtag-findrendereddomcomponentwithtag" class="level3">
+          <h3><code>findRenderedDOMComponentWithTag()</code> {#findrendereddomcomponentwithtag}</h3>
+          <pre class="language-javascript"><code class="language-javascript"><span class="token function">findRenderedDOMComponentWithTag</span><span class="token punctuation">(</span>
+  tree<span class="token punctuation">,</span>
+  tagName
+<span class="token punctuation">)</span></code></pre>
+          <p>Verhält sich wie <a href="#scryrendereddomcomponentswithtag"><code>scryRenderedDOMComponentsWithTag()</code></a>, erwartet aber genau ein Resultat und gibt dieses zurück. Gibt einen Fehler aus, falls es mehr oder weniger als eine Übereinstimmung gibt.</p>
+          <hr>
+        </section>
+        <section id="scryrenderedcomponentswithtype-scryrenderedcomponentswithtype" class="level3">
+          <h3><code>scryRenderedComponentsWithType()</code> {#scryrenderedcomponentswithtype}</h3>
+          <pre class="language-javascript"><code class="language-javascript"><span class="token function">scryRenderedComponentsWithType</span><span class="token punctuation">(</span>
+  tree<span class="token punctuation">,</span>
+  componentClass
+<span class="token punctuation">)</span></code></pre>
+          <p>Findet alle Instanzen von Komponenten, deren Typ mit <code>componentClass</code> übereinstimmt.</p>
+          <hr>
+        </section>
+        <section id="findrenderedcomponentwithtype-findrenderedcomponentwithtype" class="level3">
+          <h3><code>findRenderedComponentWithType()</code> {#findrenderedcomponentwithtype}</h3>
+          <pre class="language-javascript"><code class="language-javascript"><span class="token function">findRenderedComponentWithType</span><span class="token punctuation">(</span>
+  tree<span class="token punctuation">,</span>
+  componentClass
+<span class="token punctuation">)</span></code></pre>
+          <p>Verhält sich wie <a href="#scryrenderedcomponentswithtype"><code>scryRenderedComponentsWithType()</code></a>, erwartet aber genau ein Resultat und gibt dieses zurück. Gibt einen Fehler aus, falls es mehr oder weniger als eine Übereinstimmung gibt.</p>
+          <hr>
+        </section>
+        <section id="renderintodocument-renderintodocument" class="level3">
+          <h3><code>renderIntoDocument()</code> {#renderintodocument}</h3>
+          <pre class="language-javascript"><code class="language-javascript"><span class="token function">renderIntoDocument</span><span class="token punctuation">(</span>element<span class="token punctuation">)</span></code></pre>
+          <p>Rendert ein React-Element in einen separaten DOM-Knoten im Dokument. <strong>Diese Funktion benötigt ein DOM.</strong> Effektiv ist sie äquivalent zu:</p>
+          <pre class="language-js"><code class="language-js"><span class="token keyword">const</span> domContainer <span class="token operator">=</span> <span class="token dom variable">document</span><span class="token punctuation">.</span><span class="token method function property-access">createElement</span><span class="token punctuation">(</span><span class="token string">'div'</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token maybe-class-name">ReactDOM</span><span class="token punctuation">.</span><span class="token method function property-access">createRoot</span><span class="token punctuation">(</span>domContainer<span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token method function property-access">render</span><span class="token punctuation">(</span>element<span class="token punctuation">)</span><span class="token punctuation">;</span></code></pre>
+          <blockquote>
+            <p>Hinweis:</p>
+            <p><code>window</code>, <code>window.document</code> und <code>window.document.createElement</code> müssen global verfügbar sein, <strong>bevor</strong> du <code>React</code> importierst. Ansonsten denkt React, dass es nicht auf das DOM zugreifen kann, und Methoden wie <code>setState</code> werden nicht funktionieren.</p>
+          </blockquote>
+          <hr>
+        </section>
+      </section>
+      <section id="other-utilities" class="level2">
+        <h2>Andere Utilities</h2>
+        <section id="simulate-simulate" class="level3">
+          <h3><code>Simulate</code> {#simulate}</h3>
+          <pre class="language-javascript"><code class="language-javascript"><span class="token maybe-class-name">Simulate</span><span class="token punctuation">.</span><span class="token punctuation">{</span>eventName<span class="token punctuation">}</span><span class="token punctuation">(</span>
+  element<span class="token punctuation">,</span>
+  <span class="token punctuation">[</span>eventData<span class="token punctuation">]</span>
+<span class="token punctuation">)</span></code></pre>
+          <p>Simuliere das Abschicken eines Events auf einen DOM-Knoten mit optionalen <code>eventData</code>-Eventdaten.</p>
+          <p><code>Simulate</code> hat eine Methode für <a href="./events.html#supported-events">jedes Event, das React versteht</a>.</p>
+          <p><strong>Ein Element anklicken</strong></p>
+          <pre class="language-javascript"><code class="language-javascript"><span class="token comment">// &#x3C;button ref={(node) => this.button = node}>...&#x3C;/button></span>
+<span class="token keyword">const</span> node <span class="token operator">=</span> <span class="token keyword">this</span><span class="token punctuation">.</span><span class="token property-access">button</span><span class="token punctuation">;</span>
+<span class="token maybe-class-name">ReactTestUtils</span><span class="token punctuation">.</span><span class="token property-access"><span class="token maybe-class-name">Simulate</span></span><span class="token punctuation">.</span><span class="token method function property-access">click</span><span class="token punctuation">(</span>node<span class="token punctuation">)</span><span class="token punctuation">;</span></code></pre>
+          <p><strong>Den Wert eines Input-Feldes verändern und dann ENTER drücken</strong></p>
+          <pre class="language-javascript"><code class="language-javascript"><span class="token comment">// &#x3C;input ref={(node) => this.textInput = node} /></span>
+<span class="token keyword">const</span> node <span class="token operator">=</span> <span class="token keyword">this</span><span class="token punctuation">.</span><span class="token property-access">textInput</span><span class="token punctuation">;</span>
+node<span class="token punctuation">.</span><span class="token property-access">value</span> <span class="token operator">=</span> <span class="token string">'Giraffe'</span><span class="token punctuation">;</span>
+<span class="token maybe-class-name">ReactTestUtils</span><span class="token punctuation">.</span><span class="token property-access"><span class="token maybe-class-name">Simulate</span></span><span class="token punctuation">.</span><span class="token method function property-access">change</span><span class="token punctuation">(</span>node<span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token maybe-class-name">ReactTestUtils</span><span class="token punctuation">.</span><span class="token property-access"><span class="token maybe-class-name">Simulate</span></span><span class="token punctuation">.</span><span class="token method function property-access">keyDown</span><span class="token punctuation">(</span>node<span class="token punctuation">,</span> <span class="token punctuation">{</span><span class="token literal-property property">key</span><span class="token operator">:</span> <span class="token string">"Enter"</span><span class="token punctuation">,</span> <span class="token literal-property property">keyCode</span><span class="token operator">:</span> <span class="token number">13</span><span class="token punctuation">,</span> <span class="token literal-property property">which</span><span class="token operator">:</span> <span class="token number">13</span><span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">;</span></code></pre>
+          <blockquote>
+            <p>Hinweis</p>
+            <p>Du musst jede Event-Eigenschaft angeben, die du in deiner Komponente verwendest (z. B. keyCode, which, etc.), da React keine davon für dich erstellt.</p>
+          </blockquote>
+          <hr>
+          <p><span style="float: footnote;"><a href="./index.html#toc">Go to TOC</a></span></p>
+        </section>
+      </section>
+    </section>
+  </body>
+</html>

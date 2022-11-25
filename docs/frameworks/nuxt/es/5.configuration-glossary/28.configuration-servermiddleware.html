@@ -1,0 +1,120 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8">
+    <title>The serverMiddleware Property</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="navigation.title" content="serverMiddleware">
+    <meta name="description" content="Define server-side middleware.">
+    <meta name="menu" content="serverMiddleware">
+    <meta name="category" content="configuration-glossary">
+    <link rel="stylesheet" href="https://raw.githubusercontent.com/shinokada/prism-coy-theme/main/theme_common.css">
+  </head>
+  <body>
+    <section id="the-servermiddleware-property" class="level1">
+      <h1>The serverMiddleware property</h1>
+      <p>Define server-side middleware.</p>
+      <hr>
+      <ul>
+        <li>Type: <code>Array</code>
+          <ul>
+            <li>Items: <code>String</code> or <code>Object</code> or <code>Function</code></li>
+          </ul>
+        </li>
+      </ul>
+      <p>Nuxt internally creates a <a href="https://github.com/senchalabs/connect">connect</a> instance that you can add your own custom middleware to. This allows us to register additional routes (typically <code>/api</code> routes) <strong>without need for an external server</strong>.</p>
+      <p>Because connect itself is a middleware, registered middleware will work with both <code>nuxt start</code> and also when used as a middleware with programmatic usages like <a href="https://github.com/nuxt-community/express-template">express-template</a>. Nuxt <a href="./directory-structure/modules">Modules</a> can also provide <code>serverMiddleware</code> using <a href="./internals-glossary/internals-module-container#addservermiddleware-middleware">this.addServerMiddleware()</a></p>
+      <p>Additional to them, we introduced a <code>prefix</code> option which defaults to <code>true</code>. It will add the router base to your server middlewares.</p>
+      <p><strong>Example:</strong></p>
+      <ul>
+        <li>Server middleware path: <code>/server-middleware</code></li>
+        <li>Router base: <code>/admin</code></li>
+        <li>With <code>prefix: true</code> (default): <code>/admin/server-middleware</code></li>
+        <li>With <code>prefix: false</code>: <code>/server-middleware</code></li>
+      </ul>
+      <section id="servermiddleware-vs-middleware" class="level2">
+        <h2>serverMiddleware vs middleware!</h2>
+        <p>Don't confuse it with <a href="./directory-structure/middleware">routes middleware</a> which are called before each route by Vue in Client Side or SSR. Middleware listed in the <code>serverMiddleware</code> property runs server-side <strong>before</strong> <code>vue-server-renderer</code> and can be used for server specific tasks like handling API requests or serving assets.</p>
+        <section id="warning" class="level4">
+          <h4>Warning</h4>
+          <p>Do not add serverMiddleware to the middleware/ directory.</p>
+          <p>Middleware, are bundled by webpack into your production bundle and run on beforeRouteEnter. If you add serverMiddleware to the middleware/ directory it will be wrongly picked up by Nuxt as middleware and will add wrong dependencies to your bundle or generate errors.</p>
+        </section>
+      </section>
+      <section id="usage" class="level2">
+        <h2>Usage</h2>
+        <p>If middleware is String Nuxt will try to automatically resolve and require it.</p>
+        <pre class="language-js{}[nuxt.config.js]"><code class="language-js{}[nuxt.config.js]">import serveStatic from 'serve-static'
+
+export default {
+  serverMiddleware: [
+    // Will register redirect-ssl npm package
+    'redirect-ssl',
+
+    // Will register file from project server-middleware directory to handle /server-middleware/* requires
+    { path: '/server-middleware', handler: '~/server-middleware/index.js' },
+
+    // We can create custom instances too
+    { path: '/static2', handler: serveStatic(__dirname + '/static2') }
+  ]
+}</code></pre>
+        <section id="warning-1" class="level4">
+          <h4>Warning</h4>
+          <p>If you don't want middleware to register for all routes you have to use Object form with specific path, otherwise nuxt default handler won't work!</p>
+        </section>
+      </section>
+      <section id="custom-server-middleware" class="level2">
+        <h2>Custom Server Middleware</h2>
+        <p>It is also possible to write custom middleware. For more information See <a href="https://github.com/senchalabs/connect#appusefn">Connect Docs</a>.</p>
+        <p>Middleware (<code>server-middleware/logger.js</code>):</p>
+        <pre class="language-js{}[server-middleware/logger.js]"><code class="language-js{}[server-middleware/logger.js]">export default function (req, res, next) {
+  // req is the Node.js http request object
+  console.log(req.url)
+
+  // res is the Node.js http response object
+
+  // next is a function to call to invoke the next middleware
+  // Don't forget to call next at the end if your middleware is not an endpoint!
+  next()
+}</code></pre>
+        <pre class="language-js{}[nuxt.config.js]"><code class="language-js{}[nuxt.config.js]">serverMiddleware: ['~/server-middleware/logger']</code></pre>
+      </section>
+      <section id="custom-api-endpoint" class="level2">
+        <h2>Custom API endpoint</h2>
+        <p>A server middleware can also extend Express. This allows the creation of REST endpoints.</p>
+        <pre class="language-js{}[server-middleware/rest.js]"><code class="language-js{}[server-middleware/rest.js]">const bodyParser = require('body-parser')
+const app = require('express')()
+
+app.use(bodyParser.json())
+app.all('/getJSON', (req, res) => {
+  res.json({ data: 'data' })
+})
+
+module.exports = app</code></pre>
+        <pre class="language-js{}[nuxt.config.js]"><code class="language-js{}[nuxt.config.js]">serverMiddleware: [
+  { path: "/server-middleware", handler: "~/server-middleware/rest.js" },
+],</code></pre>
+      </section>
+      <section id="object-syntax" class="level2">
+        <h2>Object Syntax</h2>
+        <p>If your server middleware consists of a list of functions mapped to paths:</p>
+        <pre class="language-js"><code class="language-js"><span class="token keyword module">export</span> <span class="token keyword module">default</span> <span class="token punctuation">{</span>
+  <span class="token literal-property property">serverMiddleware</span><span class="token operator">:</span> <span class="token punctuation">[</span>
+    <span class="token punctuation">{</span> <span class="token literal-property property">path</span><span class="token operator">:</span> <span class="token string">'/a'</span><span class="token punctuation">,</span> <span class="token literal-property property">handler</span><span class="token operator">:</span> <span class="token string">'~/server-middleware/a.js'</span> <span class="token punctuation">}</span><span class="token punctuation">,</span>
+    <span class="token punctuation">{</span> <span class="token literal-property property">path</span><span class="token operator">:</span> <span class="token string">'/b'</span><span class="token punctuation">,</span> <span class="token literal-property property">handler</span><span class="token operator">:</span> <span class="token string">'~/server-middleware/b.js'</span> <span class="token punctuation">}</span><span class="token punctuation">,</span>
+    <span class="token punctuation">{</span> <span class="token literal-property property">path</span><span class="token operator">:</span> <span class="token string">'/c'</span><span class="token punctuation">,</span> <span class="token literal-property property">handler</span><span class="token operator">:</span> <span class="token string">'~/server-middleware/c.js'</span> <span class="token punctuation">}</span>
+  <span class="token punctuation">]</span>
+<span class="token punctuation">}</span></code></pre>
+        <p>You can alternatively pass an object to define them, as follows:</p>
+        <pre class="language-js"><code class="language-js"><span class="token keyword module">export</span> <span class="token keyword module">default</span> <span class="token punctuation">{</span>
+  <span class="token literal-property property">serverMiddleware</span><span class="token operator">:</span> <span class="token punctuation">{</span>
+    <span class="token string-property property">'/a'</span><span class="token operator">:</span> <span class="token string">'~/server-middleware/a.js'</span><span class="token punctuation">,</span>
+    <span class="token string-property property">'/b'</span><span class="token operator">:</span> <span class="token string">'~/server-middleware/b.js'</span><span class="token punctuation">,</span>
+    <span class="token string-property property">'/c'</span><span class="token operator">:</span> <span class="token string">'~/server-middleware/c.js'</span>
+  <span class="token punctuation">}</span>
+<span class="token punctuation">}</span></code></pre>
+        <p><span style="float: footnote;"><a href="../index.html#toc">Go to TOC</a></span></p>
+      </section>
+    </section>
+  </body>
+</html>

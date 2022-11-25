@@ -1,0 +1,117 @@
+<!doctype html>
+<html lang="he">
+  <head>
+    <meta charset="utf-8">
+    <title>טיפול באירועים</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="https://raw.githubusercontent.com/shinokada/prism-coy-theme/main/theme_common.css">
+  </head>
+  <body>
+    <section id="טיפול-באירועים" class="level1">
+      <h1>טיפול באירועים</h1>
+      <p>טיפול באירועים עם אלמנטים של React דומה מאוד לטיפול באירועים באלמנטים של DOM. ישנם כמה הבדלים תחביריים:</p>
+      <ul>
+        <li>שמות אירועים של React נכתבים באמצעות תחביר camelCase (כל תחילת מילה באות גדולה פרט לראשונה), ולא באותיות קטנות.</li>
+        <li>ב-JSX מעבירים פונקציה כמטפל האירוע, ולא מחרוזת.</li>
+      </ul>
+      <p>למשל, ה-HTML:</p>
+      <pre class="language-html"><code class="language-html"><span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;</span>button</span> <span class="token special-attr"><span class="token attr-name">onclick</span><span class="token attr-value"><span class="token punctuation attr-equals">=</span><span class="token punctuation">"</span><span class="token value javascript language-javascript"><span class="token function">activateLasers</span><span class="token punctuation">(</span><span class="token punctuation">)</span></span><span class="token punctuation">"</span></span></span><span class="token punctuation">></span></span>
+  הפעל לייזרים
+<span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;/</span>button</span><span class="token punctuation">></span></span></code></pre>
+      <p>הוא מעט שונה ב-React:</p>
+      <pre class="language-js{1}"><code class="language-js{1}">&#x3C;button onClick={activateLasers}>
+  הפעל לייזרים
+&#x3C;/button></code></pre>
+      <p>הבדל נוסף הוא שאינכם יכולים להחזיר <code>false</code> כדי למנוע התנהגות ברירת מחדל ב-React. אתם חייבים לקרוא ל-<code>preventDefault</code> במפורש. לדוגמה, עם HTML רגיל, כדי למנוע את התנהגות ברירת המחדל עבור קישור של פתיחת דף חדש, אתם יכולים לכתוב:</p>
+      <pre class="language-html"><code class="language-html"><span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;</span>form</span> <span class="token special-attr"><span class="token attr-name">onsubmit</span><span class="token attr-value"><span class="token punctuation attr-equals">=</span><span class="token punctuation">"</span><span class="token value javascript language-javascript"><span class="token console class-name">console</span><span class="token punctuation">.</span><span class="token method function property-access">log</span><span class="token punctuation">(</span><span class="token string">'לחצת שלח.'</span><span class="token punctuation">)</span><span class="token punctuation">;</span> <span class="token keyword control-flow">return</span> <span class="token boolean">false</span></span><span class="token punctuation">"</span></span></span><span class="token punctuation">></span></span>
+  <span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;</span>button</span> <span class="token attr-name">type</span><span class="token attr-value"><span class="token punctuation attr-equals">=</span><span class="token punctuation">"</span>submit<span class="token punctuation">"</span></span><span class="token punctuation">></span></span>שלח<span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;/</span>button</span><span class="token punctuation">></span></span>
+<span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;/</span>form</span><span class="token punctuation">></span></span></code></pre>
+      <p>ב-React, זה יכול להיות במקום זאת:</p>
+      <pre class="language-js{3}"><code class="language-js{3}">function Form() {
+  function handleSubmit(e) {
+    e.preventDefault();
+    console.log('לחצת שלח.');
+  }
+
+  return (
+    &#x3C;form onSubmit={handleSubmit}>
+      &#x3C;button type="submit">שלח&#x3C;/button>
+    &#x3C;/form>
+  );
+}</code></pre>
+      <p>כאן, <code>e</code> הוא אירוע סינתטי. React מגדיר אירועים סינתטיים אלה בהתאם ל<a href="https://www.w3.org/TR/DOM-Level-3-Events/">מפרט W3C</a>, כך שאתם לא צריכים לדאוג לתאימות בין דפדפנים. events בריאקט לא עובדים בדיוק כמו native events. עיינו בהפנייה למדריך <a href="./events.html"><code>SyntheticEvent</code></a> כדי ללמוד עוד.</p>
+      <p>בעת שימוש ב-React אתם בדרך כלל לא צריכים לקרוא ל-<code>addEventListener</code> כדי להוסיף מאזינים לאלמנט DOM לאחר שנוצר. במקום זאת, רק ספקו מאזין כאשר האלמנט רונדר בהתחלה.</p>
+      <p>כאשר אתם מגדירים קומפוננטה באמצעות <a href="https://developer.mozilla.org/en/docs/Web/JavaScript/Reference/Classes">מחלקת ES6</a>, זהו דפוס נפוץ שמטפל אירוע הוא מתודה במחלקה. למשל, רכיב <code>Toggle</code> זה מרנדר כפתור המאפשר למשתמש לעבור בין מצבי "ON" ו-"OFF":</p>
+      <pre class="language-js{6,7,10-14,18}"><code class="language-js{6,7,10-14,18}">class Toggle extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = {isToggleOn: true};
+
+    // ה-binding הזה הכרחי כדי לגרום לכך ש-`this` יעבוד בתוך ה-callback
+    this.handleClick = this.handleClick.bind(this);
+  }
+
+  handleClick() {
+    this.setState(prevState => ({
+      isToggleOn: !prevState.isToggleOn
+    }));
+  }
+
+  render() {
+    return (
+      &#x3C;button onClick={this.handleClick}>
+        {this.state.isToggleOn ? 'ON' : 'OFF'}
+      &#x3C;/button>
+    );
+  }
+}</code></pre>
+      <p><a href="https://codepen.io/gaearon/pen/xEmzGg?editors=0010"><strong>נסו זאת ב-CodePen</strong></a></p>
+      <p>עליכם להיות זהירים לגבי המשמעות של <code>this</code> בקריאות JSX. ב-JavaScript, מתודות מחלקה אינן <a href="https://developer.mozilla.org/en/docs/Web/JavaScript/Reference/Global_objects/Function/bind">bound</a> כברירת מחדל. אם תשכחו לעשות bind ל-<code>this.handleClick</code> ותעבירו אותה ל-<code>onClick</code>, <code>this</code> יהיה <code>undefined</code> כאשר הפונקציה תקרא למעשה.</p>
+      <p>זו אינה התנהגות ספציפית ל-React; זה חלק מ<a href="https://www.smashingmagazine.com/2014/01/understanding-javascript-function-prototype-bind/">איך שפונקציות פועלות ב-JavaScript</a>. באופן כללי, אם אתם מתייחסים למתודה ללא <code>()</code> אחריה, כגון <code>onClick={this.handleClick}</code>, עליכם לעשות bind לאותה מתודה.</p>
+      <p>אם קריאה ל-<code>bind</code> מפריעה לכם, יש שתי דרכים לעקוף את זה. אם אתם משתמשים ב<a href="https://babeljs.io/docs/plugins/transform-class-properties/">תחביר שדות ציבוריים של מחלקה</a> הנסיוני, תוכלו להשתמש בשדות המחלקה כדי לעשות bind ל-callbacks בדרך הנכונה:</p>
+      <pre class="language-js{2-6}"><code class="language-js{2-6}">class LoggingButton extends React.Component {
+  // תחביר זה מבטיח ש-`this` הוא bound בתוך handleClick.
+  // אזהרה: זהו תחביר *ניסיוני*.
+  handleClick = () => {
+    console.log('this is:', this);
+  }
+
+  render() {
+    return (
+      &#x3C;button onClick={this.handleClick}>
+        לחץ עליי
+      &#x3C;/button>
+    );
+  }
+}</code></pre>
+      <p>תחביר זה מופעל כברירת מחדל ב-<a href="https://github.com/facebookincubator/create-react-app">Create React App</a>.</p>
+      <p>אם אינכם משתמשים בתחביר שדות של מחלקה, באפשרותכם להשתמש ב<a href="https://developer.mozilla.org/en/docs/Web/JavaScript/Reference/Functions/Arrow_functions">פונקצית חץ</a> ב-callback:</p>
+      <pre class="language-js{7-9}"><code class="language-js{7-9}">class LoggingButton extends React.Component {
+  handleClick() {
+    console.log('this is:', this);
+  }
+
+  render() {
+    // תחביר זה מבטיח ש-`this` הוא bound בתוך handleClick
+    return (
+      &#x3C;button onClick={() => this.handleClick()}>
+        לחץ עליי
+      &#x3C;/button>
+    );
+  }
+}</code></pre>
+      <p>הבעיה עם תחביר זה היא שנוצר callback שונה בכל פעם שה-<code>LoggingButton</code> מרונדר. ברוב המקרים, זה בסדר. עם זאת, אם callback זה מועבר כ-prop לקומפוננטות נמוכות יותר, קומפוננטות אלו עשויות לבצע רינדור מחדש נוסף. באופן כללי אנו ממליצים על ביצוע binding בבנאי או באמצעות תחביר שדות מחלקה, כדי למנוע בעית ביצועים זו.</p>
+      <section id="passing-arguments-to-event-handlers" class="level2">
+        <h2>העברת ארגומנטים למטפלי אירועים</h2>
+        <p>בתוך לולאה זהו דבר נפוץ לרצות להעביר פרמטר נוסף למטפל האירוע. לדוגמה, אם <code>id</code> הוא מזהה השורה, כל אחת מהאפשרויות הבאות תעבוד:</p>
+        <pre class="language-js"><code class="language-js"><span class="token operator">&#x3C;</span>button onClick<span class="token operator">=</span><span class="token punctuation">{</span><span class="token punctuation">(</span><span class="token parameter">e</span><span class="token punctuation">)</span> <span class="token arrow operator">=></span> <span class="token keyword">this</span><span class="token punctuation">.</span><span class="token method function property-access">deleteRow</span><span class="token punctuation">(</span>id<span class="token punctuation">,</span> e<span class="token punctuation">)</span><span class="token punctuation">}</span><span class="token operator">></span>מחק שורה<span class="token operator">&#x3C;</span><span class="token operator">/</span>button<span class="token operator">></span>
+<span class="token operator">&#x3C;</span>button onClick<span class="token operator">=</span><span class="token punctuation">{</span><span class="token keyword">this</span><span class="token punctuation">.</span><span class="token method function property-access">deleteRow</span><span class="token punctuation">.</span><span class="token method function property-access">bind</span><span class="token punctuation">(</span><span class="token keyword">this</span><span class="token punctuation">,</span> id<span class="token punctuation">)</span><span class="token punctuation">}</span><span class="token operator">></span>מחק שורה<span class="token operator">&#x3C;</span><span class="token operator">/</span>button<span class="token operator">></span></code></pre>
+        <p>שתי השורות למעלה שוות, ומשתמשות ב<a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Functions/Arrow_functions">פונקציות חץ</a> ו-<a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_objects/Function/bind"><code>Function.prototype.bind</code></a> בהתאמה.</p>
+        <p>
+          בשני המקרים, הארגומנט <code>e</code> שמייצג את אירוע ה-React יועבר כארגומנט שני לאחר המזהה. עם פונקציית חץ, אנחנו צריכים להעביר אותו במפורש, אבל עם <code>bind</code> כל הארגומנטים הנוספים מועברים באופן אוטומטי.
+          <span style="float: footnote;"><a href="./index.html#toc">Go to TOC</a></span>
+        </p>
+      </section>
+    </section>
+  </body>
+</html>

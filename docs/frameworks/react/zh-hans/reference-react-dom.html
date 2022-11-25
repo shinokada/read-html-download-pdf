@@ -1,0 +1,142 @@
+<!doctype html>
+<html lang="zh-hans">
+  <head>
+    <meta charset="utf-8">
+    <title>ReactDOM</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="https://raw.githubusercontent.com/shinokada/prism-coy-theme/main/theme_common.css">
+  </head>
+  <body>
+    <section id="reactdom" class="level1">
+      <h1>ReactDOM</h1>
+      <p><code>react-dom</code> 包提供了用户 DOM 的特定方法，可以在你应用程序的顶层进行使用，如果你有需要的话，还可以作为应急方案，在 React 模型以外的地方使用。</p>
+      <pre class="language-js"><code class="language-js"><span class="token keyword module">import</span> <span class="token imports"><span class="token operator">*</span> <span class="token keyword module">as</span> <span class="token maybe-class-name">ReactDOM</span></span> <span class="token keyword module">from</span> <span class="token string">'react-dom'</span><span class="token punctuation">;</span></code></pre>
+      <p>如果你使用 npm 和 ES5，你可以用：</p>
+      <pre class="language-js"><code class="language-js"><span class="token keyword">var</span> <span class="token maybe-class-name">ReactDOM</span> <span class="token operator">=</span> <span class="token function">require</span><span class="token punctuation">(</span><span class="token string">'react-dom'</span><span class="token punctuation">)</span><span class="token punctuation">;</span></code></pre>
+      <p><code>react-dom</code> 包还提供了客户端和服务器应用程序的特定模块：</p>
+      <ul>
+        <li><a href="./react-dom-client.html"><code>react-dom/client</code></a></li>
+        <li><a href="./react-dom-server.html"><code>react-dom/server</code></a></li>
+      </ul>
+      <section id="overview" class="level2">
+        <h2>概览</h2>
+        <p><code>react-dom</code> 包导出了如下这些方法：</p>
+        <ul>
+          <li><a href="#createportal"><code>createPortal()</code></a></li>
+          <li><a href="#flushsync"><code>flushSync()</code></a></li>
+        </ul>
+        <p>如下这些方法也会被 <code>react-dom</code> 导出，但会被认为是遗弃：</p>
+        <ul>
+          <li><a href="#render"><code>render()</code></a></li>
+          <li><a href="#hydrate"><code>hydrate()</code></a></li>
+          <li><a href="#finddomnode"><code>findDOMNode()</code></a></li>
+          <li><a href="#unmountcomponentatnode"><code>unmountComponentAtNode()</code></a></li>
+        </ul>
+        <blockquote>
+          <p>注意：</p>
+          <p>在 React 18，<code>render</code> 和 <code>hydrate</code> 都被新的 <a href="./react-dom-client.html">客户端方法</a> 所取代。这些方法将警告你的应用程序将表现得像运行 React 17 一样（欲了解更多请参阅 <a href="https://reactjs.org/link/switch-to-createroot">此处</a>）。</p>
+        </blockquote>
+        <section id="browser-support" class="level3">
+          <h3>浏览器支持</h3>
+          <p>React 支持所有的现代浏览器，尽管对于旧版本来说，可能需要引入 <a href="./javascript-environment-requirements.html">相关的 polyfills 依赖</a>。</p>
+          <blockquote>
+            <p>注意：</p>
+            <p>我们不支持那些不兼容 ES5 方法的旧版浏览器，但如果你的应用包含了 polyfill，例如 <a href="https://github.com/es-shims/es5-shim">es5-shim 和 es5-sham</a> 你可能会发现你的应用仍然可以在这些浏览器中正常运行。但是如果你选择这种方法，你便需要孤军奋战了。</p>
+          </blockquote>
+        </section>
+      </section>
+      <section id="reference" class="level2">
+        <h2>参考</h2>
+        <section id="createportal-createportal" class="level3">
+          <h3><code>createPortal()</code> {#createportal}</h3>
+          <pre class="language-javascript"><code class="language-javascript"><span class="token function">createPortal</span><span class="token punctuation">(</span>child<span class="token punctuation">,</span> container<span class="token punctuation">)</span></code></pre>
+          <p>创建 portal。<a href="./portals.html">Portal</a> 提供了一种将子节点渲染到已 DOM 节点中的方式，该节点存在于 DOM 组件的层次结构之外。</p>
+        </section>
+        <section id="flushsync-flushsync" class="level3">
+          <h3><code>flushSync()</code> {#flushsync}</h3>
+          <pre class="language-javascript"><code class="language-javascript"><span class="token function">flushSync</span><span class="token punctuation">(</span>callback<span class="token punctuation">)</span></code></pre>
+          <p>强制 React 同步刷新提供的回调函数中的任何更新。这确保了 DOM 会被立即 更新。</p>
+          <pre class="language-javascript"><code class="language-javascript"><span class="token comment">// Force this state update to be synchronous.</span>
+<span class="token function">flushSync</span><span class="token punctuation">(</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token arrow operator">=></span> <span class="token punctuation">{</span>
+  <span class="token function">setCount</span><span class="token punctuation">(</span>count <span class="token operator">+</span> <span class="token number">1</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token comment">// By this point, DOM is updated.</span></code></pre>
+          <blockquote>
+            <p>注意：</p>
+            <p><code>flushSync</code> 会对性能产生很大影响。尽量少用。</p>
+            <p><code>flushSync</code> 可能会迫使悬而未决的 Suspense 边界显示其 <code>fallback</code> 的状态。</p>
+            <p><code>flushSync</code> 也可以运行待定副作用，并在返回之前同步应用它们所包含的任何更新。</p>
+            <p>当需要刷新内部的更新时，<code>flushSync</code> 也可以在回调外部刷新更新。例如，如果有来自点击的未决更新。React 可能会在刷新回调之前刷新这些更新。</p>
+          </blockquote>
+        </section>
+      </section>
+      <section id="legacy-reference" class="level2">
+        <h2>遗留方法参考</h2>
+        <section id="render-render" class="level3">
+          <h3><code>render()</code> {#render}</h3>
+          <pre class="language-javascript"><code class="language-javascript"><span class="token function">render</span><span class="token punctuation">(</span>element<span class="token punctuation">,</span> container<span class="token punctuation">[</span><span class="token punctuation">,</span> callback<span class="token punctuation">]</span><span class="token punctuation">)</span></code></pre>
+          <blockquote>
+            <p>注意：</p>
+            <p>在 React 18 中，<code>render</code> 函数已被 <code>createRoot</code> 函数所取代。具体请参阅 <a href="./react-dom-client.html#createroot">createRoot</a> 以了解更多。</p>
+          </blockquote>
+          <p>在提供的 <code>container</code> 里渲染一个 React 元素，并返回对该组件的<a href="./more-about-refs.html">引用</a>（或者针对<a href="./components-and-props.html#function-and-class-components">无状态组件</a>返回 <code>null</code>）。</p>
+          <p>如果 React 元素之前已经在 <code>container</code> 里渲染过，这将会对其执行更新操作，并仅会在必要时改变 DOM 以映射最新的 React 元素。</p>
+          <p>如果提供了可选的回调函数，该回调将在组件被渲染或更新之后被执行。</p>
+          <blockquote>
+            <p>注意：</p>
+            <p><code>render()</code> 会控制你传入容器节点里的内容。当首次调用时，容器节点里的所有 DOM 元素都会被替换，后续的调用则会使用 React 的 DOM 差分算法（DOM diffing algorithm）进行高效的更新。</p>
+            <p><code>render()</code> 不会修改容器节点（只会修改容器的子节点）。可以在不覆盖现有子节点的情况下，将组件插入已有的 DOM 节点中。</p>
+            <p>
+              <code>render()</code> 目前会返回对根组件 <code>ReactComponent</code> 实例的引用。
+              但是，目前应该避免使用返回的引用，因为它是历史遗留下来的内容，而且在未来版本的 React 中，组件渲染在某些情况下可能会是异步的。
+              如果你真的需要获得对根组件 <code>ReactComponent</code> 实例的引用，那么推荐为根元素添加 <a href="./refs-and-the-dom.html#callback-refs">callback ref</a>。
+            </p>
+            <p>使用 <code>render()</code> 对服务端渲染容器进行 hydrate 操作的方式已经被废弃，并且会在 React 17 被移除。作为替代，请使用 <a href="./react-dom-client.html#hydrateroot"><code>hydrateRoot()</code></a>。</p>
+          </blockquote>
+          <hr>
+        </section>
+        <section id="hydrate-hydrate" class="level3">
+          <h3><code>hydrate()</code> {#hydrate}</h3>
+          <pre class="language-javascript"><code class="language-javascript"><span class="token function">hydrate</span><span class="token punctuation">(</span>element<span class="token punctuation">,</span> container<span class="token punctuation">[</span><span class="token punctuation">,</span> callback<span class="token punctuation">]</span><span class="token punctuation">)</span></code></pre>
+          <blockquote>
+            <p>注意：</p>
+            <p>在 React 18 中，请使用 <code>hydrateRoot</code> 来替代 <code>hydrate</code>。请参阅 <a href="./react-dom-client.html#hydrateroot">hydrateRoot</a> 以了解更多。</p>
+          </blockquote>
+          <p>与 <a href="#render"><code>render()</code></a> 相同，但它用于在 <a href="./react-dom-server.html"><code>ReactDOMServer</code></a> 渲染的容器中对 HTML 的内容进行 hydrate 操作。React 会尝试在已有标记上绑定事件监听器。</p>
+          <p>React 希望服务端与客户端渲染的内容完全一致。React 可以弥补文本内容的差异，但是你需要将不匹配的地方作为 bug 进行修复。在开发者模式下，React 会对 hydration 操作过程中的不匹配进行警告。但并不能保证在不匹配的情况下，修补属性的差异。由于性能的关系，这一点非常重要，因为大多是应用中不匹配的情况很少见，并且验证所有标记的成本非常昂贵。</p>
+          <p>如果单个元素的属性或者文本内容，在服务端和客户端之间有无法避免差异（比如：时间戳），则可以为元素添加 <code>suppressHydrationWarning={true}</code> 来消除警告。这种方式只在一级深度上有效，应只作为一种应急方案（escape hatch）。请不要过度使用！除非它是文本内容，否则 React 仍不会尝试修补差异，因此在未来的更新之前，仍会保持不一致。</p>
+          <p>如果你执意要在服务端与客户端渲染不同内容，你可以采用双重（two-pass）渲染。在客户端渲染不同内容的组件可以读取类似于 <code>this.state.isClient</code> 的 state 变量，你可以在 <code>componentDidMount()</code> 里将它设置为 <code>true</code>。这种方式在初始渲染过程中会与服务端渲染相同的内容，从而避免不匹配的情况出现，但在 hydration 操作之后，会同步进行额外的渲染操作。注意，因为进行了两次渲染，这种方式会使得组件渲染变慢，请小心使用。</p>
+          <p>记得保证弱网环境下的用户体验。JavaScript 代码的加载要比最初的 HTML 渲染晚的多。因此如果你只在客户端渲染不同的内容，其转换可能会不稳定。但是，如果执行顺利，那么在服务端负责渲染的 shell 会对渲染提供帮助，并且只显示客户端上额外的小组件。欲了解如何在不出现标记不匹配的情况下执行此操作，请参考上一段的解释。</p>
+          <hr>
+        </section>
+        <section id="unmountcomponentatnode-unmountcomponentatnode" class="level3">
+          <h3><code>unmountComponentAtNode()</code> {#unmountcomponentatnode}</h3>
+          <pre class="language-javascript"><code class="language-javascript"><span class="token function">unmountComponentAtNode</span><span class="token punctuation">(</span>container<span class="token punctuation">)</span></code></pre>
+          <blockquote>
+            <p>注意：</p>
+            <p>在 React 18 中，<code>unmountComponentAtNode</code> 已被 <code>root.unmount()</code> 取代。具体请参阅 <a href="./react-dom-client.html#createroot">createRoot</a> 以了解更多。</p>
+          </blockquote>
+          <p>从 DOM 中卸载组件，会将其事件处理器（event handlers）和 state 一并清除。如果指定容器上没有对应已挂载的组件，这个函数什么也不会做。如果组件被移除将会返回 <code>true</code>，如果没有组件可被移除将会返回 <code>false</code>。</p>
+          <hr>
+        </section>
+        <section id="finddomnode-finddomnode" class="level3">
+          <h3><code>findDOMNode()</code> {#finddomnode}</h3>
+          <blockquote>
+            <p>注意:</p>
+            <p><code>findDOMNode</code> 是一个访问底层 DOM 节点的应急方案（escape hatch）。在大多数情况下，不推荐使用该方法，因为它会破坏组件的抽象结构。<a href="./strict-mode.html#warning-about-deprecated-finddomnode-usage">严格模式下该方法已弃用。</a></p>
+          </blockquote>
+          <pre class="language-javascript"><code class="language-javascript"><span class="token function">findDOMNode</span><span class="token punctuation">(</span>component<span class="token punctuation">)</span></code></pre>
+          <p>如果组件已经被挂载到 DOM 上，此方法会返回浏览器中相应的原生 DOM 元素。此方法对于从 DOM 中读取值很有用，例如获取表单字段的值或者执行 DOM 检测（performing DOM measurements）。<strong>大多数情况下，你可以绑定一个 ref 到 DOM 节点上，可以完全避免使用 findDOMNode。</strong></p>
+          <p>当组件渲染的内容为 <code>null</code> 或 <code>false</code> 时，<code>findDOMNode</code> 也会返回 <code>null</code>。当组件渲染的是字符串时，<code>findDOMNode</code> 返回的是字符串对应的 DOM 节点。从 React 16 开始，组件可能会返回有多个子节点的 fragment，在这种情况下，<code>findDOMNode</code> 会返回第一个非空子节点对应的 DOM 节点。</p>
+          <blockquote>
+            <p>注意:</p>
+            <p><code>findDOMNode</code> 只在已挂载的组件上可用（即，已经放置在 DOM 中的组件）。如果你尝试调用未挂载的组件（例如在一个还未创建的组件上调用 <code>render()</code> 中的 <code>findDOMNode()</code>）将会引发异常。</p>
+            <p><code>findDOMNode</code> 不能用于函数组件。</p>
+          </blockquote>
+          <hr>
+          <p><span style="float: footnote;"><a href="./index.html#toc">Go to TOC</a></span></p>
+        </section>
+      </section>
+    </section>
+  </body>
+</html>

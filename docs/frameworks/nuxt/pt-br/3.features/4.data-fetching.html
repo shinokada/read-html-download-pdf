@@ -1,0 +1,251 @@
+<!doctype html>
+<html lang="pt-br">
+  <head>
+    <meta charset="utf-8">
+    <title>Busca de Dados</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="No Nuxt, nós temos duas opções para buscar dados de uma API. Podemos utilizar o método fetch e o método asyncData.">
+    <meta name="category" content="features">
+    <meta name="csb_link" content="https://codesandbox.io/embed/github/nuxt-academy/guides-examples/tree/master/03_features/04_data_fetching?fontsize=14&#x26;hidenavigation=1&#x26;theme=dark">
+    <link rel="stylesheet" href="https://raw.githubusercontent.com/shinokada/prism-coy-theme/main/theme_common.css">
+  </head>
+  <body>
+    <section id="busca-de-dados" class="level1">
+      <h1>Busca de Dados</h1>
+      <p>No Nuxt, nós temos duas opções para buscar dados de uma API. Podemos utilizar o método fetch e o método asyncData.</p>
+      <hr>
+      <p>O Nuxt suporta os padrões tradicionais do Vue para carregar dados no lado do cliente em sua aplicação, como buscar dados através do método <code>mounted()</code>. Aplicações Universais, no entanto, precisam utilizar o método específico do Nuxt para poderem renderizar dados no lado do servidor. Isso permite que sua página seja renderizada com todos os dados necessários.</p>
+      <p>Nuxt possui dois métodos para carregamento assíncrono de dados:</p>
+      <ul>
+        <li><code>asyncData</code>. Este método só pode ser colocado em componentes de <em>página</em>. Ao contrário de <code>fetch</code>, este método não exibe um marcador de posição de carregamento durante a renderização no lado do cliente: em vez disso, bloqueia a navegação da rota até que seja resolvida, exibindo um erro de página se falhar.</li>
+        <li><code>fetch</code> (Nuxt 2.12+). Este método pode ser colocado em qualquer componente e fornece atalhos para renderizar estados de carregamento (durante a renderização no lado do cliente) e erros.</li>
+      </ul>
+      <p>Esses métodos podem ser usados ​​com <em>qualquer biblioteca de busca de dados</em> que você escolher. Recomendamos usar <a href="https://http.nuxtjs.org/">@nuxt/http</a> ou <a href="https://axios.nuxtjs.org/">@nuxt/axios</a> para fazer chamadas para APIs HTTP. Mais informações sobre essas bibliotecas, como guias para configuração de cabeçalhos de autenticação, podem ser encontradas em suas respectivas documentações.</p>
+      <section id="info" class="level4">
+        <h4>Info</h4>
+        <p>Se você definir <code>fetch</code> ou <code>asyncData</code> dentro de um mixin e também definir dentro de um componente/página, a função do mixin será substituída em vez de ser chamada.</p>
+      </section>
+    </section>
+    <section id="o-método-fetch" class="level1">
+      <h1>O método fetch</h1>
+      <section id="info-1" class="level4">
+        <h4>Info</h4>
+        <p><strong>Antes do Nuxt 2.12, havia um método diferente do <code>fetch</code> que apenas funciona em <em>componentes página</em> e não tinha acesso a instância do componente.</strong></p>
+        <p>Se o seu <code>fetch()</code> aceitar um argumento do <code>context</code>, ele será tratado como um método de busca legado. Essa funcionalidade está obsoleta e deve ser substituída por <code>asyncData</code> ou um <a href="./directory-structure/middleware#anonymous-middleware">middleware anônimo</a>.</p>
+        <p><code>fetch</code> é um método chamado durante a renderização no lado do servidor depois que a instância do componente é criada, e no cliente quando está navegando. O método <code>fetch</code> deve retornar uma <em>promise</em> (seja explicitamente ou implicitamente usando <code>async/await</code>) que será resolvido:</p>
+        <ul>
+          <li>No servidor, antes da página inicial ser renderizada</li>
+          <li>No cliente, algum tempo após o componente ser montado</li>
+        </ul>
+      </section>
+      <section id="info-2" class="level4">
+        <h4>Info</h4>
+        <p>Para <a href="./features/deployment-targets#hospedagem-est%C3%A1tica">hospedagem estática</a>, o método <code>fetch</code> será chamando apenas durante a geração, o resultado será armazenado em cache para uso no cliente. Para evitar conflitos de cache, será necessário especificar um nome para o seu componente, ou fornecer uma implementação exclusiva de <em>fetchKey</em>.</p>
+      </section>
+      <section id="uso" class="level3">
+        <h3>Uso</h3>
+        <section id="buscando-dados" class="level4">
+          <h4>Buscando dados</h4>
+          <p>Dentro do método <code>fetch</code>, você terá acesso à instância do componente através do <code>this</code>.</p>
+        </section>
+        <section id="info-3" class="level4">
+          <h4>Info</h4>
+          <p>Certifique-se de que todas as propriedades que você deseja modificar já foram declaradas em <code>data()</code>. Em seguida, os dados provenientes da busca podem ser atribuídos a essas propriedades.</p>
+        </section>
+        <section id="modificando-o-comportamento-do-fetch" class="level4">
+          <h4>Modificando o comportamento do fetch</h4>
+          <p><code>fetchOnServer</code>: É <code>Boolean</code> ou <code>Function</code>. (padrão: <code>true</code>), chama <code>fetch</code> ao renderizar a página no servidor</p>
+          <p><code>fetchKey</code>: <code>String</code> ou <code>Function</code> (padrão para o ID ou nome do componente), uma chave (ou uma função que produz uma chave única) que identifica o resultado do <code>fetch</code> deste componente (disponível no Nuxt 2.15+). Ao hidratar uma página renderizada ao servidor, esta chave é utilizada para mapear o resultado do <code>fetch()</code> no lado do servidor para os dados do componente no lado do cliente. <a href="https://github.com/nuxt/nuxt.js/pull/8466">Mais informações disponíveis no PR original</a>.</p>
+          <p><code>fetchDelay</code>: <code>Integer</code> (padrão: 200), defini o tempo mínimo de execução em milissegundos (para evitar flashes rápidos).</p>
+          <p>Quando <code>fetchOnServer</code> é falso (<code>false</code> ou devolve <code>false</code>), <code>fetch</code> será chamado somente no lado do cliente e <code>$fetchState.pending</code> retornará <code>true</code> quando o servidor estiver renderizando o componente.</p>
+          <pre class="language-js"><code class="language-js"><span class="token keyword module">export</span> <span class="token keyword module">default</span> <span class="token punctuation">{</span>
+  <span class="token function-variable function">data</span><span class="token operator">:</span> <span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token arrow operator">=></span> <span class="token punctuation">(</span><span class="token punctuation">{</span>
+    <span class="token literal-property property">posts</span><span class="token operator">:</span> <span class="token punctuation">[</span><span class="token punctuation">]</span>
+  <span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">,</span>
+  <span class="token keyword">async</span> <span class="token function">fetch</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token keyword">this</span><span class="token punctuation">.</span><span class="token property-access">posts</span> <span class="token operator">=</span> <span class="token keyword control-flow">await</span> <span class="token keyword">this</span><span class="token punctuation">.</span><span class="token property-access">$http</span><span class="token punctuation">.</span><span class="token method function property-access">$get</span><span class="token punctuation">(</span><span class="token string">'https://api.nuxtjs.dev/posts'</span><span class="token punctuation">)</span>
+  <span class="token punctuation">}</span><span class="token punctuation">,</span>
+  <span class="token literal-property property">fetchOnServer</span><span class="token operator">:</span> <span class="token boolean">false</span><span class="token punctuation">,</span>
+  <span class="token comment">// múltiplos componentes podem retornar o mesmo `fetchKey` e Nuxt irá rastreá-los separadamente</span>
+  <span class="token literal-property property">fetchKey</span><span class="token operator">:</span> <span class="token string">'site-sidebar'</span><span class="token punctuation">,</span>
+  <span class="token comment">// alternativamente, para maior controle, uma função pode ser passada com acesso à instância do componente</span>
+  <span class="token comment">// Será chamado em `created` e não deve depender de dados buscados</span>
+  <span class="token function">fetchKey</span><span class="token punctuation">(</span><span class="token parameter">getCounter</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token comment">// getCounter é um método que pode ser chamado para obter o próximo número em uma sequência</span>
+    <span class="token comment">// como parte da geração de um fetchKey único.</span>
+    <span class="token keyword control-flow">return</span> <span class="token keyword">this</span><span class="token punctuation">.</span><span class="token property-access">someOtherData</span> <span class="token operator">+</span> <span class="token function">getCounter</span><span class="token punctuation">(</span><span class="token string">'sidebar'</span><span class="token punctuation">)</span>
+  <span class="token punctuation">}</span>
+<span class="token punctuation">}</span></code></pre>
+        </section>
+      </section>
+      <section id="acessando-o-estado-do-fetch" class="level3">
+        <h3>Acessando o estado do fetch</h3>
+        <p>O <code>fetch</code> expõe o método <code>this.$fetchState</code> no componente com as seguintes propriedades:</p>
+        <ul>
+          <li><code>pending</code> é um <code>Boolean</code> que permite exibir um espaço reservado quando <code>fetch</code> está sendo chamado no <em>lado do cliente</em>.</li>
+          <li><code>error</code> é <code>null</code> ou um <code>Error</code> lançado pelo método fetch</li>
+          <li><code>timestamp</code> é um carimbo da hora (timestamp) em que ocorreu o último <code>fetch</code>, útil para <a href="#caching">cache com <code>keep-alive</code></a></li>
+        </ul>
+        <p>Além do <code>fetch</code> ser chamado pelo Nuxt, você pode chamar manualmente em seu componente (por exemplo, para recarregar seus dados assíncronos) chamando <code>this.$fetch()</code></p>
+        <pre class="language-html{}[components/NuxtMountains.vue]"><code class="language-html{}[components/NuxtMountains.vue]">&#x3C;template>
+  &#x3C;div>
+    &#x3C;p v-if="$fetchState.pending">Buscando montanhas...&#x3C;/p>
+    &#x3C;p v-else-if="$fetchState.error">Ocorreu um error :'(&#x3C;/p>
+    &#x3C;div v-else>
+      &#x3C;h1>Montanhas do Nuxt&#x3C;/h1>
+      &#x3C;ul>
+        &#x3C;li v-for="mountain of mountains">{{ mountain.title }}&#x3C;/li>
+      &#x3C;/ul>
+      &#x3C;button @click="$fetch">Recarregar&#x3C;/button>
+    &#x3C;/div>
+  &#x3C;/div>
+&#x3C;/template>
+
+&#x3C;script>
+  export default {
+    data() {
+      return {
+        mountains: []
+      }
+    },
+    async fetch() {
+      this.mountains = await fetch(
+        'https://api.nuxtjs.dev/mountains'
+      ).then(res => res.json())
+    }
+  }
+&#x3C;/script></code></pre>
+        <section id="info-4" class="level4">
+          <h4>Info</h4>
+          <p>Você pode acessar o <a href="./concepts/context-helpers">contexto do Nuxt</a> dentro de <code>fetch</code> utilizando <code>this.$nuxt.context</code></p>
+        </section>
+      </section>
+      <section id="observando-mudanças-em-query-strings" class="level3">
+        <h3>Observando mudanças em query strings</h3>
+        <p>Por padrão, o método <code>fetch</code> não é chamando quando uma <em>query string</em> é modificada. Para observar mudanças em consulta s você pode adicionar um observador em <code>$route.query</code> e chamar <code>$fetch</code>:</p>
+        <pre class="language-js"><code class="language-js"><span class="token keyword module">export</span> <span class="token keyword module">default</span> <span class="token punctuation">{</span>
+  <span class="token literal-property property">watch</span><span class="token operator">:</span> <span class="token punctuation">{</span>
+    <span class="token string-property property">'$route.query'</span><span class="token operator">:</span> <span class="token string">'$fetch'</span>
+  <span class="token punctuation">}</span><span class="token punctuation">,</span>
+  <span class="token keyword">async</span> <span class="token function">fetch</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token comment">// Chamando também em mudanças de query</span>
+  <span class="token punctuation">}</span>
+<span class="token punctuation">}</span></code></pre>
+      </section>
+      <section id="cache" class="level3">
+        <h3>Cache</h3>
+        <p>Você pode utilizar a diretiva <code>keep-alive</code> nos componentes <code>&#x3C;nuxt /></code> e <code>&#x3C;nuxt-child /></code> para salvar as chamadas ao <code>fetch</code> em páginas que você visitou.</p>
+        <pre class="language-html{}[layouts/default.vue]"><code class="language-html{}[layouts/default.vue]">&#x3C;template>
+  &#x3C;nuxt keep-alive />
+&#x3C;/template></code></pre>
+        <p>Você também pode especificar as <a href="https://vuejs.org/v2/api/#keep-alive">propriedades</a> passados ​​para <code>&#x3C;keep-alive></code> passando uma propriedade <code>keep-alive-props</code> para o componente <code>&#x3C;nuxt></code>.</p>
+        <pre class="language-html{}[layouts/default.vue]"><code class="language-html{}[layouts/default.vue]">&#x3C;nuxt keep-alive :keep-alive-props="{ max: 10 }" /></code></pre>
+        <p>Mantém apenas 10 componentes página na memória.</p>
+      </section>
+      <section id="manipulação-de-erros" class="level3">
+        <h3>Manipulação de Erros</h3>
+        <section id="warning" class="level4">
+          <h4>Warning</h4>
+          <p>Se houver um erro ao buscar dados, a página de erro normal do Nuxt não será carregada - e você não deve usar os métodos de redirecionamento ou erro do Nuxt em <code>fetch()</code>. Em vez disso, você precisará manipulá-lo em seu componente usando <code>$fetchState.error</code>.</p>
+          <p>Podemos verificar <code>$fetchState.error</code> e mostrar uma mensagem de erro se houver um erro ao buscar os dados.</p>
+          <pre class="language-html{}[components/MountainsList.vue]"><code class="language-html{}[components/MountainsList.vue]">&#x3C;template>
+  &#x3C;div>
+    &#x3C;p v-if="$fetchState.pending">Carregando....&#x3C;/p>
+    &#x3C;p v-else-if="$fetchState.error">Erro ao carregar as montanhas&#x3C;/p>
+    &#x3C;ul v-else>
+      &#x3C;li v-for="(mountain, index) in mountains" :key="index">
+        {{ mountain.title }}
+      &#x3C;/li>
+    &#x3C;/ul>
+  &#x3C;/div>
+&#x3C;/template>
+&#x3C;script>
+  export default {
+    data() {
+      return {
+        mountains: []
+      }
+    },
+    async fetch() {
+      this.mountains = await fetch(
+        'https://api.nuxtjs.dev/mountains'
+      ).then(res => res.json())
+    }
+  }
+&#x3C;/script></code></pre>
+        </section>
+      </section>
+      <section id="usando-o-método-activated" class="level3">
+        <h3>Usando o método <code>activated</code></h3>
+        <p>Nuxt irá preencher <code>this.$fetchState.timestamp</code> da última chamada ao <code>fetch</code> (SSR incluído). Você pode usar essa propriedade combinada com o método <code>activated</code> para adicionar um cache de 30 segundos ao <code>fetch</code>:</p>
+        <pre class="language-html{}[pages/posts/_id.vue]"><code class="language-html{}[pages/posts/_id.vue]">&#x3C;template> ... &#x3C;/template>
+
+&#x3C;script>
+  export default {
+    data() {
+      return {
+        posts: []
+      }
+    },
+    activated() {
+      // Chama o fetch novamente se o último fetch foi há 30 segundos
+      if (this.$fetchState.timestamp &#x3C;= Date.now() - 30000) {
+        this.$fetch()
+      }
+    },
+    async fetch() {
+      this.posts = await fetch('https://api.nuxtjs.dev/posts').then(res =>
+        res.json()
+      )
+    }
+  }
+&#x3C;/script></code></pre>
+        <p>A navegação para a mesma página não irá chamar <code>fetch</code> se o último <code>fetch</code> ocorreu há menos de 30 segundos.</p>
+      </section>
+      <section id="async-data" class="level2">
+        <h2>Async Data</h2>
+        <section id="warning-1" class="level4">
+          <h4>Warning</h4>
+          <p><code>asyncData</code> está disponível apenas para <a href="./directory-structure/pages">páginas</a> e você não terá acesso ao <code>this</code> dentro do método.</p>
+          <p><code>asyncData</code> é outro método para busca de dados universal. Ao contrário de <code>fetch</code>, que exige que você defina propriedades na instância do componente (ou despache ações Vuex) para salvar seu estado assíncrono, <code>asyncData</code> simplesmente mescla seu valor de retorno no estado local do seu componente. Aqui está um exemplo usando a biblioteca <a href="https://http.nuxtjs.org/">@nuxt/http</a>:</p>
+          <pre class="language-html{}[pages/posts/_id.vue]"><code class="language-html{}[pages/posts/_id.vue]">&#x3C;template>
+  &#x3C;div>
+    &#x3C;h1>{{ post.title }}&#x3C;/h1>
+    &#x3C;p>{{ post.description }}&#x3C;/p>
+  &#x3C;/div>
+&#x3C;/template>
+
+&#x3C;script>
+  export default {
+    async asyncData({ params, $http }) {
+      const post = await $http.$get(`https://api.nuxtjs.dev/posts/${params.id}`)
+      return { post }
+    }
+  }
+&#x3C;/script></code></pre>
+          <p>Ao contrário do <code>fetch</code>, a <em>promise</em> retornada pelo método <code>asyncData</code> é resolvida <em>durante a transição da rota</em>. Isso significa que nenhum "espaço reservado de carregamento" é visível durante as transições do lado do cliente (embora a <a href="https://nuxtjs.org/guides/features/loading">barra de carregamento</a> possa ser usada para indicar um estado de carregamento ao usuário). Em vez disso, o Nuxt aguardará a conclusão do método <code>asyncData</code> antes de navegar para a próxima página ou exibir a <a href="./directory-structure/layouts#error-page">página de erro</a>).</p>
+          <p>Esse método pode ser usado apenas em componentes nível de página. Ao contrário de <code>fetch</code>, <code>asyncData</code> não pode acessar a instância do componente (<code>this</code>). Em vez disso, ele recebe <a href="./concepts/context-helpers">o contexto</a> como seu argumento.</p>
+          <p>Nos próximos exemplos, estamos usando <a href="https://http.nuxtjs.org/">@nuxt/http</a> que nós recomendados para buscar dados de uma API.</p>
+        </section>
+        <section id="async-data-em-componentes" class="level3">
+          <h3>Async data em componentes?</h3>
+          <p>Como os componentes não possuem o método <code>asyncData</code>, você não pode carregar dados diretamente no lado do servidor em um componente. Para contornar essa limitação, você têm três opções básicas:</p>
+          <ol>
+            <li>Use <a href="#o-m%C3%A9todo-fetch">o novo método <code>fetch</code></a> que está disponível a partir do Nuxt 2.12.</li>
+            <li>Faça a chamada da API no método <code>mounted</code> e defina as propriedades dos dados quando carregados. <em>Desvantagem: Não funcionará para renderização no lado do servidor.</em></li>
+            <li>Faça a chamada da API no método <code>asyncData</code> do componente da página e passe os dados como propriedades para os sub componentes. A renderização do servidor funcionará bem. <em>Desvantagem: O <code>asyncData</code> da página pode ser menos legível porque está carregando os dados para outros componentes</em>.</li>
+          </ol>
+        </section>
+        <section id="ouvindo-mudanças-de-query" class="level3">
+          <h3>Ouvindo mudanças de query</h3>
+          <p>Por padrão, o método <code>asyncData</code> não é chamado quando ocorrem mudanças em <em>query strings</em>. Se você quiser mudar esse comportamento, por exemplo ao construir um componente, você pode configurar parâmetros que serão ouvidos usando a propriedade <code>watchQuery</code> do seu componente de página.</p>
+          <section id="next" class="level4">
+            <h4>Next</h4>
+            <p>Veja mais sobre a <a href="./components-glossary/watchquery">propriedade watchQuery</a> e veja a lista de <a href="./concepts/context-helpers">chaves disponíveis no contexto</a>.</p>
+            <p><span style="float: footnote;"><a href="../index.html#toc">Go to TOC</a></span></p>
+          </section>
+        </section>
+      </section>
+    </section>
+  </body>
+</html>

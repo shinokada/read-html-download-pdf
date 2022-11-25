@@ -1,0 +1,189 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="utf-8">
+    <title>Récupération de la data</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="Dans Nuxt, nous avons 2 façons de récupérer de la data depuis une API. Nous pouvons utiliser la méthode fetch ou bien asyncData.">
+    <meta name="category" content="features">
+    <meta name="csb_link" content="https://codesandbox.io/embed/github/nuxt-academy/guides-examples/tree/master/03_features/04_data_fetching?fontsize=14&#x26;hidenavigation=1&#x26;theme=dark">
+    <link rel="stylesheet" href="https://raw.githubusercontent.com/shinokada/prism-coy-theme/main/theme_common.css">
+  </head>
+  <body>
+    <section id="récupération-de-la-data" class="level1">
+      <h1>Récupération de la data</h1>
+      <p>Dans Nuxt, nous avons 2 façons de récupérer de la data depuis une API. Nous pouvons utiliser la méthode fetch ou bien asyncData.</p>
+      <hr>
+      <p>Nuxt prend en charge les modèles Vue traditionnels pour le chargement de données dans votre application côté client, comme la récupération de données dans le hook <code>mounted()</code> d'un composant. Cependant, les applications universelles doivent utiliser des hooks spécifiques à Nuxt pour pouvoir restituer les données lors du rendu côté serveur. Cela permet à votre page de s'afficher avec toutes ses données requises présentes.</p>
+      <p>Nuxt a deux hooks pour le chargement asynchrone des données:</p>
+      <ul>
+        <li>Le hook <code>fetch</code> (Nuxt 2.12+). Ce hook peut être placé sur n'importe quel composant et fournit des raccourcis pour le rendu des états de chargement (pendant le rendu côté client) et des erreurs.</li>
+        <li>Le hook <code>asyncData</code>. Ce hook ne peut être placé que sur les composants <em>page</em>. Contrairement à <code>fetch</code>, ce hook n'affiche pas d'espace réservé de chargement pendant le rendu côté client: à la place, ce hook bloque la navigation de l'itinéraire jusqu'à ce qu'il soit résolu, affichant une erreur de page en cas d'échec.</li>
+      </ul>
+      <section id="info" class="level4">
+        <h4>Info</h4>
+        <p>Dans les versions de Nuxt antérieures à la 2.12, le hook <code>fetch</code> fonctionnait un peu comme <code>asyncData</code> aujourd'hui. Cette fonctionnalité est toujours supportée aujourd'hui pour des raisons de rétrocompatibilité: si un argument <code>context</code> est accepté dans votre <code>fetch()</code>, il sera considéré comme un hook de récupération "hérité". Cette fonctionnalité est obsolète et doit être remplacée par <code>asyncData(context)</code> ou par un <a href="./directory-structure/middleware#anonymous-middleware">middleware anonyme</a> en utilisant <code>middleware(context)</code>.</p>
+        <p>Ces hooks peuvent être utilisés avec <em>toute bibliothèque de récupération de données</em> que vous choisissez. Nous vous recommandons d'utiliser <a href="https://http.nuxtjs.org/">@nuxt/http</a> ou <a href="https://axios.nuxtjs.org/">@nuxt/axios</a> pour faire des requêtes HTTP aux API. Vous trouverez plus d'informations sur ces bibliothèques, telles que des guides de configuration, des en-têtes d'authentification, dans leur documentation respective.</p>
+      </section>
+      <section id="le-hook-fetch" class="level2">
+        <h2>Le hook fetch</h2>
+        <section id="info-1" class="level4">
+          <h4>Info</h4>
+          <p>Ce hook est uniquement disponible à partir de Nuxt <code>2.12+</code>.</p>
+          <p>Le hook <code>fetch</code> de Nuxt est appelé après que l'instanciation du composant soit faite côté serveur: <code>this</code> est disponible à l'intérieur.</p>
+          <pre class="language-js"><code class="language-js"><span class="token keyword module">export</span> <span class="token keyword module">default</span> <span class="token punctuation">{</span>
+  <span class="token keyword">async</span> <span class="token function">fetch</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token console class-name">console</span><span class="token punctuation">.</span><span class="token method function property-access">log</span><span class="token punctuation">(</span><span class="token keyword">this</span><span class="token punctuation">)</span>
+  <span class="token punctuation">}</span>
+<span class="token punctuation">}</span></code></pre>
+        </section>
+        <section id="info-2" class="level4">
+          <h4>Info</h4>
+          <p><code>fetch(context)</code> a été déprécié dans nos pages, il faut utiliser un <a href="./directory-structure/middleware#anonymous-middleware">middleware anonyme</a> à la place: <code>middleware(context)</code></p>
+        </section>
+        <section id="quand-utiliser-fetch" class="level3">
+          <h3>Quand utiliser fetch?</h3>
+          <p>À chaque fois que nous avons besoin d'avoir de la data asynchrone. <code>fetch</code> est appelé côté serveur lors du render de la route et côté client lors de la navigation.</p>
+          <p>Cela expose <code>$fetchState</code> au niveau du composant et avec les propriétés suivantes:</p>
+          <ul>
+            <li><code>pending</code> est un Booléen, il permet d'afficher un placeholder quand <code>fetch</code> est appelé <em>côté client</em>.</li>
+            <li><code>error</code>, il peut être soit à <code>null</code> soit à <code>Error</code> et nous permet d'afficher un message</li>
+            <li><code>timestamp</code> est l'horodatage du dernier <code>fetch</code>, cela peut s'avérer utile pour faire du <a href="#caching">cache avec <code>keep-alive</code></a></li>
+          </ul>
+          <p>Nous avons aussi accès à <code>this.$fetch()</code>, utile si nous voulons appeler le hook <code>fetch</code> dans notre composant.</p>
+          <pre class="language-html{}[components/NuxtMountains.vue]"><code class="language-html{}[components/NuxtMountains.vue]">&#x3C;template>
+  &#x3C;p v-if="$fetchState.pending">Récupération des montagnes... ⛰️&#x3C;/p>
+  &#x3C;p v-else-if="$fetchState.error">Une erreur est survenue :(&#x3C;/p>
+  &#x3C;div v-else>
+    &#x3C;h1>Montagnes Nuxt&#x3C;/h1>
+    &#x3C;ul v-for="mountain of mountains">
+      &#x3C;li>{{ mountain.title }}&#x3C;/li>
+    &#x3C;/ul>
+    &#x3C;button @click="$fetch">Actualiser&#x3C;/button>
+  &#x3C;/div>
+&#x3C;/template>
+
+&#x3C;script>
+  export default {
+    data() {
+      return {
+        mountains: []
+      }
+    },
+    async fetch() {
+      this.mountains = await fetch(
+        'https://api.nuxtjs.dev/mountains'
+      ).then(res => res.json())
+    }
+  }
+&#x3C;/script></code></pre>
+          <section id="info-3" class="level4">
+            <h4>Info</h4>
+            <p>On peut accéder au <a href="./concepts/context-helpers">contexte</a> Nuxt à l'intérieur du hook <code>fetch</code> avec <code>this.$nuxt.context</code>.</p>
+          </section>
+        </section>
+        <section id="options" class="level3">
+          <h3>Options</h3>
+          <p><code>fetchOnServer</code>: Un booléen ou une fonction (par défaut: <code>true</code>), utile si on veut appeler <code>fetch()</code> lors du render de la page côté serveur.</p>
+          <p><code>fetchDelay</code>: Un entier (par défaut: <code>200</code>), définit une limite minimale exprimée en millisecondes de temps d'exécution (pour éviter les flashs).</p>
+          <p>Lorsque <code>fetchOnServer</code> est falsy (<code>false</code> ou retourne quelque chose de faux), <code>fetch</code> sera appelé uniquement côté client et <code>$fetchState.pending</code> retournera <code>true</code> lors du render du composant côté serveur.</p>
+          <pre class="language-js"><code class="language-js"><span class="token keyword module">export</span> <span class="token keyword module">default</span> <span class="token punctuation">{</span>
+  <span class="token function">data</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token keyword control-flow">return</span> <span class="token punctuation">{</span>
+      <span class="token literal-property property">posts</span><span class="token operator">:</span> <span class="token punctuation">[</span><span class="token punctuation">]</span>
+    <span class="token punctuation">}</span>
+  <span class="token punctuation">}</span><span class="token punctuation">,</span>
+  <span class="token keyword">async</span> <span class="token function">fetch</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token keyword">this</span><span class="token punctuation">.</span><span class="token property-access">posts</span> <span class="token operator">=</span> <span class="token keyword control-flow">await</span> <span class="token function">fetch</span><span class="token punctuation">(</span><span class="token string">'https://api.nuxtjs.dev/posts'</span><span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token method function property-access">then</span><span class="token punctuation">(</span><span class="token parameter">res</span> <span class="token arrow operator">=></span>
+      res<span class="token punctuation">.</span><span class="token method function property-access">json</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+    <span class="token punctuation">)</span>
+  <span class="token punctuation">}</span><span class="token punctuation">,</span>
+  <span class="token comment">// on appelle fetch uniquement du côté client</span>
+  <span class="token literal-property property">fetchOnServer</span><span class="token operator">:</span> <span class="token boolean">false</span>
+<span class="token punctuation">}</span></code></pre>
+        </section>
+        <section id="écoute-des-modifications-des-query-strings" class="level3">
+          <h3>Écoute des modifications des query strings</h3>
+          <p>Le hook <code>fetch</code> n'est pas appelé sur les modifications des query strings par défaut. Pour surveiller ces modifications, nous pouvons ajouter un watcher sur <code>$route.query</code> et appeler <code>$fetch</code>:</p>
+          <pre class="language-js"><code class="language-js"><span class="token keyword module">export</span> <span class="token keyword module">default</span> <span class="token punctuation">{</span>
+  <span class="token literal-property property">watch</span><span class="token operator">:</span> <span class="token punctuation">{</span>
+    <span class="token string-property property">'$route.query'</span><span class="token operator">:</span> <span class="token string">'$fetch'</span>
+  <span class="token punctuation">}</span><span class="token punctuation">,</span>
+  <span class="token keyword">async</span> <span class="token function">fetch</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token comment">// appelé aussi lors des modifications de query</span>
+  <span class="token punctuation">}</span>
+<span class="token punctuation">}</span></code></pre>
+        </section>
+        <section id="mise-en-cache" class="level3">
+          <h3>Mise en cache</h3>
+          <p>Nous pouvons utiliser la directive <code>keep-alive</code> dans les composants <code>&#x3C;nuxt/></code> et <code>&#x3C;nuxt-child></code> pour sauvegarder le résultat des appels de <code>fetch</code> dans les pages déjà visitées:</p>
+          <pre class="language-html{}[layouts/default.vue]"><code class="language-html{}[layouts/default.vue]">&#x3C;template>
+  &#x3C;nuxt keep-alive />
+&#x3C;/template></code></pre>
+          <p>Nous pouvons aussi spécifier les <a href="https://vuejs.org/v2/api/#keep-alive">props</a> passées à <code>&#x3C;keep-alive></code> en passant la prop <code>keep-alive-props</code> au composant <code>&#x3C;nuxt></code>.</p>
+          <pre class="language-html{}[layouts/default.vue]"><code class="language-html{}[layouts/default.vue]">&#x3C;nuxt keep-alive :keep-alive-props="{ max: 10 }" /></code></pre>
+          <p>Le code ci-dessus va garder en mémoire 10 composants <code>page</code>.</p>
+        </section>
+        <section id="utiliser-le-hook-activated" class="level3">
+          <h3>Utiliser le hook <code>activated</code></h3>
+          <p>Nuxt va directement remplir <code>this.$fetchState.timestamp</code> (horodatage) avec le dernier appel de <code>fetch</code> (cela inclut le SSR). Nous pouvons utiliser cette propriété en combinaison avec le hook <code>activated</code> pour ajouter 30 secondes de cache à <code>fetch</code>:</p>
+          <pre class="language-html{}[pages/posts/_id.vue]"><code class="language-html{}[pages/posts/_id.vue]">&#x3C;template> ... &#x3C;/template>
+
+&#x3C;script>
+  export default {
+    data() {
+      return {
+        posts: []
+      }
+    },
+    activated() {
+      // appeller fetch de nouveau si le dernier appel date de plus de 30 secondes
+      if (this.$fetchState.timestamp &#x3C;= Date.now() - 30000) {
+        this.$fetch()
+      }
+    },
+    async fetch() {
+      this.posts = await fetch('https://api.nuxtjs.dev/posts').then(res =>
+        res.json()
+      )
+    }
+  }
+&#x3C;/script></code></pre>
+          <p>La navigation à la même page ne va pas rappeler <code>fetch</code> tant que le dernier call ne date pas d'au moins 30 secondes.</p>
+        </section>
+      </section>
+      <section id="async-data" class="level2">
+        <h2>Async Data</h2>
+        <section id="info-4" class="level4">
+          <h4>Info</h4>
+          <p><code>asyncData</code> est seulement disponible pour les <a href="./directory-structure/pages">pages</a> et nous n'avons donc pas accès à <code>this</code> à l'intérieur du hook.</p>
+          <p>La différence principale avec <code>fetch</code> est que vous n'avez pas à gérer les status d'erreur ou en cours. Nuxt va attendre que le hook <code>asyncData</code> soit terminé avant de procéder à la navigation sur la page suivante ou afficher la <a href="./directory-structure/layouts#error-page">page d'erreur</a></p>
+          <p>Ce hook reçoit <a href="./concepts/context-helpers">le contexte</a> en tant que premier argument. Nous pouvons l'utiliser pour aller chercher de la data et Nuxt va automatiquement fusionner l'object retourné avec le <code>data</code> du composant.</p>
+          <pre class="language-html{}[pages/index.vue]"><code class="language-html{}[pages/index.vue]">&#x3C;template>
+  &#x3C;h1>{{ project }}&#x3C;/h1>
+&#x3C;/template>
+
+&#x3C;script>
+  export default {
+    async asyncData(context) {
+      return {
+        project: 'nuxt'
+      }
+    }
+  }
+&#x3C;/script></code></pre>
+          <p>Dans les exemples qui suivent nous utilisons <a href="https://http.nuxtjs.org/">@nuxt/http</a>, que nous recommandons pour aller récupérer de la data d'une API.</p>
+        </section>
+        <section id="écouter-les-changements-de-query" class="level3">
+          <h3>Écouter les changements de query</h3>
+          <p>La méthode <code>asyncData</code> n'est pas appelée par défaut sur les modifications liées aux query strings. Si nous souhaitons changer ce comportement, pour par exemple créer un composant de pagination, nous pouvons configurer des paramètres qui seront par la suite écoutés grâce à la propriété <code>watchQuery</code> sur le composant de notre page.</p>
+          <section id="info-5" class="level4">
+            <h4>Info</h4>
+            <p>Pour en apprendre davantage sur la <a href="./components-glossary/watchquery">propriété watchQuery</a> et voir la liste des <a href="./concepts/context-helpers">clés disponibles dans le contexte</a>.</p>
+            <p><span style="float: footnote;"><a href="../index.html#toc">Go to TOC</a></span></p>
+          </section>
+        </section>
+      </section>
+    </section>
+  </body>
+</html>

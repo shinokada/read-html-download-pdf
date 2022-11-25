@@ -1,0 +1,239 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="utf-8">
+    <title>Listes et clés</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="https://raw.githubusercontent.com/shinokada/prism-coy-theme/main/theme_common.css">
+  </head>
+  <body>
+    <section id="listes-et-clés" class="level1">
+      <h1>Listes et clés</h1>
+      <p>Tout d'abord, voyons comment transformer des listes en JavaScript.</p>
+      <p>Dans le code suivant, on utilise la méthode <a href="https://developer.mozilla.org/fr/docs/Web/JavaScript/Reference/Objets_globaux/Array/map"><code>map()</code></a> pour prendre un tableau de nombres et doubler leurs valeurs. On affecte le nouveau tableau retourné par <code>map()</code> à une variable <code>doubled</code> et on l'affiche dans la console :</p>
+      <pre class="language-javascript{2}"><code class="language-javascript{2}">const numbers = [1, 2, 3, 4, 5];
+const doubled = numbers.map((number) => number * 2);
+console.log(doubled);</code></pre>
+      <p>Ce code affiche <code>[2, 4, 6, 8, 10]</code> dans la console.</p>
+      <p>Avec React, transformer un tableau en une liste d'<a href="./rendering-elements.html">éléments</a> est presque identique.</p>
+      <section id="rendering-multiple-components" class="level3">
+        <h3>Afficher plusieurs composants</h3>
+        <p>On peut construire des collections d'éléments et <a href="./introducing-jsx.html#embedding-expressions-in-jsx">les inclure dans du JSX</a> en utilisant les accolades <code>{}</code>.</p>
+        <p>Ci-dessous, on itère sur le tableau de nombres en utilisant la méthode JavaScript <a href="https://developer.mozilla.org/fr/docs/Web/JavaScript/Reference/Objets_globaux/Array/map"><code>map()</code></a>. On retourne un élément <code>&#x3C;li></code> pour chaque entrée du tableau. Enfin, on affecte le tableau d'éléments résultant à <code>listItems</code> :</p>
+        <pre class="language-javascript{2-4}"><code class="language-javascript{2-4}">const numbers = [1, 2, 3, 4, 5];
+const listItems = numbers.map((number) =>
+  &#x3C;li>{number}&#x3C;/li>
+);</code></pre>
+        <p>On inclut tout le tableau <code>listItems</code> dans un élément <code>&#x3C;ul></code>, et <a href="./rendering-elements.html#rendering-an-element-into-the-dom">on l'affiche dans le DOM</a> :</p>
+        <pre class="language-javascript{2}"><code class="language-javascript{2}">ReactDOM.render(
+  &#x3C;ul>{listItems}&#x3C;/ul>,
+  document.getElementById('root')
+);</code></pre>
+        <p><a href="https://codepen.io/gaearon/pen/GjPyQr?editors=0011"><strong>Essayer sur CodePen</strong></a></p>
+        <p>Ce code affiche une liste à puces de nombres entre 1 et 5.</p>
+      </section>
+      <section id="basic-list-component" class="level3">
+        <h3>Composant basique de liste</h3>
+        <p>Généralement, on souhaite afficher une liste au sein d’un <a href="./components-and-props.html">composant</a>.</p>
+        <p>On peut transformer l’exemple précédent pour en faire un composant qui accepte un tableau de nombres et produit une liste d'éléments.</p>
+        <pre class="language-javascript{3-5,7,13}"><code class="language-javascript{3-5,7,13}">function NumberList(props) {
+  const numbers = props.numbers;
+  const listItems = numbers.map((number) =>
+    &#x3C;li>{number}&#x3C;/li>
+  );
+  return (
+    &#x3C;ul>{listItems}&#x3C;/ul>
+  );
+}
+
+const numbers = [1, 2, 3, 4, 5];
+ReactDOM.render(
+  &#x3C;NumberList numbers={numbers} />,
+  document.getElementById('root')
+);</code></pre>
+        <p>En exécutant ce code, vous obtiendrez un avertissement disant qu'une clé devrait être fournie pour les éléments d'une liste. Une « clé » <em>(key, NdT)</em>, est un attribut spécial que vous devez inclure quand vous créez une liste d'éléments. Nous verrons pourquoi c'est important dans la prochaine section.</p>
+        <p>Assignons une <code>key</code> aux éléments de notre liste dans <code>numbers.map()</code> afin de corriger le problème de clés manquantes.</p>
+        <pre class="language-javascript{4}"><code class="language-javascript{4}">function NumberList(props) {
+  const numbers = props.numbers;
+  const listItems = numbers.map((number) =>
+    &#x3C;li key={number.toString()}>
+      {number}
+    &#x3C;/li>
+  );
+  return (
+    &#x3C;ul>{listItems}&#x3C;/ul>
+  );
+}
+
+const numbers = [1, 2, 3, 4, 5];
+ReactDOM.render(
+  &#x3C;NumberList numbers={numbers} />,
+  document.getElementById('root')
+);</code></pre>
+        <p><a href="https://codepen.io/gaearon/pen/jrXYRR?editors=0011"><strong>Essayer sur CodePen</strong></a></p>
+      </section>
+      <section id="keys" class="level2">
+        <h2>Les clés</h2>
+        <p>Les clés aident React à identifier quels éléments d'une liste ont changé, ont été ajoutés ou supprimés. Vous devez donner une clé à chaque élément dans un tableau afin d’apporter aux éléments une identité stable :</p>
+        <pre class="language-js{3}"><code class="language-js{3}">const numbers = [1, 2, 3, 4, 5];
+const listItems = numbers.map((number) =>
+  &#x3C;li key={number.toString()}>
+    {number}
+  &#x3C;/li>
+);</code></pre>
+        <p>Le meilleur moyen de choisir une clé est d'utiliser quelque chose qui identifie de façon unique un élément d'une liste parmi ses voisins. Le plus souvent on utilise l'ID de notre donnée comme clé :</p>
+        <pre class="language-js{2}"><code class="language-js{2}">const todoItems = todos.map((todo) =>
+  &#x3C;li key={todo.id}>
+    {todo.text}
+  &#x3C;/li>
+);</code></pre>
+        <p>Quand vous n'avez pas d'ID stable pour les éléments affichés, vous pouvez utiliser l'index de l'élément en dernier recours :</p>
+        <pre class="language-js{2,3}"><code class="language-js{2,3}">const todoItems = todos.map((todo, index) =>
+  // Ne faites ceci que si les éléments n'ont pas d'ID stable
+  &#x3C;li key={index}>
+    {todo.text}
+  &#x3C;/li>
+);</code></pre>
+        <p>Nous vous recommandons de ne pas utiliser l'index comme clé si l'ordre des éléments est susceptible de changer. Ça peut avoir un effet négatif sur les performances, et causer des problèmes avec l'état du composant. Vous pouvez lire l'article de Robin Pokorny pour une <a href="https://medium.com/@robinpokorny/index-as-a-key-is-an-anti-pattern-e0349aece318">explication en profondeur de l'impact négatif de l'utilisation de l'index comme clé</a> (en anglais). Si vous choisissez de ne pas donner explicitement de clé aux éléments d'une liste, React utilisera l’index par défaut.</p>
+        <p>Si vous voulez en apprendre davantage, consultez cette <a href="./reconciliation.html#recursing-on-children">explication en profondeur de la raison pour laquelle les clés sont nécessaires</a>.</p>
+        <section id="extracting-components-with-keys" class="level3">
+          <h3>Extraire des composants avec des clés</h3>
+          <p>Les clés n'ont une signification que dans le contexte du tableau qui les entoure.</p>
+          <p>Par exemple, si on <a href="./components-and-props.html#extracting-components">extrait</a> un composant <code>ListItem</code>, on doit garder la clé sur l'élément <code>&#x3C;ListItem /></code> dans le tableau, et non sur l'élément <code>&#x3C;li></code> dans le composant <code>ListItem</code> lui-même.</p>
+          <p><strong>Exemple : utilisation erronée des clés</strong></p>
+          <pre class="language-javascript{4,5,14,15}"><code class="language-javascript{4,5,14,15}">function ListItem(props) {
+  const value = props.value;
+  return (
+    // Erroné ! Pas la peine de spécifier la clé ici :
+    &#x3C;li key={value.toString()}>
+      {value}
+    &#x3C;/li>
+  );
+}
+
+function NumberList(props) {
+  const numbers = props.numbers;
+  const listItems = numbers.map((number) =>
+    // Erroné : la clé doit être spécifiée ici :
+    &#x3C;ListItem value={number} />
+  );
+  return (
+    &#x3C;ul>
+      {listItems}
+    &#x3C;/ul>
+  );
+}
+
+const numbers = [1, 2, 3, 4, 5];
+ReactDOM.render(
+  &#x3C;NumberList numbers={numbers} />,
+  document.getElementById('root')
+);</code></pre>
+          <p><strong>Exemple : utilisation correcte des clés</strong></p>
+          <pre class="language-javascript{2,3,9,10}"><code class="language-javascript{2,3,9,10}">function ListItem(props) {
+  // Correct ! Pas la peine de spécifier la clé ici :
+  return &#x3C;li>{props.value}&#x3C;/li>;
+}
+
+function NumberList(props) {
+  const numbers = props.numbers;
+  const listItems = numbers.map((number) =>
+    // Correct ! La clé doit être spécifiée dans le tableau.
+    &#x3C;ListItem key={number.toString()} value={number} />
+  );
+  return (
+    &#x3C;ul>
+      {listItems}
+    &#x3C;/ul>
+  );
+}
+
+const numbers = [1, 2, 3, 4, 5];
+ReactDOM.render(
+  &#x3C;NumberList numbers={numbers} />,
+  document.getElementById('root')
+);</code></pre>
+          <p><a href="https://codepen.io/gaearon/pen/ZXeOGM?editors=0010"><strong>Essayer sur CodePen</strong></a></p>
+          <p>Gardez en tête cette règle simple : chaque élément à l'intérieur d'un appel à <code>map()</code> a besoin d'une clé.</p>
+        </section>
+        <section id="keys-must-only-be-unique-among-siblings" class="level3">
+          <h3>Les clés n’ont besoin d’être uniques qu’au sein de la liste</h3>
+          <p>Les clés utilisées dans un tableau doivent être uniques parmi leurs voisins. Cependant, elles n'ont pas besoin d'être globalement uniques. On peut utiliser les mêmes clés dans des tableaux différents :</p>
+          <pre class="language-js{2,5,11,12,19,21}"><code class="language-js{2,5,11,12,19,21}">function Blog(props) {
+  const sidebar = (
+    &#x3C;ul>
+      {props.posts.map((post) =>
+        &#x3C;li key={post.id}>
+          {post.title}
+        &#x3C;/li>
+      )}
+    &#x3C;/ul>
+  );
+  const content = props.posts.map((post) =>
+    &#x3C;div key={post.id}>
+      &#x3C;h3>{post.title}&#x3C;/h3>
+      &#x3C;p>{post.content}&#x3C;/p>
+    &#x3C;/div>
+  );
+  return (
+    &#x3C;div>
+      {sidebar}
+      &#x3C;hr />
+      {content}
+    &#x3C;/div>
+  );
+}
+
+const posts = [
+];
+ReactDOM.render(
+  &#x3C;Blog posts={posts} />,
+  document.getElementById('root')
+);</code></pre>
+          <p><a href="https://codepen.io/gaearon/pen/NRZYGN?editors=0010"><strong>Essayer sur CodePen</strong></a></p>
+          <p>Les clés servent d'indicateur à React mais ne sont pas passées à vos composants. Si vous avez besoin de la même valeur dans votre composant, passez-la dans une prop avec un nom différent :</p>
+          <pre class="language-js{3,4}"><code class="language-js{3,4}">const content = posts.map((post) =>
+  &#x3C;Post
+    key={post.id}
+    id={post.id}
+    title={post.title} />
+);</code></pre>
+          <p>Dans l'exemple ci-dessus, le composant <code>Post</code> peut accéder à <code>props.id</code>, mais pas à <code>props.key</code>.</p>
+        </section>
+        <section id="embedding-map-in-jsx" class="level3">
+          <h3>Intégrer <code>map()</code> dans du JSX</h3>
+          <p>Dans les exemples précédents, nous déclarions séparément la variable <code>listItems</code> pour ensuite l’inclure dans le JSX :</p>
+          <pre class="language-js{3-6}"><code class="language-js{3-6}">function NumberList(props) {
+  const numbers = props.numbers;
+  const listItems = numbers.map((number) =>
+    &#x3C;ListItem key={number.toString()}
+              value={number} />
+  );
+  return (
+    &#x3C;ul>
+      {listItems}
+    &#x3C;/ul>
+  );
+}</code></pre>
+          <p>JSX permet <a href="./introducing-jsx.html#embedding-expressions-in-jsx">d'intégrer des expressions quelconques</a> entre accolades. Nous pouvons donc utiliser <code>map()</code> directement dans notre code JSX :</p>
+          <pre class="language-js{5-8}"><code class="language-js{5-8}">function NumberList(props) {
+  const numbers = props.numbers;
+  return (
+    &#x3C;ul>
+      {numbers.map((number) =>
+        &#x3C;ListItem key={number.toString()}
+                  value={number} />
+      )}
+    &#x3C;/ul>
+  );
+}</code></pre>
+          <p><a href="https://codepen.io/gaearon/pen/BLvYrB?editors=0010"><strong>Essayer sur CodePen</strong></a></p>
+          <p>
+            Ça rend parfois le code plus lisible, mais il faut éviter d’en abuser. Comme avec JavaScript, c'est vous qui décidez quand ça vaut le coup d'extraire l'expression dans une variable pour plus de lisibilité. Gardez en tête que si le corps de <code>map()</code> est trop profond ou trop riche, c’est sans doute le signe qu’il faudrait <a href="./components-and-props.html#extracting-components">extraire un composant</a>.
+            <span style="float: footnote;"><a href="./index.html#toc">Go to TOC</a></span>
+          </p>
+        </section>
+      </section>
+    </section>
+  </body>
+</html>
