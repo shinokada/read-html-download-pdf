@@ -1,0 +1,203 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <title>Frequently Asked Questions</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="https://raw.githubusercontent.com/shinokada/prism-coy-theme/main/theme_common.css">
+  </head>
+  <body>
+    <section id="frequently-asked-questions" class="level1">
+      <h1>Frequently Asked Questions</h1>
+      <section id="why-does-my-node_modules-folder-use-disk-space-if-packages-are-stored-in-a-global-store" class="level2">
+        <h2>Why does my <code>node_modules</code> folder use disk space if packages are stored in a global store?</h2>
+        <p>
+          pnpm creates [hard links] from the global store to the project's <code>node_modules</code>
+          folders. Hard links point to the same place on the disk where the original
+          files are. So, for example, if you have <code>foo</code> in your project as a dependency
+          and it occupies 1MB of space, then it will look like it occupies 1MB of space in
+          the project's <code>node_modules</code> folder and the same amount of space in the global
+          store. However, that 1MB is <em>the same space</em> on the disk addressed from two
+          different locations. So in total <code>foo</code> occupies 1MB, not 2MB.
+        </p>
+        <p><a href="https://en.wikipedia.org/wiki/Hard_link">hard links</a></p>
+        <p>For more on this subject:</p>
+        <ul>
+          <li><a href="https://unix.stackexchange.com/questions/88423/why-do-hard-links-seem-to-take-the-same-space-as-the-originals">Why do hard links seem to take the same space as the originals?</a>)</li>
+          <li><a href="https://gist.github.com/zkochan/106cfef49f8476b753a9cbbf9c65aff1">A thread from the pnpm chat room</a>)</li>
+          <li><a href="https://github.com/pnpm/pnpm/issues/794">An issue in the pnpm repo</a>)</li>
+        </ul>
+      </section>
+      <section id="does-it-work-on-windows" class="level2">
+        <h2>Does it work on Windows?</h2>
+        <p>
+          Short answer: Yes.
+          Long answer: Using symbolic linking on Windows is problematic to say the least,
+          however, pnpm has a workaround. For Windows, we use [junctions] instead.
+        </p>
+        <p><a href="https://docs.microsoft.com/en-us/windows/win32/fileio/hard-links-and-junctions">junctions</a></p>
+      </section>
+      <section id="but-the-nested-node_modules-approach-is-incompatible-with-windows" class="level2">
+        <h2>But the nested <code>node_modules</code> approach is incompatible with Windows?</h2>
+        <p>
+          Early versions of npm had issues because of nesting all <code>node_modules</code> (see
+          [this issue]). However, pnpm does not create deep folders, it stores all packages
+          flatly and uses symbolic links to create the dependency tree structure.
+        </p>
+        <p><a href="https://github.com/nodejs/node-v0.x-archive/issues/6960">this issue</a></p>
+      </section>
+      <section id="what-about-circular-symlinks" class="level2">
+        <h2>What about circular symlinks?</h2>
+        <p>
+          Although pnpm uses linking to put dependencies into <code>node_modules</code> folders,
+          circular symlinks are avoided because parent packages are placed into the same
+          <code>node_modules</code> folder in which their dependencies are. So <code>foo</code>'s dependencies
+          are not in <code>foo/node_modules</code>, but <code>foo</code> is in <code>node_modules</code> together with its
+          own dependencies.
+        </p>
+      </section>
+      <section id="why-have-hard-links-at-all-why-not-symlink-directly-to-the-global-store" class="level2">
+        <h2>Why have hard links at all? Why not symlink directly to the global store?</h2>
+        <p>One package can have different sets of dependencies on one machine.</p>
+        <p>
+          In project <strong>A</strong> <code>foo@1.0.0</code> can have a dependency resolved to <code>bar@1.0.0</code>, but
+          in project <strong>B</strong> the same dependency of <code>foo</code> might resolve to <code>bar@1.1.0</code>; so,
+          pnpm hard links <code>foo@1.0.0</code> to every project where it is used, in order to
+          create different sets of dependencies for it.
+        </p>
+        <p>
+          Direct symlinking to the global store would work with Node's
+          <code>--preserve-symlinks</code> flag, however, that approach comes with a plethora of its
+          own issues, so we decided to stick with hard links. For more details about why
+          this decision was made, see [this issue][eps-issue].
+        </p>
+        <p><a href="https://github.com/nodejs/node-eps/issues/46">eps-issue</a></p>
+      </section>
+      <section id="does-pnpm-work-across-multiple-drives-or-filesystems" class="level2">
+        <h2>Does pnpm work across multiple drives or filesystems?</h2>
+        <p>
+          The package store should be on the same drive and filesystem as installations,
+          otherwise packages will be copied, not linked. This is due to a limitation in
+          how hard linking works, in that a file on one filesystem cannot address a
+          location in another. See [Issue #712] for more details.
+        </p>
+        <p>pnpm functions differently in the 2 cases below:</p>
+        <p><a href="https://github.com/pnpm/pnpm/issues/712">Issue #712</a></p>
+        <section id="store-path-is-specified" class="level3">
+          <h3>Store path is specified</h3>
+          <p>
+            If the store path is specified via <a href="configuring.html">the store config</a> then copying
+            occurs between the store and any projects that are on a different disk.
+          </p>
+          <p>
+            If you run <code>pnpm install</code> on disk <code>A</code>, then the pnpm store must be on disk <code>A</code>.
+            If the pnpm store is located on disk <code>B</code>, then all required packages will be
+            directly copied to the project location instead of being linked. This severely
+            inhibits the storage and performance benefits of pnpm.
+          </p>
+        </section>
+        <section id="store-path-is-not-specified" class="level3">
+          <h3>Store path is NOT specified</h3>
+          <p>
+            If the store path is not set, then multiple stores are created (one per drive or
+            filesystem).
+          </p>
+          <p>
+            If installation is run on disk <code>A</code>, the store will be created on <code>A</code>
+            <code>.pnpm-store</code> under the filesystem root. If later the installation is run on
+            disk <code>B</code>, an independent store will be created on <code>B</code> at <code>.pnpm-store</code>. The
+            projects would still maintain the benefits of pnpm, but each drive may have
+            redundant packages.
+          </p>
+        </section>
+      </section>
+      <section id="what-does-pnpm-stand-for" class="level2">
+        <h2>What does <code>pnpm</code> stand for?</h2>
+        <p>
+          <code>pnpm</code> stands for <code>performant npm</code>.
+          <a href="https://github.com/rstacruz/">@rstacruz</a> came up with the name.)
+        </p>
+      </section>
+      <section id="pnpm-does-not-work-with-your-project-here" class="level2">
+        <h2><code>pnpm</code> does not work with &#x3C;YOUR-PROJECT-HERE>?</h2>
+        <p>
+          In most cases it means that one of the dependencies require packages not
+          declared in <code>package.json</code>. It is a common mistake caused by flat
+          <code>node_modules</code>. If this happens, this is an error in the dependency and the
+          dependency should be fixed. That might take time though, so pnpm supports
+          workarounds to make the buggy packages work.
+        </p>
+        <section id="solution-1" class="level3">
+          <h3>Solution 1</h3>
+          <p>
+            In the following example, a dependency does <strong>not</strong> have the <code>iterall</code> module in
+            its own list of deps.
+          </p>
+          <p>
+            The easiest solution to resolve missing dependencies of the buggy packages is to
+            <strong>add <code>iterall</code> as a dependency to our project's <code>package.json</code></strong>.
+          </p>
+          <p>
+            You can do so, by installing it via <code>pnpm add iterall</code>, and will be
+            automatically added to your project's <code>package.json</code>.
+          </p>
+          <pre class="language-json"><code class="language-json">  dependencies<span class="token operator">:</span> <span class="token punctuation">{</span>
+    ...
+    iterall<span class="token operator">:</span> ^<span class="token number">1.2</span>.<span class="token number">2</span><span class="token punctuation">,</span>
+    ...
+  <span class="token punctuation">}</span></code></pre>
+        </section>
+        <section id="solution-2" class="level3">
+          <h3>Solution 2</h3>
+          <p>
+            One of the solutions is to use <a href="pnpmfile.html">hooks</a> for adding the missing
+            dependencies to the package's <code>package.json</code>.
+          </p>
+          <p>
+            An example was [Webpack Dashboard] which wasn't working with <code>pnpm</code>. It has
+            since been resolved such that it works with <code>pnpm</code> now.
+          </p>
+          <p>It used to throw an error:</p>
+          <pre class="language-console"><code class="language-console">Error: Cannot find module 'babel-traverse'
+  at /node_modules/inspectpack@2.2.3/node_modules/inspectpack/lib/actions/parse</code></pre>
+          <p>
+            The problem was that <code>babel-traverse</code> was used in <code>inspectpack</code> which
+            was used by <code>webpack-dashboard</code>, but <code>babel-traverse</code> wasn't specified in
+            <code>inspectpack</code>'s <code>package.json</code>. It still worked with <code>npm</code> and <code>yarn</code> because
+            they create flat <code>node_modules</code>.
+          </p>
+          <p>The solution was to create a <code>.pnpmfile.cjs</code> with the following contents:</p>
+          <pre class="language-js"><code class="language-js">module<span class="token punctuation">.</span><span class="token property-access">exports</span> <span class="token operator">=</span> <span class="token punctuation">{</span>
+  <span class="token literal-property property">hooks</span><span class="token operator">:</span> <span class="token punctuation">{</span>
+    <span class="token function-variable function">readPackage</span><span class="token operator">:</span> <span class="token punctuation">(</span><span class="token parameter">pkg</span><span class="token punctuation">)</span> <span class="token arrow operator">=></span> <span class="token punctuation">{</span>
+      <span class="token keyword control-flow">if</span> <span class="token punctuation">(</span>pkg<span class="token punctuation">.</span><span class="token property-access">name</span> <span class="token operator">===</span> inspectpack<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        pkg<span class="token punctuation">.</span><span class="token property-access">dependencies</span><span class="token punctuation">[</span><span class="token string">'babel-traverse'</span><span class="token punctuation">]</span> <span class="token operator">=</span> <span class="token string">'^6.26.0'</span><span class="token punctuation">;</span>
+      <span class="token punctuation">}</span>
+      <span class="token keyword control-flow">return</span> pkg<span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+  <span class="token punctuation">}</span>
+<span class="token punctuation">}</span><span class="token punctuation">;</span></code></pre>
+          <p>
+            After creating a <code>.pnpmfile.cjs</code>, delete <code>pnpm-lock.yaml</code> only - there is no need
+            to delete <code>node_modules</code>, as pnpm hooks only affect module resolution. Then,
+            rebuild the dependencies &#x26; it should be working.
+          </p>
+          <p><a href="https://github.com/pnpm/pnpm/issues/1043">Webpack Dashboard</a></p>
+        </section>
+        <section id="solution-3" class="level3">
+          <h3>Solution 3</h3>
+          <p>
+            In case there are too many issues, you can use the <code>shamefully-hoist</code> option.
+            This creates a flat <code>node_modules</code> structure similar to the one created by <code>npm</code>
+            or <code>yarn</code>, which is not recommended as avoiding this structure is the primary
+            purpose of pnpm's <code>node_modules</code> approach.
+          </p>
+          <p>
+            To use it, try <code>pnpm install --shamefully-hoist</code>.
+            <span style="float: footnote;"><a href="./index.html#toc">Go to TOC</a></span>
+          </p>
+        </section>
+      </section>
+    </section>
+  </body>
+</html>

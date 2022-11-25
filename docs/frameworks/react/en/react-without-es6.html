@@ -1,0 +1,189 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <title>React Without ES6</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="https://raw.githubusercontent.com/shinokada/prism-coy-theme/main/theme_common.css">
+  </head>
+  <body>
+    <section id="react-without-es6" class="level1">
+      <h1>React Without ES6</h1>
+      <p>Normally you would define a React component as a plain JavaScript class:</p>
+      <pre class="language-javascript"><code class="language-javascript"><span class="token keyword">class</span> <span class="token class-name">Greeting</span> <span class="token keyword">extends</span> <span class="token class-name">React<span class="token punctuation">.</span>Component</span> <span class="token punctuation">{</span>
+  <span class="token function">render</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token keyword control-flow">return</span> <span class="token operator">&#x3C;</span>h1<span class="token operator">></span><span class="token maybe-class-name">Hello</span><span class="token punctuation">,</span> <span class="token punctuation">{</span><span class="token keyword">this</span><span class="token punctuation">.</span><span class="token property-access">props</span><span class="token punctuation">.</span><span class="token property-access">name</span><span class="token punctuation">}</span><span class="token operator">&#x3C;</span><span class="token operator">/</span>h1<span class="token operator">></span><span class="token punctuation">;</span>
+  <span class="token punctuation">}</span>
+<span class="token punctuation">}</span></code></pre>
+      <p>If you don't use ES6 yet, you may use the <code>create-react-class</code> module instead:</p>
+      <pre class="language-javascript"><code class="language-javascript"><span class="token keyword">var</span> createReactClass <span class="token operator">=</span> <span class="token function">require</span><span class="token punctuation">(</span><span class="token string">'create-react-class'</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token keyword">var</span> <span class="token maybe-class-name">Greeting</span> <span class="token operator">=</span> <span class="token function">createReactClass</span><span class="token punctuation">(</span><span class="token punctuation">{</span>
+  <span class="token function-variable function">render</span><span class="token operator">:</span> <span class="token keyword">function</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token keyword control-flow">return</span> <span class="token operator">&#x3C;</span>h1<span class="token operator">></span><span class="token maybe-class-name">Hello</span><span class="token punctuation">,</span> <span class="token punctuation">{</span><span class="token keyword">this</span><span class="token punctuation">.</span><span class="token property-access">props</span><span class="token punctuation">.</span><span class="token property-access">name</span><span class="token punctuation">}</span><span class="token operator">&#x3C;</span><span class="token operator">/</span>h1<span class="token operator">></span><span class="token punctuation">;</span>
+  <span class="token punctuation">}</span>
+<span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">;</span></code></pre>
+      <p>The API of ES6 classes is similar to <code>createReactClass()</code> with a few exceptions.</p>
+      <section id="declaring-default-props" class="level2">
+        <h2>Declaring Default Props</h2>
+        <p>With functions and ES6 classes <code>defaultProps</code> is defined as a property on the component itself:</p>
+        <pre class="language-javascript"><code class="language-javascript"><span class="token keyword">class</span> <span class="token class-name">Greeting</span> <span class="token keyword">extends</span> <span class="token class-name">React<span class="token punctuation">.</span>Component</span> <span class="token punctuation">{</span>
+  <span class="token comment">// ...</span>
+<span class="token punctuation">}</span>
+
+<span class="token maybe-class-name">Greeting</span><span class="token punctuation">.</span><span class="token property-access">defaultProps</span> <span class="token operator">=</span> <span class="token punctuation">{</span>
+  <span class="token literal-property property">name</span><span class="token operator">:</span> <span class="token string">'Mary'</span>
+<span class="token punctuation">}</span><span class="token punctuation">;</span></code></pre>
+        <p>With <code>createReactClass()</code>, you need to define <code>getDefaultProps()</code> as a function on the passed object:</p>
+        <pre class="language-javascript"><code class="language-javascript"><span class="token keyword">var</span> <span class="token maybe-class-name">Greeting</span> <span class="token operator">=</span> <span class="token function">createReactClass</span><span class="token punctuation">(</span><span class="token punctuation">{</span>
+  <span class="token function-variable function">getDefaultProps</span><span class="token operator">:</span> <span class="token keyword">function</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token keyword control-flow">return</span> <span class="token punctuation">{</span>
+      <span class="token literal-property property">name</span><span class="token operator">:</span> <span class="token string">'Mary'</span>
+    <span class="token punctuation">}</span><span class="token punctuation">;</span>
+  <span class="token punctuation">}</span><span class="token punctuation">,</span>
+
+  <span class="token comment">// ...</span>
+
+<span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">;</span></code></pre>
+      </section>
+      <section id="setting-the-initial-state" class="level2">
+        <h2>Setting the Initial State</h2>
+        <p>In ES6 classes, you can define the initial state by assigning <code>this.state</code> in the constructor:</p>
+        <pre class="language-javascript"><code class="language-javascript"><span class="token keyword">class</span> <span class="token class-name">Counter</span> <span class="token keyword">extends</span> <span class="token class-name">React<span class="token punctuation">.</span>Component</span> <span class="token punctuation">{</span>
+  <span class="token function">constructor</span><span class="token punctuation">(</span><span class="token parameter">props</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token keyword">super</span><span class="token punctuation">(</span>props<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token keyword">this</span><span class="token punctuation">.</span><span class="token property-access">state</span> <span class="token operator">=</span> <span class="token punctuation">{</span><span class="token literal-property property">count</span><span class="token operator">:</span> props<span class="token punctuation">.</span><span class="token property-access">initialCount</span><span class="token punctuation">}</span><span class="token punctuation">;</span>
+  <span class="token punctuation">}</span>
+  <span class="token comment">// ...</span>
+<span class="token punctuation">}</span></code></pre>
+        <p>With <code>createReactClass()</code>, you have to provide a separate <code>getInitialState</code> method that returns the initial state:</p>
+        <pre class="language-javascript"><code class="language-javascript"><span class="token keyword">var</span> <span class="token maybe-class-name">Counter</span> <span class="token operator">=</span> <span class="token function">createReactClass</span><span class="token punctuation">(</span><span class="token punctuation">{</span>
+  <span class="token function-variable function">getInitialState</span><span class="token operator">:</span> <span class="token keyword">function</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token keyword control-flow">return</span> <span class="token punctuation">{</span><span class="token literal-property property">count</span><span class="token operator">:</span> <span class="token keyword">this</span><span class="token punctuation">.</span><span class="token property-access">props</span><span class="token punctuation">.</span><span class="token property-access">initialCount</span><span class="token punctuation">}</span><span class="token punctuation">;</span>
+  <span class="token punctuation">}</span><span class="token punctuation">,</span>
+  <span class="token comment">// ...</span>
+<span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">;</span></code></pre>
+      </section>
+      <section id="autobinding" class="level2">
+        <h2>Autobinding</h2>
+        <p>In React components declared as ES6 classes, methods follow the same semantics as regular ES6 classes. This means that they don't automatically bind <code>this</code> to the instance. You'll have to explicitly use <code>.bind(this)</code> in the constructor:</p>
+        <pre class="language-javascript"><code class="language-javascript"><span class="token keyword">class</span> <span class="token class-name">SayHello</span> <span class="token keyword">extends</span> <span class="token class-name">React<span class="token punctuation">.</span>Component</span> <span class="token punctuation">{</span>
+  <span class="token function">constructor</span><span class="token punctuation">(</span><span class="token parameter">props</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token keyword">super</span><span class="token punctuation">(</span>props<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token keyword">this</span><span class="token punctuation">.</span><span class="token property-access">state</span> <span class="token operator">=</span> <span class="token punctuation">{</span><span class="token literal-property property">message</span><span class="token operator">:</span> <span class="token string">'Hello!'</span><span class="token punctuation">}</span><span class="token punctuation">;</span>
+    <span class="token comment">// This line is important!</span>
+    <span class="token keyword">this</span><span class="token punctuation">.</span><span class="token property-access">handleClick</span> <span class="token operator">=</span> <span class="token keyword">this</span><span class="token punctuation">.</span><span class="token method function property-access">handleClick</span><span class="token punctuation">.</span><span class="token method function property-access">bind</span><span class="token punctuation">(</span><span class="token keyword">this</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token punctuation">}</span>
+
+  <span class="token function">handleClick</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token function">alert</span><span class="token punctuation">(</span><span class="token keyword">this</span><span class="token punctuation">.</span><span class="token property-access">state</span><span class="token punctuation">.</span><span class="token property-access">message</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token punctuation">}</span>
+
+  <span class="token function">render</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token comment">// Because `this.handleClick` is bound, we can use it as an event handler.</span>
+    <span class="token keyword control-flow">return</span> <span class="token punctuation">(</span>
+      <span class="token operator">&#x3C;</span>button onClick<span class="token operator">=</span><span class="token punctuation">{</span><span class="token keyword">this</span><span class="token punctuation">.</span><span class="token property-access">handleClick</span><span class="token punctuation">}</span><span class="token operator">></span>
+        <span class="token maybe-class-name">Say</span> hello
+      <span class="token operator">&#x3C;</span><span class="token operator">/</span>button<span class="token operator">></span>
+    <span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token punctuation">}</span>
+<span class="token punctuation">}</span></code></pre>
+        <p>With <code>createReactClass()</code>, this is not necessary because it binds all methods:</p>
+        <pre class="language-javascript"><code class="language-javascript"><span class="token keyword">var</span> <span class="token maybe-class-name">SayHello</span> <span class="token operator">=</span> <span class="token function">createReactClass</span><span class="token punctuation">(</span><span class="token punctuation">{</span>
+  <span class="token function-variable function">getInitialState</span><span class="token operator">:</span> <span class="token keyword">function</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token keyword control-flow">return</span> <span class="token punctuation">{</span><span class="token literal-property property">message</span><span class="token operator">:</span> <span class="token string">'Hello!'</span><span class="token punctuation">}</span><span class="token punctuation">;</span>
+  <span class="token punctuation">}</span><span class="token punctuation">,</span>
+
+  <span class="token function-variable function">handleClick</span><span class="token operator">:</span> <span class="token keyword">function</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token function">alert</span><span class="token punctuation">(</span><span class="token keyword">this</span><span class="token punctuation">.</span><span class="token property-access">state</span><span class="token punctuation">.</span><span class="token property-access">message</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token punctuation">}</span><span class="token punctuation">,</span>
+
+  <span class="token function-variable function">render</span><span class="token operator">:</span> <span class="token keyword">function</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token keyword control-flow">return</span> <span class="token punctuation">(</span>
+      <span class="token operator">&#x3C;</span>button onClick<span class="token operator">=</span><span class="token punctuation">{</span><span class="token keyword">this</span><span class="token punctuation">.</span><span class="token property-access">handleClick</span><span class="token punctuation">}</span><span class="token operator">></span>
+        <span class="token maybe-class-name">Say</span> hello
+      <span class="token operator">&#x3C;</span><span class="token operator">/</span>button<span class="token operator">></span>
+    <span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token punctuation">}</span>
+<span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">;</span></code></pre>
+        <p>This means writing ES6 classes comes with a little more boilerplate code for event handlers, but the upside is slightly better performance in large applications.</p>
+        <p>If the boilerplate code is too unattractive to you, you may use <a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Classes/Public_class_fields#public_instance_fields">ES2022 Class Properties</a> syntax:</p>
+        <pre class="language-javascript"><code class="language-javascript"><span class="token keyword">class</span> <span class="token class-name">SayHello</span> <span class="token keyword">extends</span> <span class="token class-name">React<span class="token punctuation">.</span>Component</span> <span class="token punctuation">{</span>
+  <span class="token function">constructor</span><span class="token punctuation">(</span><span class="token parameter">props</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token keyword">super</span><span class="token punctuation">(</span>props<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token keyword">this</span><span class="token punctuation">.</span><span class="token property-access">state</span> <span class="token operator">=</span> <span class="token punctuation">{</span><span class="token literal-property property">message</span><span class="token operator">:</span> <span class="token string">'Hello!'</span><span class="token punctuation">}</span><span class="token punctuation">;</span>
+  <span class="token punctuation">}</span>
+  
+  <span class="token comment">// Using an arrow here binds the method:</span>
+  <span class="token function-variable function">handleClick</span> <span class="token operator">=</span> <span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token arrow operator">=></span> <span class="token punctuation">{</span>
+    <span class="token function">alert</span><span class="token punctuation">(</span><span class="token keyword">this</span><span class="token punctuation">.</span><span class="token property-access">state</span><span class="token punctuation">.</span><span class="token property-access">message</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token punctuation">}</span><span class="token punctuation">;</span>
+
+  <span class="token function">render</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token keyword control-flow">return</span> <span class="token punctuation">(</span>
+      <span class="token operator">&#x3C;</span>button onClick<span class="token operator">=</span><span class="token punctuation">{</span><span class="token keyword">this</span><span class="token punctuation">.</span><span class="token property-access">handleClick</span><span class="token punctuation">}</span><span class="token operator">></span>
+        <span class="token maybe-class-name">Say</span> hello
+      <span class="token operator">&#x3C;</span><span class="token operator">/</span>button<span class="token operator">></span>
+    <span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token punctuation">}</span>
+<span class="token punctuation">}</span></code></pre>
+        <p>You also have a few other options:</p>
+        <ul>
+          <li>Bind methods in the constructor.</li>
+          <li>Use arrow functions, e.g. <code>onClick={(e) => this.handleClick(e)}</code>.</li>
+          <li>Keep using <code>createReactClass</code>.</li>
+        </ul>
+      </section>
+      <section id="mixins" class="level2">
+        <h2>Mixins</h2>
+        <blockquote>
+          <p><strong>Note:</strong></p>
+          <p>ES6 launched without any mixin support. Therefore, there is no support for mixins when you use React with ES6 classes.</p>
+          <p><strong>We also found numerous issues in codebases using mixins, <a href="/blog/2016/07/13/mixins-considered-harmful.html">and don't recommend using them in the new code</a>.</strong></p>
+          <p>This section exists only for the reference.</p>
+        </blockquote>
+        <p>Sometimes very different components may share some common functionality. These are sometimes called <a href="https://en.wikipedia.org/wiki/Cross-cutting_concern">cross-cutting concerns</a>. <code>createReactClass</code> lets you use a legacy <code>mixins</code> system for that.</p>
+        <p>One common use case is a component wanting to update itself on a time interval. It's easy to use <code>setInterval()</code>, but it's important to cancel your interval when you don't need it anymore to save memory. React provides <a href="./react-component.html#the-component-lifecycle">lifecycle methods</a> that let you know when a component is about to be created or destroyed. Let's create a simple mixin that uses these methods to provide an easy <code>setInterval()</code> function that will automatically get cleaned up when your component is destroyed.</p>
+        <pre class="language-javascript"><code class="language-javascript"><span class="token keyword">var</span> <span class="token maybe-class-name">SetIntervalMixin</span> <span class="token operator">=</span> <span class="token punctuation">{</span>
+  <span class="token function-variable function">componentWillMount</span><span class="token operator">:</span> <span class="token keyword">function</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token keyword">this</span><span class="token punctuation">.</span><span class="token property-access">intervals</span> <span class="token operator">=</span> <span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token punctuation">;</span>
+  <span class="token punctuation">}</span><span class="token punctuation">,</span>
+  <span class="token function-variable function">setInterval</span><span class="token operator">:</span> <span class="token keyword">function</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token keyword">this</span><span class="token punctuation">.</span><span class="token property-access">intervals</span><span class="token punctuation">.</span><span class="token method function property-access">push</span><span class="token punctuation">(</span>setInterval<span class="token punctuation">.</span><span class="token method function property-access">apply</span><span class="token punctuation">(</span><span class="token keyword null nil">null</span><span class="token punctuation">,</span> arguments<span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token punctuation">}</span><span class="token punctuation">,</span>
+  <span class="token function-variable function">componentWillUnmount</span><span class="token operator">:</span> <span class="token keyword">function</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token keyword">this</span><span class="token punctuation">.</span><span class="token property-access">intervals</span><span class="token punctuation">.</span><span class="token method function property-access">forEach</span><span class="token punctuation">(</span>clearInterval<span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token punctuation">}</span>
+<span class="token punctuation">}</span><span class="token punctuation">;</span>
+
+<span class="token keyword">var</span> createReactClass <span class="token operator">=</span> <span class="token function">require</span><span class="token punctuation">(</span><span class="token string">'create-react-class'</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+<span class="token keyword">var</span> <span class="token maybe-class-name">TickTock</span> <span class="token operator">=</span> <span class="token function">createReactClass</span><span class="token punctuation">(</span><span class="token punctuation">{</span>
+  <span class="token literal-property property">mixins</span><span class="token operator">:</span> <span class="token punctuation">[</span><span class="token maybe-class-name">SetIntervalMixin</span><span class="token punctuation">]</span><span class="token punctuation">,</span> <span class="token comment">// Use the mixin</span>
+  <span class="token function-variable function">getInitialState</span><span class="token operator">:</span> <span class="token keyword">function</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token keyword control-flow">return</span> <span class="token punctuation">{</span><span class="token literal-property property">seconds</span><span class="token operator">:</span> <span class="token number">0</span><span class="token punctuation">}</span><span class="token punctuation">;</span>
+  <span class="token punctuation">}</span><span class="token punctuation">,</span>
+  <span class="token function-variable function">componentDidMount</span><span class="token operator">:</span> <span class="token keyword">function</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token keyword">this</span><span class="token punctuation">.</span><span class="token method function property-access">setInterval</span><span class="token punctuation">(</span><span class="token keyword">this</span><span class="token punctuation">.</span><span class="token property-access">tick</span><span class="token punctuation">,</span> <span class="token number">1000</span><span class="token punctuation">)</span><span class="token punctuation">;</span> <span class="token comment">// Call a method on the mixin</span>
+  <span class="token punctuation">}</span><span class="token punctuation">,</span>
+  <span class="token function-variable function">tick</span><span class="token operator">:</span> <span class="token keyword">function</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token keyword">this</span><span class="token punctuation">.</span><span class="token method function property-access">setState</span><span class="token punctuation">(</span><span class="token punctuation">{</span><span class="token literal-property property">seconds</span><span class="token operator">:</span> <span class="token keyword">this</span><span class="token punctuation">.</span><span class="token property-access">state</span><span class="token punctuation">.</span><span class="token property-access">seconds</span> <span class="token operator">+</span> <span class="token number">1</span><span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token punctuation">}</span><span class="token punctuation">,</span>
+  <span class="token function-variable function">render</span><span class="token operator">:</span> <span class="token keyword">function</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token keyword control-flow">return</span> <span class="token punctuation">(</span>
+      <span class="token operator">&#x3C;</span>p<span class="token operator">></span>
+        <span class="token maybe-class-name">React</span> has been running <span class="token keyword control-flow">for</span> <span class="token punctuation">{</span><span class="token keyword">this</span><span class="token punctuation">.</span><span class="token property-access">state</span><span class="token punctuation">.</span><span class="token property-access">seconds</span><span class="token punctuation">}</span> seconds<span class="token punctuation">.</span>
+      <span class="token operator">&#x3C;</span><span class="token operator">/</span>p<span class="token operator">></span>
+    <span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token punctuation">}</span>
+<span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+<span class="token keyword">const</span> root <span class="token operator">=</span> <span class="token maybe-class-name">ReactDOM</span><span class="token punctuation">.</span><span class="token method function property-access">createRoot</span><span class="token punctuation">(</span><span class="token dom variable">document</span><span class="token punctuation">.</span><span class="token method function property-access">getElementById</span><span class="token punctuation">(</span><span class="token string">'example'</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+root<span class="token punctuation">.</span><span class="token method function property-access">render</span><span class="token punctuation">(</span><span class="token operator">&#x3C;</span><span class="token maybe-class-name">TickTock</span> <span class="token operator">/</span><span class="token operator">></span><span class="token punctuation">)</span><span class="token punctuation">;</span></code></pre>
+        <p>
+          If a component is using multiple mixins and several mixins define the same lifecycle method (i.e. several mixins want to do some cleanup when the component is destroyed), all of the lifecycle methods are guaranteed to be called. Methods defined on mixins run in the order mixins were listed, followed by a method call on the component.
+          <span style="float: footnote;"><a href="./index.html#toc">Go to TOC</a></span>
+        </p>
+      </section>
+    </section>
+  </body>
+</html>

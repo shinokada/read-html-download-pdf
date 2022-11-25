@@ -1,0 +1,150 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <title>Composition vs Inheritance</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="https://raw.githubusercontent.com/shinokada/prism-coy-theme/main/theme_common.css">
+  </head>
+  <body>
+    <section id="composition-vs-inheritance" class="level1">
+      <h1>Composition vs Inheritance</h1>
+      <p>React has a powerful composition model, and we recommend using composition instead of inheritance to reuse code between components.</p>
+      <p>In this section, we will consider a few problems where developers new to React often reach for inheritance, and show how we can solve them with composition.</p>
+      <section id="containment" class="level2">
+        <h2>Containment</h2>
+        <p>Some components don't know their children ahead of time. This is especially common for components like <code>Sidebar</code> or <code>Dialog</code> that represent generic "boxes".</p>
+        <p>We recommend that such components use the special <code>children</code> prop to pass children elements directly into their output:</p>
+        <pre class="language-js{4}"><code class="language-js{4}">function FancyBorder(props) {
+  return (
+    &#x3C;div className={'FancyBorder FancyBorder-' + props.color}>
+      {props.children}
+    &#x3C;/div>
+  );
+}</code></pre>
+        <p>This lets other components pass arbitrary children to them by nesting the JSX:</p>
+        <pre class="language-js{4-9}"><code class="language-js{4-9}">function WelcomeDialog() {
+  return (
+    &#x3C;FancyBorder color="blue">
+      &#x3C;h1 className="Dialog-title">
+        Welcome
+      &#x3C;/h1>
+      &#x3C;p className="Dialog-message">
+        Thank you for visiting our spacecraft!
+      &#x3C;/p>
+    &#x3C;/FancyBorder>
+  );
+}</code></pre>
+        <p><strong><a href="https://codepen.io/gaearon/pen/ozqNOV?editors=0010">Try it on CodePen</a></strong></p>
+        <p>Anything inside the <code>&#x3C;FancyBorder></code> JSX tag gets passed into the <code>FancyBorder</code> component as a <code>children</code> prop. Since <code>FancyBorder</code> renders <code>{props.children}</code> inside a <code>&#x3C;div></code>, the passed elements appear in the final output.</p>
+        <p>While this is less common, sometimes you might need multiple "holes" in a component. In such cases you may come up with your own convention instead of using <code>children</code>:</p>
+        <pre class="language-js{5,8,18,21}"><code class="language-js{5,8,18,21}">function SplitPane(props) {
+  return (
+    &#x3C;div className="SplitPane">
+      &#x3C;div className="SplitPane-left">
+        {props.left}
+      &#x3C;/div>
+      &#x3C;div className="SplitPane-right">
+        {props.right}
+      &#x3C;/div>
+    &#x3C;/div>
+  );
+}
+
+function App() {
+  return (
+    &#x3C;SplitPane
+      left={
+        &#x3C;Contacts />
+      }
+      right={
+        &#x3C;Chat />
+      } />
+  );
+}</code></pre>
+        <p><a href="https://codepen.io/gaearon/pen/gwZOJp?editors=0010"><strong>Try it on CodePen</strong></a></p>
+        <p>React elements like <code>&#x3C;Contacts /></code> and <code>&#x3C;Chat /></code> are just objects, so you can pass them as props like any other data. This approach may remind you of "slots" in other libraries but there are no limitations on what you can pass as props in React.</p>
+      </section>
+      <section id="specialization" class="level2">
+        <h2>Specialization</h2>
+        <p>Sometimes we think about components as being "special cases" of other components. For example, we might say that a <code>WelcomeDialog</code> is a special case of <code>Dialog</code>.</p>
+        <p>In React, this is also achieved by composition, where a more "specific" component renders a more "generic" one and configures it with props:</p>
+        <pre class="language-js{5,8,16-18}"><code class="language-js{5,8,16-18}">function Dialog(props) {
+  return (
+    &#x3C;FancyBorder color="blue">
+      &#x3C;h1 className="Dialog-title">
+        {props.title}
+      &#x3C;/h1>
+      &#x3C;p className="Dialog-message">
+        {props.message}
+      &#x3C;/p>
+    &#x3C;/FancyBorder>
+  );
+}
+
+function WelcomeDialog() {
+  return (
+    &#x3C;Dialog
+      title="Welcome"
+      message="Thank you for visiting our spacecraft!" />
+  );
+}</code></pre>
+        <p><a href="https://codepen.io/gaearon/pen/kkEaOZ?editors=0010"><strong>Try it on CodePen</strong></a></p>
+        <p>Composition works equally well for components defined as classes:</p>
+        <pre class="language-js{10,27-31}"><code class="language-js{10,27-31}">function Dialog(props) {
+  return (
+    &#x3C;FancyBorder color="blue">
+      &#x3C;h1 className="Dialog-title">
+        {props.title}
+      &#x3C;/h1>
+      &#x3C;p className="Dialog-message">
+        {props.message}
+      &#x3C;/p>
+      {props.children}
+    &#x3C;/FancyBorder>
+  );
+}
+
+class SignUpDialog extends React.Component {
+  constructor(props) {
+    super(props);
+    this.handleChange = this.handleChange.bind(this);
+    this.handleSignUp = this.handleSignUp.bind(this);
+    this.state = {login: ''};
+  }
+
+  render() {
+    return (
+      &#x3C;Dialog title="Mars Exploration Program"
+              message="How should we refer to you?">
+        &#x3C;input value={this.state.login}
+               onChange={this.handleChange} />
+        &#x3C;button onClick={this.handleSignUp}>
+          Sign Me Up!
+        &#x3C;/button>
+      &#x3C;/Dialog>
+    );
+  }
+
+  handleChange(e) {
+    this.setState({login: e.target.value});
+  }
+
+  handleSignUp() {
+    alert(`Welcome aboard, ${this.state.login}!`);
+  }
+}</code></pre>
+        <p><a href="https://codepen.io/gaearon/pen/gwZbYa?editors=0010"><strong>Try it on CodePen</strong></a></p>
+      </section>
+      <section id="so-what-about-inheritance" class="level2">
+        <h2>So What About Inheritance?</h2>
+        <p>At Facebook, we use React in thousands of components, and we haven't found any use cases where we would recommend creating component inheritance hierarchies.</p>
+        <p>Props and composition give you all the flexibility you need to customize a component's look and behavior in an explicit and safe way. Remember that components may accept arbitrary props, including primitive values, React elements, or functions.</p>
+        <p>
+          If you want to reuse non-UI functionality between components, we suggest extracting it into a separate JavaScript module. The components may import it and use that function, object, or class, without extending it.
+          <span style="float: footnote;"><a href="./index.html#toc">Go to TOC</a></span>
+        </p>
+      </section>
+    </section>
+  </body>
+</html>

@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="utf-8">
+    <title>イベントプーリング</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="https://raw.githubusercontent.com/shinokada/prism-coy-theme/main/theme_common.css">
+  </head>
+  <body>
+    <section id="イベントプーリング" class="level1">
+      <h1>イベントプーリング</h1>
+      <blockquote>
+        <p>補足</p>
+        <p>このページの内容は React 16 以前および React Native にのみ関連します。</p>
+        <p>ウェブで使う React 17 ではイベントプーリングは<strong>使用されていません</strong>。</p>
+        <p>React 17 におけるこの変更についての<a href="/blog/2020/08/10/react-v17-rc.html#no-event-pooling">詳細はこちら</a>。</p>
+      </blockquote>
+      <p><a href="./events.html"><code>SyntheticEvent</code></a> オブジェクトはプールされます。つまり <code>SyntheticEvent</code> はイベントハンドラが呼び出された後に再利用され、すべてのプロパティが null にセットされます。例えば、以下は動作しません：</p>
+      <pre class="language-javascript"><code class="language-javascript"><span class="token keyword">function</span> <span class="token function">handleChange</span><span class="token punctuation">(</span><span class="token parameter">e</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  <span class="token comment">// This won't work because the event object gets reused.</span>
+  <span class="token function">setTimeout</span><span class="token punctuation">(</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token arrow operator">=></span> <span class="token punctuation">{</span>
+    <span class="token console class-name">console</span><span class="token punctuation">.</span><span class="token method function property-access">log</span><span class="token punctuation">(</span>e<span class="token punctuation">.</span><span class="token property-access">target</span><span class="token punctuation">.</span><span class="token property-access">value</span><span class="token punctuation">)</span><span class="token punctuation">;</span> <span class="token comment">// Too late!</span>
+  <span class="token punctuation">}</span><span class="token punctuation">,</span> <span class="token number">100</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span></code></pre>
+      <p>イベントハンドラが実行された後にオブジェクトのプロパティにアクセスする必要がある場合は、<code>e.persist()</code> を呼ぶ必要があります：</p>
+      <pre class="language-javascript"><code class="language-javascript"><span class="token keyword">function</span> <span class="token function">handleChange</span><span class="token punctuation">(</span><span class="token parameter">e</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  <span class="token comment">// Prevents React from resetting its properties:</span>
+  e<span class="token punctuation">.</span><span class="token method function property-access">persist</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+  <span class="token function">setTimeout</span><span class="token punctuation">(</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token arrow operator">=></span> <span class="token punctuation">{</span>
+    <span class="token console class-name">console</span><span class="token punctuation">.</span><span class="token method function property-access">log</span><span class="token punctuation">(</span>e<span class="token punctuation">.</span><span class="token property-access">target</span><span class="token punctuation">.</span><span class="token property-access">value</span><span class="token punctuation">)</span><span class="token punctuation">;</span> <span class="token comment">// Works</span>
+  <span class="token punctuation">}</span><span class="token punctuation">,</span> <span class="token number">100</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span></code></pre>
+      <p><span style="float: footnote;"><a href="./index.html#toc">Go to TOC</a></span></p>
+    </section>
+  </body>
+</html>

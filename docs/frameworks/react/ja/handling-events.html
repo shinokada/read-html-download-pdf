@@ -1,0 +1,119 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="utf-8">
+    <title>イベント処理</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="https://raw.githubusercontent.com/shinokada/prism-coy-theme/main/theme_common.css">
+  </head>
+  <body>
+    <section id="イベント処理" class="level1">
+      <h1>イベント処理</h1>
+      <p>React でのイベント処理は DOM 要素のイベントの処理と非常に似ています。いくつかの文法的な違いがあります：</p>
+      <ul>
+        <li>React のイベントは小文字ではなく camelCase で名付けられています。</li>
+        <li>JSX ではイベントハンドラとして文字列ではなく関数を渡します。</li>
+      </ul>
+      <p>例えば、以下の HTML：</p>
+      <pre class="language-html"><code class="language-html"><span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;</span>button</span> <span class="token special-attr"><span class="token attr-name">onclick</span><span class="token attr-value"><span class="token punctuation attr-equals">=</span><span class="token punctuation">"</span><span class="token value javascript language-javascript"><span class="token function">activateLasers</span><span class="token punctuation">(</span><span class="token punctuation">)</span></span><span class="token punctuation">"</span></span></span><span class="token punctuation">></span></span>
+  Activate Lasers
+<span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;/</span>button</span><span class="token punctuation">></span></span></code></pre>
+      <p>は、React では少し異なります：</p>
+      <pre class="language-js{1}"><code class="language-js{1}">&#x3C;button onClick={activateLasers}>
+  Activate Lasers
+&#x3C;/button></code></pre>
+      <p>別の違いとして、React では <code>false</code> を返してもデフォルトの動作を抑止することができません。明示的に <code>preventDefault</code> を呼び出す必要があります。例えば、プレーンな HTML では、「フォームをサブミットする」という form 要素のデフォルト動作を抑止するために次のように書くことができます。</p>
+      <pre class="language-html"><code class="language-html"><span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;</span>form</span> <span class="token special-attr"><span class="token attr-name">onsubmit</span><span class="token attr-value"><span class="token punctuation attr-equals">=</span><span class="token punctuation">"</span><span class="token value javascript language-javascript"><span class="token console class-name">console</span><span class="token punctuation">.</span><span class="token method function property-access">log</span><span class="token punctuation">(</span><span class="token string">'You clicked submit.'</span><span class="token punctuation">)</span><span class="token punctuation">;</span> <span class="token keyword control-flow">return</span> <span class="token boolean">false</span></span><span class="token punctuation">"</span></span></span><span class="token punctuation">></span></span>
+  <span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;</span>button</span> <span class="token attr-name">type</span><span class="token attr-value"><span class="token punctuation attr-equals">=</span><span class="token punctuation">"</span>submit<span class="token punctuation">"</span></span><span class="token punctuation">></span></span>Submit<span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;/</span>button</span><span class="token punctuation">></span></span>
+<span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;/</span>form</span><span class="token punctuation">></span></span></code></pre>
+      <p>React では、代わりに次のようになります：</p>
+      <pre class="language-js{3}"><code class="language-js{3}">function Form() {
+  function handleSubmit(e) {
+    e.preventDefault();
+    console.log('You clicked submit.');
+  }
+
+  return (
+    &#x3C;form onSubmit={handleSubmit}>
+      &#x3C;button type="submit">Submit&#x3C;/button>
+    &#x3C;/form>
+  );
+}</code></pre>
+      <p>ここで、<code>e</code> は合成 (synthetic) イベントです。React はこれらの合成イベントを <a href="https://www.w3.org/TR/DOM-Level-3-Events/">W3C の仕様</a>に則って定義しているので、ブラウザ間の互換性を心配する必要はありません。React のイベントはネイティブのイベントと全く同様に動作するわけではありません。詳細については、<a href="./events.html"><code>SyntheticEvent</code></a> のリファレンスガイドを参照してください。</p>
+      <p>React を使う場合、一般的には DOM 要素の生成後に <code>addEventListener</code> を呼び出してリスナを追加する必要はありません。代わりに、要素が最初にレンダーされる際にリスナを指定するようにしてください。</p>
+      <p>コンポーネントを <a href="https://developer.mozilla.org/en/docs/Web/JavaScript/Reference/Classes">ES6 のクラス</a>を使用して定義した場合、一般的なパターンではイベントハンドラはクラスのメソッドになります。例えば、以下の <code>Toggle</code> コンポーネントはユーザが "ON" 状態 "OFF" 状態を切り替えられるようなボタンをレンダーします。</p>
+      <pre class="language-js{6,7,10-14,18}"><code class="language-js{6,7,10-14,18}">class Toggle extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = {isToggleOn: true};
+
+    // This binding is necessary to make `this` work in the callback
+    this.handleClick = this.handleClick.bind(this);
+  }
+
+  handleClick() {
+    this.setState(prevState => ({
+      isToggleOn: !prevState.isToggleOn
+    }));
+  }
+
+  render() {
+    return (
+      &#x3C;button onClick={this.handleClick}>
+        {this.state.isToggleOn ? 'ON' : 'OFF'}
+      &#x3C;/button>
+    );
+  }
+}</code></pre>
+      <p><a href="https://codepen.io/gaearon/pen/xEmzGg?editors=0010"><strong>Try it on CodePen</strong></a></p>
+      <p>JSX のコールバックにおける <code>this</code> の意味に注意しなければなりません。JavaScript では、クラスのメソッドはデフォルトでは<a href="https://developer.mozilla.org/en/docs/Web/JavaScript/Reference/Global_objects/Function/bind">バインド</a>されません。<code>this.handleClick</code> へのバインドを忘れて <code>onClick</code> に渡した場合、実際に関数が呼ばれた時に <code>this</code> は <code>undefined</code> となってしまいます。</p>
+      <p>これは React に限った動作ではなく、<a href="https://www.smashingmagazine.com/2014/01/understanding-javascript-function-prototype-bind/">JavaScript における関数の仕組み</a>の一部です。一般的に、<code>onClick={this.handleClick}</code> のように <code>()</code> を末尾に付けずに何らかのメソッドを参照する場合、そのメソッドはバインドしておく必要があります。</p>
+      <p><code>bind</code> の呼び出しが苦痛なら、それを回避する方法が 2 つあります。<a href="https://babeljs.io/docs/plugins/transform-class-properties/">パブリッククラスフィールド構文</a>を使えば、コールバックを正しくバインドすることができます：</p>
+      <pre class="language-js{2-6}"><code class="language-js{2-6}">class LoggingButton extends React.Component {
+  // This syntax ensures `this` is bound within handleClick.
+  handleClick = () => {
+    console.log('this is:', this);
+  };
+
+  render() {
+    return (
+      &#x3C;button onClick={this.handleClick}>
+        Click me
+      &#x3C;/button>
+    );
+  }
+}</code></pre>
+      <p>この構文は、<a href="https://github.com/facebookincubator/create-react-app">Create React App</a> ではデフォルトで有効です。</p>
+      <p>クラスフィールド構文を使用しない場合、コールバック内で<a href="https://developer.mozilla.org/en/docs/Web/JavaScript/Reference/Functions/Arrow_functions">アロー関数</a>を使用することもできます：</p>
+      <pre class="language-js{7-9}"><code class="language-js{7-9}">class LoggingButton extends React.Component {
+  handleClick() {
+    console.log('this is:', this);
+  }
+
+  render() {
+    // This syntax ensures `this` is bound within handleClick
+    return (
+      &#x3C;button onClick={() => this.handleClick()}>
+        Click me
+      &#x3C;/button>
+    );
+  }
+}</code></pre>
+      <p>
+        この構文での問題は、<code>LoggingButton</code> がレンダーされるたびに異なるコールバック関数が毎回作成されるということです。大抵のケースではこれは問題ありません。しかし、このコールバックが props の一部として下層のコンポーネントに渡される場合、それら下層コンポーネントが余分に再描画されることになります。
+        一般的にはコンストラクタでバインドするかクラスフィールド構文を使用して、この種のパフォーマンスの問題を避けるようおすすめします。
+      </p>
+      <section id="passing-arguments-to-event-handlers" class="level2">
+        <h2>イベントハンドラに引数を渡す</h2>
+        <p>ループ内では、イベントハンドラに追加のパラメータを渡したくなることがよくあります。例えば、<code>id</code> という行の ID がある場合、以下のどちらでも動作します：</p>
+        <pre class="language-js"><code class="language-js"><span class="token operator">&#x3C;</span>button onClick<span class="token operator">=</span><span class="token punctuation">{</span><span class="token punctuation">(</span><span class="token parameter">e</span><span class="token punctuation">)</span> <span class="token arrow operator">=></span> <span class="token keyword">this</span><span class="token punctuation">.</span><span class="token method function property-access">deleteRow</span><span class="token punctuation">(</span>id<span class="token punctuation">,</span> e<span class="token punctuation">)</span><span class="token punctuation">}</span><span class="token operator">></span><span class="token maybe-class-name">Delete</span> <span class="token maybe-class-name">Row</span><span class="token operator">&#x3C;</span><span class="token operator">/</span>button<span class="token operator">></span>
+<span class="token operator">&#x3C;</span>button onClick<span class="token operator">=</span><span class="token punctuation">{</span><span class="token keyword">this</span><span class="token punctuation">.</span><span class="token method function property-access">deleteRow</span><span class="token punctuation">.</span><span class="token method function property-access">bind</span><span class="token punctuation">(</span><span class="token keyword">this</span><span class="token punctuation">,</span> id<span class="token punctuation">)</span><span class="token punctuation">}</span><span class="token operator">></span><span class="token maybe-class-name">Delete</span> <span class="token maybe-class-name">Row</span><span class="token operator">&#x3C;</span><span class="token operator">/</span>button<span class="token operator">></span></code></pre>
+        <p>上記の 2 行は等価であり、上側では<a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Functions/Arrow_functions">アロー関数</a>が、下側では <a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_objects/Function/bind"><code>Function.prototype.bind</code></a> が使われています。</p>
+        <p>
+          どちらの場合でも、React イベントを表す <code>e</code> という引数は ID の次の 2 番目の引数として渡されることになります。アロー関数では <code>e</code> を明示的に渡す必要がありますが、<code>bind</code> の場合には <code>id</code> 以降の追加の引数は自動的に転送されます。
+          <span style="float: footnote;"><a href="./index.html#toc">Go to TOC</a></span>
+        </p>
+      </section>
+    </section>
+  </body>
+</html>

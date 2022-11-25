@@ -1,0 +1,144 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="utf-8">
+    <title>差分検出処理</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="https://raw.githubusercontent.com/shinokada/prism-coy-theme/main/theme_common.css">
+  </head>
+  <body>
+    <section id="差分検出処理" class="level1">
+      <h1>差分検出処理</h1>
+      <p>React は、各更新で実際に何が変更されるべきかを人間が心配する必要がないように、宣言型の API を提供しています。これによりアプリケーションの作成が大幅に容易になるわけですが、React の中でこの処理がどのように実装されているのかはよく分からないかもしれません。この章では React の "差分" アルゴリズムについて、コンポーネントの更新を予測可能なものとしながら、ハイパフォーマンスなアプリケーションの要求を満たす速度を得られるように、私たちが行った選択について説明します。</p>
+      <section id="motivation" class="level2">
+        <h2>何が問題なのか</h2>
+        <p>React を使う際、<code>render()</code> 関数をある時点の React 要素のツリーを作成するものとして考えることができます。次回の state や props の更新時には、<code>render()</code> 関数は React 要素の別のツリーを返します。React はそこから直近のツリーに合致させるように効率よく UI を更新する方法を見つけ出す必要があります。</p>
+        <p>あるツリーを別のものに変換するための最小限の操作を求めるというアルゴリズム問題については、いくつかの一般的な解決方法が存在しています。しかし、<a href="https://grfia.dlsi.ua.es/ml/algorithms/references/editsurvey_bille.pdf">最新のアルゴリズム</a>でもツリーの要素数を n として O(n<sup>3</sup>) ほどの計算量があります。</p>
+        <p>React でそのアルゴリズムを使った場合、1000 個の要素を表示するのに 10 億といったレベルの比較が必要となります。これではあまりに計算コストが高すぎます。代わりに、React は 2 つの仮定に基づくことで、ある程度近い結果を得ることができる O(n) ほどの計算量のアルゴリズムを実装しています。</p>
+        <ol>
+          <li>異なる型の 2 つの要素は異なるツリーを生成する。</li>
+          <li>開発者は key プロパティを与えることで、異なるレンダー間でどの子要素が変化しない可能性があるのかについてヒントを出すことができる。</li>
+        </ol>
+        <p>実際に、これらの仮定はほとんど全ての実践的なユースケースで有効です。</p>
+      </section>
+      <section id="the-diffing-algorithm" class="level2">
+        <h2>差分アルゴリズム</h2>
+        <p>2 つのツリーが異なっている場合、React は最初に 2 つのルート要素を比較します。そのふるまいはルート要素の型に応じて異なります。</p>
+        <section id="elements-of-different-types" class="level3">
+          <h3>異なる型の要素</h3>
+          <p>ルート要素が異なる型を持つ場合は常に、React は古いツリーを破棄して新しいツリーをゼロから構築します。<code>&#x3C;a></code> から <code>&#x3C;img></code> へ、もしくは <code>&#x3C;Article></code> から <code>&#x3C;Comment></code> へ、もしくは <code>&#x3C;Button></code> から <code>&#x3C;div></code> へ ― それらの全てがツリーをゼロから再構築させるのです。</p>
+          <p>ツリーを破棄する時点で、古い DOM ノードは破棄されます。コンポーネントのインスタンスは <code>componentWillUnmount()</code> を受け取ります。新しいツリーを構築する時点で、新しい DOM ノードが DOM に挿入されます。コンポーネントのインスタンスは <code>UNSAFE_componentWillMount()</code> とそれから <code>componentDidMount()</code> を受け取ります。古いツリーに関連付けられた全ての state は失われます。</p>
+          <p>ルート配下のコンポーネントはアンマウントされ、それらの state は破棄されます。例えば、以下のように異なる場合：</p>
+          <pre class="language-xml"><code class="language-xml"><span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;</span>div</span><span class="token punctuation">></span></span>
+  <span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;</span>Counter</span> <span class="token punctuation">/></span></span>
+<span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;/</span>div</span><span class="token punctuation">></span></span>
+
+<span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;</span>span</span><span class="token punctuation">></span></span>
+  <span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;</span>Counter</span> <span class="token punctuation">/></span></span>
+<span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;/</span>span</span><span class="token punctuation">></span></span></code></pre>
+          <p>古い <code>Counter</code> は破棄され、新しいものが再マウントされます。</p>
+          <blockquote>
+            <p>補足：</p>
+            <p>このコードはレガシーとみなされるため、新規コードでは<a href="/blog/2018/03/27/update-on-async-rendering.html">使用を避ける</a>べきです：</p>
+            <ul>
+              <li><code>UNSAFE_componentWillMount()</code></li>
+            </ul>
+          </blockquote>
+        </section>
+        <section id="dom-elements-of-the-same-type" class="level3">
+          <h3>同じ型の DOM 要素</h3>
+          <p>同じ型の 2 つの React DOM 要素を比較した場合、React はそれぞれの属性を調べ、対応する共通の DOM ノードを保持し、変更された属性のみを更新します。例えば：</p>
+          <pre class="language-xml"><code class="language-xml"><span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;</span>div</span> <span class="token attr-name">className</span><span class="token attr-value"><span class="token punctuation attr-equals">=</span><span class="token punctuation">"</span>before<span class="token punctuation">"</span></span> <span class="token attr-name">title</span><span class="token attr-value"><span class="token punctuation attr-equals">=</span><span class="token punctuation">"</span>stuff<span class="token punctuation">"</span></span> <span class="token punctuation">/></span></span>
+
+<span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;</span>div</span> <span class="token attr-name">className</span><span class="token attr-value"><span class="token punctuation attr-equals">=</span><span class="token punctuation">"</span>after<span class="token punctuation">"</span></span> <span class="token attr-name">title</span><span class="token attr-value"><span class="token punctuation attr-equals">=</span><span class="token punctuation">"</span>stuff<span class="token punctuation">"</span></span> <span class="token punctuation">/></span></span></code></pre>
+          <p>これらの 2 つの要素を比べた場合、React は対応する DOM ノードの <code>className</code> のみを更新すればよいと分かります。</p>
+          <p><code>style</code> を更新した場合は、React は同様に変更されたプロパティのみを更新すればよいと分かります。例えば：</p>
+          <pre class="language-xml"><code class="language-xml"><span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;</span>div</span> <span class="token attr-name">style</span><span class="token attr-value"><span class="token punctuation attr-equals">=</span>{{color:</span> <span class="token attr-name">'red',</span> <span class="token attr-name"><span class="token namespace">fontWeight:</span></span> <span class="token attr-name">'bold'}}</span> <span class="token punctuation">/></span></span>
+
+<span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;</span>div</span> <span class="token attr-name">style</span><span class="token attr-value"><span class="token punctuation attr-equals">=</span>{{color:</span> <span class="token attr-name">'green',</span> <span class="token attr-name"><span class="token namespace">fontWeight:</span></span> <span class="token attr-name">'bold'}}</span> <span class="token punctuation">/></span></span></code></pre>
+          <p>2 つの要素を変換する場合、React は <code>fontWeight</code> ではなく <code>color</code> のみを変更すればよいことが分かります。</p>
+          <p>この DOM ノードを処理した後、React は子に対して再帰的に処理を行っていきます。</p>
+        </section>
+        <section id="component-elements-of-the-same-type" class="level3">
+          <h3>同じ型のコンポーネント要素</h3>
+          <p>コンポーネントが更新される場合、インスタンスは同じままとなり、レンダー間で state は保持されます。React は対応するコンポーネントのインスタンスの props を新しい要素に合うように更新し、<code>UNSAFE_componentWillReceiveProps()</code>、<code>UNSAFE_componentWillUpdate()</code> および <code>componentDidUpdate()</code> を対応するインスタンスに対して呼び出します。</p>
+          <p>次に、<code>render()</code> メソッドが呼ばれ、差分アルゴリズムが再帰的に前の結果と新しい結果を処理します。</p>
+          <blockquote>
+            <p>補足：</p>
+            <p>これらのコードはレガシーとみなされるため、新規コードでは<a href="/blog/2018/03/27/update-on-async-rendering.html">使用を避ける</a>べきです：</p>
+            <ul>
+              <li><code>UNSAFE_componentWillUpdate()</code></li>
+              <li><code>UNSAFE_componentWillReceiveProps()</code></li>
+            </ul>
+          </blockquote>
+        </section>
+        <section id="recursing-on-children" class="level3">
+          <h3>子要素の再帰的な処理</h3>
+          <p>デフォルトでは、DOM ノードの子に対して再帰的に処理を行う場合、React は単純に、両方の子要素リストのそれぞれ最初から同時に処理を行っていって、差分を見つけたところで毎回更新を発生させます。</p>
+          <p>例えば、子ノードの最後にひとつ要素を追加するような場合、以下の 2 つのツリー間の変換はうまく動作します：</p>
+          <pre class="language-xml"><code class="language-xml"><span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;</span>ul</span><span class="token punctuation">></span></span>
+  <span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;</span>li</span><span class="token punctuation">></span></span>first<span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;/</span>li</span><span class="token punctuation">></span></span>
+  <span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;</span>li</span><span class="token punctuation">></span></span>second<span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;/</span>li</span><span class="token punctuation">></span></span>
+<span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;/</span>ul</span><span class="token punctuation">></span></span>
+
+<span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;</span>ul</span><span class="token punctuation">></span></span>
+  <span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;</span>li</span><span class="token punctuation">></span></span>first<span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;/</span>li</span><span class="token punctuation">></span></span>
+  <span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;</span>li</span><span class="token punctuation">></span></span>second<span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;/</span>li</span><span class="token punctuation">></span></span>
+  <span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;</span>li</span><span class="token punctuation">></span></span>third<span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;/</span>li</span><span class="token punctuation">></span></span>
+<span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;/</span>ul</span><span class="token punctuation">></span></span></code></pre>
+          <p>React は 2 つの <code>&#x3C;li>first&#x3C;/li></code> ツリーを一致させ、2 つの <code>&#x3C;li>second&#x3C;/li></code> ツリーを一致させ、最後に <code>&#x3C;li>third&#x3C;/li></code> ツリーを挿入します。</p>
+          <p>それを単純に実行した場合、先頭への要素の追加はパフォーマンスが悪くなります。</p>
+          <pre class="language-xml"><code class="language-xml"><span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;</span>ul</span><span class="token punctuation">></span></span>
+  <span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;</span>li</span><span class="token punctuation">></span></span>Duke<span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;/</span>li</span><span class="token punctuation">></span></span>
+  <span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;</span>li</span><span class="token punctuation">></span></span>Villanova<span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;/</span>li</span><span class="token punctuation">></span></span>
+<span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;/</span>ul</span><span class="token punctuation">></span></span>
+
+<span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;</span>ul</span><span class="token punctuation">></span></span>
+  <span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;</span>li</span><span class="token punctuation">></span></span>Connecticut<span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;/</span>li</span><span class="token punctuation">></span></span>
+  <span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;</span>li</span><span class="token punctuation">></span></span>Duke<span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;/</span>li</span><span class="token punctuation">></span></span>
+  <span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;</span>li</span><span class="token punctuation">></span></span>Villanova<span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;/</span>li</span><span class="token punctuation">></span></span>
+<span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;/</span>ul</span><span class="token punctuation">></span></span></code></pre>
+          <p>React は <code>&#x3C;li>Duke&#x3C;/li></code> と <code>&#x3C;li>Villanova&#x3C;/li></code> サブツリーをそのまま保てるということに気づくことなく、すべての子要素を変更してしまいます。この非効率性は問題になることがあります。</p>
+        </section>
+        <section id="keys" class="level3">
+          <h3>Keys</h3>
+          <p>この問題を解決するため、React は <code>key</code> 属性をサポートします。子要素が key を持っている場合、React は key を利用して元のツリーの子要素と次のツリーの子要素を対応させます。例えば、<code>key</code> を前出の非効率な例に追加することで、ツリーの変換を効率的なものにすることができます。</p>
+          <pre class="language-xml"><code class="language-xml"><span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;</span>ul</span><span class="token punctuation">></span></span>
+  <span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;</span>li</span> <span class="token attr-name">key</span><span class="token attr-value"><span class="token punctuation attr-equals">=</span><span class="token punctuation">"</span>2015<span class="token punctuation">"</span></span><span class="token punctuation">></span></span>Duke<span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;/</span>li</span><span class="token punctuation">></span></span>
+  <span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;</span>li</span> <span class="token attr-name">key</span><span class="token attr-value"><span class="token punctuation attr-equals">=</span><span class="token punctuation">"</span>2016<span class="token punctuation">"</span></span><span class="token punctuation">></span></span>Villanova<span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;/</span>li</span><span class="token punctuation">></span></span>
+<span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;/</span>ul</span><span class="token punctuation">></span></span>
+
+<span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;</span>ul</span><span class="token punctuation">></span></span>
+  <span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;</span>li</span> <span class="token attr-name">key</span><span class="token attr-value"><span class="token punctuation attr-equals">=</span><span class="token punctuation">"</span>2014<span class="token punctuation">"</span></span><span class="token punctuation">></span></span>Connecticut<span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;/</span>li</span><span class="token punctuation">></span></span>
+  <span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;</span>li</span> <span class="token attr-name">key</span><span class="token attr-value"><span class="token punctuation attr-equals">=</span><span class="token punctuation">"</span>2015<span class="token punctuation">"</span></span><span class="token punctuation">></span></span>Duke<span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;/</span>li</span><span class="token punctuation">></span></span>
+  <span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;</span>li</span> <span class="token attr-name">key</span><span class="token attr-value"><span class="token punctuation attr-equals">=</span><span class="token punctuation">"</span>2016<span class="token punctuation">"</span></span><span class="token punctuation">></span></span>Villanova<span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;/</span>li</span><span class="token punctuation">></span></span>
+<span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;/</span>ul</span><span class="token punctuation">></span></span></code></pre>
+          <p>これで React は、<code>'2014'</code> の key を持つ要素が新規の要素であり、<code>'2015'</code> と <code>'2016'</code> の key をもつ要素は移動しただけだ、と理解するようになります。</p>
+          <p>実際に、key を探すのはたいてい難しくありません。表示しようとしている要素は既に固有の ID を持っているかもしれないので、key をそのデータから設定するだけです。</p>
+          <pre class="language-js"><code class="language-js"><span class="token operator">&#x3C;</span>li key<span class="token operator">=</span><span class="token punctuation">{</span>item<span class="token punctuation">.</span><span class="token property-access">id</span><span class="token punctuation">}</span><span class="token operator">></span><span class="token punctuation">{</span>item<span class="token punctuation">.</span><span class="token property-access">name</span><span class="token punctuation">}</span><span class="token operator">&#x3C;</span><span class="token operator">/</span>li<span class="token operator">></span></code></pre>
+          <p>そうではない場合には、新しい ID プロパティをモデルに追加するか、key を生成するためにコンテンツの一部をハッシュ化します。key は兄弟要素間で一意であればよく、グローバルに一意である必要はありません。</p>
+          <p>最後の手段として、配列の要素のインデックスを key として渡すことができます。項目が並び替えられることがなければうまく動作しますが、並び替えられると遅くなります。</p>
+          <p>key として配列のインデックスが使用されている場合、並べ替えはコンポーネントの状態に関しても問題を起こすことがあります。コンポーネントのインスタンスは key に基づいて更新、再利用されます。インデックスが key の場合、要素の移動はインデックスの変更を伴います。結果として、非制御の入力などに対するコンポーネントの状態が混乱し、予期せぬ形で更新されてしまうことがあります。</p>
+          <p>CodePen で、<a href="codepen://reconciliation/index-used-as-key">配列のインデックスを key として使うことで生じる問題</a>、および<a href="codepen://reconciliation/no-index-used-as-key">配列のインデックスを使わないことで、ソートや並び替え、要素の先頭への追加にまつわる問題がどのように解決されるのかを示した変更後のバージョン</a>を見ることができます。</p>
+        </section>
+      </section>
+      <section id="tradeoffs" class="level2">
+        <h2>トレードオフ</h2>
+        <p>この差分検出処理アルゴリズムは内部の実装の詳細であることに気をつけておく事が重要です。React はアクション毎にアプリケーション全体を再レンダーし得るものです。最終結果はいずれにせよ同じでしょう。誤解のないように言っておくと、ここでの再レンダーとは全てのコンポーネントに対して <code>render</code> メソッドを呼び出すことであり、React がそれらをアンマウントして再びマウントすることではありません。前述のルールに従って変更を適用するだけです。</p>
+        <p>私達は一般的なユースケースで高速となるように、定期的にヒューリスティクスを改善しています。現時点の実装ではサブツリーが兄弟要素の間で移動したということは表現できますが、それ以外のどこか別の場所に移動したということは伝えることはできません。結果的にアルゴリズムはサブツリーを再レンダーします。</p>
+        <p>React はヒューリスティクスに依存するため、その背後にある仮定に合致しなければ、パフォーマンスが低下します。</p>
+        <ol>
+          <li>
+            <p>差分アルゴリズムは型が異なるコンポーネント間でサブツリーを照合しようとはしません。2 つのとてもよく似た出力をするコンポーネントの型を入れ替えているケースがあれば、同じ型にした方がいいかもしれません。現実的には、これが問題となったことはありません。</p>
+          </li>
+          <li>
+            <p>
+              key は予測可能で安定した、一意なものであるべきです。不安定な key（例えば <code>Math.random()</code> 関数で生成するような）は多くのコンポーネントのインスタンスと DOM ノードを不必要に再生成し、パフォーマンスの低下や子コンポーネントの state の喪失を引き起こします。
+              <span style="float: footnote;"><a href="./index.html#toc">Go to TOC</a></span>
+            </p>
+          </li>
+        </ol>
+      </section>
+    </section>
+  </body>
+</html>

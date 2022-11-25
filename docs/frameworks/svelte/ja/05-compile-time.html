@@ -1,0 +1,313 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="utf-8">
+    <title>Compile time</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="https://raw.githubusercontent.com/shinokada/prism-coy-theme/main/theme_common.css">
+  </head>
+  <body>
+    <section id="compile-time" class="level1">
+      <h1>Compile time</h1>
+      <p>通常、Svelte コンパイラと直接やり取りすることはありません。その代わり、バンドラープラグイン(bundler plugin)を使ってビルドシステムにインテグレートします。Svelte チームが最も推奨している、また注力もしているバンドラープラグインは <a href="https://github.com/sveltejs/vite-plugin-svelte">vite-plugin-svelte</a> です。<a href="https://kit.svelte.jp/">SvelteKit</a> フレームワークは <code>vite-plugin-svelte</code> を活用し、アプリケーションをビルドするためのセットアップと、<a href="https://kit.svelte.jp/docs/packaging">Svelte コンポーネントライブラリをパッケージングするツール</a>を提供しています。Svelte Society には、Rollup や Webpack などのツール向けの <a href="https://sveltesociety.dev/tools/#bundling">その他のバンドラープラグイン</a> のリストがあります。</p>
+      <p>とはいえ、バンドラープラグインは一般的にコンパイラのオプションを公開しているので、コンパイラの使い方を理解しておくと便利です。</p>
+      <section id="sveltecompile" class="level2">
+        <h2><code>svelte.compile</code></h2>
+        <pre class="language-js"><code class="language-js"><span class="token literal-property property">result</span><span class="token operator">:</span> <span class="token punctuation">{</span>
+	js<span class="token punctuation">,</span>
+	css<span class="token punctuation">,</span>
+	ast<span class="token punctuation">,</span>
+	warnings<span class="token punctuation">,</span>
+	vars<span class="token punctuation">,</span>
+	stats
+<span class="token punctuation">}</span> <span class="token operator">=</span> svelte<span class="token punctuation">.</span><span class="token method function property-access">compile</span><span class="token punctuation">(</span>source<span class="token operator">:</span> string<span class="token punctuation">,</span> options<span class="token operator">?</span><span class="token operator">:</span> <span class="token punctuation">{</span><span class="token spread operator">...</span><span class="token punctuation">}</span><span class="token punctuation">)</span></code></pre>
+        <p>ここでマジックが起こります。<code>svelte.compile</code> はコンポーネントのソースコードを受け取ります。そしてそれを使用して、クラスをエクスポートするJavaScriptモジュールに変えます。</p>
+        <pre class="language-js"><code class="language-js"><span class="token keyword">const</span> svelte <span class="token operator">=</span> <span class="token function">require</span><span class="token punctuation">(</span><span class="token string">'svelte/compiler'</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+<span class="token keyword">const</span> result <span class="token operator">=</span> svelte<span class="token punctuation">.</span><span class="token method function property-access">compile</span><span class="token punctuation">(</span>source<span class="token punctuation">,</span> <span class="token punctuation">{</span>
+	<span class="token comment">// options</span>
+<span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">;</span></code></pre>
+        <p>以下のオプションをコンパイラに渡すことができます。どれも必須ではありません。</p><!-- | option | type | default
+        |  | --- | --- |
+        | `filename` | string | `null`
+        | `name` | string | `"Component"`
+        | `format` | `"esm"` or `"cjs"` | `"esm"`
+        | `generate` | `"dom"` or `"ssr"` or `false` | `"dom"`
+        | `errorMode` | `"throw"` or `"warn"` | `"throw"`
+        | `varsReport` | `"strict"` or `"full"` or `false` | `"strict"`
+        | `dev` | boolean | `false`
+        | `immutable` | boolean | `false`
+        | `hydratable` | boolean | `false`
+        | `legacy` | boolean | `false`
+        | `customElement` | boolean | `false`
+        | `tag` | string | null
+        | `accessors` | boolean | `false`
+        | `css` | boolean | `true`
+        | `loopGuardTimeout` | number | 0
+        | `preserveComments` | boolean | `false`
+        | `preserveWhitespace` | boolean | `false`
+        | `outputFilename` | string | `null`
+        | `cssOutputFilename` | string | `null`
+        | `sveltePath` | string | `"svelte"` -->
+        <p>
+          | option | default | description |
+          | | --- | --- |
+          | <code>filename</code> | <code>null</code> | デバッグのヒントやソースマップに使われる <code>string</code> です。バンドラープラグインが自動的に設定します。
+          | <code>name</code> | <code>"Component"</code> | 結果として得られるJavaScriptクラスの名前を設定する <code>string</code> です (ただし、スコープ内の他の変数と競合する場合はコンパイラが名前を変更します)、通常は <code>filename</code> から推測されます。
+          | <code>format</code> | <code>"esm"</code> | <code>"esm"</code> の場合、JavaScriptモジュールを作成します (<code>import</code> と <code>export</code> を指定します)、<code>"cjs"</code> の場合、CommonJSモジュールを作成します(<code>require</code> と <code>module.exports</code> を指定します)、これは、いくつかのサーバーサイドのレンダリング状況やテストに便利です。
+          | <code>generate</code> | <code>"dom"</code> | <code>"dom"</code> の場合、SvelteはDOMにマウントするためのJavaScriptクラスを生成します。<code>"ssr"</code>の場合、サーバサイドのレンダリングに適した <code>render</code> メソッドを持つオブジェクトを出力します。<code>false</code> の場合、JavaScriptやCSSは返されず、メタデータだけが返されます。
+          | <code>errorMode</code> | <code>"throw"</code> | <code>"throw"</code> の場合、Svelteはコンパイルエラーが発生したときにエラーをスローします。<code>"warn"</code> の場合、Svelteはエラーを警告として扱い、その警告をwarning reportに追加します。
+          | <code>varsReport</code> | <code>"strict"</code> | <code>"strict"</code> の場合、Svelteはグローバルまたはインターナルな変数以外のみの変数レポートを返します。<code>"full"</code> の場合は検出された全ての変数を返します、<code>false</code> の場合は変数レポートは返しません。
+          | <code>dev</code> | <code>false</code> | <code>true</code> の場合、コンポーネントに特別なコードを追加します。これは、ランタイムチェックを実行し、開発中にデバッグ情報を提供するためのものです。
+          | <code>immutable</code> | <code>false</code> | <code>true</code> の場合、オブジェクトを変更させないことをコンパイラに伝えます。これにより、値が変更されたかどうかのチェックをより控えめにすることができます。
+          | <code>hydratable</code> | <code>false</code> | <code>true</code> を指定すると、DOMコードを生成する際に <code>hydrate: true</code> ランタイムオプションが有効になり、新しいDOMをゼロから生成するのではなく、既存のDOMをアップグレードすることができます。これにより、SSRコードを生成する際に <code>&#x3C;head></code> 要素にマーカーが追加され、ハイドレーションがどれを置き換えるべきかを知ることができるようになります。
+          | <code>legacy</code> | <code>false</code> | <code>true</code> ならば、<code>element.dataset</code> のようなものをサポートしていないIE9とIE10で動作するコードを生成します。
+          | <code>accessors</code> | <code>false</code> | <code>true</code> の場合、ゲッターとセッターはコンポーネントのプロパティ(props)に対して作成されます。<code>false</code> の場合、それらは読み書きされた値に対してのみ作成されます。 (つまり<code>const</code>, <code>class</code>, <code>function</code> で宣言されたもの) <code>customElement: true</code> でコンパイルした場合、このオプションのデフォルトは <code>true</code> です。
+          | <code>customElement</code> | <code>false</code> | <code>true</code> ならば、コンパイラに通常のSvelteコンポーネントの代わりにカスタム要素のコンストラクタを生成するように指示します。
+          | <code>tag</code> | <code>null</code> | Svelteにカスタム要素を登録するタグ名を指定する <code>string</code>。文字列は小文字の英数字で、少なくとも1つのハイフンを含んだ文字列でなければなりません。例えば <code>"my-element"</code>.
+          | <code>css</code> | <code>'injected'</code> | <code>'injected'</code> (以前は <code>true</code>) の場合、スタイルはJavaScriptクラスに含まれ、実行時にコンポーネントが実際にレンダリングされるときに注入されます。<code>'external'</code> (以前は <code>false</code>) の場合、CSS はコンパイル結果の <code>css</code> フィールドで返されます。多くの Svelte バンドラープラグインはこれを <code>external</code> に設定して静的に生成されたCSSを使用するので、JavaScriptのバンドルが小さくなり、キャッシュ可能な <code>.css</code> ファイルをサーブすることができるようになるので、パフォーマンスが向上します。<code>'none'</code> の場合、スタイルは完全に取り除かれ、CSS 出力は生成されません。
+          | <code>cssHash</code> | 右記 | <code>{ hash, css, name, filename }</code>を引数に取り、スコープ付きCSSのクラス名として使われる文字列を返す関数。デフォルトでは、<code>svelte-${hash(css)}</code>を返します。
+          | <code>loopGuardTimeout</code> | 0 | <code>loopGuardTimeout</code> msを超えてスレッドがブロックされた場合にループを解除するようにSvelteに指示する <code>数値</code> です。これは無限ループを防ぐのに便利です。<strong>利用可能なのは <code>dev: true</code> の場合のみです</strong>
+          | <code>preserveComments</code> | <code>false</code> | <code>true</code> の場合、サーバサイドでのレンダリング中に HTML コメントが保存されます。デフォルトではコメントは削除されます。
+          | <code>preserveWhitespace</code> | <code>false</code> | <code>true</code> の場合、要素内や要素間の空白は、可能であれば削除されたり単一の空白になったりするのではなく、入力したとおりに保持されます。
+          | <code>sourcemap</code> | <code>object \| string</code> | 最終的な出力ソースマップにマージされる初期のソースマップです。これは通常、プリプロセッサのソースマップです。
+          | <code>enableSourcemap</code> | <code>boolean \| { js: boolean; css: boolean; }</code> | <code>true</code>の場合、Svelteはコンポーネントのソースマップを生成します。ソースマップ生成をより詳細に制御するには、<code>js</code>または<code>css</code>を持つオブジェクトを使用します。デフォルトでは<code>true</code>です。
+          | <code>outputFilename</code> | <code>null</code> | JavaScriptのソースマップに使われる <code>文字列</code> です。
+          | <code>cssOutputFilename</code> | <code>null</code> | CSSのソースマップに使われる <code>文字列</code> です。
+          | <code>sveltePath</code> | <code>"svelte"</code> | <code>svelte</code> パッケージの場所。<code>svelte</code> または <code>svelte/[module]</code> からのインポートは、それに応じて変更されます。
+          | <code>namespace</code> | <code>"html"</code> | 要素の名前空間。例えば、<code>"mathml"</code>, <code>"svg"</code>, <code>"foreign"</code>
+        </p>
+        <p>返ってきた <code>result</code> オブジェクトには、有用なメタデータとともにコンポーネントのコードが含まれます。</p>
+        <pre class="language-js"><code class="language-js"><span class="token keyword">const</span> <span class="token punctuation">{</span>
+	js<span class="token punctuation">,</span>
+	css<span class="token punctuation">,</span>
+	ast<span class="token punctuation">,</span>
+	warnings<span class="token punctuation">,</span>
+	vars<span class="token punctuation">,</span>
+	stats
+<span class="token punctuation">}</span> <span class="token operator">=</span> svelte<span class="token punctuation">.</span><span class="token method function property-access">compile</span><span class="token punctuation">(</span>source<span class="token punctuation">)</span><span class="token punctuation">;</span></code></pre>
+        <ul>
+          <li><code>js</code> と <code>css</code> は以下のプロパティを持つオブジェクトです。
+            <ul>
+              <li><code>code</code> は JavaScript の文字列です。</li>
+              <li><code>map</code> はソースマップに <code>toString()</code> と <code>toUrl()</code> の便利なメソッドを追加したものです。</li>
+            </ul>
+          </li>
+          <li><code>ast</code> はコンポーネントの構造を表す抽象構文ツリーです。</li>
+          <li><code>warnings</code> はコンパイル時に生成された警告オブジェクトの配列です。各警告にはいくつかのプロパティがあります。
+            <ul>
+              <li><code>code</code> は警告のカテゴリを識別する文字列です。</li>
+              <li><code>message</code> は人間が読みやすい言葉で問題を説明したものです。</li>
+              <li><code>start</code> and <code>end</code> はもしも警告が特定の場所に関連している場合には <code>line</code>, <code>column</code>, <code>character</code> プロパティを持つオブジェクトです。</li>
+              <li><code>frame</code> は該当する場合に問題のあるコードを行番号で強調表示する文字列です。</li>
+            </ul>
+          </li>
+          <li><code>vars</code> はコンポーネントの宣言の配列です、例えば <a href="https://github.com/sveltejs/eslint-plugin-svelte3">eslint-plugin-svelte3</a> で使用されているように、各変数はいくつかのプロパティを持っています。
+            <ul>
+              <li><code>name</code> はそのままの意味です</li>
+              <li><code>export_name</code> は、エクスポートされた場合に使用される名前です。 (<code>export...as</code> でない限り、<code>name</code> と一致します)</li>
+              <li><code>injected</code> が <code>true</code> なのは、宣言はあなたが書いたコードではなく、Svelteによって注入されている場合です。</li>
+              <li><code>module</code> が <code>true</code> なのは、モジュールの値が <code>context="module"</code>スクリプトで宣言されている場合です。</li>
+              <li><code>mutated</code> が <code>true</code> なのは、値のプロパティがコンポーネント内部に割り当てられている場合です。</li>
+              <li><code>reassigned</code> が <code>true</code> なのは、コンポーネント内で値が再割り当てされている場合です。</li>
+              <li><code>referenced</code> が <code>true</code> なのは、テンプレート内で値が使われている場合です。</li>
+              <li><code>referenced_from_script</code> が <code>true</code> なのは、宣言外の <code>&#x3C;script></code> の中で値が使われている場合です。</li>
+              <li><code>writable</code> が <code>true</code> なのは、値が <code>let</code> または <code>var</code> で宣言されている場合です。 (ただし<code>const</code>, <code>class</code> と <code>function</code> は除きます)</li>
+            </ul>
+          </li>
+          <li><code>stats</code> はSvelte開発チームがコンパイラを診断するために使用するオブジェクトです。これに依存してはいけません！</li>
+        </ul><!--
+        
+        ```js
+        compiled: {
+        	// `map` is a v3 sourcemap with toString()/toUrl() methods
+        	js: { code: string, map: {...} },
+        	css: { code: string, map: {...} },
+        	ast: {...}, // ESTree-like syntax tree for the component, including HTML, CSS and JS
+        	warnings: Array<{
+        		code: string,
+        		message: string,
+        		filename: string,
+        		pos: number,
+        		start: { line: number, column: number },
+        		end: { line: number, column: number },
+        		frame: string,
+        		toString: () => string
+        	}>,
+        	vars: Array<{
+        		name: string,
+        		export_name: string,
+        		injected: boolean,
+        		module: boolean,
+        		mutated: boolean,
+        		reassigned: boolean,
+        		referenced: boolean,
+        		referenced_from_script: boolean,
+        		writable: boolean
+        	}>,
+        	stats: {
+        		timings: { [label]: number }
+        	}
+        } = svelte.compile(source: string, options?: {...})
+        ```
+        
+        -->
+      </section>
+      <section id="svelteparse" class="level2">
+        <h2><code>svelte.parse</code></h2>
+        <pre class="language-js"><code class="language-js"><span class="token literal-property property">ast</span><span class="token operator">:</span> object <span class="token operator">=</span> svelte<span class="token punctuation">.</span><span class="token method function property-access">parse</span><span class="token punctuation">(</span>
+	<span class="token literal-property property">source</span><span class="token operator">:</span> string<span class="token punctuation">,</span>
+	options<span class="token operator">?</span><span class="token operator">:</span> <span class="token punctuation">{</span>
+		filename<span class="token operator">?</span><span class="token operator">:</span> string<span class="token punctuation">,</span>
+		customElement<span class="token operator">?</span><span class="token operator">:</span> boolean
+	<span class="token punctuation">}</span>
+<span class="token punctuation">)</span></code></pre>
+        <p><code>parse</code> 関数はコンポーネントを解析し、その抽象構文木のみを返します。<code>generate: false</code> オプションを指定してコンパイルするのとは異なり、これはコンポーネントを解析する以外の検証やその他の解析を行いません。戻り値の AST はパブリックな API とは見なされないため、将来どこかのタイミングで破壊的な変更が発生する可能性があることにご注意ください。</p>
+        <pre class="language-js"><code class="language-js"><span class="token keyword">const</span> svelte <span class="token operator">=</span> <span class="token function">require</span><span class="token punctuation">(</span><span class="token string">'svelte/compiler'</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+<span class="token keyword">const</span> ast <span class="token operator">=</span> svelte<span class="token punctuation">.</span><span class="token method function property-access">parse</span><span class="token punctuation">(</span>source<span class="token punctuation">,</span> <span class="token punctuation">{</span> <span class="token literal-property property">filename</span><span class="token operator">:</span> <span class="token string">'App.svelte'</span> <span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">;</span></code></pre>
+      </section>
+      <section id="sveltepreprocess" class="level2">
+        <h2><code>svelte.preprocess</code></h2>
+        <p>Svelte を TypeScript, PostCSS, SCSS, Less などのツールで利用できるようにするための <a href="https://sveltesociety.dev/tools#preprocessors">コミュニティでメンテナンスされているプリプロセッサプラグイン</a> が多数用意されています。</p>
+        <p><code>svelte.preprocess</code> APIを使って独自のプリプロセッサを書くことができます。</p>
+        <pre class="language-js"><code class="language-js"><span class="token literal-property property">result</span><span class="token operator">:</span> <span class="token punctuation">{</span>
+	<span class="token literal-property property">code</span><span class="token operator">:</span> string<span class="token punctuation">,</span>
+	<span class="token literal-property property">dependencies</span><span class="token operator">:</span> <span class="token known-class-name class-name">Array</span><span class="token operator">&#x3C;</span>string<span class="token operator">></span>
+<span class="token punctuation">}</span> <span class="token operator">=</span> <span class="token keyword control-flow">await</span> svelte<span class="token punctuation">.</span><span class="token method function property-access">preprocess</span><span class="token punctuation">(</span>
+	<span class="token literal-property property">source</span><span class="token operator">:</span> string<span class="token punctuation">,</span>
+	<span class="token literal-property property">preprocessors</span><span class="token operator">:</span> <span class="token known-class-name class-name">Array</span><span class="token operator">&#x3C;</span><span class="token punctuation">{</span>
+		markup<span class="token operator">?</span><span class="token operator">:</span> <span class="token punctuation">(</span><span class="token parameter"><span class="token literal-property property">input</span><span class="token operator">:</span> <span class="token punctuation">{</span> <span class="token literal-property property">content</span><span class="token operator">:</span> string<span class="token punctuation">,</span> <span class="token literal-property property">filename</span><span class="token operator">:</span> string <span class="token punctuation">}</span></span><span class="token punctuation">)</span> <span class="token arrow operator">=></span> <span class="token known-class-name class-name">Promise</span><span class="token operator">&#x3C;</span><span class="token punctuation">{</span>
+			<span class="token literal-property property">code</span><span class="token operator">:</span> string<span class="token punctuation">,</span>
+			dependencies<span class="token operator">?</span><span class="token operator">:</span> <span class="token known-class-name class-name">Array</span><span class="token operator">&#x3C;</span>string<span class="token operator">></span>
+		<span class="token punctuation">}</span><span class="token operator">></span><span class="token punctuation">,</span>
+		script<span class="token operator">?</span><span class="token operator">:</span> <span class="token punctuation">(</span><span class="token parameter"><span class="token literal-property property">input</span><span class="token operator">:</span> <span class="token punctuation">{</span> <span class="token literal-property property">content</span><span class="token operator">:</span> string<span class="token punctuation">,</span> <span class="token literal-property property">markup</span><span class="token operator">:</span> string<span class="token punctuation">,</span> <span class="token literal-property property">attributes</span><span class="token operator">:</span> <span class="token maybe-class-name">Record</span><span class="token operator">&#x3C;</span>string<span class="token punctuation">,</span> string<span class="token operator">></span><span class="token punctuation">,</span> <span class="token literal-property property">filename</span><span class="token operator">:</span> string <span class="token punctuation">}</span></span><span class="token punctuation">)</span> <span class="token arrow operator">=></span> <span class="token known-class-name class-name">Promise</span><span class="token operator">&#x3C;</span><span class="token punctuation">{</span>
+			<span class="token literal-property property">code</span><span class="token operator">:</span> string<span class="token punctuation">,</span>
+			dependencies<span class="token operator">?</span><span class="token operator">:</span> <span class="token known-class-name class-name">Array</span><span class="token operator">&#x3C;</span>string<span class="token operator">></span>
+		<span class="token punctuation">}</span><span class="token operator">></span><span class="token punctuation">,</span>
+		style<span class="token operator">?</span><span class="token operator">:</span> <span class="token punctuation">(</span><span class="token parameter"><span class="token literal-property property">input</span><span class="token operator">:</span> <span class="token punctuation">{</span> <span class="token literal-property property">content</span><span class="token operator">:</span> string<span class="token punctuation">,</span> <span class="token literal-property property">markup</span><span class="token operator">:</span> string<span class="token punctuation">,</span> <span class="token literal-property property">attributes</span><span class="token operator">:</span> <span class="token maybe-class-name">Record</span><span class="token operator">&#x3C;</span>string<span class="token punctuation">,</span> string<span class="token operator">></span><span class="token punctuation">,</span> <span class="token literal-property property">filename</span><span class="token operator">:</span> string <span class="token punctuation">}</span></span><span class="token punctuation">)</span> <span class="token arrow operator">=></span> <span class="token known-class-name class-name">Promise</span><span class="token operator">&#x3C;</span><span class="token punctuation">{</span>
+			<span class="token literal-property property">code</span><span class="token operator">:</span> string<span class="token punctuation">,</span>
+			dependencies<span class="token operator">?</span><span class="token operator">:</span> <span class="token known-class-name class-name">Array</span><span class="token operator">&#x3C;</span>string<span class="token operator">></span>
+		<span class="token punctuation">}</span><span class="token operator">></span>
+	<span class="token punctuation">}</span><span class="token operator">></span><span class="token punctuation">,</span>
+	options<span class="token operator">?</span><span class="token operator">:</span> <span class="token punctuation">{</span>
+		filename<span class="token operator">?</span><span class="token operator">:</span> string
+	<span class="token punctuation">}</span>
+<span class="token punctuation">)</span></code></pre>
+        <p><code>preprocess</code> 関数は、コンポーネントのソースコードを任意に変換するための便利なフックを提供します。例えば、<code>&#x3C;style lang="sass"></code> ブロックを純粋なCSSに変換するために使うことができます。</p>
+        <p>最初の引数はコンポーネントのソースコードです。2番目の引数は、<em>プリプロセッサ</em> の配列です (1つしかない場合は単独のプリプロセッサになります)。このプリプロセッサは <code>markup</code>, <code>script</code>, <code>style</code> 関数を持つオブジェクトであり、これらは全てオプションです。</p>
+        <p>各 <code>markup</code>, <code>script</code>, <code>style</code> 関数は、変換されたソースコードを表す <code>code</code> プロパティと、任意で <code>dependencies</code> の配列を含んだオブジェクト (またはオブジェクトを resolve する promise) を返さなければなりません。</p>
+        <p><code>markup</code> 関数は、コンポーネントのソーステキスト全体と、第3引数にコンポーネントの <code>filename</code> が指定されている場合はそのコンポーネントの <code>filename</code> を受け取ります。</p>
+        <blockquote>
+          <p>プリプロセッサ関数は、<code>code</code> や <code>dependencies</code> に加えて <code>map</code> オブジェクトを返すことがあります。この <code>map</code> は変換を表すソースマップです。</p>
+        </blockquote>
+        <pre class="language-js"><code class="language-js"><span class="token keyword">const</span> svelte <span class="token operator">=</span> <span class="token function">require</span><span class="token punctuation">(</span><span class="token string">'svelte/compiler'</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token keyword">const</span> <span class="token maybe-class-name">MagicString</span> <span class="token operator">=</span> <span class="token function">require</span><span class="token punctuation">(</span><span class="token string">'magic-string'</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+<span class="token keyword">const</span> <span class="token punctuation">{</span> code <span class="token punctuation">}</span> <span class="token operator">=</span> <span class="token keyword control-flow">await</span> svelte<span class="token punctuation">.</span><span class="token method function property-access">preprocess</span><span class="token punctuation">(</span>source<span class="token punctuation">,</span> <span class="token punctuation">{</span>
+	<span class="token function-variable function">markup</span><span class="token operator">:</span> <span class="token punctuation">(</span><span class="token parameter"><span class="token punctuation">{</span> content<span class="token punctuation">,</span> filename <span class="token punctuation">}</span></span><span class="token punctuation">)</span> <span class="token arrow operator">=></span> <span class="token punctuation">{</span>
+		<span class="token keyword">const</span> pos <span class="token operator">=</span> content<span class="token punctuation">.</span><span class="token method function property-access">indexOf</span><span class="token punctuation">(</span><span class="token string">'foo'</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+		<span class="token keyword control-flow">if</span><span class="token punctuation">(</span>pos <span class="token operator">&#x3C;</span> <span class="token number">0</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+			<span class="token keyword control-flow">return</span> <span class="token punctuation">{</span> <span class="token literal-property property">code</span><span class="token operator">:</span> content <span class="token punctuation">}</span>
+		<span class="token punctuation">}</span>
+		<span class="token keyword">const</span> s <span class="token operator">=</span> <span class="token keyword">new</span> <span class="token class-name">MagicString</span><span class="token punctuation">(</span>content<span class="token punctuation">,</span> <span class="token punctuation">{</span> filename <span class="token punctuation">}</span><span class="token punctuation">)</span>
+		s<span class="token punctuation">.</span><span class="token method function property-access">overwrite</span><span class="token punctuation">(</span>pos<span class="token punctuation">,</span> pos <span class="token operator">+</span> <span class="token number">3</span><span class="token punctuation">,</span> <span class="token string">'bar'</span><span class="token punctuation">,</span> <span class="token punctuation">{</span> <span class="token literal-property property">storeName</span><span class="token operator">:</span> <span class="token boolean">true</span> <span class="token punctuation">}</span><span class="token punctuation">)</span>
+		<span class="token keyword control-flow">return</span> <span class="token punctuation">{</span>
+			<span class="token literal-property property">code</span><span class="token operator">:</span> s<span class="token punctuation">.</span><span class="token method function property-access">toString</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">,</span>
+			<span class="token literal-property property">map</span><span class="token operator">:</span> s<span class="token punctuation">.</span><span class="token method function property-access">generateMap</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+		<span class="token punctuation">}</span>
+	<span class="token punctuation">}</span>
+<span class="token punctuation">}</span><span class="token punctuation">,</span> <span class="token punctuation">{</span>
+	<span class="token literal-property property">filename</span><span class="token operator">:</span> <span class="token string">'App.svelte'</span>
+<span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">;</span></code></pre>
+        <p><code>script</code>関数と<code>style</code>関数はそれぞれ <code>&#x3C;script></code> と <code>&#x3C;style></code> 要素の内容(<code>content</code>)とコンポーネントのソーステキスト全体(<code>markup</code>)を受け取ります。これらの関数は <code>filename</code> に加えて要素の属性のオブジェクトを取得します。</p>
+        <p><code>依存関係</code>の配列が返された場合、それが結果オブジェクトに含まれます。これは（例えば）<a href="https://github.com/sveltejs/rollup-plugin-svelte">rollup-plugin-svelte</a> のようなパッケージで、<code>&#x3C;style></code> タグに <code>@import</code> がある場合などに、追加ファイルの変更を監視するために使われます。</p>
+        <pre class="language-js"><code class="language-js"><span class="token keyword">const</span> svelte <span class="token operator">=</span> <span class="token function">require</span><span class="token punctuation">(</span><span class="token string">'svelte/compiler'</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token keyword">const</span> sass <span class="token operator">=</span> <span class="token function">require</span><span class="token punctuation">(</span><span class="token string">'node-sass'</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token keyword">const</span> <span class="token punctuation">{</span> dirname <span class="token punctuation">}</span> <span class="token operator">=</span> <span class="token function">require</span><span class="token punctuation">(</span><span class="token string">'path'</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+<span class="token keyword">const</span> <span class="token punctuation">{</span> code<span class="token punctuation">,</span> dependencies <span class="token punctuation">}</span> <span class="token operator">=</span> <span class="token keyword control-flow">await</span> svelte<span class="token punctuation">.</span><span class="token method function property-access">preprocess</span><span class="token punctuation">(</span>source<span class="token punctuation">,</span> <span class="token punctuation">{</span>
+	<span class="token function-variable function">style</span><span class="token operator">:</span> <span class="token keyword">async</span> <span class="token punctuation">(</span><span class="token parameter"><span class="token punctuation">{</span> content<span class="token punctuation">,</span> attributes<span class="token punctuation">,</span> filename <span class="token punctuation">}</span></span><span class="token punctuation">)</span> <span class="token arrow operator">=></span> <span class="token punctuation">{</span>
+		<span class="token comment">// only process &#x3C;style lang="sass"></span>
+		<span class="token keyword control-flow">if</span> <span class="token punctuation">(</span>attributes<span class="token punctuation">.</span><span class="token property-access">lang</span> <span class="token operator">!==</span> <span class="token string">'sass'</span><span class="token punctuation">)</span> <span class="token keyword control-flow">return</span><span class="token punctuation">;</span>
+
+		<span class="token keyword">const</span> <span class="token punctuation">{</span> css<span class="token punctuation">,</span> stats <span class="token punctuation">}</span> <span class="token operator">=</span> <span class="token keyword control-flow">await</span> <span class="token keyword">new</span> <span class="token class-name">Promise</span><span class="token punctuation">(</span><span class="token punctuation">(</span><span class="token parameter">resolve<span class="token punctuation">,</span> reject</span><span class="token punctuation">)</span> <span class="token arrow operator">=></span> sass<span class="token punctuation">.</span><span class="token method function property-access">render</span><span class="token punctuation">(</span><span class="token punctuation">{</span>
+			<span class="token literal-property property">file</span><span class="token operator">:</span> filename<span class="token punctuation">,</span>
+			<span class="token literal-property property">data</span><span class="token operator">:</span> content<span class="token punctuation">,</span>
+			<span class="token literal-property property">includePaths</span><span class="token operator">:</span> <span class="token punctuation">[</span>
+				<span class="token function">dirname</span><span class="token punctuation">(</span>filename<span class="token punctuation">)</span><span class="token punctuation">,</span>
+			<span class="token punctuation">]</span><span class="token punctuation">,</span>
+		<span class="token punctuation">}</span><span class="token punctuation">,</span> <span class="token punctuation">(</span><span class="token parameter">err<span class="token punctuation">,</span> result</span><span class="token punctuation">)</span> <span class="token arrow operator">=></span> <span class="token punctuation">{</span>
+			<span class="token keyword control-flow">if</span> <span class="token punctuation">(</span>err<span class="token punctuation">)</span> <span class="token function">reject</span><span class="token punctuation">(</span>err<span class="token punctuation">)</span><span class="token punctuation">;</span>
+			<span class="token keyword control-flow">else</span> <span class="token function">resolve</span><span class="token punctuation">(</span>result<span class="token punctuation">)</span><span class="token punctuation">;</span>
+		<span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+		<span class="token keyword control-flow">return</span> <span class="token punctuation">{</span>
+			<span class="token literal-property property">code</span><span class="token operator">:</span> css<span class="token punctuation">.</span><span class="token method function property-access">toString</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">,</span>
+			<span class="token literal-property property">dependencies</span><span class="token operator">:</span> stats<span class="token punctuation">.</span><span class="token property-access">includedFiles</span>
+		<span class="token punctuation">}</span><span class="token punctuation">;</span>
+	<span class="token punctuation">}</span>
+<span class="token punctuation">}</span><span class="token punctuation">,</span> <span class="token punctuation">{</span>
+	<span class="token literal-property property">filename</span><span class="token operator">:</span> <span class="token string">'App.svelte'</span>
+<span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">;</span></code></pre>
+        <p>複数のプリプロセッサを併用することができます。最初のプリプロセッサの出力は、2番目のプリプロセッサへの入力になります。最初に <code>markup</code> 関数が実行され、次に <code>script</code> と <code>style</code> が実行されます。</p>
+        <pre class="language-js"><code class="language-js"><span class="token keyword">const</span> svelte <span class="token operator">=</span> <span class="token function">require</span><span class="token punctuation">(</span><span class="token string">'svelte/compiler'</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+<span class="token keyword">const</span> <span class="token punctuation">{</span> code <span class="token punctuation">}</span> <span class="token operator">=</span> <span class="token keyword control-flow">await</span> svelte<span class="token punctuation">.</span><span class="token method function property-access">preprocess</span><span class="token punctuation">(</span>source<span class="token punctuation">,</span> <span class="token punctuation">[</span>
+	<span class="token punctuation">{</span>
+		<span class="token function-variable function">markup</span><span class="token operator">:</span> <span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token arrow operator">=></span> <span class="token punctuation">{</span>
+			<span class="token console class-name">console</span><span class="token punctuation">.</span><span class="token method function property-access">log</span><span class="token punctuation">(</span><span class="token string">'this runs first'</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+		<span class="token punctuation">}</span><span class="token punctuation">,</span>
+		<span class="token function-variable function">script</span><span class="token operator">:</span> <span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token arrow operator">=></span> <span class="token punctuation">{</span>
+			<span class="token console class-name">console</span><span class="token punctuation">.</span><span class="token method function property-access">log</span><span class="token punctuation">(</span><span class="token string">'this runs third'</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+		<span class="token punctuation">}</span><span class="token punctuation">,</span>
+		<span class="token function-variable function">style</span><span class="token operator">:</span> <span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token arrow operator">=></span> <span class="token punctuation">{</span>
+			<span class="token console class-name">console</span><span class="token punctuation">.</span><span class="token method function property-access">log</span><span class="token punctuation">(</span><span class="token string">'this runs fifth'</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+		<span class="token punctuation">}</span>
+	<span class="token punctuation">}</span><span class="token punctuation">,</span>
+	<span class="token punctuation">{</span>
+		<span class="token function-variable function">markup</span><span class="token operator">:</span> <span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token arrow operator">=></span> <span class="token punctuation">{</span>
+			<span class="token console class-name">console</span><span class="token punctuation">.</span><span class="token method function property-access">log</span><span class="token punctuation">(</span><span class="token string">'this runs second'</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+		<span class="token punctuation">}</span><span class="token punctuation">,</span>
+		<span class="token function-variable function">script</span><span class="token operator">:</span> <span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token arrow operator">=></span> <span class="token punctuation">{</span>
+			<span class="token console class-name">console</span><span class="token punctuation">.</span><span class="token method function property-access">log</span><span class="token punctuation">(</span><span class="token string">'this runs fourth'</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+		<span class="token punctuation">}</span><span class="token punctuation">,</span>
+		<span class="token function-variable function">style</span><span class="token operator">:</span> <span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token arrow operator">=></span> <span class="token punctuation">{</span>
+			<span class="token console class-name">console</span><span class="token punctuation">.</span><span class="token method function property-access">log</span><span class="token punctuation">(</span><span class="token string">'this runs sixth'</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+		<span class="token punctuation">}</span>
+	<span class="token punctuation">}</span>
+<span class="token punctuation">]</span><span class="token punctuation">,</span> <span class="token punctuation">{</span>
+	<span class="token literal-property property">filename</span><span class="token operator">:</span> <span class="token string">'App.svelte'</span>
+<span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">;</span></code></pre>
+      </section>
+      <section id="sveltewalk" class="level2">
+        <h2><code>svelte.walk</code></h2>
+        <pre class="language-js"><code class="language-js"><span class="token function">walk</span><span class="token punctuation">(</span>ast<span class="token operator">:</span> <span class="token maybe-class-name">Node</span><span class="token punctuation">,</span> <span class="token punctuation">{</span>
+	<span class="token function">enter</span><span class="token punctuation">(</span>node<span class="token operator">:</span> <span class="token maybe-class-name">Node</span><span class="token punctuation">,</span> <span class="token literal-property property">parent</span><span class="token operator">:</span> <span class="token maybe-class-name">Node</span><span class="token punctuation">,</span> <span class="token literal-property property">prop</span><span class="token operator">:</span> string<span class="token punctuation">,</span> <span class="token literal-property property">index</span><span class="token operator">:</span> number<span class="token punctuation">)</span><span class="token operator">?</span><span class="token operator">:</span> <span class="token keyword">void</span><span class="token punctuation">,</span>
+	<span class="token function">leave</span><span class="token punctuation">(</span>node<span class="token operator">:</span> <span class="token maybe-class-name">Node</span><span class="token punctuation">,</span> <span class="token literal-property property">parent</span><span class="token operator">:</span> <span class="token maybe-class-name">Node</span><span class="token punctuation">,</span> <span class="token literal-property property">prop</span><span class="token operator">:</span> string<span class="token punctuation">,</span> <span class="token literal-property property">index</span><span class="token operator">:</span> number<span class="token punctuation">)</span><span class="token operator">?</span><span class="token operator">:</span> <span class="token keyword">void</span>
+<span class="token punctuation">}</span><span class="token punctuation">)</span></code></pre>
+        <p><code>walk</code> 関数はパーサーによって生成された抽象構文木をウォークする方法を提供します。コンパイラの組み込みインスタンスである<a href="https://github.com/Rich-Harris/estree-walker">estree-walker</a>を使用します。</p>
+        <p>ウォーカーは歩くための抽象構文木と、オプションの2つのメソッド <code>enter</code> と <code>leave</code> を持つオブジェクトを受け取ります。各ノードに対して、(存在すれば) <code>enter</code> が呼び出されます。そして <code>enter</code> を実行している間に <code>this.skip()</code> が呼ばれない限り、各子プロセスを巡回した後、ノード上で <code>leave</code> が呼ばれます。</p>
+        <pre class="language-js"><code class="language-js"><span class="token keyword">const</span> svelte <span class="token operator">=</span> <span class="token function">require</span><span class="token punctuation">(</span><span class="token string">'svelte/compiler'</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+svelte<span class="token punctuation">.</span><span class="token method function property-access">walk</span><span class="token punctuation">(</span>ast<span class="token punctuation">,</span> <span class="token punctuation">{</span>
+	<span class="token function">enter</span><span class="token punctuation">(</span><span class="token parameter">node<span class="token punctuation">,</span> parent<span class="token punctuation">,</span> prop<span class="token punctuation">,</span> index</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+		<span class="token function">do_something</span><span class="token punctuation">(</span>node<span class="token punctuation">)</span><span class="token punctuation">;</span>
+		<span class="token keyword control-flow">if</span> <span class="token punctuation">(</span><span class="token function">should_skip_children</span><span class="token punctuation">(</span>node<span class="token punctuation">)</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+			<span class="token keyword">this</span><span class="token punctuation">.</span><span class="token method function property-access">skip</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+		<span class="token punctuation">}</span>
+	<span class="token punctuation">}</span><span class="token punctuation">,</span>
+	<span class="token function">leave</span><span class="token punctuation">(</span><span class="token parameter">node<span class="token punctuation">,</span> parent<span class="token punctuation">,</span> prop<span class="token punctuation">,</span> index</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+		<span class="token function">do_something_else</span><span class="token punctuation">(</span>node<span class="token punctuation">)</span><span class="token punctuation">;</span>
+	<span class="token punctuation">}</span>
+<span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">;</span></code></pre>
+      </section>
+      <section id="svelteversion" class="level2">
+        <h2><code>svelte.VERSION</code></h2>
+        <p>package.json で設定されている現在のバージョンです。</p>
+        <pre class="language-js"><code class="language-js"><span class="token keyword">const</span> svelte <span class="token operator">=</span> <span class="token function">require</span><span class="token punctuation">(</span><span class="token string">'svelte/compiler'</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token console class-name">console</span><span class="token punctuation">.</span><span class="token method function property-access">log</span><span class="token punctuation">(</span><span class="token template-string"><span class="token template-punctuation string">`</span><span class="token string">running svelte version </span><span class="token interpolation"><span class="token interpolation-punctuation punctuation">${</span>svelte<span class="token punctuation">.</span><span class="token constant">VERSION</span><span class="token interpolation-punctuation punctuation">}</span></span><span class="token template-punctuation string">`</span></span><span class="token punctuation">)</span><span class="token punctuation">;</span></code></pre>
+        <p><span style="float: footnote;"><a href="./index.html#toc">Go to TOC</a></span></p>
+      </section>
+    </section>
+  </body>
+</html>

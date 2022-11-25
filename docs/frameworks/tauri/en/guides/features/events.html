@@ -1,0 +1,131 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <title>Events</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="https://raw.githubusercontent.com/shinokada/prism-coy-theme/main/theme_common.css">
+  </head>
+  <body>
+    <section id="events" class="level1">
+      <h1>Events</h1>
+      <p>
+        The Tauri event system is a multi-producer multi-consumer communication primitive that allows message passing between the frontend and the backend.
+        It is analogous to the command system, but a payload type check must be written on the event handler and it simplifies communication from the backend to the frontend, working like a channel.
+      </p>
+      <p>A Tauri application can listen and emit global and window-specific events. Usage from the frontend and the backend is described below.</p>
+      <section id="frontend" class="level2">
+        <h2>Frontend</h2>
+        <p>The event system is accessible on the frontend on the <code>event</code> and <code>window</code> modules of the <code>@tauri-apps/api</code> package.</p>
+        <section id="global-events" class="level3">
+          <h3>Global events</h3>
+          <p>To use the global event channel, import the <code>event</code> module and use the <code>emit</code> and <code>listen</code> functions:</p>
+          <pre class="language-js"><code class="language-js"><span class="token keyword module">import</span> <span class="token imports"><span class="token punctuation">{</span> emit<span class="token punctuation">,</span> listen <span class="token punctuation">}</span></span> <span class="token keyword module">from</span> <span class="token string">'@tauri-apps/api/event'</span>
+
+<span class="token comment">// listen to the `click` event and get a function to remove the event listener</span>
+<span class="token comment">// there's also a `once` function that subscribes to an event and automatically unsubscribes the listener on the first event</span>
+<span class="token keyword">const</span> unlisten <span class="token operator">=</span> <span class="token keyword control-flow">await</span> <span class="token function">listen</span><span class="token punctuation">(</span><span class="token string">'click'</span><span class="token punctuation">,</span> <span class="token punctuation">(</span><span class="token parameter">event</span><span class="token punctuation">)</span> <span class="token arrow operator">=></span> <span class="token punctuation">{</span>
+  <span class="token comment">// event.event is the event name (useful if you want to use a single callback fn for multiple event types)</span>
+  <span class="token comment">// event.payload is the payload object</span>
+<span class="token punctuation">}</span><span class="token punctuation">)</span>
+
+<span class="token comment">// emits the `click` event with the object payload</span>
+<span class="token function">emit</span><span class="token punctuation">(</span><span class="token string">'click'</span><span class="token punctuation">,</span> <span class="token punctuation">{</span>
+  <span class="token literal-property property">theMessage</span><span class="token operator">:</span> <span class="token string">'Tauri is awesome!'</span><span class="token punctuation">,</span>
+<span class="token punctuation">}</span><span class="token punctuation">)</span></code></pre>
+        </section>
+        <section id="window-specific-events" class="level3">
+          <h3>Window-specific events</h3>
+          <p>Window-specific events are exposed on the <code>window</code> module.</p>
+          <pre class="language-js"><code class="language-js"><span class="token keyword module">import</span> <span class="token imports"><span class="token punctuation">{</span> appWindow<span class="token punctuation">,</span> <span class="token maybe-class-name">WebviewWindow</span> <span class="token punctuation">}</span></span> <span class="token keyword module">from</span> <span class="token string">'@tauri-apps/api/window'</span>
+
+<span class="token comment">// emit an event that are only visible to the current window</span>
+appWindow<span class="token punctuation">.</span><span class="token method function property-access">emit</span><span class="token punctuation">(</span><span class="token string">'event'</span><span class="token punctuation">,</span> <span class="token punctuation">{</span> <span class="token literal-property property">message</span><span class="token operator">:</span> <span class="token string">'Tauri is awesome!'</span> <span class="token punctuation">}</span><span class="token punctuation">)</span>
+
+<span class="token comment">// create a new webview window and emit an event only to that window</span>
+<span class="token keyword">const</span> webview <span class="token operator">=</span> <span class="token keyword">new</span> <span class="token class-name">WebviewWindow</span><span class="token punctuation">(</span><span class="token string">'window'</span><span class="token punctuation">)</span>
+webview<span class="token punctuation">.</span><span class="token method function property-access">emit</span><span class="token punctuation">(</span><span class="token string">'event'</span><span class="token punctuation">)</span></code></pre>
+        </section>
+      </section>
+      <section id="backend" class="level2">
+        <h2>Backend</h2>
+        <p>On the backend, the global event channel is exposed on the <code>App</code> struct, and window-specific events can be emitted using the <code>Window</code> trait.</p>
+        <section id="global-events-1" class="level3">
+          <h3>Global events</h3>
+          <pre class="language-rust"><code class="language-rust"><span class="token keyword">use</span> <span class="token namespace">tauri<span class="token punctuation">::</span></span><span class="token class-name">Manager</span><span class="token punctuation">;</span>
+
+<span class="token comment">// the payload type must implement `Serialize` and `Clone`.</span>
+<span class="token attribute attr-name">#[derive(Clone, serde::Serialize)]</span>
+<span class="token keyword">struct</span> <span class="token type-definition class-name">Payload</span> <span class="token punctuation">{</span>
+  message<span class="token punctuation">:</span> <span class="token class-name">String</span><span class="token punctuation">,</span>
+<span class="token punctuation">}</span>
+
+<span class="token keyword">fn</span> <span class="token function-definition function">main</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  <span class="token namespace">tauri<span class="token punctuation">::</span></span><span class="token class-name">Builder</span><span class="token punctuation">::</span><span class="token function">default</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+    <span class="token punctuation">.</span><span class="token function">setup</span><span class="token punctuation">(</span><span class="token closure-params"><span class="token closure-punctuation punctuation">|</span>app<span class="token closure-punctuation punctuation">|</span></span> <span class="token punctuation">{</span>
+      <span class="token comment">// listen to the `event-name` (emitted on any window)</span>
+      <span class="token keyword">let</span> id <span class="token operator">=</span> app<span class="token punctuation">.</span><span class="token function">listen_global</span><span class="token punctuation">(</span>event<span class="token operator">-</span>name<span class="token punctuation">,</span> <span class="token closure-params"><span class="token closure-punctuation punctuation">|</span>event<span class="token closure-punctuation punctuation">|</span></span> <span class="token punctuation">{</span>
+        <span class="token macro property">println!</span><span class="token punctuation">(</span>got event<span class="token operator">-</span>name with payload <span class="token punctuation">{</span><span class="token punctuation">:</span><span class="token operator">?</span><span class="token punctuation">}</span><span class="token punctuation">,</span> event<span class="token punctuation">.</span><span class="token function">payload</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+      <span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+      <span class="token comment">// unlisten to the event using the `id` returned on the `listen_global` function</span>
+      <span class="token comment">// an `once_global` API is also exposed on the `App` struct</span>
+      app<span class="token punctuation">.</span><span class="token function">unlisten</span><span class="token punctuation">(</span>id<span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+      <span class="token comment">// emit the `event-name` event to all webview windows on the frontend</span>
+      app<span class="token punctuation">.</span><span class="token function">emit_all</span><span class="token punctuation">(</span>event<span class="token operator">-</span>name<span class="token punctuation">,</span> <span class="token class-name">Payload</span> <span class="token punctuation">{</span> message<span class="token punctuation">:</span> <span class="token class-name">Tauri</span> is <span class="token macro property">awesome!</span><span class="token punctuation">.</span><span class="token function">into</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">unwrap</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+      <span class="token class-name">Ok</span><span class="token punctuation">(</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+    <span class="token punctuation">}</span><span class="token punctuation">)</span>
+    <span class="token punctuation">.</span><span class="token function">run</span><span class="token punctuation">(</span><span class="token namespace">tauri<span class="token punctuation">::</span></span><span class="token macro property">generate_context!</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+    <span class="token punctuation">.</span><span class="token function">expect</span><span class="token punctuation">(</span>failed to run app<span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span></code></pre>
+        </section>
+        <section id="window-specific-events-1" class="level3">
+          <h3>Window-specific events</h3>
+          <p>To use the window-specific event channel, a <code>Window</code> object can be obtained on a command handler or with the <code>get_window</code> function:</p>
+          <pre class="language-rust"><code class="language-rust"><span class="token keyword">use</span> <span class="token namespace">tauri<span class="token punctuation">::</span></span><span class="token punctuation">{</span><span class="token class-name">Manager</span><span class="token punctuation">,</span> <span class="token class-name">Window</span><span class="token punctuation">}</span><span class="token punctuation">;</span>
+
+<span class="token comment">// the payload type must implement `Serialize` and `Clone`.</span>
+<span class="token attribute attr-name">#[derive(Clone, serde::Serialize)]</span>
+<span class="token keyword">struct</span> <span class="token type-definition class-name">Payload</span> <span class="token punctuation">{</span>
+  message<span class="token punctuation">:</span> <span class="token class-name">String</span><span class="token punctuation">,</span>
+<span class="token punctuation">}</span>
+
+<span class="token comment">// init a background process on the command, and emit periodic events only to the window that used the command</span>
+<span class="token attribute attr-name">#[tauri::command]</span>
+<span class="token keyword">fn</span> <span class="token function-definition function">init_process</span><span class="token punctuation">(</span>window<span class="token punctuation">:</span> <span class="token class-name">Window</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  <span class="token namespace">std<span class="token punctuation">::</span>thread<span class="token punctuation">::</span></span><span class="token function">spawn</span><span class="token punctuation">(</span><span class="token keyword">move</span> <span class="token closure-params"><span class="token closure-punctuation punctuation">|</span><span class="token closure-punctuation punctuation">|</span></span> <span class="token punctuation">{</span>
+    <span class="token keyword">loop</span> <span class="token punctuation">{</span>
+      window<span class="token punctuation">.</span><span class="token function">emit</span><span class="token punctuation">(</span>event<span class="token operator">-</span>name<span class="token punctuation">,</span> <span class="token class-name">Payload</span> <span class="token punctuation">{</span> message<span class="token punctuation">:</span> <span class="token class-name">Tauri</span> is <span class="token macro property">awesome!</span><span class="token punctuation">.</span><span class="token function">into</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">unwrap</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+  <span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+
+<span class="token keyword">fn</span> <span class="token function-definition function">main</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  <span class="token namespace">tauri<span class="token punctuation">::</span></span><span class="token class-name">Builder</span><span class="token punctuation">::</span><span class="token function">default</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+    <span class="token punctuation">.</span><span class="token function">setup</span><span class="token punctuation">(</span><span class="token closure-params"><span class="token closure-punctuation punctuation">|</span>app<span class="token closure-punctuation punctuation">|</span></span> <span class="token punctuation">{</span>
+      <span class="token comment">// `main` here is the window label; it is defined on the window creation or under `tauri.conf.json`</span>
+      <span class="token comment">// the default value is `main`. note that it must be unique</span>
+      <span class="token keyword">let</span> main_window <span class="token operator">=</span> app<span class="token punctuation">.</span><span class="token function">get_window</span><span class="token punctuation">(</span>main<span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">unwrap</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+      <span class="token comment">// listen to the `event-name` (emitted on the `main` window)</span>
+      <span class="token keyword">let</span> id <span class="token operator">=</span> main_window<span class="token punctuation">.</span><span class="token function">listen</span><span class="token punctuation">(</span>event<span class="token operator">-</span>name<span class="token punctuation">,</span> <span class="token closure-params"><span class="token closure-punctuation punctuation">|</span>event<span class="token closure-punctuation punctuation">|</span></span> <span class="token punctuation">{</span>
+        <span class="token macro property">println!</span><span class="token punctuation">(</span>got window event<span class="token operator">-</span>name with payload <span class="token punctuation">{</span><span class="token punctuation">:</span><span class="token operator">?</span><span class="token punctuation">}</span><span class="token punctuation">,</span> event<span class="token punctuation">.</span><span class="token function">payload</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+      <span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+      <span class="token comment">// unlisten to the event using the `id` returned on the `listen` function</span>
+      <span class="token comment">// an `once` API is also exposed on the `Window` struct</span>
+      main_window<span class="token punctuation">.</span><span class="token function">unlisten</span><span class="token punctuation">(</span>id<span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+      <span class="token comment">// emit the `event-name` event to the `main` window</span>
+      main_window<span class="token punctuation">.</span><span class="token function">emit</span><span class="token punctuation">(</span>event<span class="token operator">-</span>name<span class="token punctuation">,</span> <span class="token class-name">Payload</span> <span class="token punctuation">{</span> message<span class="token punctuation">:</span> <span class="token class-name">Tauri</span> is <span class="token macro property">awesome!</span><span class="token punctuation">.</span><span class="token function">into</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">unwrap</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+      <span class="token class-name">Ok</span><span class="token punctuation">(</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+    <span class="token punctuation">}</span><span class="token punctuation">)</span>
+    <span class="token punctuation">.</span><span class="token function">invoke_handler</span><span class="token punctuation">(</span><span class="token namespace">tauri<span class="token punctuation">::</span></span><span class="token macro property">generate_handler!</span><span class="token punctuation">[</span>init_process<span class="token punctuation">]</span><span class="token punctuation">)</span>
+    <span class="token punctuation">.</span><span class="token function">run</span><span class="token punctuation">(</span><span class="token namespace">tauri<span class="token punctuation">::</span></span><span class="token macro property">generate_context!</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+    <span class="token punctuation">.</span><span class="token function">expect</span><span class="token punctuation">(</span>failed to run app<span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span></code></pre>
+          <p><span style="float: footnote;"><a href="../../index.html#toc">Go to TOC</a></span></p>
+        </section>
+      </section>
+    </section>
+  </body>
+</html>

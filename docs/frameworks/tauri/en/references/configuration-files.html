@@ -1,0 +1,101 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <title>Configuration Files</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="sidebar_position" content="3">
+    <link rel="stylesheet" href="https://raw.githubusercontent.com/shinokada/prism-coy-theme/main/theme_common.css">
+  </head>
+  <body>
+    <section id="configuration-files" class="level1">
+      <h1>Configuration Files</h1>
+      <p>Since Tauri is a toolkit for building applications there can be many files to configure project settings. Some common files that you may run across are <code>tauri.conf.json</code>, <code>package.json</code> and <code>Cargo.toml</code>. We briefly explain each on this page to help point you in the right direction for which file to modify.</p>
+      <section id="tauri-config" class="level2">
+        <h2>Tauri Config</h2>
+        <p>The file can be either <code>tauri.conf.json</code>, <code>tauri.conf.json5</code>, or <code>Tauri.toml</code>. The default is <code>tauri.conf.json</code>. See the note below for more information.</p>
+        <p>This is the file used by the Tauri process. You can define build settings (such as the <a href="../api/config.md#buildconfig.beforebuildcommand">command run before <code>tauri build</code></a> or <a href="../api/config.md#buildconfig.beforedevcommand"><code>tauri dev</code></a>), set the <a href="../api/config#packageconfig">name and version of your app</a>, <a href="../api/config#tauriconfig">control the Tauri process</a>, and configure any plugin settings. You can find all of the options in the <a href="../api/config.md"><code>tauri.conf.json</code> API reference</a>.</p>
+        <blockquote>
+          <p>The default Tauri config format is <code>.json</code>. The <code>.json5</code> or <code>.toml</code> format can be enabled by adding the <code>config-json5</code> or <code>config-toml</code> feature flag (respectively) to the <code>tauri</code> and <code>tauri-build</code> dependencies in <code>Cargo.toml</code>. Note that the <code>.toml</code> format is only available from Tauri 1.1 and above.</p>
+          <figure class="language-toml">
+            <figcaption>Cargo.toml</figcaption>
+            <pre class="language-toml"><code class="language-toml"><span class="token punctuation">[</span><span class="token table class-name">build-dependencies</span><span class="token punctuation">]</span>
+// highlight-next-line
+<span class="token key property">tauri-build</span> <span class="token punctuation">=</span> <span class="token punctuation">{</span> <span class="token key property">version</span> <span class="token punctuation">=</span> <span class="token number">1.0</span><span class="token punctuation">.</span><span class="token number">0</span><span class="token punctuation">,</span> <span class="token key property">features</span> <span class="token punctuation">=</span> <span class="token punctuation">[</span> config-json5 <span class="token punctuation">]</span> <span class="token punctuation">}</span>
+
+<span class="token punctuation">[</span><span class="token table class-name">dependencies</span><span class="token punctuation">]</span>
+<span class="token key property">serde_json</span> <span class="token punctuation">=</span> <span class="token number">1.0</span>
+<span class="token key property">serde</span> <span class="token punctuation">=</span> <span class="token punctuation">{</span> <span class="token key property">version</span> <span class="token punctuation">=</span> <span class="token number">1.0</span><span class="token punctuation">,</span> <span class="token key property">features</span> <span class="token punctuation">=</span> <span class="token punctuation">[</span>derive<span class="token punctuation">]</span> <span class="token punctuation">}</span>
+// highlight-next-line
+<span class="token key property">tauri</span> <span class="token punctuation">=</span> <span class="token punctuation">{</span> <span class="token key property">version</span> <span class="token punctuation">=</span> <span class="token number">1.0</span><span class="token punctuation">.</span><span class="token number">0</span><span class="token punctuation">,</span> <span class="token key property">features</span> <span class="token punctuation">=</span> <span class="token punctuation">[</span> api-all<span class="token punctuation">,</span> config-json5 <span class="token punctuation">]</span> <span class="token punctuation">}</span></code></pre>
+          </figure>
+          <p>The structure and values are the same across all formats, however, the formatting should be consistent with the respective file's format.</p>
+        </blockquote>
+      </section>
+      <section id="cargotoml" class="level2">
+        <h2><code>Cargo.toml</code></h2>
+        <p>Cargo's manifest file is used to declare Rust crates your app depends on, metadata about your app, and other Rust-related features. If you do not intend to do backend development using Rust for your app then you may not be modifying it much, but it's important to know that it exists and what it does.</p>
+        <p>Below is an example of a barebones <code>Cargo.toml</code> file for a Tauri project:</p>
+        <figure class="language-toml">
+          <figcaption>Cargo.toml</figcaption>
+          <pre class="language-toml"><code class="language-toml"><span class="token punctuation">[</span><span class="token table class-name">package</span><span class="token punctuation">]</span>
+<span class="token key property">name</span> <span class="token punctuation">=</span> app
+<span class="token key property">version</span> <span class="token punctuation">=</span> <span class="token number">0.1</span><span class="token punctuation">.</span><span class="token number">0</span>
+<span class="token key property">description</span> <span class="token punctuation">=</span> A Tauri App
+<span class="token key property">authors</span> <span class="token punctuation">=</span> <span class="token punctuation">[</span>you<span class="token punctuation">]</span>
+<span class="token key property">license</span> <span class="token punctuation">=</span> 
+<span class="token key property">repository</span> <span class="token punctuation">=</span> 
+<span class="token key property">default-run</span> <span class="token punctuation">=</span> app
+<span class="token key property">edition</span> <span class="token punctuation">=</span> <span class="token number">2021</span>
+<span class="token key property">rust-version</span> <span class="token punctuation">=</span> <span class="token number">1.57</span>
+
+<span class="token punctuation">[</span><span class="token table class-name">build-dependencies</span><span class="token punctuation">]</span>
+<span class="token key property">tauri-build</span> <span class="token punctuation">=</span> <span class="token punctuation">{</span> <span class="token key property">version</span> <span class="token punctuation">=</span> <span class="token number">1.0</span><span class="token punctuation">.</span><span class="token number">0</span> <span class="token punctuation">}</span>
+
+<span class="token punctuation">[</span><span class="token table class-name">dependencies</span><span class="token punctuation">]</span>
+<span class="token key property">serde_json</span> <span class="token punctuation">=</span> <span class="token number">1.0</span>
+<span class="token key property">serde</span> <span class="token punctuation">=</span> <span class="token punctuation">{</span> <span class="token key property">version</span> <span class="token punctuation">=</span> <span class="token number">1.0</span><span class="token punctuation">,</span> <span class="token key property">features</span> <span class="token punctuation">=</span> <span class="token punctuation">[</span>derive<span class="token punctuation">]</span> <span class="token punctuation">}</span>
+<span class="token key property">tauri</span> <span class="token punctuation">=</span> <span class="token punctuation">{</span> <span class="token key property">version</span> <span class="token punctuation">=</span> <span class="token number">1.0</span><span class="token punctuation">.</span><span class="token number">0</span><span class="token punctuation">,</span> <span class="token key property">features</span> <span class="token punctuation">=</span> <span class="token punctuation">[</span> api-all <span class="token punctuation">]</span> <span class="token punctuation">}</span>
+
+<span class="token punctuation">[</span><span class="token table class-name">features</span><span class="token punctuation">]</span>
+<span class="token comment"># by default Tauri runs in production mode</span>
+<span class="token comment"># when `tauri dev` runs it is executed with `cargo run --no-default-features` if `devPath` is an URL</span>
+<span class="token key property">default</span> <span class="token punctuation">=</span> <span class="token punctuation">[</span> custom-protocol <span class="token punctuation">]</span>
+<span class="token comment"># this feature is used for production builds where `devPath` points to the filesystem</span>
+<span class="token comment"># DO NOT remove this</span>
+<span class="token key property">custom-protocol</span> <span class="token punctuation">=</span> <span class="token punctuation">[</span> tauri/custom-protocol <span class="token punctuation">]</span></code></pre>
+        </figure>
+        <p>The most important parts to take note of are the <code>tauri-build</code> and <code>tauri</code> dependencies. Generally, they must both be on the latest minor versions as the Tauri CLI, but this is not strictly required. If you encounter issues while trying to run your app you should check that any Tauri versions (<code>tauri</code> and <code>tauri-cli</code>) are on the latest versions for their respective minor releases.</p>
+        <p>Cargo version numbers use <a href="https://semver.org">Semantic Versioning</a>. Running <code>cargo update</code> will pull the latest available Semver-compatible versions of all dependencies. For example, if you specify <code>1.0.0</code> as the version for <code>tauri-build</code>, Cargo will detect and download version <code>1.0.4</code> because it is the latest Semver-compatible version available. Tauri will update the major version number whenever a breaking change is introduced, meaning you should always be capable of safely upgrading to the latest minor and patch versions without fear of your code breaking.</p>
+        <p>If you want to use a specific crate version you can use exact versions instead by prepending <code>=</code> to the version number of the dependency:</p>
+        <pre class="language-text"><code class="language-text">tauri-build = { version = =1.0.0 }</code></pre>
+        <p>An additional thing to take note of is the <code>features=[]</code> portion of the <code>tauri</code> dependency. Running <code>tauri dev</code> and <code>tauri build</code> will automatically manage which features need to be enabled in your project based on the <code>allowlist</code> properties you set in <code>tauri.conf.json</code>.</p>
+        <p>When you build your application a <code>Cargo.lock</code> file is produced. This file is used primarily for ensuring that the same dependencies are used across machines during development (similar to <code>yarn.lock</code> or <code>package-lock.json</code> in Node.js). Since you are developing a Tauri app, this file should be committed to your source repository (only Rust libraries should omit committing this file).</p>
+        <p>To learn more about <code>Cargo.toml</code> you can read more in the <a href="https://doc.rust-lang.org/cargo/reference/manifest.html">official documentation</a>.</p>
+      </section>
+      <section id="packagejson" class="level2">
+        <h2><code>package.json</code></h2>
+        <p>This is the package file used by Node.js. If the frontend of a Tauri app is developed using Node.js-based technologies (such as <code>npm</code>, <code>yarn</code>, or <code>pnpm</code>) this file is used to configure the frontend dependencies and scripts.</p>
+        <p>An example of a barebones <code>package.json</code> file for a Tauri project might look a little something like this:</p>
+        <figure class="language-json">
+          <figcaption>package.json</figcaption>
+          <pre class="language-json"><code class="language-json"><span class="token punctuation">{</span>
+  scripts<span class="token operator">:</span> <span class="token punctuation">{</span>
+    dev<span class="token operator">:</span> command-for-your-framework<span class="token punctuation">,</span>
+    tauri<span class="token operator">:</span> tauri
+  <span class="token punctuation">}</span><span class="token punctuation">,</span>
+  dependencies<span class="token operator">:</span> <span class="token punctuation">{</span>
+    @tauri-apps/api<span class="token operator">:</span> ^<span class="token number">1.0</span><span class="token punctuation">,</span>
+    @tauri-apps/cli<span class="token operator">:</span> ^<span class="token number">1.0</span>
+  <span class="token punctuation">}</span>
+<span class="token punctuation">}</span></code></pre>
+        </figure>
+        <p>It's common to use the <code>scripts</code> section to store the command used to launch the frontend used by your Tauri application. The above file specifies the <code>dev</code> command that you can run using <code>yarn dev</code> or <code>npm run dev</code> to start the frontend framework.</p>
+        <p>The dependencies object specifies which dependencies Node.js should download when you run either <code>yarn</code> or <code>npm install</code> (in this case the Tauri CLI and API).</p>
+        <p>In addition to the <code>package.json</code> file you may see either a <code>yarn.lock</code> file or a <code>package-lock.json</code> file. These files assist in ensuring that when you download the dependencies later you'll get the exact same versions that you have used during development (similar to <code>Cargo.lock</code> in Rust).</p>
+        <p>To learn more about <code>package.json</code> you can read more in the <a href="https://docs.npmjs.com/cli/v8/configuring-npm/package-json">official documentation</a>.</p>
+        <p><span style="float: footnote;"><a href="../index.html#toc">Go to TOC</a></span></p>
+      </section>
+    </section>
+  </body>
+</html>

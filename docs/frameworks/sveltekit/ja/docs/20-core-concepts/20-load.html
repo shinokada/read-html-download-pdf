@@ -1,0 +1,474 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="utf-8">
+    <title>Loading data</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="https://raw.githubusercontent.com/shinokada/prism-coy-theme/main/theme_common.css">
+  </head>
+  <body>
+    <section id="loading-data" class="level1">
+      <h1>Loading data</h1>
+      <p><a href="../20-core-concepts/10-routing.html#page-page-svelte"><code>+page.svelte</code></a> コンポーネント (と <a href="../20-core-concepts/10-routing.html#layout-layout-svelte"><code>+layout.svelte</code></a> コンポーネント) をレンダリングする前に、データを取得する必要があるケースが多いでしょう。<code>load</code> 関数を定義することでこれができるようになります。</p>
+      <section id="page-data" class="level2">
+        <h2>Page data</h2>
+        <p><code>+page.svelte</code> ファイルは、<code>load</code> 関数をエクスポートする <code>+page.js</code> (または <code>+page.ts</code>) という兄弟ファイルを持つことができ、<code>load</code> 関数の戻り値は page で <code>data</code> プロパティを介して使用することができます。</p>
+        <pre class="language-js"><code class="language-js"><span class="token comment">/// file: src/routes/blog/[slug]/+page.js</span>
+<span class="token doc-comment comment">/** <span class="token keyword">@type</span> <span class="token class-name"><span class="token punctuation">{</span><span class="token keyword module">import</span><span class="token punctuation">(</span><span class="token string">'./$types'</span><span class="token punctuation">)</span><span class="token punctuation">.</span>PageLoad<span class="token punctuation">}</span></span> */</span>
+<span class="token keyword module">export</span> <span class="token keyword">function</span> <span class="token function">load</span><span class="token punctuation">(</span><span class="token parameter"><span class="token punctuation">{</span> params <span class="token punctuation">}</span></span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+	<span class="token keyword control-flow">return</span> <span class="token punctuation">{</span>
+		<span class="token literal-property property">post</span><span class="token operator">:</span> <span class="token punctuation">{</span>
+			# <span class="token template-string"><span class="token template-punctuation string">`</span><span class="token string">Title for </span><span class="token interpolation"><span class="token interpolation-punctuation punctuation">${</span>params<span class="token punctuation">.</span><span class="token property-access">slug</span><span class="token interpolation-punctuation punctuation">}</span></span><span class="token string"> goes here</span><span class="token template-punctuation string">`</span></span><span class="token punctuation">,</span>
+			<span class="token literal-property property">content</span><span class="token operator">:</span> <span class="token template-string"><span class="token template-punctuation string">`</span><span class="token string">Content for </span><span class="token interpolation"><span class="token interpolation-punctuation punctuation">${</span>params<span class="token punctuation">.</span><span class="token property-access">slug</span><span class="token interpolation-punctuation punctuation">}</span></span><span class="token string"> goes here</span><span class="token template-punctuation string">`</span></span>
+		<span class="token punctuation">}</span>
+	<span class="token punctuation">}</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span></code></pre>
+        <pre class="language-svelte"><code class="language-svelte">/// file: src/routes/blog/[slug]/+page.svelte
+&#x3C;script>
+	/** @type {import('./$types').PageData} */
+	export let data;
+&#x3C;/script>
+
+&#x3C;h1>{data.post.title}&#x3C;/h1>
+&#x3C;div>{@html data.post.content}&#x3C;/div></code></pre>
+        <p>生成される <code>$types</code> モジュールのおかげで、完全な型安全性を確保できます。</p>
+        <p><code>+page.js</code> ファイルの <code>load</code> 関数はサーバーでもブラウザでも実行されます。<code>load</code> 関数を <em>常に</em> サーバーで実行させたければ (例えばプライベートな環境変数を使用していたり、データベースにアクセスする場合など)、代わりに <code>+page.server.js</code> に <code>load</code> 関数を置くとよいでしょう。</p>
+        <p>例えばブログ記事の <code>load</code> 関数をより現実的なものにするとしたら、以下のように、サーバー上でのみ実行され、データベースからデータを取得する、というものになるでしょう。</p>
+        <pre class="language-js"><code class="language-js"><span class="token comment">/// file: src/routes/blog/[slug]/+page.server.js</span>
+<span class="token comment">// @filename: ambient.d.ts</span>
+declare module <span class="token string">'$lib/server/database'</span> <span class="token punctuation">{</span>
+	<span class="token keyword module">export</span> <span class="token keyword">function</span> <span class="token function">getPost</span><span class="token punctuation">(</span><span class="token parameter"><span class="token literal-property property">slug</span><span class="token operator">:</span> string</span><span class="token punctuation">)</span><span class="token operator">:</span> <span class="token known-class-name class-name">Promise</span><span class="token operator">&#x3C;</span><span class="token punctuation">{</span> # string<span class="token punctuation">,</span> <span class="token literal-property property">content</span><span class="token operator">:</span> string <span class="token punctuation">}</span><span class="token operator">></span>
+<span class="token punctuation">}</span>
+
+<span class="token comment">// @filename: index.js</span>
+<span class="token comment">// cut---</span>
+<span class="token keyword module">import</span> <span class="token imports"><span class="token operator">*</span> <span class="token keyword module">as</span> db</span> <span class="token keyword module">from</span> <span class="token string">'$lib/server/database'</span><span class="token punctuation">;</span>
+
+<span class="token doc-comment comment">/** <span class="token keyword">@type</span> <span class="token class-name"><span class="token punctuation">{</span><span class="token keyword module">import</span><span class="token punctuation">(</span><span class="token string">'./$types'</span><span class="token punctuation">)</span><span class="token punctuation">.</span>PageServerLoad<span class="token punctuation">}</span></span> */</span>
+<span class="token keyword module">export</span> <span class="token keyword">async</span> <span class="token keyword">function</span> <span class="token function">load</span><span class="token punctuation">(</span><span class="token parameter"><span class="token punctuation">{</span> params <span class="token punctuation">}</span></span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+	<span class="token keyword control-flow">return</span> <span class="token punctuation">{</span>
+		<span class="token literal-property property">post</span><span class="token operator">:</span> <span class="token keyword control-flow">await</span> db<span class="token punctuation">.</span><span class="token method function property-access">getPost</span><span class="token punctuation">(</span>params<span class="token punctuation">.</span><span class="token property-access">slug</span><span class="token punctuation">)</span>
+	<span class="token punctuation">}</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span></code></pre>
+        <p>型が <code>PageLoad</code> から <code>PageServerLoad</code> に変わっていることにご注意ください。サーバー専用の <code>load</code> 関数では追加の引数にアクセスすることができます。どのような場合に <code>+page.js</code> を使用し、どのような場合に <code>+page.server.js</code> を使用するのかを理解するには、<a href="../20-core-concepts/20-load.html#shared-vs-server">Shared vs server</a> を参照してください。</p>
+      </section>
+      <section id="layout-data" class="level2">
+        <h2>Layout data</h2>
+        <p><code>+layout.svelte</code> ファイルでも、<code>+layout.js</code> や <code>+layout.server.js</code> を通じてデータを読み込むことができます。</p>
+        <pre class="language-js"><code class="language-js"><span class="token comment">/// file: src/routes/blog/[slug]/+layout.server.js</span>
+<span class="token comment">// @filename: ambient.d.ts</span>
+declare module <span class="token string">'$lib/server/database'</span> <span class="token punctuation">{</span>
+	<span class="token keyword module">export</span> <span class="token keyword">function</span> <span class="token function">getPostSummaries</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token operator">:</span> <span class="token known-class-name class-name">Promise</span><span class="token operator">&#x3C;</span><span class="token known-class-name class-name">Array</span><span class="token operator">&#x3C;</span><span class="token punctuation">{</span> # string<span class="token punctuation">,</span> <span class="token literal-property property">slug</span><span class="token operator">:</span> string <span class="token punctuation">}</span><span class="token operator">>></span>
+<span class="token punctuation">}</span>
+
+<span class="token comment">// @filename: index.js</span>
+<span class="token comment">// cut---</span>
+<span class="token keyword module">import</span> <span class="token imports"><span class="token operator">*</span> <span class="token keyword module">as</span> db</span> <span class="token keyword module">from</span> <span class="token string">'$lib/server/database'</span><span class="token punctuation">;</span>
+
+<span class="token doc-comment comment">/** <span class="token keyword">@type</span> <span class="token class-name"><span class="token punctuation">{</span><span class="token keyword module">import</span><span class="token punctuation">(</span><span class="token string">'./$types'</span><span class="token punctuation">)</span><span class="token punctuation">.</span>LayoutServerLoad<span class="token punctuation">}</span></span> */</span>
+<span class="token keyword module">export</span> <span class="token keyword">async</span> <span class="token keyword">function</span> <span class="token function">load</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+	<span class="token keyword control-flow">return</span> <span class="token punctuation">{</span>
+		<span class="token literal-property property">posts</span><span class="token operator">:</span> <span class="token keyword control-flow">await</span> db<span class="token punctuation">.</span><span class="token method function property-access">getPostSummaries</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+	<span class="token punctuation">}</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span></code></pre>
+        <pre class="language-svelte"><code class="language-svelte">/// file: src/routes/blog/[slug]/+layout.svelte
+&#x3C;script>
+	/** @type {import('./$types').LayoutData} */
+	export let data;
+&#x3C;/script>
+
+&#x3C;main>
+	&#x3C;!-- +page.svelte is rendered here -->
+	&#x3C;slot />
+&#x3C;/main>
+
+&#x3C;aside>
+	&#x3C;h2>More posts&#x3C;/h2>
+	&#x3C;ul>
+		{#each data.posts as post}
+			&#x3C;li>
+				&#x3C;a href="/blog/{post.slug}">
+					{post.title}
+				&#x3C;/a>
+			&#x3C;/li>
+		{/each}
+	&#x3C;/ul>
+&#x3C;/aside></code></pre>
+        <p>レイアウトの <code>load</code> 関数から返されたデータは、子の <code>+layout.svelte</code> コンポーネントやそのレイアウトに属する <code>+page.svelte</code> コンポーネントでも利用可能です。</p>
+        <pre class="language-diff"><code class="language-diff">/// file: src/routes/blog/[slug]/+page.svelte
+<span class="token deleted-arrow deleted"><span class="token prefix deleted">&#x3C;</span><span class="token line">script>
+</span></span><span class="token inserted-sign inserted"><span class="token prefix inserted">+</span><span class="token line">	import { page } from '$app/stores';
+</span></span>
+	/** @type {import('./$types').PageData} */
+	export let data;
+
+<span class="token inserted-sign inserted"><span class="token prefix inserted">+</span><span class="token line">	// we can access `data.posts` because it's returned from
+</span><span class="token prefix inserted">+</span><span class="token line">	// the parent layout `load` function
+</span><span class="token prefix inserted">+</span><span class="token line">	$: index = data.posts.findIndex(post => post.slug === $page.params.slug);
+</span><span class="token prefix inserted">+</span><span class="token line">	$: next = data.posts[index - 1];
+</span></span><span class="token deleted-arrow deleted"><span class="token prefix deleted">&#x3C;</span><span class="token line">/script>
+</span></span>
+<span class="token deleted-arrow deleted"><span class="token prefix deleted">&#x3C;</span><span class="token line">h1>{data.post.title}&#x3C;/h1>
+</span><span class="token prefix deleted">&#x3C;</span><span class="token line">div>{@html data.post.content}&#x3C;/div>
+</span></span>
+<span class="token inserted-sign inserted"><span class="token prefix inserted">+</span><span class="token line">{#if next}
+</span><span class="token prefix inserted">+</span><span class="token line">	&#x3C;p>Next post: &#x3C;a href="/blog/{next.slug}">{next.title}&#x3C;/a>&#x3C;/p>
+</span><span class="token prefix inserted">+</span><span class="token line">{/if}</span></span></code></pre>
+        <blockquote>
+          <p>複数の <code>load</code> 関数が同じキーを持つデータを返した場合、最後に返したものが'勝ちます'。レイアウトの <code>load</code> が <code>{ a: 1, b: 2 }</code> を返し、ページの <code>load</code> が <code>{ b: 3, c: 4 }</code> を返すと、結果は <code>{ a: 1, b: 3, c: 4 }</code> となります。</p>
+        </blockquote>
+      </section>
+      <section id="pagedata" class="level2">
+        <h2>$page.data</h2>
+        <p><code>+page.svelte</code> コンポーネントとその上の各 <code>+layout.svelte</code> コンポーネントは、自身のデータとその親の全てのデータにアクセスすることができます。</p>
+        <p>場合によっては、その逆も必要かもしれません — 親レイアウトからページのデータや子レイアウトのデータにアクセスする必要があるかもしれません。例えば、最上位のレイアウト(root layout)から、<code>+page.js</code> や <code>+page.server.js</code> の <code>load</code> 関数から返された <code>title</code> プロパティにアクセスしたい場合があるでしょう。これは <code>$page.data</code> で行うことができます:</p>
+        <pre class="language-svelte"><code class="language-svelte">/// file: src/routes/+layout.svelte
+&#x3C;script>
+	import { page } from '$app/stores';
+&#x3C;/script>
+
+&#x3C;svelte:head>
+	&#x3C;title>{$page.data.title}&#x3C;/title>
+&#x3C;/svelte:head></code></pre>
+        <p><code>$page.data</code> の型情報は <code>App.PageData</code> から提供されます。</p>
+      </section>
+      <section id="shared-vs-server" class="level2">
+        <h2>Shared vs server</h2>
+        <p>これまで見てきたように、<code>load</code> 関数には2つの種類があります:</p>
+        <ul>
+          <li><code>+page.js</code> ファイルと <code>+layout.js</code> ファイルがエクスポートする <code>load</code> 関数は、サーバーとブラウザで共有(shared)されます</li>
+          <li><code>+page.server.js</code> ファイルと <code>+layout.server.js</code> ファイルがエクスポートする <code>load</code> 関数は、サーバー専用です</li>
+        </ul>
+        <p>概念上は同じものですが、気をつけなければならない重要な違いがあります。</p>
+        <section id="input" class="level3">
+          <h3>Input</h3>
+          <p>共有される <code>load</code> 関数とサーバー専用の <code>load</code> 関数はどちらも、リクエストを表すプロパティ (<code>params</code>、<code>route</code>、<code>url</code>) と様々な関数 (<code>depends</code>、<code>fetch</code>、<code>parent</code>) にアクセスできます。これらについては、以下のセクションで説明します。</p>
+          <p>サーバー専用の <code>load</code> 関数は <code>ServerLoadEvent</code> を引数にとって呼び出されます。<code>ServerLoadEvent</code> は、<code>RequestEvent</code> から <code>clientAddress</code>、<code>cookies</code>、<code>locals</code>、<code>platform</code>、<code>request</code> を継承しています。</p>
+          <p>共有される <code>load</code> 関数は、<code>LoadEvent</code> を引数にとって呼び出されます。<code>LoadEvent</code> は <code>data</code> プロパティを持っています。もし <code>+page.js</code> と <code>+page.server.js</code> (または <code>+layout.js</code> と <code>+layout.server.js</code>) の両方に <code>load</code> 関数がある場合、サーバー専用の <code>load</code> 関数の戻り値が、共有される <code>load</code> 関数の引数の <code>data</code> プロパティとなります。</p>
+        </section>
+        <section id="output" class="level3">
+          <h3>Output</h3>
+          <p>共有される <code>load</code> 関数は、任意の値(カスタムクラスやコンポーネントコンストラクタなどを含む)を含むオブジェクトを返すことができます。</p>
+          <p>サーバー専用の <code>load</code> 関数は、ネットワークで転送できるようにするために、<a href="https://github.com/rich-harris/devalue">devalue</a> でシリアライズできるデータ、つまり JSON で表現できるものに加え、<code>BigInt</code>、<code>Date</code>、<code>Map</code>、<code>Set</code>、<code>RegExp</code> や、繰り返し/循環参照などを返さなければなりません。</p>
+        </section>
+        <section id="どちらを使用すべきか" class="level3">
+          <h3>どちらを使用すべきか</h3>
+          <p>サーバー専用の <code>load</code> 関数は、データベースやファイルシステムからデータを直接アクセスする必要がある場合や、プライベートな環境変数を使用する必要がある場合に有用です。</p>
+          <p>共有される <code>load</code> 関数は、外部の API から データを <code>fetch</code> (取得) する必要があり、プライベートなクレデンシャルが必要ない場合に便利です。なぜなら、SvelteKit はあなたのサーバーを経由せずに、その API から直接データを取得することができるからです。また、Svelte コンポーネントコンストラクタのような、シリアライズできないものを返す必要がある場合にも便利です。</p>
+          <p>まれに、両方を同時に使用する必要がある場合もあります。例えば、サーバーからのデータで初期化されたカスタムクラスのインスタンスを返す必要がある場合です。</p>
+        </section>
+      </section>
+      <section id="url-data-を使用する" class="level2">
+        <h2>URL data を使用する</h2>
+        <p>多くの場合、<code>load</code> 関数は何らかの形で URL に依存します。そのため、<code>load</code> 関数では <code>url</code>、<code>route</code>、<code>params</code> を提供しています。</p>
+        <section id="url" class="level3">
+          <h3>url</h3>
+          <p><a href="https://developer.mozilla.org/ja/docs/Web/API/URL"><code>URL</code></a> のインスタンスで、<code>origin</code>、<code>hostname</code>、<code>pathname</code>、<code>searchParams</code> (<a href="https://developer.mozilla.org/ja/docs/Web/API/URLSearchParams"><code>URLSearchParams</code></a> オブジェクトとしてパースされたクエリ文字列を含む) を含んでいます。<code>url.hash</code> はサーバーで利用できないため、<code>load</code> 中にアクセスすることはできません。</p>
+          <blockquote>
+            <p>環境によっては、サーバーサイドレンダリング時のリクエストヘッダからこれが導出されることもあります。例えば <a href="../20-core-concepts/50-adapters.html#supported-environments-node-js">adapter-node</a> では、URL を正しく設定するために adapter の設定をする必要があるかもしれません。</p>
+          </blockquote>
+        </section>
+        <section id="route" class="level3">
+          <h3>route</h3>
+          <p>現在のルート(route)ディレクトリの名前を含んでいます。<code>src/routes</code> との相対です:</p>
+          <pre class="language-js"><code class="language-js"><span class="token comment">/// file: src/routes/a/[b]/[...c]/+page.js</span>
+<span class="token doc-comment comment">/** <span class="token keyword">@type</span> <span class="token class-name"><span class="token punctuation">{</span><span class="token keyword module">import</span><span class="token punctuation">(</span><span class="token string">'./$types'</span><span class="token punctuation">)</span><span class="token punctuation">.</span>PageLoad<span class="token punctuation">}</span></span> */</span>
+<span class="token keyword module">export</span> <span class="token keyword">function</span> <span class="token function">load</span><span class="token punctuation">(</span><span class="token parameter"><span class="token punctuation">{</span> route <span class="token punctuation">}</span></span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+	<span class="token console class-name">console</span><span class="token punctuation">.</span><span class="token method function property-access">log</span><span class="token punctuation">(</span>route<span class="token punctuation">.</span><span class="token property-access">id</span><span class="token punctuation">)</span><span class="token punctuation">;</span> <span class="token comment">// '/a/[b]/[...c]'</span>
+<span class="token punctuation">}</span></code></pre>
+        </section>
+        <section id="params" class="level3">
+          <h3>params</h3>
+          <p><code>params</code> は <code>url.pathname</code> と <code>route.id</code> から導出されます。</p>
+          <p><code>route.id</code> が <code>/a/[b]/[...c]</code> で、<code>url.pathname</code> が <code>/a/x/y/z</code> の場合、<code>params</code> オブジェクトはこのようになります:</p>
+          <pre class="language-json"><code class="language-json"><span class="token punctuation">{</span>
+	<span class="token property">"b"</span><span class="token operator">:</span> <span class="token string">"x"</span><span class="token punctuation">,</span>
+	<span class="token property">"c"</span><span class="token operator">:</span> <span class="token string">"y/z"</span>
+<span class="token punctuation">}</span></code></pre>
+        </section>
+      </section>
+      <section id="fetch-リクエストの作成" class="level2">
+        <h2>fetch リクエストの作成</h2>
+        <p>外部の API や <code>+server.js</code> ハンドラからデータを取得するには、提供されている <code>fetch</code> 関数を使用します。これは <a href="https://developer.mozilla.org/ja/docs/Web/API/fetch">ネイティブの <code>fetch</code> web API</a> と同じように動作しますが、いくつか追加の機能があります:</p>
+        <ul>
+          <li>ページリクエストの <code>cookie</code> と <code>authorization</code> ヘッダーを継承するので、サーバー上でクレデンシャル付きのリクエストを行うことができます</li>
+          <li>サーバー上で、相対パスのリクエストを行うことができます (通常、<code>fetch</code> はサーバーのコンテキストで使用する場合にはオリジン付きの URL が必要です)</li>
+          <li>サーバーで動作している場合、内部リクエスト (例えば <code>+server.js</code> ルート(routes)に対するリクエスト) は直接ハンドラ関数を呼び出すので、HTTP を呼び出すオーバーヘッドがありません</li>
+          <li>サーバーサイドレンダリング中は、レスポンスはキャプチャされ、レンダリング済の HTML にインライン化されます。ヘッダーは、<a href="../30-advanced/20-hooks.html#server-hooks-handle"><code>filterSerializedResponseHeaders</code></a> で明示的に指定されない限り、シリアライズされないことにご注意ください。そして、ハイドレーション中は、レスポンスは HTML から読み込まれるため、一貫性が保証され、追加のネットワークリクエストを防ぎます。もし、<code>load</code> 関数の <code>fetch</code> ではなくブラウザの <code>fetch</code> を使用しているときにブラウザコンソールに警告が出た場合は、これが理由です。</li>
+        </ul>
+        <pre class="language-js"><code class="language-js"><span class="token comment">/// file: src/routes/items/[id]/+page.js</span>
+<span class="token doc-comment comment">/** <span class="token keyword">@type</span> <span class="token class-name"><span class="token punctuation">{</span><span class="token keyword module">import</span><span class="token punctuation">(</span><span class="token string">'./$types'</span><span class="token punctuation">)</span><span class="token punctuation">.</span>PageLoad<span class="token punctuation">}</span></span> */</span>
+<span class="token keyword module">export</span> <span class="token keyword">async</span> <span class="token keyword">function</span> <span class="token function">load</span><span class="token punctuation">(</span><span class="token parameter"><span class="token punctuation">{</span> fetch<span class="token punctuation">,</span> params <span class="token punctuation">}</span></span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+	<span class="token keyword">const</span> res <span class="token operator">=</span> <span class="token keyword control-flow">await</span> <span class="token function">fetch</span><span class="token punctuation">(</span><span class="token template-string"><span class="token template-punctuation string">`</span><span class="token string">/api/items/</span><span class="token interpolation"><span class="token interpolation-punctuation punctuation">${</span>params<span class="token punctuation">.</span><span class="token property-access">id</span><span class="token interpolation-punctuation punctuation">}</span></span><span class="token template-punctuation string">`</span></span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+	<span class="token keyword">const</span> item <span class="token operator">=</span> <span class="token keyword control-flow">await</span> res<span class="token punctuation">.</span><span class="token method function property-access">json</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+	<span class="token keyword control-flow">return</span> <span class="token punctuation">{</span> item <span class="token punctuation">}</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span></code></pre>
+        <blockquote>
+          <p>Cookie は、ターゲットホストが Sveltekit アプリケーションと同じか、より明確・詳細(specific)なサブドメインである場合にのみ引き渡されます。</p>
+        </blockquote>
+      </section>
+      <section id="cookies-and-headers" class="level2">
+        <h2>Cookies and headers</h2>
+        <p>サーバー専用の <code>load</code> 関数では <a href="../50-api-reference/40-types.html#sveltejs-kit-cookies"><code>cookies</code></a> を取得したり設定したりすることができます。</p>
+        <pre class="language-js"><code class="language-js"><span class="token comment">/// file: src/routes/+layout.server.js</span>
+<span class="token comment">// @filename: ambient.d.ts</span>
+declare module <span class="token string">'$lib/server/database'</span> <span class="token punctuation">{</span>
+	<span class="token keyword module">export</span> <span class="token keyword">function</span> <span class="token function">getUser</span><span class="token punctuation">(</span><span class="token parameter"><span class="token literal-property property">sessionid</span><span class="token operator">:</span> string <span class="token operator">|</span> <span class="token keyword nil">undefined</span></span><span class="token punctuation">)</span><span class="token operator">:</span> <span class="token known-class-name class-name">Promise</span><span class="token operator">&#x3C;</span><span class="token punctuation">{</span> <span class="token literal-property property">name</span><span class="token operator">:</span> string<span class="token punctuation">,</span> <span class="token literal-property property">avatar</span><span class="token operator">:</span> string <span class="token punctuation">}</span><span class="token operator">></span>
+<span class="token punctuation">}</span>
+
+<span class="token comment">// @filename: index.js</span>
+<span class="token comment">// cut---</span>
+<span class="token keyword module">import</span> <span class="token imports"><span class="token operator">*</span> <span class="token keyword module">as</span> db</span> <span class="token keyword module">from</span> <span class="token string">'$lib/server/database'</span><span class="token punctuation">;</span>
+
+<span class="token doc-comment comment">/** <span class="token keyword">@type</span> <span class="token class-name"><span class="token punctuation">{</span><span class="token keyword module">import</span><span class="token punctuation">(</span><span class="token string">'./$types'</span><span class="token punctuation">)</span><span class="token punctuation">.</span>LayoutServerLoad<span class="token punctuation">}</span></span> */</span>
+<span class="token keyword module">export</span> <span class="token keyword">async</span> <span class="token keyword">function</span> <span class="token function">load</span><span class="token punctuation">(</span><span class="token parameter"><span class="token punctuation">{</span> cookies <span class="token punctuation">}</span></span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+	<span class="token keyword">const</span> sessionid <span class="token operator">=</span> cookies<span class="token punctuation">.</span><span class="token method function property-access">get</span><span class="token punctuation">(</span><span class="token string">'sessionid'</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+	<span class="token keyword control-flow">return</span> <span class="token punctuation">{</span>
+		<span class="token literal-property property">user</span><span class="token operator">:</span> <span class="token keyword control-flow">await</span> db<span class="token punctuation">.</span><span class="token method function property-access">getUser</span><span class="token punctuation">(</span>sessionid<span class="token punctuation">)</span>
+	<span class="token punctuation">}</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span></code></pre>
+        <blockquote>
+          <p>cookie を設定するときは、<code>path</code> プロパティにご注意ください。デフォルトでは、cookie の <code>path</code> は現在のパス名です。例えば、<code>admin/user</code> ページで cookie を設定した場合、デフォルトではその cookie は <code>admin</code> ページ配下でのみ使用することができます。多くの場合、<code>path</code> を <code>'/'</code> に設定して、アプリ全体で cookie を使用できるようにしたいでしょう。</p>
+        </blockquote>
+        <p>サーバー専用の <code>load</code> 関数と共有される <code>load</code> 関数はどちらも <code>setHeaders</code> 関数にアクセスでき、サーバー上で実行している場合、 レスポンスにヘッダーを設定できます。(ブラウザで実行している場合、<code>setHeaders</code> には何の効果もありません。) これは、ページをキャッシュさせる場合に便利です、例えば:</p>
+        <pre class="language-js"><code class="language-js"><span class="token comment">// @errors: 2322</span>
+<span class="token comment">/// file: src/routes/products/+page.js</span>
+<span class="token doc-comment comment">/** <span class="token keyword">@type</span> <span class="token class-name"><span class="token punctuation">{</span><span class="token keyword module">import</span><span class="token punctuation">(</span><span class="token string">'./$types'</span><span class="token punctuation">)</span><span class="token punctuation">.</span>PageLoad<span class="token punctuation">}</span></span> */</span>
+<span class="token keyword module">export</span> <span class="token keyword">async</span> <span class="token keyword">function</span> <span class="token function">load</span><span class="token punctuation">(</span><span class="token parameter"><span class="token punctuation">{</span> fetch<span class="token punctuation">,</span> setHeaders <span class="token punctuation">}</span></span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+	<span class="token keyword">const</span> url <span class="token operator">=</span> <span class="token template-string"><span class="token template-punctuation string">`</span><span class="token string">https://cms.example.com/products.json</span><span class="token template-punctuation string">`</span></span><span class="token punctuation">;</span>
+	<span class="token keyword">const</span> response <span class="token operator">=</span> <span class="token keyword control-flow">await</span> <span class="token function">fetch</span><span class="token punctuation">(</span>url<span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+	<span class="token comment">// cache the page for the same length of time</span>
+	<span class="token comment">// as the underlying data</span>
+	<span class="token function">setHeaders</span><span class="token punctuation">(</span><span class="token punctuation">{</span>
+		<span class="token literal-property property">age</span><span class="token operator">:</span> response<span class="token punctuation">.</span><span class="token property-access">headers</span><span class="token punctuation">.</span><span class="token method function property-access">get</span><span class="token punctuation">(</span><span class="token string">'age'</span><span class="token punctuation">)</span><span class="token punctuation">,</span>
+		<span class="token string-property property">'cache-control'</span><span class="token operator">:</span> response<span class="token punctuation">.</span><span class="token property-access">headers</span><span class="token punctuation">.</span><span class="token method function property-access">get</span><span class="token punctuation">(</span><span class="token string">'cache-control'</span><span class="token punctuation">)</span>
+	<span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+	<span class="token keyword control-flow">return</span> response<span class="token punctuation">.</span><span class="token method function property-access">json</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span></code></pre>
+        <p>同じヘッダーを複数回設定することは (たとえ別々の <code>load</code> 関数であっても) エラーとなります。指定したヘッダーを設定できるのは一度だけです。<code>set-cookie</code> ヘッダーは、<code>setHeaders</code> では追加できません。代わりに、<code>cookies.set(name, value, options)</code> を使用してください。</p>
+      </section>
+      <section id="using-parent-data" class="level2">
+        <h2>Using parent data</h2>
+        <p><code>load</code> 関数が親の <code>load</code> 関数からのデータにアクセスできたら便利なことがあるでしょう。<code>await parent()</code> でこれを行うことができます:</p>
+        <pre class="language-js"><code class="language-js"><span class="token comment">/// file: src/routes/+layout.js</span>
+<span class="token doc-comment comment">/** <span class="token keyword">@type</span> <span class="token class-name"><span class="token punctuation">{</span><span class="token keyword module">import</span><span class="token punctuation">(</span><span class="token string">'./$types'</span><span class="token punctuation">)</span><span class="token punctuation">.</span>LayoutLoad<span class="token punctuation">}</span></span> */</span>
+<span class="token keyword module">export</span> <span class="token keyword">function</span> <span class="token function">load</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+	<span class="token keyword control-flow">return</span> <span class="token punctuation">{</span> <span class="token literal-property property">a</span><span class="token operator">:</span> <span class="token number">1</span> <span class="token punctuation">}</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span></code></pre>
+        <pre class="language-js"><code class="language-js"><span class="token comment">/// file: src/routes/abc/+layout.js</span>
+<span class="token doc-comment comment">/** <span class="token keyword">@type</span> <span class="token class-name"><span class="token punctuation">{</span><span class="token keyword module">import</span><span class="token punctuation">(</span><span class="token string">'./$types'</span><span class="token punctuation">)</span><span class="token punctuation">.</span>LayoutLoad<span class="token punctuation">}</span></span> */</span>
+<span class="token keyword module">export</span> <span class="token keyword">async</span> <span class="token keyword">function</span> <span class="token function">load</span><span class="token punctuation">(</span><span class="token parameter"><span class="token punctuation">{</span> parent <span class="token punctuation">}</span></span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+	<span class="token keyword">const</span> <span class="token punctuation">{</span> a <span class="token punctuation">}</span> <span class="token operator">=</span> <span class="token keyword control-flow">await</span> <span class="token function">parent</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+	<span class="token keyword control-flow">return</span> <span class="token punctuation">{</span> <span class="token literal-property property">b</span><span class="token operator">:</span> a <span class="token operator">+</span> <span class="token number">1</span> <span class="token punctuation">}</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span></code></pre>
+        <pre class="language-js"><code class="language-js"><span class="token comment">/// file: src/routes/abc/+page.js</span>
+<span class="token doc-comment comment">/** <span class="token keyword">@type</span> <span class="token class-name"><span class="token punctuation">{</span><span class="token keyword module">import</span><span class="token punctuation">(</span><span class="token string">'./$types'</span><span class="token punctuation">)</span><span class="token punctuation">.</span>PageLoad<span class="token punctuation">}</span></span> */</span>
+<span class="token keyword module">export</span> <span class="token keyword">async</span> <span class="token keyword">function</span> <span class="token function">load</span><span class="token punctuation">(</span><span class="token parameter"><span class="token punctuation">{</span> parent <span class="token punctuation">}</span></span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+	<span class="token keyword">const</span> <span class="token punctuation">{</span> a<span class="token punctuation">,</span> b <span class="token punctuation">}</span> <span class="token operator">=</span> <span class="token keyword control-flow">await</span> <span class="token function">parent</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+	<span class="token keyword control-flow">return</span> <span class="token punctuation">{</span> <span class="token literal-property property">c</span><span class="token operator">:</span> a <span class="token operator">+</span> b <span class="token punctuation">}</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span></code></pre>
+        <pre class="language-svelte"><code class="language-svelte">&#x3C;script>
+	/** @type {import('./$types').PageData} */
+	export let data;
+&#x3C;/script>
+
+&#x3C;!-- renders `1 + 2 = 3` -->
+&#x3C;p>{data.a} + {data.b} = {data.c}&#x3C;/p></code></pre>
+        <blockquote>
+          <p><code>+page.js</code> の <code>load</code> 関数が、直接の親だけなく、両方のレイアウトの <code>load</code> 関数からマージされたたデータを受け取っていることにご注意ください。</p>
+        </blockquote>
+        <p><code>+page.server.js</code> と <code>+layout.server.js</code> の中では、<code>parent</code> は親の <code>+layout.server.js</code> ファイルからデータを取得します。</p>
+        <p><code>+page.js</code> や <code>+layout.js</code> では、親の <code>+layout.js</code> ファイルからデータを返します。しかし、<code>+layout.js</code> が見つからない場合は <code>({ data }) => data</code> 関数として扱われます。つまり、<code>+layout.js</code> ファイルによって'シャドウ(shadowed)'されていない親の <code>+layout.server.js</code> ファイルからデータを返します。</p>
+        <p><code>await parent()</code> を使用する際はウォータフォールを発生させないよう注意してください。例えば、こちらの <code>getData(params)</code> は <code>parent()</code> の呼び出しの結果には依存しないので、レンダリングの遅延を避けるために最初に呼び出すほうが良いでしょう。</p>
+        <pre class="language-difこ"><code class="language-difこ">/// file: +page.js
+/** @type {import('./$types').PageLoad} */
+export async function load({ params, parent }) {
+-	const parentData = await parent();
+	const data = await getData(params);
++	const parentData = await parent();
+
+	return {
+		...data
+		meta: { ...parentData.meta, ...data.meta }
+	};
+}</code></pre>
+      </section>
+      <section id="errors" class="level2">
+        <h2>Errors</h2>
+        <p><code>load</code> 中にエラーがスローされた場合、最も近くにある <a href="../20-core-concepts/10-routing.html#error"><code>+error.svelte</code></a> がレンダリングされます。想定されるエラーには、<code>@sveltejs/kit</code> からインポートできる <code>error</code> ヘルパーを使用して HTTP ステータスコードとオプションのメッセージを指定できます:</p>
+        <pre class="language-js"><code class="language-js"><span class="token comment">/// file: src/routes/admin/+layout.server.js</span>
+<span class="token comment">// @filename: ambient.d.ts</span>
+declare namespace <span class="token maybe-class-name">App</span> <span class="token punctuation">{</span>
+	<span class="token keyword">interface</span> <span class="token class-name">Locals</span> <span class="token punctuation">{</span>
+		user<span class="token operator">?</span><span class="token operator">:</span> <span class="token punctuation">{</span>
+			<span class="token literal-property property">name</span><span class="token operator">:</span> string<span class="token punctuation">;</span>
+			<span class="token literal-property property">isAdmin</span><span class="token operator">:</span> boolean<span class="token punctuation">;</span>
+		<span class="token punctuation">}</span>
+	<span class="token punctuation">}</span>
+<span class="token punctuation">}</span>
+
+<span class="token comment">// @filename: index.js</span>
+<span class="token comment">// cut---</span>
+<span class="token keyword module">import</span> <span class="token imports"><span class="token punctuation">{</span> error <span class="token punctuation">}</span></span> <span class="token keyword module">from</span> <span class="token string">'@sveltejs/kit'</span><span class="token punctuation">;</span>
+
+<span class="token doc-comment comment">/** <span class="token keyword">@type</span> <span class="token class-name"><span class="token punctuation">{</span><span class="token keyword module">import</span><span class="token punctuation">(</span><span class="token string">'./$types'</span><span class="token punctuation">)</span><span class="token punctuation">.</span>LayoutServerLoad<span class="token punctuation">}</span></span> */</span>
+<span class="token keyword module">export</span> <span class="token keyword">function</span> <span class="token function">load</span><span class="token punctuation">(</span><span class="token parameter"><span class="token punctuation">{</span> locals <span class="token punctuation">}</span></span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+	<span class="token keyword control-flow">if</span> <span class="token punctuation">(</span><span class="token operator">!</span>locals<span class="token punctuation">.</span><span class="token property-access">user</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+		<span class="token keyword control-flow">throw</span> <span class="token function">error</span><span class="token punctuation">(</span><span class="token number">401</span><span class="token punctuation">,</span> <span class="token string">'not logged in'</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+	<span class="token punctuation">}</span>
+
+	<span class="token keyword control-flow">if</span> <span class="token punctuation">(</span><span class="token operator">!</span>locals<span class="token punctuation">.</span><span class="token property-access">user</span><span class="token punctuation">.</span><span class="token property-access">isAdmin</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+		<span class="token keyword control-flow">throw</span> <span class="token function">error</span><span class="token punctuation">(</span><span class="token number">403</span><span class="token punctuation">,</span> <span class="token string">'not an admin'</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+	<span class="token punctuation">}</span>
+<span class="token punctuation">}</span></code></pre>
+        <p>予期せぬエラーがスローされた場合、SvelteKit は <a href="../30-advanced/20-hooks.html#shared-hooks-handleerror"><code>handleError</code></a> を呼び出し、それを 500 Internal Error として処理します。</p>
+      </section>
+      <section id="redirects" class="level2">
+        <h2>Redirects</h2>
+        <p>ユーザーをリダイレクトさせるには、<code>@sveltejs/kit</code> からインポートできる <code>redirect</code> ヘルパーを使用して、ステータスコード <code>3xx</code> と一緒にリダイレクト先の location を指定します。</p>
+        <pre class="language-js"><code class="language-js"><span class="token comment">/// file: src/routes/user/+layout.server.js</span>
+<span class="token comment">// @filename: ambient.d.ts</span>
+declare namespace <span class="token maybe-class-name">App</span> <span class="token punctuation">{</span>
+	<span class="token keyword">interface</span> <span class="token class-name">Locals</span> <span class="token punctuation">{</span>
+		user<span class="token operator">?</span><span class="token operator">:</span> <span class="token punctuation">{</span>
+			<span class="token literal-property property">name</span><span class="token operator">:</span> string<span class="token punctuation">;</span>
+		<span class="token punctuation">}</span>
+	<span class="token punctuation">}</span>
+<span class="token punctuation">}</span>
+
+<span class="token comment">// @filename: index.js</span>
+<span class="token comment">// cut---</span>
+<span class="token keyword module">import</span> <span class="token imports"><span class="token punctuation">{</span> redirect <span class="token punctuation">}</span></span> <span class="token keyword module">from</span> <span class="token string">'@sveltejs/kit'</span><span class="token punctuation">;</span>
+
+<span class="token doc-comment comment">/** <span class="token keyword">@type</span> <span class="token class-name"><span class="token punctuation">{</span><span class="token keyword module">import</span><span class="token punctuation">(</span><span class="token string">'./$types'</span><span class="token punctuation">)</span><span class="token punctuation">.</span>LayoutServerLoad<span class="token punctuation">}</span></span> */</span>
+<span class="token keyword module">export</span> <span class="token keyword">function</span> <span class="token function">load</span><span class="token punctuation">(</span><span class="token parameter"><span class="token punctuation">{</span> locals <span class="token punctuation">}</span></span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+	<span class="token keyword control-flow">if</span> <span class="token punctuation">(</span><span class="token operator">!</span>locals<span class="token punctuation">.</span><span class="token property-access">user</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+		<span class="token keyword control-flow">throw</span> <span class="token function">redirect</span><span class="token punctuation">(</span><span class="token number">307</span><span class="token punctuation">,</span> <span class="token string">'/login'</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+	<span class="token punctuation">}</span>
+<span class="token punctuation">}</span></code></pre>
+      </section>
+      <section id="promise-unwrapping" class="level2">
+        <h2>Promise unwrapping</h2>
+        <p>トップレベルの promise は await されるので、ウォータフォールを作ることなく、複数の promise を簡単に返すことができます:</p>
+        <pre class="language-js"><code class="language-js"><span class="token comment">/// file: src/routes/+page.server.js</span>
+<span class="token doc-comment comment">/** <span class="token keyword">@type</span> <span class="token class-name"><span class="token punctuation">{</span><span class="token keyword module">import</span><span class="token punctuation">(</span><span class="token string">'./$types'</span><span class="token punctuation">)</span><span class="token punctuation">.</span>PageServerLoad<span class="token punctuation">}</span></span> */</span>
+<span class="token keyword module">export</span> <span class="token keyword">function</span> <span class="token function">load</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+	<span class="token keyword control-flow">return</span> <span class="token punctuation">{</span>
+		<span class="token literal-property property">a</span><span class="token operator">:</span> <span class="token known-class-name class-name">Promise</span><span class="token punctuation">.</span><span class="token method function property-access">resolve</span><span class="token punctuation">(</span><span class="token string">'a'</span><span class="token punctuation">)</span><span class="token punctuation">,</span>
+		<span class="token literal-property property">b</span><span class="token operator">:</span> <span class="token known-class-name class-name">Promise</span><span class="token punctuation">.</span><span class="token method function property-access">resolve</span><span class="token punctuation">(</span><span class="token string">'b'</span><span class="token punctuation">)</span><span class="token punctuation">,</span>
+		<span class="token literal-property property">c</span><span class="token operator">:</span> <span class="token punctuation">{</span>
+			<span class="token literal-property property">value</span><span class="token operator">:</span> <span class="token known-class-name class-name">Promise</span><span class="token punctuation">.</span><span class="token method function property-access">resolve</span><span class="token punctuation">(</span><span class="token string">'c'</span><span class="token punctuation">)</span>
+		<span class="token punctuation">}</span>
+	<span class="token punctuation">}</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span></code></pre>
+        <pre class="language-svelte"><code class="language-svelte">&#x3C;script>
+	/** @type {import('./$types').PageData} */
+	export let data;
+
+	console.log(data.a); // 'a'
+	console.log(data.b); // 'b'
+	console.log(data.c.value); // `Promise {...}`
+&#x3C;/script></code></pre>
+      </section>
+      <section id="parallel-loading" class="level2">
+        <h2>Parallel loading</h2>
+        <p>ページをレンダリング (またはページにナビゲーション) するとき、SvelteKit はすべての <code>load</code> 関数を同時に実行し、リクエストのウォーターフォールを回避します。クライアントサイドナビゲーションのときは、複数のサーバー専用 <code>load</code> 関数の呼び出し結果が単一のレスポンスにグループ化されます。すべての <code>load</code> 関数が返されると、ページがレンダリングされます。</p>
+      </section>
+      <section id="invalidation" class="level2">
+        <h2>Invalidation</h2>
+        <p>SvelteKit は それぞれの <code>load</code> 関数の依存関係を追跡し、ナビゲーションの際に不必要に再実行されるのを回避します。</p>
+        <p>例えば、このような <code>load</code> 関数のペアがあるとして…</p>
+        <pre class="language-js"><code class="language-js"><span class="token comment">/// file: src/routes/blog/[slug]/+page.server.js</span>
+<span class="token comment">// @filename: ambient.d.ts</span>
+declare module <span class="token string">'$lib/server/database'</span> <span class="token punctuation">{</span>
+	<span class="token keyword module">export</span> <span class="token keyword">function</span> <span class="token function">getPost</span><span class="token punctuation">(</span><span class="token parameter"><span class="token literal-property property">slug</span><span class="token operator">:</span> string</span><span class="token punctuation">)</span><span class="token operator">:</span> <span class="token known-class-name class-name">Promise</span><span class="token operator">&#x3C;</span><span class="token punctuation">{</span> # string<span class="token punctuation">,</span> <span class="token literal-property property">content</span><span class="token operator">:</span> string <span class="token punctuation">}</span><span class="token operator">></span>
+<span class="token punctuation">}</span>
+
+<span class="token comment">// @filename: index.js</span>
+<span class="token comment">// cut---</span>
+<span class="token keyword module">import</span> <span class="token imports"><span class="token operator">*</span> <span class="token keyword module">as</span> db</span> <span class="token keyword module">from</span> <span class="token string">'$lib/server/database'</span><span class="token punctuation">;</span>
+
+<span class="token doc-comment comment">/** <span class="token keyword">@type</span> <span class="token class-name"><span class="token punctuation">{</span><span class="token keyword module">import</span><span class="token punctuation">(</span><span class="token string">'./$types'</span><span class="token punctuation">)</span><span class="token punctuation">.</span>PageServerLoad<span class="token punctuation">}</span></span> */</span>
+<span class="token keyword module">export</span> <span class="token keyword">async</span> <span class="token keyword">function</span> <span class="token function">load</span><span class="token punctuation">(</span><span class="token parameter"><span class="token punctuation">{</span> params <span class="token punctuation">}</span></span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+	<span class="token keyword control-flow">return</span> <span class="token punctuation">{</span>
+		<span class="token literal-property property">post</span><span class="token operator">:</span> <span class="token keyword control-flow">await</span> db<span class="token punctuation">.</span><span class="token method function property-access">getPost</span><span class="token punctuation">(</span>params<span class="token punctuation">.</span><span class="token property-access">slug</span><span class="token punctuation">)</span>
+	<span class="token punctuation">}</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span></code></pre>
+        <pre class="language-js"><code class="language-js"><span class="token comment">/// file: src/routes/blog/[slug]/+layout.server.js</span>
+<span class="token comment">// @filename: ambient.d.ts</span>
+declare module <span class="token string">'$lib/server/database'</span> <span class="token punctuation">{</span>
+	<span class="token keyword module">export</span> <span class="token keyword">function</span> <span class="token function">getPostSummaries</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token operator">:</span> <span class="token known-class-name class-name">Promise</span><span class="token operator">&#x3C;</span><span class="token known-class-name class-name">Array</span><span class="token operator">&#x3C;</span><span class="token punctuation">{</span> # string<span class="token punctuation">,</span> <span class="token literal-property property">slug</span><span class="token operator">:</span> string <span class="token punctuation">}</span><span class="token operator">>></span>
+<span class="token punctuation">}</span>
+
+<span class="token comment">// @filename: index.js</span>
+<span class="token comment">// cut---</span>
+<span class="token keyword module">import</span> <span class="token imports"><span class="token operator">*</span> <span class="token keyword module">as</span> db</span> <span class="token keyword module">from</span> <span class="token string">'$lib/server/database'</span><span class="token punctuation">;</span>
+
+<span class="token doc-comment comment">/** <span class="token keyword">@type</span> <span class="token class-name"><span class="token punctuation">{</span><span class="token keyword module">import</span><span class="token punctuation">(</span><span class="token string">'./$types'</span><span class="token punctuation">)</span><span class="token punctuation">.</span>LayoutServerLoad<span class="token punctuation">}</span></span> */</span>
+<span class="token keyword module">export</span> <span class="token keyword">async</span> <span class="token keyword">function</span> <span class="token function">load</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+	<span class="token keyword control-flow">return</span> <span class="token punctuation">{</span>
+		<span class="token literal-property property">posts</span><span class="token operator">:</span> <span class="token keyword control-flow">await</span> db<span class="token punctuation">.</span><span class="token method function property-access">getPostSummaries</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+	<span class="token punctuation">}</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span></code></pre>
+        <p>…もし、<code>/blog/trying-the-raw-meat-diet</code> から <code>/blog/i-regret-my-choices</code> に移動したら、<code>params.slug</code> が変更されているので、<code>+page.server.js</code> のほうは再実行されるでしょう。<code>+layout.server.js</code> のほうは再実行されません、なぜならデータがまだ有効だからです。言い換えると、<code>db.getPostSummaries()</code> を2回呼び出すことはないということです。</p>
+        <p><code>await parent()</code> を呼び出している <code>load</code> 関数は、親の <code>load</code> 関数が再実行された場合に再実行されます。</p>
+        <section id="manual-invalidation" class="level3">
+          <h3>Manual invalidation</h3>
+          <p>現在のページに適用される <code>load</code> 関数は、<a href="../50-api-reference/30-modules.html#$app-navigation-invalidate"><code>invalidate(url)</code></a> を使用することで再実行させることもできます。これは <code>url</code> に依存しているすべての <code>load</code> 関数を再実行させるものです。<a href="../50-api-reference/30-modules.html#$app-navigation-invalidateall"><code>invalidateAll()</code></a> は、すべての <code>load</code> 関数を再実行させます。</p>
+          <p><code>load</code> 関数が <code>fetch(url)</code> や <code>depends(url)</code> を呼び出している場合、その <code>load</code> 関数は <code>url</code> に依存しています。<code>url</code> には <code>[a-z]:</code> から始まるカスタムの識別子を指定することができることにご注意ください:</p>
+          <pre class="language-js"><code class="language-js"><span class="token comment">/// file: src/routes/random-number/+page.js</span>
+<span class="token doc-comment comment">/** <span class="token keyword">@type</span> <span class="token class-name"><span class="token punctuation">{</span><span class="token keyword module">import</span><span class="token punctuation">(</span><span class="token string">'./$types'</span><span class="token punctuation">)</span><span class="token punctuation">.</span>PageLoad<span class="token punctuation">}</span></span> */</span>
+<span class="token keyword module">export</span> <span class="token keyword">async</span> <span class="token keyword">function</span> <span class="token function">load</span><span class="token punctuation">(</span><span class="token parameter"><span class="token punctuation">{</span> fetch<span class="token punctuation">,</span> depends <span class="token punctuation">}</span></span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+	<span class="token comment">// load reruns when `invalidate('https://api.example.com/random-number')` is called...</span>
+	<span class="token keyword">const</span> response <span class="token operator">=</span> <span class="token keyword control-flow">await</span> <span class="token function">fetch</span><span class="token punctuation">(</span><span class="token string">'https://api.example.com/random-number'</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+	<span class="token comment">// ...or when `invalidate('app:random')` is called</span>
+	<span class="token function">depends</span><span class="token punctuation">(</span><span class="token string">'app:random'</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+	<span class="token keyword control-flow">return</span> <span class="token punctuation">{</span>
+		<span class="token literal-property property">number</span><span class="token operator">:</span> <span class="token keyword control-flow">await</span> response<span class="token punctuation">.</span><span class="token method function property-access">json</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+	<span class="token punctuation">}</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span></code></pre>
+          <pre class="language-svelte"><code class="language-svelte">/// file: src/routes/random-number/+page.svelte
+&#x3C;script>
+	import { invalidateAll } from '$app/navigation';
+
+	/** @type {import('./$types').PageData} */
+	export let data;
+
+	function rerunLoadFunction() {
+		// any of these will cause the `load` function to re-run
+		invalidate('app:random');
+		invalidate('https://api.example.com/random-number');
+		invalidate(url => url.href.includes('random-number'));
+		invalidateAll();
+	}
+&#x3C;/script>
+
+&#x3C;p>random number: {data.number}&#x3C;/p>
+&#x3C;button on:click={rerunLoadFunction}>Update random number&#x3C;/button></code></pre>
+          <p>まとめると、<code>load</code> 関数は以下のシチュエーションで再実行されます:</p>
+          <ul>
+            <li><code>params</code> のプロパティを参照していて、その値が変更された場合</li>
+            <li><code>url</code> のプロパティを参照していて (例えば <code>url.pathname</code> や <code>url.search</code>)、その値が変更された場合</li>
+            <li><code>await parent()</code> を呼び出していて、親の <code>load</code> 関数が再実行されたとき</li>
+            <li><a href="#making-fetch-requests"><code>fetch</code></a> や <a href="../50-api-reference/40-types.html#sveltejs-kit-loadevent"><code>depends</code></a> を介して特定の URL に対する依存を宣言していて、その URL が <a href="../50-api-reference/30-modules.html#$app-navigation-invalidate"><code>invalidate(url)</code></a> で無効(invalid)であるとマークされた場合</li>
+            <li><a href="../50-api-reference/30-modules.html#$app-navigation-invalidateall"><code>invalidateAll()</code></a> によって全ての有効な <code>load</code> 関数が強制的に再実行された場合</li>
+          </ul>
+          <p><code>load</code> 関数の再実行は、対応する <code>+layout.svelte</code> や <code>+page.svelte</code> 内の <code>data</code> プロパティが更新されるだけで、コンポーネントは再作成されることはありません。結果として、内部の状態は保持されます。もし、この挙動がお望みでなければ、<a href="../50-api-reference/30-modules.html#$app-navigation-afternavigate"><code>afterNavigate</code></a> コールバック内でリセットしたり、コンポーネントを <a href="https://svelte.jp/docs#template-syntax-key"><code>{#key ...}</code></a> ブロックでラップしたりしてリセットすることができます。</p>
+        </section>
+      </section>
+      <section id="状態の共有shared-state" class="level2">
+        <h2>状態の共有(Shared state)</h2>
+        <p>
+          多くのサーバー環境では、アプリの単一のインスタンスが複数のユーザーにサービスを提供することになります。そのため、リクエストごと(per-request)、ユーザーごと(per-user)の状態を <code>load</code> 関数の外側の共有変数に保存してはいけません。代わりに、<code>event.locals</code> に保存するようにしてください。
+          <span style="float: footnote;"><a href="../../index.html#toc">Go to TOC</a></span>
+        </p>
+      </section>
+    </section>
+  </body>
+</html>

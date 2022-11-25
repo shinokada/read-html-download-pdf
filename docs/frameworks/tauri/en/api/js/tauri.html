@@ -1,0 +1,160 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <title>tauri</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="https://raw.githubusercontent.com/shinokada/prism-coy-theme/main/theme_common.css">
+  </head>
+  <body>
+    <section id="tauri" class="level1">
+      <h1>tauri</h1>
+      <p>Invoke your custom commands.</p>
+      <p>This package is also accessible with <code>window.__TAURI__.tauri</code> when <a href="https://tauri.app/v1/api/config/#buildconfig.withglobaltauri"><code>build.withGlobalTauri</code></a> in <code>tauri.conf.json</code> is set to <code>true</code>.</p>
+      <section id="interfaces" class="level2">
+        <h2>Interfaces</h2>
+        <section id="invokeargs" class="level3">
+          <h3><code>InvokeArgs</code></h3>
+          <p>Command arguments.</p>
+          <p><strong>Since</strong>: 1.0.0</p>
+        </section>
+      </section>
+      <section id="functions" class="level2">
+        <h2>Functions</h2>
+        <section id="convertfilesrc" class="level3">
+          <h3><code>convertFileSrc</code></h3>
+          <blockquote>
+            <p><strong>convertFileSrc</strong>(<code>filePath</code>: <code>string</code>, <code>protocol?</code>: <code>string</code>): <code>string</code></p>
+          </blockquote>
+          <p>
+            Convert a device file path to an URL that can be loaded by the webview.
+            Note that <code>asset:</code> and <code>https://asset.localhost</code> must be added to <a href="https://tauri.app/v1/api/config/#securityconfig.csp"><code>tauri.security.csp</code></a> in <code>tauri.conf.json</code>.
+          </p>
+          <p>Example CSP value: <code>csp: default-src 'self'; img-src 'self' asset: https://asset.localhost</code> to use the asset protocol on image sources.</p>
+          <p>
+            Additionally, <code>asset</code> must be added to <a href="https://tauri.app/v1/api/config/#allowlistconfig.protocol"><code>tauri.allowlist.protocol</code></a>
+            in <code>tauri.conf.json</code> and its access scope must be defined on the <code>assetScope</code> array on the same <code>protocol</code> object.
+          </p>
+          <p><strong>Example</strong></p>
+          <pre class="language-typescript"><code class="language-typescript"><span class="token keyword module">import</span> <span class="token imports"><span class="token punctuation">{</span> appDataDir<span class="token punctuation">,</span> join <span class="token punctuation">}</span></span> <span class="token keyword module">from</span> <span class="token string">'@tauri-apps/api/path'</span><span class="token punctuation">;</span>
+<span class="token keyword module">import</span> <span class="token imports"><span class="token punctuation">{</span> convertFileSrc <span class="token punctuation">}</span></span> <span class="token keyword module">from</span> <span class="token string">'@tauri-apps/api/tauri'</span><span class="token punctuation">;</span>
+<span class="token keyword">const</span> appDataDirPath <span class="token operator">=</span> <span class="token keyword control-flow">await</span> <span class="token function">appDataDir</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token keyword">const</span> filePath <span class="token operator">=</span> <span class="token keyword control-flow">await</span> <span class="token function">join</span><span class="token punctuation">(</span>appDataDirPath<span class="token punctuation">,</span> <span class="token string">'assets/video.mp4'</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token keyword">const</span> assetUrl <span class="token operator">=</span> <span class="token function">convertFileSrc</span><span class="token punctuation">(</span>filePath<span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+<span class="token keyword">const</span> video <span class="token operator">=</span> <span class="token dom variable">document</span><span class="token punctuation">.</span><span class="token method function property-access">getElementById</span><span class="token punctuation">(</span><span class="token string">'my-video'</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token keyword">const</span> source <span class="token operator">=</span> <span class="token dom variable">document</span><span class="token punctuation">.</span><span class="token method function property-access">createElement</span><span class="token punctuation">(</span><span class="token string">'source'</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+source<span class="token punctuation">.</span><span class="token property-access">type</span> <span class="token operator">=</span> <span class="token string">'video/mp4'</span><span class="token punctuation">;</span>
+source<span class="token punctuation">.</span><span class="token property-access">src</span> <span class="token operator">=</span> assetUrl<span class="token punctuation">;</span>
+video<span class="token punctuation">.</span><span class="token method function property-access">appendChild</span><span class="token punctuation">(</span>source<span class="token punctuation">)</span><span class="token punctuation">;</span>
+video<span class="token punctuation">.</span><span class="token method function property-access">load</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span></code></pre>
+          <p><strong>Since</strong>: 1.0.0</p>
+          <p><strong>Parameters</strong></p>
+          <table>
+            <thead>
+              <tr>
+                <th align="left">Name</th>
+                <th align="left">Type</th>
+                <th align="left">Default value</th>
+                <th align="left">Description</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td align="left"><code>filePath</code></td>
+                <td align="left"><code>string</code></td>
+                <td align="left"><code>undefined</code></td>
+                <td align="left">The file path.</td>
+              </tr>
+              <tr>
+                <td align="left"><code>protocol</code></td>
+                <td align="left"><code>string</code></td>
+                <td align="left"><code>'asset'</code></td>
+                <td align="left">The protocol to use. Defaults to <code>asset</code>. You only need to set this when using a custom protocol.</td>
+              </tr>
+            </tbody>
+          </table>
+          <p><strong>Returns: </strong><code>string</code></p>
+          <p>the URL that can be used as source on the webview.</p>
+        </section>
+        <section id="invoke" class="level3">
+          <h3><code>invoke</code></h3>
+          <blockquote>
+            <p><strong>invoke</strong>&#x3C;<code>T</code>>(<code>cmd</code>: <code>string</code>, <code>args?</code>: <a href="tauri.md#invokeargs"><code>InvokeArgs</code></a>): <a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise"><code>Promise</code></a>&#x3C;<code>T</code>></p>
+          </blockquote>
+          <p>Sends a message to the backend.</p>
+          <p><strong>Example</strong></p>
+          <pre class="language-typescript"><code class="language-typescript"><span class="token keyword module">import</span> <span class="token imports"><span class="token punctuation">{</span> invoke <span class="token punctuation">}</span></span> <span class="token keyword module">from</span> <span class="token string">'@tauri-apps/api/tauri'</span><span class="token punctuation">;</span>
+<span class="token keyword control-flow">await</span> <span class="token function">invoke</span><span class="token punctuation">(</span><span class="token string">'login'</span><span class="token punctuation">,</span> <span class="token punctuation">{</span> user<span class="token operator">:</span> <span class="token string">'tauri'</span><span class="token punctuation">,</span> password<span class="token operator">:</span> <span class="token string">'poiwe3h4r5ip3yrhtew9ty'</span> <span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">;</span></code></pre>
+          <p><strong>Since</strong>: 1.0.0</p>
+          <p><strong>Type parameters</strong></p>
+          <ul>
+            <li><code>T</code></li>
+          </ul>
+          <p><strong>Parameters</strong></p>
+          <table>
+            <thead>
+              <tr>
+                <th align="left">Name</th>
+                <th align="left">Type</th>
+                <th align="left">Description</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td align="left"><code>cmd</code></td>
+                <td align="left"><code>string</code></td>
+                <td align="left">The command name.</td>
+              </tr>
+              <tr>
+                <td align="left"><code>args</code></td>
+                <td align="left"><a href="tauri.md#invokeargs"><code>InvokeArgs</code></a></td>
+                <td align="left">The optional arguments to pass to the command.</td>
+              </tr>
+            </tbody>
+          </table>
+          <p><strong>Returns: </strong><a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise"><code>Promise</code></a>&#x3C;<code>T</code>></p>
+          <p>A promise resolving or rejecting to the backend response.</p>
+        </section>
+        <section id="transformcallback" class="level3">
+          <h3><code>transformCallback</code></h3>
+          <blockquote>
+            <p><strong>transformCallback</strong>(<code>callback?</code>: <code>fn</code>, <code>once?</code>: <code>boolean</code>): <code>number</code></p>
+          </blockquote>
+          <p>
+            Transforms a callback function to a string identifier that can be passed to the backend.
+            The backend uses the identifier to <code>eval()</code> the callback.
+          </p>
+          <p><strong>Since</strong>: 1.0.0</p>
+          <p><strong>Parameters</strong></p>
+          <table>
+            <thead>
+              <tr>
+                <th align="left">Name</th>
+                <th align="left">Type</th>
+                <th align="left">Default value</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td align="left"><code>callback?</code></td>
+                <td align="left">(<code>response</code>: <code>any</code>) => <code>void</code></td>
+                <td align="left"><code>undefined</code></td>
+              </tr>
+              <tr>
+                <td align="left"><code>once</code></td>
+                <td align="left"><code>boolean</code></td>
+                <td align="left"><code>false</code></td>
+              </tr>
+            </tbody>
+          </table>
+          <p><strong>Returns: </strong><code>number</code></p>
+          <p>
+            A unique identifier associated with the callback function.
+            <span style="float: footnote;"><a href="../../index.html#toc">Go to TOC</a></span>
+          </p>
+        </section>
+      </section>
+    </section>
+  </body>
+</html>

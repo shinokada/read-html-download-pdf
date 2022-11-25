@@ -1,0 +1,202 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <title>.pnpmfile.cjs</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="https://raw.githubusercontent.com/shinokada/prism-coy-theme/main/theme_common.css">
+  </head>
+  <body>
+    <section id="pnpmfilecjs" class="level1">
+      <h1>.pnpmfile.cjs</h1>
+      <p>
+        pnpm lets you hook directly into the installation process via special functions
+        (hooks). Hooks can be declared in a file called <code>.pnpmfile.cjs</code>.
+      </p>
+      <p>
+        By default, <code>.pnpmfile.cjs</code> should be located in the same directory as the
+        lockfile. For instance, in a <a href="workspaces.html">workspace</a> with a shared lockfile,
+        <code>.pnpmfile.cjs</code> should be in the root of the monorepo.
+      </p>
+      <section id="hooks" class="level2">
+        <h2>Hooks</h2>
+        <section id="tldr" class="level3">
+          <h3>TL;DR</h3>
+          <table>
+            <thead>
+              <tr>
+                <th>Hook Function</th>
+                <th>Process</th>
+                <th>Uses</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><code>hooks.readPackage(pkg, context): pkg</code></td>
+                <td>Called after pnpm parses the dependency's package manifest</td>
+                <td>Allows you to mutate a dependency's <code>package.json</code></td>
+              </tr>
+              <tr>
+                <td><code>hooks.afterAllResolved(lockfile, context): lockfile</code></td>
+                <td>Called after the dependencies have been resolved.</td>
+                <td>Allows you to mutate the lockfile.</td>
+              </tr>
+            </tbody>
+          </table>
+        </section>
+        <section id="hooksreadpackagepkg-context-pkg--promisepkg" class="level3">
+          <h3><code>hooks.readPackage(pkg, context): pkg | Promise&#x3C;pkg></code></h3>
+          <p>
+            Allows you to mutate a dependency's <code>package.json</code> after parsing and prior to
+            resolution. These mutations are not saved to the filesystem, however, they will
+            affect what gets resolved in the lockfile and therefore what gets installed.
+          </p>
+          <p>Note that you will need to delete the <code>pnpm-lock.yaml</code> if you have already</p>
+          <p>resolved the dependency you want to modify.</p>
+          <blockquote>
+            <p>
+              If you need changes to <code>package.json</code> saved to the filesystem, you need to use the [<code>pnpm patch</code>] command and patch the <code>package.json</code> file.
+              This might be useful if you want to remove the <code>bin</code> field of a dependency for instance.
+            </p>
+          </blockquote>
+          <section id="arguments" class="level4">
+            <h4>Arguments</h4>
+            <ul>
+              <li>
+                <code>pkg</code> - The manifest of the package. Either the response from the registry or
+                the <code>package.json</code> content.
+              </li>
+              <li>
+                <code>context</code> - Context object for the step. Method <code>#log(msg)</code> allows you to use
+                a debug log for the step.
+              </li>
+            </ul>
+          </section>
+          <section id="usage" class="level4">
+            <h4>Usage</h4>
+            <p>Example <code>.pnpmfile.cjs</code> (changes the dependencies of a dependency):</p>
+            <pre class="language-js"><code class="language-js"><span class="token keyword">function</span> <span class="token function">readPackage</span><span class="token punctuation">(</span><span class="token parameter">pkg<span class="token punctuation">,</span> context</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  <span class="token comment">// Override the manifest of foo@1.x after downloading it from the registry</span>
+  <span class="token keyword control-flow">if</span> <span class="token punctuation">(</span>pkg<span class="token punctuation">.</span><span class="token property-access">name</span> <span class="token operator">===</span> <span class="token string">'foo'</span> <span class="token operator">&#x26;&#x26;</span> pkg<span class="token punctuation">.</span><span class="token property-access">version</span><span class="token punctuation">.</span><span class="token method function property-access">startsWith</span><span class="token punctuation">(</span><span class="token string">'1.'</span><span class="token punctuation">)</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token comment">// Replace bar@x.x.x with bar@2.0.0</span>
+    pkg<span class="token punctuation">.</span><span class="token property-access">dependencies</span> <span class="token operator">=</span> <span class="token punctuation">{</span>
+      <span class="token spread operator">...</span>pkg<span class="token punctuation">.</span><span class="token property-access">dependencies</span><span class="token punctuation">,</span>
+      <span class="token literal-property property">bar</span><span class="token operator">:</span> <span class="token string">'^2.0.0'</span>
+    <span class="token punctuation">}</span>
+    context<span class="token punctuation">.</span><span class="token method function property-access">log</span><span class="token punctuation">(</span><span class="token string">'bar@1 => bar@2 in dependencies of foo'</span><span class="token punctuation">)</span>
+  <span class="token punctuation">}</span>
+  
+  <span class="token comment">// This will change any packages using baz@x.x.x to use baz@1.2.3</span>
+  <span class="token keyword control-flow">if</span> <span class="token punctuation">(</span>pkg<span class="token punctuation">.</span><span class="token property-access">dependencies</span><span class="token punctuation">.</span><span class="token property-access">baz</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    pkg<span class="token punctuation">.</span><span class="token property-access">dependencies</span><span class="token punctuation">.</span><span class="token property-access">baz</span> <span class="token operator">=</span> <span class="token string">'1.2.3'</span><span class="token punctuation">;</span>
+  <span class="token punctuation">}</span>
+  
+  <span class="token keyword control-flow">return</span> pkg
+<span class="token punctuation">}</span>
+
+module<span class="token punctuation">.</span><span class="token property-access">exports</span> <span class="token operator">=</span> <span class="token punctuation">{</span>
+  <span class="token literal-property property">hooks</span><span class="token operator">:</span> <span class="token punctuation">{</span>
+    readPackage
+  <span class="token punctuation">}</span>
+<span class="token punctuation">}</span></code></pre>
+          </section>
+          <section id="known-limitations" class="level4">
+            <h4>Known limitations</h4>
+            <p>
+              Removing the <code>scripts</code> field from a dependency's manifest via <code>readPackage</code> will
+              not prevent pnpm from building the dependency. When building a dependency, pnpm
+              reads the <code>package.json</code> of the package from the package's archive, which is not
+              affected by the hook. In order to ignore a package's build, use the
+              <a href="package_json.html">pnpm.neverBuiltDependencies</a> field.
+            </p>
+          </section>
+        </section>
+        <section id="hooksafterallresolvedlockfile-context-lockfile--promiselockfile" class="level3">
+          <h3><code>hooks.afterAllResolved(lockfile, context): lockfile | Promise&#x3C;lockfile></code></h3>
+          <p>Allows you to mutate the lockfile output before it is serialized.</p>
+          <section id="arguments-1" class="level4">
+            <h4>Arguments</h4>
+            <ul>
+              <li>
+                <code>lockfile</code> - The lockfile resolutions object that is serialized to
+                <code>pnpm-lock.yaml</code>.
+              </li>
+              <li>
+                <code>context</code> - Context object for the step. Method <code>#log(msg)</code> allows you to use
+                a debug log for the step.
+              </li>
+            </ul>
+          </section>
+          <section id="usage-example" class="level4">
+            <h4>Usage example</h4>
+            <figure class="language-js">
+              <figcaption>.pnpmfile.cjs</figcaption>
+              <pre class="language-js"><code class="language-js"><span class="token keyword">function</span> <span class="token function">afterAllResolved</span><span class="token punctuation">(</span><span class="token parameter">lockfile<span class="token punctuation">,</span> context</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  <span class="token comment">// ...</span>
+  <span class="token keyword control-flow">return</span> lockfile
+<span class="token punctuation">}</span>
+
+module<span class="token punctuation">.</span><span class="token property-access">exports</span> <span class="token operator">=</span> <span class="token punctuation">{</span>
+  <span class="token literal-property property">hooks</span><span class="token operator">:</span> <span class="token punctuation">{</span>
+    afterAllResolved
+  <span class="token punctuation">}</span>
+<span class="token punctuation">}</span></code></pre>
+            </figure>
+          </section>
+          <section id="known-limitations-1" class="level4">
+            <h4>Known Limitations</h4>
+            <p>
+              There are none - anything that can be done with the lockfile can be modified via
+              this function, and you can even extend the lockfile's functionality.
+            </p>
+          </section>
+        </section>
+      </section>
+      <section id="related-configuration" class="level2">
+        <h2>Related Configuration</h2>
+        <section id="ignore-pnpmfile" class="level3">
+          <h3>ignore-pnpmfile</h3>
+          <ul>
+            <li>Default: <strong>false</strong></li>
+            <li>Type: <strong>Boolean</strong></li>
+          </ul>
+          <p>
+            <code>.pnpmfile.cjs</code> will be ignored. Useful together with <code>--ignore-scripts</code> when you
+            want to make sure that no script gets executed during install.
+          </p>
+        </section>
+        <section id="pnpmfile" class="level3">
+          <h3>pnpmfile</h3>
+          <ul>
+            <li>Default: <strong>.pnpmfile.cjs</strong></li>
+            <li>Type: <strong>path</strong></li>
+            <li>Example: <strong>.pnpm/.pnpmfile.cjs</strong></li>
+          </ul>
+          <p>The location of the local pnpmfile.</p>
+        </section>
+        <section id="global-pnpmfile" class="level3">
+          <h3>global-pnpmfile</h3>
+          <ul>
+            <li>Default: <strong>null</strong></li>
+            <li>Type: <strong>path</strong></li>
+            <li>Example: <strong>~/.pnpm/global_pnpmfile.cjs</strong></li>
+          </ul>
+          <p>
+            The location of a global pnpmfile. A global pnpmfile is used by all projects
+            during installation.
+          </p>
+          <blockquote>
+            <p>
+              It is recommended to use local pnpmfiles. Only use a global pnpmfile
+              if you use pnpm on projects that don't use pnpm as the primary package manager.
+            </p>
+          </blockquote>
+          <p>
+            <a href="cli/patch.html"><code>pnpm patch</code></a>
+            <span style="float: footnote;"><a href="./index.html#toc">Go to TOC</a></span>
+          </p>
+        </section>
+      </section>
+    </section>
+  </body>
+</html>

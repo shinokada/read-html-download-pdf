@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <title>Benchmarks</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="View the current benchmarks of Tauri for binary size, memory usage, and other metrics.">
+    <link rel="stylesheet" href="https://raw.githubusercontent.com/shinokada/prism-coy-theme/main/theme_common.css">
+  </head>
+  <body>
+    <section id="benchmarks" class="level1">
+      <h1>Benchmarks</h1>
+      <p>import Chart, { fetchData } from '@theme/BenchmarkChart'</p><!-- Data is fetched here so that it is only fetched and processed once, then reused in each of the charts -->
+      <p>export var data = fetchData()</p>
+      <p>All benchmarks run on GitHub Actions using the <code>ubuntu-latest</code> matrix. Various metrics are measured by the following applications:</p>
+      <table>
+        <thead>
+          <tr>
+            <th align="left">Tauri</th>
+            <th align="left">Wry</th>
+            <th align="left">Electron</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td align="left"><a href="https://github.com/tauri-apps/tauri/tree/dev/tooling/bench/tests/cpu_intensive">tauri_cpu_intensive</a></td>
+            <td align="left"><a href="https://github.com/tauri-apps/wry/tree/dev/bench/tests/src/cpu_intensive.rs">wry_cpu_intensive</a></td>
+            <td align="left"><a href="https://github.com/tauri-apps/benchmark_electron/tree/dev/apps/cpu_intensive">electron_cpu_intensive</a></td>
+          </tr>
+          <tr>
+            <td align="left"><a href="https://github.com/tauri-apps/tauri/tree/dev/tooling/bench/tests/helloworld">tauri_hello_world</a></td>
+            <td align="left"><a href="https://github.com/tauri-apps/wry/tree/dev/bench/tests/src/hello_world.rs">wry_hello_world</a></td>
+            <td align="left"><a href="https://github.com/tauri-apps/benchmark_electron/tree/dev/apps/hello_world">electron_hello_world</a></td>
+          </tr>
+          <tr>
+            <td align="left"><a href="https://github.com/tauri-apps/tauri/tree/dev/tooling/bench/tests/files_transfer">tauri_3mb_transfer</a></td>
+            <td align="left"><a href="https://github.com/tauri-apps/wry/tree/dev/bench/tests/src/custom_protocol.rs">wry_custom_protocol</a></td>
+            <td align="left"><a href="https://github.com/tauri-apps/benchmark_electron/tree/dev/apps/file_transfer">electron_3mb_transfer</a></td>
+          </tr>
+        </tbody>
+      </table>
+      <blockquote>The CPU intensive benchmark measures how much time it takes to calculate all the prime numbers under a certain value without blocking the UI and reporting how many have been found so far using web workers.</blockquote>
+      <section id="execution-time" class="level2">
+        <h2>Execution Time</h2>
+        <p>How much time in total it takes to initialize the application and wait for the <code>DOMContentLoaded</code> event. This uses <a href="https://github.com/sharkdp/hyperfine">hyperfine</a> under the hood and runs 3 warm-up sequence first, then 10 sequences to calculate the average execution time.</p>
+        <chart data="{data}" column="exec_time"></chart>
+      </section>
+      <section id="binary-size" class="level2">
+        <h2>Binary Size</h2>
+        <p>All binaries are compiled in release mode.</p>
+        <chart data="{data}" column="binary_size"></chart>
+      </section>
+      <section id="memory-usage" class="level2">
+        <h2>Memory Usage</h2>
+        <p>Uses <a href="https://pypi.org/project/memory-profiler/">mprof</a> to get the max memory usage during execution. Smaller is better.</p>
+        <chart data="{data}" column="max_memory"></chart>
+      </section>
+      <section id="thread-count" class="level2">
+        <h2>Thread Count</h2>
+        <p>How many threads the application uses. Smaller is better.</p>
+        <chart data="{data}" column="thread_count"></chart>
+      </section>
+      <section id="syscall-count" class="level2">
+        <h2>Syscall Count</h2>
+        <p>How many total syscalls are performed when executing a given application. Smaller is better.</p>
+        <chart data="{data}" column="syscall_count"></chart>
+      </section>
+      <section id="dependencies" class="level2">
+        <h2>Dependencies</h2>
+        <chart data="{data}" column="cargo_deps"><span style="float: footnote;"><a href="../index.html#toc">Go to TOC</a></span></chart>
+      </section>
+    </section>
+  </body>
+</html>

@@ -1,0 +1,206 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <title>How to use ShellSpec with Docker</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="https://raw.githubusercontent.com/shinokada/prism-coy-theme/main/theme_common.css">
+  </head>
+  <body>
+    <section id="how-to-use-shellspec-with-docker" class="level1">
+      <h1>How to use ShellSpec with Docker</h1>
+      <ul>
+        <li><a href="#official-docker-images">Official docker images</a></li>
+        <li><a href="#using-shellspec-docker-image">Using ShellSpec docker image</a>
+          <ul>
+            <li><a href="#1-run-shellspec-and-your-specfiles-within-container">1. Run ShellSpec and your specfiles within container</a></li>
+            <li><a href="#2-run-simple-with-helper-script-and-extra-hooks">2. Run simple with helper script and extra hooks</a>
+              <ul>
+                <li><a href="#hooks">Hooks</a>
+                  <ul>
+                    <li><a href="#shellspec-dockerinitrc">.shellspec-docker/initrc</a></li>
+                    <li><a href="#shellspec-dockerpre-test">.shellspec-docker/pre-test</a></li>
+                    <li><a href="#shellspec-dockerpost-test">.shellspec-docker/post-test</a></li>
+                  </ul>
+                </li>
+              </ul>
+            </li>
+            <li><a href="#3-using-shellspec-image-as-parent-image">3. Using ShellSpec image as parent image</a></li>
+            <li><a href="#4-include-shellspec-into-another-image">4. Include ShellSpec into another image</a></li>
+          </ul>
+        </li>
+        <li><a href="#appendix">Appendix</a>
+          <ul>
+            <li><a href="#how-to-build-official-shellspec-docker-image-yourself">How to build official ShellSpec docker image yourself</a></li>
+          </ul>
+        </li>
+      </ul>
+      <section id="official-docker-images" class="level2">
+        <h2>Official docker images</h2>
+        <p>There are official images on the <a href="https://hub.docker.com/r/shellspec/shellspec">Docker Hub</a>.</p>
+        <table>
+          <thead>
+            <tr>
+              <th>Name</th>
+              <th>Linux</th>
+              <th>Included</th>
+              <th align="right">Size</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>shellspec/shellspec</td>
+              <td>Alpine</td>
+              <td>busybox (ash)</td>
+              <td align="right">
+                <img src="https://img.shields.io/docker/image-size/shellspec/shellspec/latest?label=" alt="Docker Image Size (tag)">
+              </td>
+            </tr>
+            <tr>
+              <td>shellspec/shellspec:kcov</td>
+              <td>Alpine</td>
+              <td>busybox (ash), bash, kcov</td>
+              <td align="right">
+                <img src="https://img.shields.io/docker/image-size/shellspec/shellspec/kcov?label=" alt="Docker Image Size (tag)">
+              </td>
+            </tr>
+            <tr>
+              <td>shellspec/shellspec-debian</td>
+              <td>Debian</td>
+              <td>dash, bash</td>
+              <td align="right">
+                <img src="https://img.shields.io/docker/image-size/shellspec/shellspec-debian/latest?label=" alt="Docker Image Size (tag)">
+              </td>
+            </tr>
+            <tr>
+              <td>shellspec/shellspec-debian:kcov</td>
+              <td>Debian</td>
+              <td>dash, bash, kcov</td>
+              <td align="right">
+                <img src="https://img.shields.io/docker/image-size/shellspec/shellspec-debian/kcov?label=" alt="Docker Image Size (tag)">
+              </td>
+            </tr>
+            <tr>
+              <td>shellspec/shellspec-scratch</td>
+              <td>None</td>
+              <td>none (shellspec only)</td>
+              <td align="right">
+                <img src="https://img.shields.io/docker/image-size/shellspec/shellspec-scratch/latest?label=" alt="Docker Image Size (tag)">
+              </td>
+            </tr>
+          </tbody>
+        </table>
+        <ul>
+          <li>Version specified images are also available (VERSION: 0.21.0 and above)
+            <ul>
+              <li><code>shellspec/shellspec[-VARIANT]:&#x3C;VERSION | master>[-kcov]</code></li>
+            </ul>
+          </li>
+        </ul>
+      </section>
+      <section id="using-shellspec-docker-image" class="level2">
+        <h2>Using ShellSpec docker image</h2>
+        <section id="1-run-shellspec-and-your-specfiles-within-container" class="level3">
+          <h3>1. Run ShellSpec and your specfiles within container</h3>
+          <pre class="language-sh"><code class="language-sh"># Run docker command on the project root
+$ docker run -it --rm -v "$PWD:/src" shellspec/shellspec
+
+# Display help
+$ docker run -it --rm -v "$PWD:/src" shellspec/shellspec --help
+
+# Run with kcov (requires kcov supported image)
+$ docker run -it --rm -u $(id -u):$(id -g) \
+    -v "$PWD:/src" shellspec/shellspec:kcov --kcov
+
+# For users using Docker Desktop for Windows within WSL 1
+$ docker run -it --rm -v "$(wslpath -wa .):/src" shellspec/shellspec</code></pre>
+        </section>
+        <section id="2-run-simple-with-helper-script-and-extra-hooks" class="level3">
+          <h3>2. Run simple with helper script and extra hooks</h3>
+          <p>Use <a href="../contrib/shellspec-docker">contrib/shellspec-docker</a> helper script.</p>
+          <pre class="language-sh"><code class="language-sh"># Specify the Docker image to use (default: shellspec/shellspec)
+$ export SHELLSPEC_DOCKER=shellspec/shellspec
+
+# Run helper script on the project root
+$ shellspec-docker
+
+# Display help
+$ shellspec-docker --help
+
+# Run with kcov (requires kcov supported image)
+$ shellspec-docker --kcov
+
+# Enter the Docker container
+$ shellspec-docker -
+
+# Execute command with in the Docker container
+$ shellspec-docker - hostname</code></pre>
+          <p>If you want to run manually.</p>
+          <pre class="language-sh"><code class="language-sh">$ docker run -it --rm --entrypoint=/shellspec-docker \
+    -u $(id -u):$(id -g) -v "$PWD:/src" shellspec/shellspec
+
+# For users using Docker Desktop for Windows within WSL 1
+$ docker run -it --rm --entrypoint=/shellspec-docker \
+    -u $(id -u):$(id -g) -v "$(wslpath -wa .):/src" shellspec/shellspec</code></pre>
+          <section id="hooks" class="level4">
+            <h4>Hooks</h4>
+            <section id="shellspec-dockerinitrc" class="level5">
+              <h5>.shellspec-docker/initrc</h5>
+              <p>
+                This file should be a shell script. You can override <a href="../contrib/shellspec-docker">docker_run()</a> to
+                changes options, pass environment variables, etc.
+              </p>
+            </section>
+            <section id="shellspec-dockerpre-test" class="level5">
+              <h5>.shellspec-docker/pre-test</h5>
+              <p>Invoked before execute shellspec inside of the docker container.</p>
+            </section>
+            <section id="shellspec-dockerpost-test" class="level5">
+              <h5>.shellspec-docker/post-test</h5>
+              <p>Invoked after executed shellspec inside of the docker container.</p>
+            </section>
+          </section>
+        </section>
+        <section id="3-using-shellspec-image-as-parent-image" class="level3">
+          <h3>3. Using ShellSpec image as parent image</h3>
+          <p>Example</p>
+          <pre class="language-Dockerfile"><code class="language-Dockerfile"># Dockerfile
+FROM shellspec/shellspec
+RUN apk add --no-cache add-your-required-packages
+COPY ./ /src</code></pre>
+          <pre class="language-sh"><code class="language-sh"># Build and run at your project root
+$ docker build -t your-project-name .
+$ docker run -it your-project-name</code></pre>
+        </section>
+        <section id="4-include-shellspec-into-another-image" class="level3">
+          <h3>4. Include ShellSpec into another image</h3>
+          <p>Example</p>
+          <pre class="language-Dockerfile"><code class="language-Dockerfile"># Dockerfile
+FROM buildpack-deps
+RUN apt-get update &#x26;&#x26; apt-get install -y add-your-required-packages
+COPY --from=shellspec/shellspec-scratch /opt/shellspec /opt/shellspec
+ENV PATH /opt/shellspec/:$PATH
+WORKDIR /src
+ENTRYPOINT [ "shellspec" ]
+COPY ./ /src</code></pre>
+          <pre class="language-sh"><code class="language-sh"># Build and run at your project root
+$ docker build -t your-project-name .
+$ docker run -it your-project-name</code></pre>
+        </section>
+      </section>
+      <section id="appendix" class="level2">
+        <h2>Appendix</h2>
+        <section id="how-to-build-official-shellspec-docker-image-yourself" class="level3">
+          <h3>How to build official ShellSpec docker image yourself</h3>
+          <p>Example</p>
+          <pre class="language-sh"><code class="language-sh">contrib/build.sh .dockerhub/Dockerfile         shellspec
+contrib/build.sh .dockerhub/Dockerfile         shellspec kcov
+contrib/build.sh .dockerhub/Dockerfile.debian  shellspec-debian
+contrib/build.sh .dockerhub/Dockerfile.debian  shellspec-debian kcov
+contrib/build.sh .dockerhub/Dockerfile.scratch shellspec-scratch</code></pre>
+          <p><span style="float: footnote;"><a href="./index.html#toc">Go to TOC</a></span></p>
+        </section>
+      </section>
+    </section>
+  </body>
+</html>

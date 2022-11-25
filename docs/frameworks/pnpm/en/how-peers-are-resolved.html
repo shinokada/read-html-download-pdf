@@ -1,0 +1,121 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <title>How peers are resolved</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="https://raw.githubusercontent.com/shinokada/prism-coy-theme/main/theme_common.css">
+  </head>
+  <body>
+    <section id="how-peers-are-resolved" class="level1">
+      <h1>How peers are resolved</h1>
+      <p>
+        One of the best features of pnpm is that in one project, a specific version of a
+        package will always have one set of dependencies. There is one exception from
+        this rule, though - packages with [peer dependencies].
+      </p>
+      <p><a href="https://docs.npmjs.com/files/package.json#peerdependencies">peer dependencies</a></p>
+      <p>
+        Peer dependencies are resolved from dependencies installed higher in the
+        dependency graph, since they share the same version as their parent. That means
+        that if <code>foo@1.0.0</code> has two peers (<code>bar@^1</code> and <code>baz@^1</code>) then it might have
+        multiple different sets of dependencies in the same project.
+      </p>
+      <pre class="language-text"><code class="language-text">- foo-parent-1
+  - bar@1.0.0
+  - baz@1.0.0
+  - foo@1.0.0
+- foo-parent-2
+  - bar@1.0.0
+  - baz@1.1.0
+  - foo@1.0.0</code></pre>
+      <p>
+        In the example above, <code>foo@1.0.0</code> is installed for <code>foo-parent-1</code> and
+        <code>foo-parent-2</code>. Both packages have <code>bar</code> and <code>baz</code> as well, but they depend on
+        different versions of <code>baz</code>. As a result, <code>foo@1.0.0</code> has two different sets of
+        dependencies: one with <code>baz@1.0.0</code> and the other one with <code>baz@1.1.0</code>. To
+        support these use cases, pnpm has to hard link <code>foo@1.0.0</code> as many times as
+        there are different dependency sets.
+      </p>
+      <p>
+        Normally, if a package does not have peer dependencies, it is hard linked to a
+        <code>node_modules</code> folder next to symlinks of its dependencies, like so:
+      </p>
+      <pre class="language-text"><code class="language-text">node_modules
+└── .pnpm
+    ├── foo@1.0.0
+    │   └── node_modules
+    │       ├── foo
+    │       ├── qux   -> ../../qux@1.0.0/node_modules/qux
+    │       └── plugh -> ../../plugh@1.0.0/node_modules/plugh
+    ├── qux@1.0.0
+    ├── plugh@1.0.0</code></pre>
+      <p>
+        However, if <code>foo</code> has peer dependencies, there may be multiple sets of
+        dependencies for it, so we create different sets for different peer dependency
+        resolutions:
+      </p>
+      <pre class="language-text"><code class="language-text">node_modules
+└── .pnpm
+    ├── foo@1.0.0_bar@1.0.0+baz@1.0.0
+    │   └── node_modules
+    │       ├── foo
+    │       ├── bar   -> ../../bar@1.0.0/node_modules/bar
+    │       ├── baz   -> ../../baz@1.0.0/node_modules/baz
+    │       ├── qux   -> ../../qux@1.0.0/node_modules/qux
+    │       └── plugh -> ../../plugh@1.0.0/node_modules/plugh
+    ├── foo@1.0.0_bar@1.0.0+baz@1.1.0
+    │   └── node_modules
+    │       ├── foo
+    │       ├── bar   -> ../../bar@1.0.0/node_modules/bar
+    │       ├── baz   -> ../../baz@1.1.0/node_modules/baz
+    │       ├── qux   -> ../../qux@1.0.0/node_modules/qux
+    │       └── plugh -> ../../plugh@1.0.0/node_modules/plugh
+    ├── bar@1.0.0
+    ├── baz@1.0.0
+    ├── baz@1.1.0
+    ├── qux@1.0.0
+    ├── plugh@1.0.0</code></pre>
+      <p>
+        We create symlinks either to the <code>foo</code> that is inside
+        <code>foo@1.0.0_bar@1.0.0+baz@1.0.0</code> or to the one in
+        <code>foo@1.0.0_bar@1.0.0+baz@1.1.0</code>.
+        As a consequence, the Node.js module resolver will find the correct peers.
+      </p>
+      <p>
+        <em>If a package has no peer dependencies but has dependencies with peers that are
+resolved higher in the graph</em>, then that transitive package can appear in the
+        project with different sets of dependencies. For instance, there's package
+        <code>a@1.0.0</code> with a single dependency <code>b@1.0.0</code>. <code>b@1.0.0</code> has a peer dependency
+        <code>c@^1</code>. <code>a@1.0.0</code> will never resolve the peers of <code>b@1.0.0</code>, so it becomes
+        dependent from the peers of <code>b@1.0.0</code> as well.
+      </p>
+      <p>
+        Here's how that structure will look in <code>node_modules</code>. In this example,
+        <code>a@1.0.0</code> will need to appear twice in the project's <code>node_modules</code> - resolved
+        once with <code>c@1.0.0</code> and again with <code>c@1.1.0</code>.
+      </p>
+      <pre class="language-text"><code class="language-text">node_modules
+└── .pnpm
+    ├── a@1.0.0_c@1.0.0
+    │   └── node_modules
+    │       ├── a
+    │       └── b -> ../../b@1.0.0_c@1.0.0/node_modules/b
+    ├── a@1.0.0_c@1.1.0
+    │   └── node_modules
+    │       ├── a
+    │       └── b -> ../../b@1.0.0_c@1.1.0/node_modules/b
+    ├── b@1.0.0_c@1.0.0
+    │   └── node_modules
+    │       ├── b
+    │       └── c -> ../../c@1.0.0/node_modules/c
+    ├── b@1.0.0_c@1.1.0
+    │   └── node_modules
+    │       ├── b
+    │       └── c -> ../../c@1.1.0/node_modules/c
+    ├── c@1.0.0
+    ├── c@1.1.0</code></pre>
+      <p><span style="float: footnote;"><a href="./index.html#toc">Go to TOC</a></span></p>
+    </section>
+  </body>
+</html>

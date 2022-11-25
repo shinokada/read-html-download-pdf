@@ -1,0 +1,795 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="utf-8">
+    <title>実装に関するメモ</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="https://raw.githubusercontent.com/shinokada/prism-coy-theme/main/theme_common.css">
+  </head>
+  <body>
+    <section id="実装に関するメモ" class="level1">
+      <h1>実装に関するメモ</h1>
+      <p>この章は <a href="./codebase-overview.html#stack-reconciler">stack リコンサイラ (reconciler)</a> の実装に関するメモを集めたものです。</p>
+      <p>これは非常に技術的な内容であり、React の公開 API だけでなく、React がどのようにコア、レンダラ (renderer) 、そしてリコンサイラに分割されているかについても、深く理解していることを前提としています。React のコードベースにあまり精通していないのであれば、まず<a href="./codebase-overview.html">コードベースの概要</a>を読んでください。</p>
+      <p>また、これは <a href="/blog/2015/12/18/react-components-elements-and-instances.html">React のコンポーネント、インスタンスおよび要素の違い</a>についての理解を前提としています。</p>
+      <p>stack リコンサイラは、React 15 およびそれ以前のバージョンで使われていました。<a href="https://github.com/facebook/react/tree/15-stable/src/renderers/shared/stack/reconciler">src/renderers/shared/stack/reconciler</a> で見つけることができます。</p>
+      <section id="video-building-react-from-scratch" class="level3">
+        <h3>動画：React をスクラッチで作成する</h3>
+        <p>このドキュメントは、<a href="https://twitter.com/zpao">Paul O'Shannessy</a> 氏の行った講演 <a href="https://www.youtube.com/watch?v=_MAD4Oly9yg">building React from scratch</a> に大いに啓発されています。</p>
+        <p>このドキュメントと彼の講演は、ともに実際のコードベースを簡素化したもので、両方に親しむことでより深く理解することができるでしょう。</p>
+      </section>
+      <section id="overview" class="level3">
+        <h3>概要</h3>
+        <p>リコンサイラそのものは公開 API を持ちません。リコンサイラは、React DOM や React Native のような <a href="./codebase-overview.html#renderers">レンダラ</a> が、ユーザの記述した React コンポーネントに応じてユーザインターフェースを効率よく更新するために使用されます。</p>
+      </section>
+      <section id="mounting-as-a-recursive-process" class="level3">
+        <h3>再帰的な処理としてマウントする</h3>
+        <p>一番最初にコンポーネントをマウントするときのことを考えてみましょう：</p>
+        <pre class="language-js"><code class="language-js"><span class="token keyword">const</span> root <span class="token operator">=</span> <span class="token maybe-class-name">ReactDOM</span><span class="token punctuation">.</span><span class="token method function property-access">createRoot</span><span class="token punctuation">(</span>rootEl<span class="token punctuation">)</span><span class="token punctuation">;</span>
+root<span class="token punctuation">.</span><span class="token method function property-access">render</span><span class="token punctuation">(</span><span class="token operator">&#x3C;</span><span class="token maybe-class-name">App</span> <span class="token operator">/</span><span class="token operator">></span><span class="token punctuation">)</span><span class="token punctuation">;</span></code></pre>
+        <p><code>root.render</code> はリコンサイラに <code>&#x3C;App /></code> を渡します。<code>&#x3C;App /></code> が React 要素であること、つまり、<strong>何</strong>をレンダーするかの説明書きであることを思い出してください。これはプレーンなオブジェクトとして考えることができます：</p>
+        <pre class="language-js"><code class="language-js"><span class="token console class-name">console</span><span class="token punctuation">.</span><span class="token method function property-access">log</span><span class="token punctuation">(</span><span class="token operator">&#x3C;</span><span class="token maybe-class-name">App</span> <span class="token operator">/</span><span class="token operator">></span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token comment">// { type: App, props: {} }</span></code></pre>
+        <p>リコンサイラは <code>App</code> がクラスか関数かをチェックします。</p>
+        <p>もし <code>App</code> が関数なら、リコンサイラは <code>App(props)</code> を呼び出してレンダーされた要素を取得します。</p>
+        <p>もし <code>App</code> がクラスなら、リコンサイラは <code>new App(props)</code> で <code>App</code> をインスタンス化し、<code>componentWillMount()</code> ライフサイクルメソッドを呼び出し、それから <code>render()</code> メソッドを呼び出してレンダーされた要素を取得します。</p>
+        <p>どちらにせよ、リコンサイラは <code>App</code> が「レンダーされた」結果となる要素を手に入れます。</p>
+        <p>このプロセスは再帰的です。<code>App</code> は <code>&#x3C;Greeting /></code> へとレンダーされるかもしれませんし、<code>Greeting</code> は <code>&#x3C;Button /></code> にレンダーされるかもしれない、といったように続いていきます。リコンサイラはそれぞれのコンポーネントが何にレンダーされるかを学習しながら、ユーザ定義コンポーネントを再帰的に「掘り下げて」いきます。</p>
+        <p>この処理の流れは擬似コードで想像することができます：</p>
+        <pre class="language-js"><code class="language-js"><span class="token keyword">function</span> <span class="token function">isClass</span><span class="token punctuation">(</span><span class="token parameter">type</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  <span class="token comment">// React.Component subclasses have this flag</span>
+  <span class="token keyword control-flow">return</span> <span class="token punctuation">(</span>
+    <span class="token known-class-name class-name">Boolean</span><span class="token punctuation">(</span>type<span class="token punctuation">.</span><span class="token property-access">prototype</span><span class="token punctuation">)</span> <span class="token operator">&#x26;&#x26;</span>
+    <span class="token known-class-name class-name">Boolean</span><span class="token punctuation">(</span>type<span class="token punctuation">.</span><span class="token property-access">prototype</span><span class="token punctuation">.</span><span class="token property-access">isReactComponent</span><span class="token punctuation">)</span>
+  <span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+
+<span class="token comment">// This function takes a React element (e.g. &#x3C;App />)</span>
+<span class="token comment">// and returns a DOM or Native node representing the mounted tree.</span>
+<span class="token keyword">function</span> <span class="token function">mount</span><span class="token punctuation">(</span><span class="token parameter">element</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  <span class="token keyword">var</span> type <span class="token operator">=</span> element<span class="token punctuation">.</span><span class="token property-access">type</span><span class="token punctuation">;</span>
+  <span class="token keyword">var</span> props <span class="token operator">=</span> element<span class="token punctuation">.</span><span class="token property-access">props</span><span class="token punctuation">;</span>
+
+  <span class="token comment">// We will determine the rendered element</span>
+  <span class="token comment">// by either running the type as function</span>
+  <span class="token comment">// or creating an instance and calling render().</span>
+  <span class="token keyword">var</span> renderedElement<span class="token punctuation">;</span>
+  <span class="token keyword control-flow">if</span> <span class="token punctuation">(</span><span class="token function">isClass</span><span class="token punctuation">(</span>type<span class="token punctuation">)</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token comment">// Component class</span>
+    <span class="token keyword">var</span> publicInstance <span class="token operator">=</span> <span class="token keyword">new</span> <span class="token class-name">type</span><span class="token punctuation">(</span>props<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token comment">// Set the props</span>
+    publicInstance<span class="token punctuation">.</span><span class="token property-access">props</span> <span class="token operator">=</span> props<span class="token punctuation">;</span>
+    <span class="token comment">// Call the lifecycle if necessary</span>
+    <span class="token keyword control-flow">if</span> <span class="token punctuation">(</span>publicInstance<span class="token punctuation">.</span><span class="token property-access">componentWillMount</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+      publicInstance<span class="token punctuation">.</span><span class="token method function property-access">componentWillMount</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+    <span class="token comment">// Get the rendered element by calling render()</span>
+    renderedElement <span class="token operator">=</span> publicInstance<span class="token punctuation">.</span><span class="token method function property-access">render</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token punctuation">}</span> <span class="token keyword control-flow">else</span> <span class="token punctuation">{</span>
+    <span class="token comment">// Component function</span>
+    renderedElement <span class="token operator">=</span> <span class="token function">type</span><span class="token punctuation">(</span>props<span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token punctuation">}</span>
+
+  <span class="token comment">// This process is recursive because a component may</span>
+  <span class="token comment">// return an element with a type of another component.</span>
+  <span class="token keyword control-flow">return</span> <span class="token function">mount</span><span class="token punctuation">(</span>renderedElement<span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+  <span class="token comment">// Note: this implementation is incomplete and recurses infinitely!</span>
+  <span class="token comment">// It only handles elements like &#x3C;App /> or &#x3C;Button />.</span>
+  <span class="token comment">// It doesn't handle elements like &#x3C;div /> or &#x3C;p /> yet.</span>
+<span class="token punctuation">}</span>
+
+<span class="token keyword">var</span> rootEl <span class="token operator">=</span> <span class="token dom variable">document</span><span class="token punctuation">.</span><span class="token method function property-access">getElementById</span><span class="token punctuation">(</span><span class="token string">'root'</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token keyword">var</span> node <span class="token operator">=</span> <span class="token function">mount</span><span class="token punctuation">(</span><span class="token operator">&#x3C;</span><span class="token maybe-class-name">App</span> <span class="token operator">/</span><span class="token operator">></span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+rootEl<span class="token punctuation">.</span><span class="token method function property-access">appendChild</span><span class="token punctuation">(</span>node<span class="token punctuation">)</span><span class="token punctuation">;</span></code></pre>
+        <blockquote>
+          <p><strong>補足：</strong></p>
+          <p>これは<strong>全くの</strong>擬似コードです。本物の実装に近いものではありません。また、いつ再帰を止めるか検討していないため、このコードはスタックオーバーフローを引き起こします。</p>
+        </blockquote>
+        <p>上記の例でいくつかの鍵となるアイデアをおさらいしましょう：</p>
+        <ul>
+          <li>React 要素とはコンポーネントの型（例えば <code>App</code>）と props を表すプレーンなオブジェクトである。</li>
+          <li>ユーザ定義コンポーネント（例えば <code>App</code>）はクラスであっても関数であってもよいが、それらは全て要素へと「レンダーされる」。</li>
+          <li>「マウント」とは、最上位の React 要素（例えば <code>&#x3C;App /></code>）を受け取り、DOM もしくはネイティブなツリーを構築する再帰的な処理である。</li>
+        </ul>
+      </section>
+      <section id="mounting-host-elements" class="level3">
+        <h3>host要素のマウント</h3>
+        <p>このようにして要素ができても、それを使って画面に何か表示しなければ意味がありません。</p>
+        <p>ユーザ定義 ("composite") コンポーネントに加え、React 要素はプラットフォームに固有な ("host") コンポーネントも表すことができます。例えば、<code>Button</code> は render メソッドから <code>&#x3C;div /></code> を返すことが考えられます。</p>
+        <p>もし要素の <code>type</code> プロパティが文字列なら、私たちはいま host 要素を扱っていることになります：</p>
+        <pre class="language-js"><code class="language-js"><span class="token console class-name">console</span><span class="token punctuation">.</span><span class="token method function property-access">log</span><span class="token punctuation">(</span><span class="token operator">&#x3C;</span>div <span class="token operator">/</span><span class="token operator">></span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token comment">// { type: 'div', props: {} }</span></code></pre>
+        <p>host 要素に関連付けられているユーザ定義のコードはありません。</p>
+        <p>リコンサイラは host 要素を見つけると、レンダラに host 要素のマウントを任せます。例えば、React DOM は DOM ノードを生成します。</p>
+        <p>host 要素に子要素がある場合、リコンサイラは前節で述べたものと同じアルゴリズムに従い、子要素を再帰的にマウントします。子要素が（<code>&#x3C;div>&#x3C;hr />&#x3C;/div></code> のような）host なのか、（<code>&#x3C;div>&#x3C;Button />&#x3C;/div></code> のような）composite なのか、もしくはその両方が含まれているかに関わらず、再帰的な処理が実行されます。</p>
+        <p>子コンポーネントにより生成された DOM ノードは親の DOM ノードに追加され、それが再帰的に行われることで、完全な DOM 構造が組み立てられます。</p>
+        <blockquote>
+          <p><strong>補足：</strong></p>
+          <p>リコンサイラそのものは DOM と結合していません。マウントの結果自体（時にソースコードでは "mount image" とも呼ばれます）はレンダラに依存し、それは（React DOM なら）DOM ノード であったり、（React DOM Server なら）文字列であったり、（React Native なら）ネイティブのビューを表す数字であったりします。</p>
+        </blockquote>
+        <p>前出のコードを host 要素も扱えるように拡張するとすれば、以下のようなものになるでしょう：</p>
+        <pre class="language-js"><code class="language-js"><span class="token keyword">function</span> <span class="token function">isClass</span><span class="token punctuation">(</span><span class="token parameter">type</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  <span class="token comment">// React.Component subclasses have this flag</span>
+  <span class="token keyword control-flow">return</span> <span class="token punctuation">(</span>
+    <span class="token known-class-name class-name">Boolean</span><span class="token punctuation">(</span>type<span class="token punctuation">.</span><span class="token property-access">prototype</span><span class="token punctuation">)</span> <span class="token operator">&#x26;&#x26;</span>
+    <span class="token known-class-name class-name">Boolean</span><span class="token punctuation">(</span>type<span class="token punctuation">.</span><span class="token property-access">prototype</span><span class="token punctuation">.</span><span class="token property-access">isReactComponent</span><span class="token punctuation">)</span>
+  <span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+
+<span class="token comment">// This function only handles elements with a composite type.</span>
+<span class="token comment">// For example, it handles &#x3C;App /> and &#x3C;Button />, but not a &#x3C;div />.</span>
+<span class="token keyword">function</span> <span class="token function">mountComposite</span><span class="token punctuation">(</span><span class="token parameter">element</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  <span class="token keyword">var</span> type <span class="token operator">=</span> element<span class="token punctuation">.</span><span class="token property-access">type</span><span class="token punctuation">;</span>
+  <span class="token keyword">var</span> props <span class="token operator">=</span> element<span class="token punctuation">.</span><span class="token property-access">props</span><span class="token punctuation">;</span>
+
+  <span class="token keyword">var</span> renderedElement<span class="token punctuation">;</span>
+  <span class="token keyword control-flow">if</span> <span class="token punctuation">(</span><span class="token function">isClass</span><span class="token punctuation">(</span>type<span class="token punctuation">)</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token comment">// Component class</span>
+    <span class="token keyword">var</span> publicInstance <span class="token operator">=</span> <span class="token keyword">new</span> <span class="token class-name">type</span><span class="token punctuation">(</span>props<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token comment">// Set the props</span>
+    publicInstance<span class="token punctuation">.</span><span class="token property-access">props</span> <span class="token operator">=</span> props<span class="token punctuation">;</span>
+    <span class="token comment">// Call the lifecycle if necessary</span>
+    <span class="token keyword control-flow">if</span> <span class="token punctuation">(</span>publicInstance<span class="token punctuation">.</span><span class="token property-access">componentWillMount</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+      publicInstance<span class="token punctuation">.</span><span class="token method function property-access">componentWillMount</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+    renderedElement <span class="token operator">=</span> publicInstance<span class="token punctuation">.</span><span class="token method function property-access">render</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token punctuation">}</span> <span class="token keyword control-flow">else</span> <span class="token keyword control-flow">if</span> <span class="token punctuation">(</span><span class="token keyword">typeof</span> type <span class="token operator">===</span> <span class="token string">'function'</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token comment">// Component function</span>
+    renderedElement <span class="token operator">=</span> <span class="token function">type</span><span class="token punctuation">(</span>props<span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token punctuation">}</span>
+
+  <span class="token comment">// This is recursive but we'll eventually reach the bottom of recursion when</span>
+  <span class="token comment">// the element is host (e.g. &#x3C;div />) rather than composite (e.g. &#x3C;App />):</span>
+  <span class="token keyword control-flow">return</span> <span class="token function">mount</span><span class="token punctuation">(</span>renderedElement<span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+
+<span class="token comment">// This function only handles elements with a host type.</span>
+<span class="token comment">// For example, it handles &#x3C;div /> and &#x3C;p /> but not an &#x3C;App />.</span>
+<span class="token keyword">function</span> <span class="token function">mountHost</span><span class="token punctuation">(</span><span class="token parameter">element</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  <span class="token keyword">var</span> type <span class="token operator">=</span> element<span class="token punctuation">.</span><span class="token property-access">type</span><span class="token punctuation">;</span>
+  <span class="token keyword">var</span> props <span class="token operator">=</span> element<span class="token punctuation">.</span><span class="token property-access">props</span><span class="token punctuation">;</span>
+  <span class="token keyword">var</span> children <span class="token operator">=</span> props<span class="token punctuation">.</span><span class="token property-access">children</span> <span class="token operator">||</span> <span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token punctuation">;</span>
+  <span class="token keyword control-flow">if</span> <span class="token punctuation">(</span><span class="token operator">!</span><span class="token known-class-name class-name">Array</span><span class="token punctuation">.</span><span class="token method function property-access">isArray</span><span class="token punctuation">(</span>children<span class="token punctuation">)</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    children <span class="token operator">=</span> <span class="token punctuation">[</span>children<span class="token punctuation">]</span><span class="token punctuation">;</span>
+  <span class="token punctuation">}</span>
+  children <span class="token operator">=</span> children<span class="token punctuation">.</span><span class="token method function property-access">filter</span><span class="token punctuation">(</span><span class="token known-class-name class-name">Boolean</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+  <span class="token comment">// This block of code shouldn't be in the reconciler.</span>
+  <span class="token comment">// Different renderers might initialize nodes differently.</span>
+  <span class="token comment">// For example, React Native would create iOS or Android views.</span>
+  <span class="token keyword">var</span> node <span class="token operator">=</span> <span class="token dom variable">document</span><span class="token punctuation">.</span><span class="token method function property-access">createElement</span><span class="token punctuation">(</span>type<span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token known-class-name class-name">Object</span><span class="token punctuation">.</span><span class="token method function property-access">keys</span><span class="token punctuation">(</span>props<span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token method function property-access">forEach</span><span class="token punctuation">(</span><span class="token parameter">propName</span> <span class="token arrow operator">=></span> <span class="token punctuation">{</span>
+    <span class="token keyword control-flow">if</span> <span class="token punctuation">(</span>propName <span class="token operator">!==</span> <span class="token string">'children'</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+      node<span class="token punctuation">.</span><span class="token method function property-access">setAttribute</span><span class="token punctuation">(</span>propName<span class="token punctuation">,</span> props<span class="token punctuation">[</span>propName<span class="token punctuation">]</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+  <span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+  <span class="token comment">// Mount the children</span>
+  children<span class="token punctuation">.</span><span class="token method function property-access">forEach</span><span class="token punctuation">(</span><span class="token parameter">childElement</span> <span class="token arrow operator">=></span> <span class="token punctuation">{</span>
+    <span class="token comment">// Children may be host (e.g. &#x3C;div />) or composite (e.g. &#x3C;Button />).</span>
+    <span class="token comment">// We will also mount them recursively:</span>
+    <span class="token keyword">var</span> childNode <span class="token operator">=</span> <span class="token function">mount</span><span class="token punctuation">(</span>childElement<span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+    <span class="token comment">// This line of code is also renderer-specific.</span>
+    <span class="token comment">// It would be different depending on the renderer:</span>
+    node<span class="token punctuation">.</span><span class="token method function property-access">appendChild</span><span class="token punctuation">(</span>childNode<span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+  <span class="token comment">// Return the DOM node as mount result.</span>
+  <span class="token comment">// This is where the recursion ends.</span>
+  <span class="token keyword control-flow">return</span> node<span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+
+<span class="token keyword">function</span> <span class="token function">mount</span><span class="token punctuation">(</span><span class="token parameter">element</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  <span class="token keyword">var</span> type <span class="token operator">=</span> element<span class="token punctuation">.</span><span class="token property-access">type</span><span class="token punctuation">;</span>
+  <span class="token keyword control-flow">if</span> <span class="token punctuation">(</span><span class="token keyword">typeof</span> type <span class="token operator">===</span> <span class="token string">'function'</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token comment">// User-defined components</span>
+    <span class="token keyword control-flow">return</span> <span class="token function">mountComposite</span><span class="token punctuation">(</span>element<span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token punctuation">}</span> <span class="token keyword control-flow">else</span> <span class="token keyword control-flow">if</span> <span class="token punctuation">(</span><span class="token keyword">typeof</span> type <span class="token operator">===</span> <span class="token string">'string'</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token comment">// Platform-specific components</span>
+    <span class="token keyword control-flow">return</span> <span class="token function">mountHost</span><span class="token punctuation">(</span>element<span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token punctuation">}</span>
+<span class="token punctuation">}</span>
+
+<span class="token keyword">var</span> rootEl <span class="token operator">=</span> <span class="token dom variable">document</span><span class="token punctuation">.</span><span class="token method function property-access">getElementById</span><span class="token punctuation">(</span><span class="token string">'root'</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token keyword">var</span> node <span class="token operator">=</span> <span class="token function">mount</span><span class="token punctuation">(</span><span class="token operator">&#x3C;</span><span class="token maybe-class-name">App</span> <span class="token operator">/</span><span class="token operator">></span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+rootEl<span class="token punctuation">.</span><span class="token method function property-access">appendChild</span><span class="token punctuation">(</span>node<span class="token punctuation">)</span><span class="token punctuation">;</span></code></pre>
+        <p>このコードは動作しますが、それでもまだ現実のリコンサイラの実装方法からは隔たりがあります。ここにあるべき鍵となる要素は、更新に対応することです。</p>
+      </section>
+      <section id="introducing-internal-instances" class="level3">
+        <h3>内部インスタンスの導入</h3>
+        <p>React の鍵となる機能は、あらゆるものを再描画できることであり、その際に DOM を再生成したり、state をリセットしたりしないことです：</p>
+        <pre class="language-js"><code class="language-js">root<span class="token punctuation">.</span><span class="token method function property-access">render</span><span class="token punctuation">(</span><span class="token operator">&#x3C;</span><span class="token maybe-class-name">App</span> <span class="token operator">/</span><span class="token operator">></span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token comment">// Should reuse the existing DOM:</span>
+root<span class="token punctuation">.</span><span class="token method function property-access">render</span><span class="token punctuation">(</span><span class="token operator">&#x3C;</span><span class="token maybe-class-name">App</span> <span class="token operator">/</span><span class="token operator">></span><span class="token punctuation">)</span><span class="token punctuation">;</span></code></pre>
+        <p>しかし、前節で実装したコードは最初のツリーをマウントする方法しか知りません。前節のコードは、全ての <code>publicInstance</code> や、どの DOM <code>node</code> がどのコンポーネントに対応しているかなど、必要な全情報を保有しているわけではないので、更新を実行することができません。</p>
+        <p>stack リコンサイラのコードベースでは、この問題を <code>mount()</code> 関数をメソッドとしてクラスに置くことで解決しています。しかしこのアプローチには欠点があるため、<a href="./codebase-overview.html#fiber-reconciler">進行中のリコンサイラの書き直し作業</a>では、反対の方向に進んでいます。それでも現時点では、この方式で動作しています。</p>
+        <p>別々の <code>mountHost</code> と <code>mountComposite</code> 関数の代わりに、2 つのクラスを作成します： <code>DOMComponent</code> と <code>CompositeComponent</code> です。</p>
+        <p>両方のクラスが <code>element</code> を受け入れるコンストラクタと、マウントされたノードを返す <code>mount()</code> メソッドを持ちます。最上位の <code>mount()</code> 関数を、正しいクラスをインスタンス化するファクトリに置き換えます：</p>
+        <pre class="language-js"><code class="language-js"><span class="token keyword">function</span> <span class="token function">instantiateComponent</span><span class="token punctuation">(</span><span class="token parameter">element</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  <span class="token keyword">var</span> type <span class="token operator">=</span> element<span class="token punctuation">.</span><span class="token property-access">type</span><span class="token punctuation">;</span>
+  <span class="token keyword control-flow">if</span> <span class="token punctuation">(</span><span class="token keyword">typeof</span> type <span class="token operator">===</span> <span class="token string">'function'</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token comment">// User-defined components</span>
+    <span class="token keyword control-flow">return</span> <span class="token keyword">new</span> <span class="token class-name">CompositeComponent</span><span class="token punctuation">(</span>element<span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token punctuation">}</span> <span class="token keyword control-flow">else</span> <span class="token keyword control-flow">if</span> <span class="token punctuation">(</span><span class="token keyword">typeof</span> type <span class="token operator">===</span> <span class="token string">'string'</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token comment">// Platform-specific components</span>
+    <span class="token keyword control-flow">return</span> <span class="token keyword">new</span> <span class="token class-name">DOMComponent</span><span class="token punctuation">(</span>element<span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token punctuation">}</span>  
+<span class="token punctuation">}</span></code></pre>
+        <p>まず、<code>CompositeComponent</code> の実装から考えてみましょう：</p>
+        <pre class="language-js"><code class="language-js"><span class="token keyword">class</span> <span class="token class-name">CompositeComponent</span> <span class="token punctuation">{</span>
+  <span class="token function">constructor</span><span class="token punctuation">(</span><span class="token parameter">element</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token keyword">this</span><span class="token punctuation">.</span><span class="token property-access">currentElement</span> <span class="token operator">=</span> element<span class="token punctuation">;</span>
+    <span class="token keyword">this</span><span class="token punctuation">.</span><span class="token property-access">renderedComponent</span> <span class="token operator">=</span> <span class="token keyword null nil">null</span><span class="token punctuation">;</span>
+    <span class="token keyword">this</span><span class="token punctuation">.</span><span class="token property-access">publicInstance</span> <span class="token operator">=</span> <span class="token keyword null nil">null</span><span class="token punctuation">;</span>
+  <span class="token punctuation">}</span>
+
+  <span class="token function">getPublicInstance</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token comment">// For composite components, expose the class instance.</span>
+    <span class="token keyword control-flow">return</span> <span class="token keyword">this</span><span class="token punctuation">.</span><span class="token property-access">publicInstance</span><span class="token punctuation">;</span>
+  <span class="token punctuation">}</span>
+
+  <span class="token function">mount</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token keyword">var</span> element <span class="token operator">=</span> <span class="token keyword">this</span><span class="token punctuation">.</span><span class="token property-access">currentElement</span><span class="token punctuation">;</span>
+    <span class="token keyword">var</span> type <span class="token operator">=</span> element<span class="token punctuation">.</span><span class="token property-access">type</span><span class="token punctuation">;</span>
+    <span class="token keyword">var</span> props <span class="token operator">=</span> element<span class="token punctuation">.</span><span class="token property-access">props</span><span class="token punctuation">;</span>
+
+    <span class="token keyword">var</span> publicInstance<span class="token punctuation">;</span>
+    <span class="token keyword">var</span> renderedElement<span class="token punctuation">;</span>
+    <span class="token keyword control-flow">if</span> <span class="token punctuation">(</span><span class="token function">isClass</span><span class="token punctuation">(</span>type<span class="token punctuation">)</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+      <span class="token comment">// Component class</span>
+      publicInstance <span class="token operator">=</span> <span class="token keyword">new</span> <span class="token class-name">type</span><span class="token punctuation">(</span>props<span class="token punctuation">)</span><span class="token punctuation">;</span>
+      <span class="token comment">// Set the props</span>
+      publicInstance<span class="token punctuation">.</span><span class="token property-access">props</span> <span class="token operator">=</span> props<span class="token punctuation">;</span>
+      <span class="token comment">// Call the lifecycle if necessary</span>
+      <span class="token keyword control-flow">if</span> <span class="token punctuation">(</span>publicInstance<span class="token punctuation">.</span><span class="token property-access">componentWillMount</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        publicInstance<span class="token punctuation">.</span><span class="token method function property-access">componentWillMount</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+      <span class="token punctuation">}</span>
+      renderedElement <span class="token operator">=</span> publicInstance<span class="token punctuation">.</span><span class="token method function property-access">render</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span> <span class="token keyword control-flow">else</span> <span class="token keyword control-flow">if</span> <span class="token punctuation">(</span><span class="token keyword">typeof</span> type <span class="token operator">===</span> <span class="token string">'function'</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+      <span class="token comment">// Component function</span>
+      publicInstance <span class="token operator">=</span> <span class="token keyword null nil">null</span><span class="token punctuation">;</span>
+      renderedElement <span class="token operator">=</span> <span class="token function">type</span><span class="token punctuation">(</span>props<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+
+    <span class="token comment">// Save the public instance</span>
+    <span class="token keyword">this</span><span class="token punctuation">.</span><span class="token property-access">publicInstance</span> <span class="token operator">=</span> publicInstance<span class="token punctuation">;</span>
+
+    <span class="token comment">// Instantiate the child internal instance according to the element.</span>
+    <span class="token comment">// It would be a DOMComponent for &#x3C;div /> or &#x3C;p />,</span>
+    <span class="token comment">// and a CompositeComponent for &#x3C;App /> or &#x3C;Button />:</span>
+    <span class="token keyword">var</span> renderedComponent <span class="token operator">=</span> <span class="token function">instantiateComponent</span><span class="token punctuation">(</span>renderedElement<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token keyword">this</span><span class="token punctuation">.</span><span class="token property-access">renderedComponent</span> <span class="token operator">=</span> renderedComponent<span class="token punctuation">;</span>
+
+    <span class="token comment">// Mount the rendered output</span>
+    <span class="token keyword control-flow">return</span> renderedComponent<span class="token punctuation">.</span><span class="token method function property-access">mount</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token punctuation">}</span>
+<span class="token punctuation">}</span></code></pre>
+        <p>以前の <code>mountComposite()</code> の実装と大きな違いはありませんが、更新時に使用する <code>this.currentElement</code> 、<code>this.renderedComponent</code> や、<code>this.publicInstance</code> のような情報を保存できるようになりました。</p>
+        <p><code>CompositeComponent</code> のインスタンスは、ユーザが指定する <code>element.type</code> のインスタンスとは同一ではないことに注意してください。<code>CompositeComponent</code> はリコンサイラの実装の詳細であり、ユーザには決して公開されません。ユーザ定義クラスとは <code>element.type</code> から読み込むものであり、<code>CompositeComponent</code> がそのインスタンスを作成するのです。</p>
+        <p>混乱を避けるために、<code>CompositeComponent</code> と <code>DOMComponent</code> のインスタンスを「内部インスタンス」と呼ぶことにします。内部インスタンスは、長期間利用されるデータとそれらを関連付けられるようにするために存在します。それらの存在はレンダラとリコンサイラのみが認識しています。</p>
+        <p>一方、ユーザ定義クラスのインスタンスは「公開インスタンス」と呼ぶことにします。公開インスタンスは、独自コンポーネントの <code>render()</code> やその他のメソッド内で <code>this</code> として現れるものです。</p>
+        <p><code>mountHost()</code> 関数は、<code>DOMComponent</code> クラスの <code>mount()</code> メソッドとしてリファクタリングされ、こちらも見慣れたものになります：</p>
+        <pre class="language-js"><code class="language-js"><span class="token keyword">class</span> <span class="token class-name">DOMComponent</span> <span class="token punctuation">{</span>
+  <span class="token function">constructor</span><span class="token punctuation">(</span><span class="token parameter">element</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token keyword">this</span><span class="token punctuation">.</span><span class="token property-access">currentElement</span> <span class="token operator">=</span> element<span class="token punctuation">;</span>
+    <span class="token keyword">this</span><span class="token punctuation">.</span><span class="token property-access">renderedChildren</span> <span class="token operator">=</span> <span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token punctuation">;</span>
+    <span class="token keyword">this</span><span class="token punctuation">.</span><span class="token property-access">node</span> <span class="token operator">=</span> <span class="token keyword null nil">null</span><span class="token punctuation">;</span>
+  <span class="token punctuation">}</span>
+
+  <span class="token function">getPublicInstance</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token comment">// For DOM components, only expose the DOM node.</span>
+    <span class="token keyword control-flow">return</span> <span class="token keyword">this</span><span class="token punctuation">.</span><span class="token property-access">node</span><span class="token punctuation">;</span>
+  <span class="token punctuation">}</span>
+
+  <span class="token function">mount</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token keyword">var</span> element <span class="token operator">=</span> <span class="token keyword">this</span><span class="token punctuation">.</span><span class="token property-access">currentElement</span><span class="token punctuation">;</span>
+    <span class="token keyword">var</span> type <span class="token operator">=</span> element<span class="token punctuation">.</span><span class="token property-access">type</span><span class="token punctuation">;</span>
+    <span class="token keyword">var</span> props <span class="token operator">=</span> element<span class="token punctuation">.</span><span class="token property-access">props</span><span class="token punctuation">;</span>
+    <span class="token keyword">var</span> children <span class="token operator">=</span> props<span class="token punctuation">.</span><span class="token property-access">children</span> <span class="token operator">||</span> <span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token punctuation">;</span>
+    <span class="token keyword control-flow">if</span> <span class="token punctuation">(</span><span class="token operator">!</span><span class="token known-class-name class-name">Array</span><span class="token punctuation">.</span><span class="token method function property-access">isArray</span><span class="token punctuation">(</span>children<span class="token punctuation">)</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+      children <span class="token operator">=</span> <span class="token punctuation">[</span>children<span class="token punctuation">]</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+
+    <span class="token comment">// Create and save the node</span>
+    <span class="token keyword">var</span> node <span class="token operator">=</span> <span class="token dom variable">document</span><span class="token punctuation">.</span><span class="token method function property-access">createElement</span><span class="token punctuation">(</span>type<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token keyword">this</span><span class="token punctuation">.</span><span class="token property-access">node</span> <span class="token operator">=</span> node<span class="token punctuation">;</span>
+
+    <span class="token comment">// Set the attributes</span>
+    <span class="token known-class-name class-name">Object</span><span class="token punctuation">.</span><span class="token method function property-access">keys</span><span class="token punctuation">(</span>props<span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token method function property-access">forEach</span><span class="token punctuation">(</span><span class="token parameter">propName</span> <span class="token arrow operator">=></span> <span class="token punctuation">{</span>
+      <span class="token keyword control-flow">if</span> <span class="token punctuation">(</span>propName <span class="token operator">!==</span> <span class="token string">'children'</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        node<span class="token punctuation">.</span><span class="token method function property-access">setAttribute</span><span class="token punctuation">(</span>propName<span class="token punctuation">,</span> props<span class="token punctuation">[</span>propName<span class="token punctuation">]</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+      <span class="token punctuation">}</span>
+    <span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+    <span class="token comment">// Create and save the contained children.</span>
+    <span class="token comment">// Each of them can be a DOMComponent or a CompositeComponent,</span>
+    <span class="token comment">// depending on whether the element type is a string or a function.</span>
+    <span class="token keyword">var</span> renderedChildren <span class="token operator">=</span> children<span class="token punctuation">.</span><span class="token method function property-access">map</span><span class="token punctuation">(</span>instantiateComponent<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token keyword">this</span><span class="token punctuation">.</span><span class="token property-access">renderedChildren</span> <span class="token operator">=</span> renderedChildren<span class="token punctuation">;</span>
+
+    <span class="token comment">// Collect DOM nodes they return on mount</span>
+    <span class="token keyword">var</span> childNodes <span class="token operator">=</span> renderedChildren<span class="token punctuation">.</span><span class="token method function property-access">map</span><span class="token punctuation">(</span><span class="token parameter">child</span> <span class="token arrow operator">=></span> child<span class="token punctuation">.</span><span class="token method function property-access">mount</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    childNodes<span class="token punctuation">.</span><span class="token method function property-access">forEach</span><span class="token punctuation">(</span><span class="token parameter">childNode</span> <span class="token arrow operator">=></span> node<span class="token punctuation">.</span><span class="token method function property-access">appendChild</span><span class="token punctuation">(</span>childNode<span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+    <span class="token comment">// Return the DOM node as mount result</span>
+    <span class="token keyword control-flow">return</span> node<span class="token punctuation">;</span>
+  <span class="token punctuation">}</span>
+<span class="token punctuation">}</span></code></pre>
+        <p>mountHost() からリファクタリングした後の主な違いは、<code>this.node</code> と <code>this.renderedChildren</code> を内部の DOM コンポーネントインスタンスに関連付け続けていることです。これらは、将来的に非破壊的な更新を適用する際にも使用します。</p>
+        <p>結果として、それが composite であれ host であれ、内部インスタンスはそれぞれの子内部インスタンスを指すようになります。<code>&#x3C;App></code> 関数コンポーネントが <code>&#x3C;Button></code> コンポーネントをレンダーし、<code>&#x3C;Button></code> クラスが <code>&#x3C;div></code>をレンダーする場合、視覚的にわかりやすくすると、内部インスタンスのツリーはこのようになります：</p>
+        <pre class="language-js"><code class="language-js"><span class="token punctuation">[</span>object <span class="token maybe-class-name">CompositeComponent</span><span class="token punctuation">]</span> <span class="token punctuation">{</span>
+  <span class="token literal-property property">currentElement</span><span class="token operator">:</span> <span class="token operator">&#x3C;</span><span class="token maybe-class-name">App</span> <span class="token operator">/</span><span class="token operator">></span><span class="token punctuation">,</span>
+  <span class="token literal-property property">publicInstance</span><span class="token operator">:</span> <span class="token keyword null nil">null</span><span class="token punctuation">,</span>
+  <span class="token literal-property property">renderedComponent</span><span class="token operator">:</span> <span class="token punctuation">[</span>object <span class="token maybe-class-name">CompositeComponent</span><span class="token punctuation">]</span> <span class="token punctuation">{</span>
+    <span class="token literal-property property">currentElement</span><span class="token operator">:</span> <span class="token operator">&#x3C;</span><span class="token maybe-class-name">Button</span> <span class="token operator">/</span><span class="token operator">></span><span class="token punctuation">,</span>
+    <span class="token literal-property property">publicInstance</span><span class="token operator">:</span> <span class="token punctuation">[</span>object <span class="token maybe-class-name">Button</span><span class="token punctuation">]</span><span class="token punctuation">,</span>
+    <span class="token literal-property property">renderedComponent</span><span class="token operator">:</span> <span class="token punctuation">[</span>object <span class="token maybe-class-name">DOMComponent</span><span class="token punctuation">]</span> <span class="token punctuation">{</span>
+      <span class="token literal-property property">currentElement</span><span class="token operator">:</span> <span class="token operator">&#x3C;</span>div <span class="token operator">/</span><span class="token operator">></span><span class="token punctuation">,</span>
+      <span class="token literal-property property">node</span><span class="token operator">:</span> <span class="token punctuation">[</span>object <span class="token maybe-class-name">HTMLDivElement</span><span class="token punctuation">]</span><span class="token punctuation">,</span>
+      <span class="token literal-property property">renderedChildren</span><span class="token operator">:</span> <span class="token punctuation">[</span><span class="token punctuation">]</span>
+    <span class="token punctuation">}</span>
+  <span class="token punctuation">}</span>
+<span class="token punctuation">}</span></code></pre>
+        <p>DOM の中では、<code>&#x3C;div></code>しか見えません。しかしながら、内部インスタンスのツリーは composite の内部インスタンスと host の内部インスタンスの両方を保有しています。</p>
+        <p>composite 内部インスタンスは以下のものを格納する必要があります：</p>
+        <ul>
+          <li>現在の要素。</li>
+          <li>要素の型がクラスの場合、公開インスタンス。</li>
+          <li>単独の、レンダーされた内部インスタンス。これは <code>DOMComponent</code> か <code>CompositeComponent</code> のいずれかにあたります。</li>
+        </ul>
+        <p>host 内部インスタンスは以下のものを格納する必要があります：</p>
+        <ul>
+          <li>現在の要素。</li>
+          <li>DOM ノード。</li>
+          <li>すべての子内部インタスタンス。各インスタンスは、<code>DOMComponent</code> または <code>CompositeComponent</code> のいずれかになります。</li>
+        </ul>
+        <p>より複雑なアプリケーションにおいて、内部インスタンスのツリーがどのような構造になるのか想像しづらい場合は、<a href="https://github.com/facebook/react-devtools">React DevTools</a> が host インスタンスを灰色に、composite インスタンスを紫色にハイライトしてくれるので、内部インスタンスのツリーにかなり近いものを得ることができます：</p>
+        <img src="../images/docs/implementation-notes-tree.png" width="500" style="max-width: 100%" alt="React DevTools tree">
+        <p>このリファクタリングを完了するため、完全なツリーをコンテナノードとパブリックインスタンスにマウントする関数を導入することにします。</p>
+        <pre class="language-js"><code class="language-js"><span class="token keyword">function</span> <span class="token function">mountTree</span><span class="token punctuation">(</span><span class="token parameter">element<span class="token punctuation">,</span> containerNode</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  <span class="token comment">// Create the top-level internal instance</span>
+  <span class="token keyword">var</span> rootComponent <span class="token operator">=</span> <span class="token function">instantiateComponent</span><span class="token punctuation">(</span>element<span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+  <span class="token comment">// Mount the top-level component into the container</span>
+  <span class="token keyword">var</span> node <span class="token operator">=</span> rootComponent<span class="token punctuation">.</span><span class="token method function property-access">mount</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  containerNode<span class="token punctuation">.</span><span class="token method function property-access">appendChild</span><span class="token punctuation">(</span>node<span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+  <span class="token comment">// Return the public instance it provides</span>
+  <span class="token keyword">var</span> publicInstance <span class="token operator">=</span> rootComponent<span class="token punctuation">.</span><span class="token method function property-access">getPublicInstance</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token keyword control-flow">return</span> publicInstance<span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+
+<span class="token keyword">var</span> rootEl <span class="token operator">=</span> <span class="token dom variable">document</span><span class="token punctuation">.</span><span class="token method function property-access">getElementById</span><span class="token punctuation">(</span><span class="token string">'root'</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token function">mountTree</span><span class="token punctuation">(</span><span class="token operator">&#x3C;</span><span class="token maybe-class-name">App</span> <span class="token operator">/</span><span class="token operator">></span><span class="token punctuation">,</span> rootEl<span class="token punctuation">)</span><span class="token punctuation">;</span></code></pre>
+      </section>
+      <section id="unmounting" class="level3">
+        <h3>アンマウント</h3>
+        <p>これで、子内部インスタンスと DOM ノードを持った内部インスタンスができ、そこにアンマウントを実装できるようになります。composite 要素では、アンマウントはライフサイクルメソッドを呼び出し、再帰的な処理を行います。</p>
+        <pre class="language-js"><code class="language-js"><span class="token keyword">class</span> <span class="token class-name">CompositeComponent</span> <span class="token punctuation">{</span>
+
+  <span class="token comment">// ...</span>
+
+  <span class="token function">unmount</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token comment">// Call the lifecycle method if necessary</span>
+    <span class="token keyword">var</span> publicInstance <span class="token operator">=</span> <span class="token keyword">this</span><span class="token punctuation">.</span><span class="token property-access">publicInstance</span><span class="token punctuation">;</span>
+    <span class="token keyword control-flow">if</span> <span class="token punctuation">(</span>publicInstance<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+      <span class="token keyword control-flow">if</span> <span class="token punctuation">(</span>publicInstance<span class="token punctuation">.</span><span class="token property-access">componentWillUnmount</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        publicInstance<span class="token punctuation">.</span><span class="token method function property-access">componentWillUnmount</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+      <span class="token punctuation">}</span>
+    <span class="token punctuation">}</span>
+
+    <span class="token comment">// Unmount the single rendered component</span>
+    <span class="token keyword">var</span> renderedComponent <span class="token operator">=</span> <span class="token keyword">this</span><span class="token punctuation">.</span><span class="token property-access">renderedComponent</span><span class="token punctuation">;</span>
+    renderedComponent<span class="token punctuation">.</span><span class="token method function property-access">unmount</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token punctuation">}</span>
+<span class="token punctuation">}</span></code></pre>
+        <p><code>DOMComponent</code> では、アンマウントは子要素それぞれにアンマウントするように伝えます：</p>
+        <pre class="language-js"><code class="language-js"><span class="token keyword">class</span> <span class="token class-name">DOMComponent</span> <span class="token punctuation">{</span>
+
+  <span class="token comment">// ...</span>
+
+  <span class="token function">unmount</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token comment">// Unmount all the children</span>
+    <span class="token keyword">var</span> renderedChildren <span class="token operator">=</span> <span class="token keyword">this</span><span class="token punctuation">.</span><span class="token property-access">renderedChildren</span><span class="token punctuation">;</span>
+    renderedChildren<span class="token punctuation">.</span><span class="token method function property-access">forEach</span><span class="token punctuation">(</span><span class="token parameter">child</span> <span class="token arrow operator">=></span> child<span class="token punctuation">.</span><span class="token method function property-access">unmount</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token punctuation">}</span>
+<span class="token punctuation">}</span></code></pre>
+        <p>実際には、DOM コンポーネントをアンマウントすると、イベントリスナの削除とキャッシュのクリアも行われますが、これらの詳細は省略します。</p>
+        <p>これで <code>ReactDOM.unmountComponentAtNode()</code> と同様の <code>unmountTree(containerNode)</code> という新規の最上位関数を追加することができます：</p>
+        <pre class="language-js"><code class="language-js"><span class="token keyword">function</span> <span class="token function">unmountTree</span><span class="token punctuation">(</span><span class="token parameter">containerNode</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  <span class="token comment">// Read the internal instance from a DOM node:</span>
+  <span class="token comment">// (This doesn't work yet, we will need to change mountTree() to store it.)</span>
+  <span class="token keyword">var</span> node <span class="token operator">=</span> containerNode<span class="token punctuation">.</span><span class="token property-access">firstChild</span><span class="token punctuation">;</span>
+  <span class="token keyword">var</span> rootComponent <span class="token operator">=</span> node<span class="token punctuation">.</span><span class="token property-access">_internalInstance</span><span class="token punctuation">;</span>
+
+  <span class="token comment">// Unmount the tree and clear the container</span>
+  rootComponent<span class="token punctuation">.</span><span class="token method function property-access">unmount</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  containerNode<span class="token punctuation">.</span><span class="token property-access">innerHTML</span> <span class="token operator">=</span> <span class="token string">''</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span></code></pre>
+        <p>これが動作するよう、DOM ノードから内部ルートインスタンスを読み込む必要があります。<code>mountTree()</code> を変更して、ルート DOM ノードに <code>_internalInstance</code> プロパティを追加します。<code>mountTree()</code> に既存の全てのツリーを破棄するようにも伝えて、複数回 <code>mountTree()</code> を呼び出せるようにします：</p>
+        <pre class="language-js"><code class="language-js"><span class="token keyword">function</span> <span class="token function">mountTree</span><span class="token punctuation">(</span><span class="token parameter">element<span class="token punctuation">,</span> containerNode</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  <span class="token comment">// Destroy any existing tree</span>
+  <span class="token keyword control-flow">if</span> <span class="token punctuation">(</span>containerNode<span class="token punctuation">.</span><span class="token property-access">firstChild</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token function">unmountTree</span><span class="token punctuation">(</span>containerNode<span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token punctuation">}</span>
+
+  <span class="token comment">// Create the top-level internal instance</span>
+  <span class="token keyword">var</span> rootComponent <span class="token operator">=</span> <span class="token function">instantiateComponent</span><span class="token punctuation">(</span>element<span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+  <span class="token comment">// Mount the top-level component into the container</span>
+  <span class="token keyword">var</span> node <span class="token operator">=</span> rootComponent<span class="token punctuation">.</span><span class="token method function property-access">mount</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  containerNode<span class="token punctuation">.</span><span class="token method function property-access">appendChild</span><span class="token punctuation">(</span>node<span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+  <span class="token comment">// Save a reference to the internal instance</span>
+  node<span class="token punctuation">.</span><span class="token property-access">_internalInstance</span> <span class="token operator">=</span> rootComponent<span class="token punctuation">;</span>
+
+  <span class="token comment">// Return the public instance it provides</span>
+  <span class="token keyword">var</span> publicInstance <span class="token operator">=</span> rootComponent<span class="token punctuation">.</span><span class="token method function property-access">getPublicInstance</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token keyword control-flow">return</span> publicInstance<span class="token punctuation">;</span>
+<span class="token punctuation">}</span></code></pre>
+        <p>これで、<code>unmountTree()</code> を実行したり、<code>mountTree()</code> の実行を繰り返したりしても、古いツリーは破棄され、コンポーネント上で <code>componentWillUnmount()</code> ライフサイクルメソッドが実行されるようになりました。</p>
+      </section>
+      <section id="updating" class="level3">
+        <h3>更新</h3>
+        <p>前節では、アンマウント機能を実装しました。しかし、各プロパティに変更があるたびにツリー全体をマウントしたりアンマウントしたりするようでは、React の使い勝手はあまり良いとは言えません。リコンサイラの目標は、DOM と state を保持できるように既存のインスタンスを再利用することです。</p>
+        <pre class="language-js"><code class="language-js"><span class="token keyword">var</span> rootEl <span class="token operator">=</span> <span class="token dom variable">document</span><span class="token punctuation">.</span><span class="token method function property-access">getElementById</span><span class="token punctuation">(</span><span class="token string">'root'</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+<span class="token function">mountTree</span><span class="token punctuation">(</span><span class="token operator">&#x3C;</span><span class="token maybe-class-name">App</span> <span class="token operator">/</span><span class="token operator">></span><span class="token punctuation">,</span> rootEl<span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token comment">// Should reuse the existing DOM:</span>
+<span class="token function">mountTree</span><span class="token punctuation">(</span><span class="token operator">&#x3C;</span><span class="token maybe-class-name">App</span> <span class="token operator">/</span><span class="token operator">></span><span class="token punctuation">,</span> rootEl<span class="token punctuation">)</span><span class="token punctuation">;</span></code></pre>
+        <p>もう 1 つメソッドを追加して内部インスタンスを拡張しましょう。<code>mount()</code> と <code>unmount()</code> に加えて、<code>DOMComponent</code> と <code>CompositeComponent</code> の両方に <code>receive(nextElement)</code> と呼ばれる新しいメソッドを実装しましょう：</p>
+        <pre class="language-js"><code class="language-js"><span class="token keyword">class</span> <span class="token class-name">CompositeComponent</span> <span class="token punctuation">{</span>
+  <span class="token comment">// ...</span>
+
+  <span class="token function">receive</span><span class="token punctuation">(</span><span class="token parameter">nextElement</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token comment">// ...</span>
+  <span class="token punctuation">}</span>
+<span class="token punctuation">}</span>
+
+<span class="token keyword">class</span> <span class="token class-name">DOMComponent</span> <span class="token punctuation">{</span>
+  <span class="token comment">// ...</span>
+
+  <span class="token function">receive</span><span class="token punctuation">(</span><span class="token parameter">nextElement</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token comment">// ...</span>
+  <span class="token punctuation">}</span>
+<span class="token punctuation">}</span></code></pre>
+        <p>このメソッドは、<code>nextElement</code> から受け取った指示に従って、コンポーネント（および全ての子要素）を最新の状態にするために必要なあらゆる作業を行う役割を担います。</p>
+        <p>実際に行われているのは、内部ツリーを再帰的に巡回して各内部インスタンスが更新を受け取れるようにすることなのですが、この処理こそ「仮想 DOM の差分処理 (diffing)」としてしばしば説明される部分です。</p>
+      </section>
+      <section id="updating-composite-components" class="level3">
+        <h3>composite コンポーネントの更新</h3>
+        <p>composite コンポーネントが新たな要素を受け取るときに、<code>componentWillUpdate()</code> ライフサイクルメソッドを実行します。</p>
+        <p>それからコンポーネントを新たな props で再レンダーし、レンダーされた次の要素を取得します：</p>
+        <pre class="language-js"><code class="language-js"><span class="token keyword">class</span> <span class="token class-name">CompositeComponent</span> <span class="token punctuation">{</span>
+
+  <span class="token comment">// ...</span>
+
+  <span class="token function">receive</span><span class="token punctuation">(</span><span class="token parameter">nextElement</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token keyword">var</span> prevProps <span class="token operator">=</span> <span class="token keyword">this</span><span class="token punctuation">.</span><span class="token property-access">currentElement</span><span class="token punctuation">.</span><span class="token property-access">props</span><span class="token punctuation">;</span>
+    <span class="token keyword">var</span> publicInstance <span class="token operator">=</span> <span class="token keyword">this</span><span class="token punctuation">.</span><span class="token property-access">publicInstance</span><span class="token punctuation">;</span>
+    <span class="token keyword">var</span> prevRenderedComponent <span class="token operator">=</span> <span class="token keyword">this</span><span class="token punctuation">.</span><span class="token property-access">renderedComponent</span><span class="token punctuation">;</span>
+    <span class="token keyword">var</span> prevRenderedElement <span class="token operator">=</span> prevRenderedComponent<span class="token punctuation">.</span><span class="token property-access">currentElement</span><span class="token punctuation">;</span>
+
+    <span class="token comment">// Update *own* element</span>
+    <span class="token keyword">this</span><span class="token punctuation">.</span><span class="token property-access">currentElement</span> <span class="token operator">=</span> nextElement<span class="token punctuation">;</span>
+    <span class="token keyword">var</span> type <span class="token operator">=</span> nextElement<span class="token punctuation">.</span><span class="token property-access">type</span><span class="token punctuation">;</span>
+    <span class="token keyword">var</span> nextProps <span class="token operator">=</span> nextElement<span class="token punctuation">.</span><span class="token property-access">props</span><span class="token punctuation">;</span>
+
+    <span class="token comment">// Figure out what the next render() output is</span>
+    <span class="token keyword">var</span> nextRenderedElement<span class="token punctuation">;</span>
+    <span class="token keyword control-flow">if</span> <span class="token punctuation">(</span><span class="token function">isClass</span><span class="token punctuation">(</span>type<span class="token punctuation">)</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+      <span class="token comment">// Component class</span>
+      <span class="token comment">// Call the lifecycle if necessary</span>
+      <span class="token keyword control-flow">if</span> <span class="token punctuation">(</span>publicInstance<span class="token punctuation">.</span><span class="token property-access">componentWillUpdate</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        publicInstance<span class="token punctuation">.</span><span class="token method function property-access">componentWillUpdate</span><span class="token punctuation">(</span>nextProps<span class="token punctuation">)</span><span class="token punctuation">;</span>
+      <span class="token punctuation">}</span>
+      <span class="token comment">// Update the props</span>
+      publicInstance<span class="token punctuation">.</span><span class="token property-access">props</span> <span class="token operator">=</span> nextProps<span class="token punctuation">;</span>
+      <span class="token comment">// Re-render</span>
+      nextRenderedElement <span class="token operator">=</span> publicInstance<span class="token punctuation">.</span><span class="token method function property-access">render</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span> <span class="token keyword control-flow">else</span> <span class="token keyword control-flow">if</span> <span class="token punctuation">(</span><span class="token keyword">typeof</span> type <span class="token operator">===</span> <span class="token string">'function'</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+      <span class="token comment">// Component function</span>
+      nextRenderedElement <span class="token operator">=</span> <span class="token function">type</span><span class="token punctuation">(</span>nextProps<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+
+    <span class="token comment">// ...</span></code></pre>
+        <p>続いて、レンダーされた要素の <code>type</code> を見てみましょう。もし最後のレンダー以降、<code>type</code> が変更されていなければ、これより下のコンポーネントもその場で更新されれば良いということになります。</p>
+        <p>例えばコンポーネントが最初に <code>&#x3C;Button color="red" /></code> を返し、2 回目に <code>&#x3C;Button color="blue" /></code> を返したなら、対応する内部インスタンスに次の要素を receive() するよう伝えるだけでよいのです：</p>
+        <pre class="language-js"><code class="language-js">    <span class="token comment">// ...</span>
+
+    <span class="token comment">// If the rendered element type has not changed,</span>
+    <span class="token comment">// reuse the existing component instance and exit.</span>
+    <span class="token keyword control-flow">if</span> <span class="token punctuation">(</span>prevRenderedElement<span class="token punctuation">.</span><span class="token property-access">type</span> <span class="token operator">===</span> nextRenderedElement<span class="token punctuation">.</span><span class="token property-access">type</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+      prevRenderedComponent<span class="token punctuation">.</span><span class="token method function property-access">receive</span><span class="token punctuation">(</span>nextRenderedElement<span class="token punctuation">)</span><span class="token punctuation">;</span>
+      <span class="token keyword control-flow">return</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+
+    <span class="token comment">// ...</span></code></pre>
+        <p>ただし、レンダーされた次の要素が前のものと異なる <code>type</code> である場合、内部インスタンスの更新はできません。<code>&#x3C;button></code> が <code>&#x3C;input></code> に「なる」ことはできないのです。</p>
+        <p>代わりに、既存の内部インスタンスをアンマウントし、レンダーされた要素の型に対応する新たな内部インスタンスをマウントします。例えば、前に <code>&#x3C;button /></code> をレンダーしていたコンポーネントが <code>&#x3C;input /></code> をレンダーした場合には、この処理が発生します：</p>
+        <pre class="language-js"><code class="language-js">    <span class="token comment">// ...</span>
+
+    <span class="token comment">// If we reached this point, we need to unmount the previously</span>
+    <span class="token comment">// mounted component, mount the new one, and swap their nodes.</span>
+
+    <span class="token comment">// Find the old node because it will need to be replaced</span>
+    <span class="token keyword">var</span> prevNode <span class="token operator">=</span> prevRenderedComponent<span class="token punctuation">.</span><span class="token method function property-access">getHostNode</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+    <span class="token comment">// Unmount the old child and mount a new child</span>
+    prevRenderedComponent<span class="token punctuation">.</span><span class="token method function property-access">unmount</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token keyword">var</span> nextRenderedComponent <span class="token operator">=</span> <span class="token function">instantiateComponent</span><span class="token punctuation">(</span>nextRenderedElement<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token keyword">var</span> nextNode <span class="token operator">=</span> nextRenderedComponent<span class="token punctuation">.</span><span class="token method function property-access">mount</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+    <span class="token comment">// Replace the reference to the child</span>
+    <span class="token keyword">this</span><span class="token punctuation">.</span><span class="token property-access">renderedComponent</span> <span class="token operator">=</span> nextRenderedComponent<span class="token punctuation">;</span>
+
+    <span class="token comment">// Replace the old node with the new one</span>
+    <span class="token comment">// Note: this is renderer-specific code and</span>
+    <span class="token comment">// ideally should live outside of CompositeComponent:</span>
+    prevNode<span class="token punctuation">.</span><span class="token property-access">parentNode</span><span class="token punctuation">.</span><span class="token method function property-access">replaceChild</span><span class="token punctuation">(</span>nextNode<span class="token punctuation">,</span> prevNode<span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token punctuation">}</span>
+<span class="token punctuation">}</span></code></pre>
+        <p>まとめると、composite コンポーネントは新たな要素を受け取った際に、レンダーされた内部インスタンスに更新を委任するか、もしくは内部インスタンスをアンマウントしてそこに新しいものをマウントする、ということになります。</p>
+        <p>もう 1 つ、コンポーネントが要素を受け取らずに再マウントする状況があります。それは要素の <code>key</code> が変更された時です。既に複雑なチュートリアルがさらに複雑になってしまうので、このドキュメントでは <code>key</code> の取り扱いについては言及しません。</p>
+        <p>プラットフォーム固有のノードを配置して更新時に置換できるよう、<code>getHostNode()</code> と呼ばれるメソッドを内部インスタンスに追加する必要があったことに注意してください。その実装は両方のクラスで簡単にできます：</p>
+        <pre class="language-js"><code class="language-js"><span class="token keyword">class</span> <span class="token class-name">CompositeComponent</span> <span class="token punctuation">{</span>
+  <span class="token comment">// ...</span>
+
+  <span class="token function">getHostNode</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token comment">// Ask the rendered component to provide it.</span>
+    <span class="token comment">// This will recursively drill down any composites.</span>
+    <span class="token keyword control-flow">return</span> <span class="token keyword">this</span><span class="token punctuation">.</span><span class="token property-access">renderedComponent</span><span class="token punctuation">.</span><span class="token method function property-access">getHostNode</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token punctuation">}</span>
+<span class="token punctuation">}</span>
+
+<span class="token keyword">class</span> <span class="token class-name">DOMComponent</span> <span class="token punctuation">{</span>
+  <span class="token comment">// ...</span>
+
+  <span class="token function">getHostNode</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token keyword control-flow">return</span> <span class="token keyword">this</span><span class="token punctuation">.</span><span class="token property-access">node</span><span class="token punctuation">;</span>
+  <span class="token punctuation">}</span>  
+<span class="token punctuation">}</span></code></pre>
+      </section>
+      <section id="updating-host-components" class="level3">
+        <h3>host コンポーネントの更新</h3>
+        <p><code>DOMComponent</code> のような host コンポーネントの実装では、異なった更新を行います。要素を受け取る際、背後のプラットフォーム固有のビューを更新する必要があるのです。React DOM の場合、これは DOM 属性の更新を意味します：</p>
+        <pre class="language-js"><code class="language-js"><span class="token keyword">class</span> <span class="token class-name">DOMComponent</span> <span class="token punctuation">{</span>
+  <span class="token comment">// ...</span>
+
+  <span class="token function">receive</span><span class="token punctuation">(</span><span class="token parameter">nextElement</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token keyword">var</span> node <span class="token operator">=</span> <span class="token keyword">this</span><span class="token punctuation">.</span><span class="token property-access">node</span><span class="token punctuation">;</span>
+    <span class="token keyword">var</span> prevElement <span class="token operator">=</span> <span class="token keyword">this</span><span class="token punctuation">.</span><span class="token property-access">currentElement</span><span class="token punctuation">;</span>
+    <span class="token keyword">var</span> prevProps <span class="token operator">=</span> prevElement<span class="token punctuation">.</span><span class="token property-access">props</span><span class="token punctuation">;</span>
+    <span class="token keyword">var</span> nextProps <span class="token operator">=</span> nextElement<span class="token punctuation">.</span><span class="token property-access">props</span><span class="token punctuation">;</span>    
+    <span class="token keyword">this</span><span class="token punctuation">.</span><span class="token property-access">currentElement</span> <span class="token operator">=</span> nextElement<span class="token punctuation">;</span>
+
+    <span class="token comment">// Remove old attributes.</span>
+    <span class="token known-class-name class-name">Object</span><span class="token punctuation">.</span><span class="token method function property-access">keys</span><span class="token punctuation">(</span>prevProps<span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token method function property-access">forEach</span><span class="token punctuation">(</span><span class="token parameter">propName</span> <span class="token arrow operator">=></span> <span class="token punctuation">{</span>
+      <span class="token keyword control-flow">if</span> <span class="token punctuation">(</span>propName <span class="token operator">!==</span> <span class="token string">'children'</span> <span class="token operator">&#x26;&#x26;</span> <span class="token operator">!</span>nextProps<span class="token punctuation">.</span><span class="token method function property-access">hasOwnProperty</span><span class="token punctuation">(</span>propName<span class="token punctuation">)</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        node<span class="token punctuation">.</span><span class="token method function property-access">removeAttribute</span><span class="token punctuation">(</span>propName<span class="token punctuation">)</span><span class="token punctuation">;</span>
+      <span class="token punctuation">}</span>
+    <span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token comment">// Set next attributes.</span>
+    <span class="token known-class-name class-name">Object</span><span class="token punctuation">.</span><span class="token method function property-access">keys</span><span class="token punctuation">(</span>nextProps<span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token method function property-access">forEach</span><span class="token punctuation">(</span><span class="token parameter">propName</span> <span class="token arrow operator">=></span> <span class="token punctuation">{</span>
+      <span class="token keyword control-flow">if</span> <span class="token punctuation">(</span>propName <span class="token operator">!==</span> <span class="token string">'children'</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        node<span class="token punctuation">.</span><span class="token method function property-access">setAttribute</span><span class="token punctuation">(</span>propName<span class="token punctuation">,</span> nextProps<span class="token punctuation">[</span>propName<span class="token punctuation">]</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+      <span class="token punctuation">}</span>
+    <span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+    <span class="token comment">// ...</span></code></pre>
+        <p>そして、host コンポーネントは子コンポーネントを更新する必要があります。composite コンポーネントと異なり、host コンポーネントは 1 つ以上の子コンポーネントを保有している可能性があります。</p>
+        <p>この簡素化した例では内部インスタンスの配列を用い、受け取った <code>type</code> と以前の <code>type</code> が一致するかによって、内部インスタンスを更新もしくは置換しながら、配列をイテレートしています。実際のリコンサイラでは処理時に要素の <code>key</code> を考慮して、要素の挿入と削除に加えて移動を追跡しますが、そのロジックは省略しています。</p>
+        <p>リストの子要素への DOM 操作は、バッチで実行できるようまとめておきます：</p>
+        <pre class="language-js"><code class="language-js">    <span class="token comment">// ...</span>
+
+    <span class="token comment">// These are arrays of React elements:</span>
+    <span class="token keyword">var</span> prevChildren <span class="token operator">=</span> prevProps<span class="token punctuation">.</span><span class="token property-access">children</span> <span class="token operator">||</span> <span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token punctuation">;</span>
+    <span class="token keyword control-flow">if</span> <span class="token punctuation">(</span><span class="token operator">!</span><span class="token known-class-name class-name">Array</span><span class="token punctuation">.</span><span class="token method function property-access">isArray</span><span class="token punctuation">(</span>prevChildren<span class="token punctuation">)</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+      prevChildren <span class="token operator">=</span> <span class="token punctuation">[</span>prevChildren<span class="token punctuation">]</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+    <span class="token keyword">var</span> nextChildren <span class="token operator">=</span> nextProps<span class="token punctuation">.</span><span class="token property-access">children</span> <span class="token operator">||</span> <span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token punctuation">;</span>
+    <span class="token keyword control-flow">if</span> <span class="token punctuation">(</span><span class="token operator">!</span><span class="token known-class-name class-name">Array</span><span class="token punctuation">.</span><span class="token method function property-access">isArray</span><span class="token punctuation">(</span>nextChildren<span class="token punctuation">)</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+      nextChildren <span class="token operator">=</span> <span class="token punctuation">[</span>nextChildren<span class="token punctuation">]</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+    <span class="token comment">// These are arrays of internal instances:</span>
+    <span class="token keyword">var</span> prevRenderedChildren <span class="token operator">=</span> <span class="token keyword">this</span><span class="token punctuation">.</span><span class="token property-access">renderedChildren</span><span class="token punctuation">;</span>
+    <span class="token keyword">var</span> nextRenderedChildren <span class="token operator">=</span> <span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token punctuation">;</span>
+
+    <span class="token comment">// As we iterate over children, we will add operations to the array.</span>
+    <span class="token keyword">var</span> operationQueue <span class="token operator">=</span> <span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token punctuation">;</span>
+
+    <span class="token comment">// Note: the section below is extremely simplified!</span>
+    <span class="token comment">// It doesn't handle reorders, children with holes, or keys.</span>
+    <span class="token comment">// It only exists to illustrate the overall flow, not the specifics.</span>
+
+    <span class="token keyword control-flow">for</span> <span class="token punctuation">(</span><span class="token keyword">var</span> i <span class="token operator">=</span> <span class="token number">0</span><span class="token punctuation">;</span> i <span class="token operator">&#x3C;</span> nextChildren<span class="token punctuation">.</span><span class="token property-access">length</span><span class="token punctuation">;</span> i<span class="token operator">++</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+      <span class="token comment">// Try to get an existing internal instance for this child</span>
+      <span class="token keyword">var</span> prevChild <span class="token operator">=</span> prevRenderedChildren<span class="token punctuation">[</span>i<span class="token punctuation">]</span><span class="token punctuation">;</span>
+
+      <span class="token comment">// If there is no internal instance under this index,</span>
+      <span class="token comment">// a child has been appended to the end. Create a new</span>
+      <span class="token comment">// internal instance, mount it, and use its node.</span>
+      <span class="token keyword control-flow">if</span> <span class="token punctuation">(</span><span class="token operator">!</span>prevChild<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token keyword">var</span> nextChild <span class="token operator">=</span> <span class="token function">instantiateComponent</span><span class="token punctuation">(</span>nextChildren<span class="token punctuation">[</span>i<span class="token punctuation">]</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token keyword">var</span> node <span class="token operator">=</span> nextChild<span class="token punctuation">.</span><span class="token method function property-access">mount</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+        <span class="token comment">// Record that we need to append a node</span>
+        operationQueue<span class="token punctuation">.</span><span class="token method function property-access">push</span><span class="token punctuation">(</span><span class="token punctuation">{</span><span class="token literal-property property">type</span><span class="token operator">:</span> <span class="token string">'ADD'</span><span class="token punctuation">,</span> node<span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+        nextRenderedChildren<span class="token punctuation">.</span><span class="token method function property-access">push</span><span class="token punctuation">(</span>nextChild<span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token keyword control-flow">continue</span><span class="token punctuation">;</span>
+      <span class="token punctuation">}</span>
+
+      <span class="token comment">// We can only update the instance if its element's type matches.</span>
+      <span class="token comment">// For example, &#x3C;Button size="small" /> can be updated to</span>
+      <span class="token comment">// &#x3C;Button size="large" /> but not to an &#x3C;App />.</span>
+      <span class="token keyword">var</span> canUpdate <span class="token operator">=</span> prevChildren<span class="token punctuation">[</span>i<span class="token punctuation">]</span><span class="token punctuation">.</span><span class="token property-access">type</span> <span class="token operator">===</span> nextChildren<span class="token punctuation">[</span>i<span class="token punctuation">]</span><span class="token punctuation">.</span><span class="token property-access">type</span><span class="token punctuation">;</span>
+
+      <span class="token comment">// If we can't update an existing instance, we have to unmount it</span>
+      <span class="token comment">// and mount a new one instead of it.</span>
+      <span class="token keyword control-flow">if</span> <span class="token punctuation">(</span><span class="token operator">!</span>canUpdate<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token keyword">var</span> prevNode <span class="token operator">=</span> prevChild<span class="token punctuation">.</span><span class="token method function property-access">getHostNode</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+        prevChild<span class="token punctuation">.</span><span class="token method function property-access">unmount</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+        <span class="token keyword">var</span> nextChild <span class="token operator">=</span> <span class="token function">instantiateComponent</span><span class="token punctuation">(</span>nextChildren<span class="token punctuation">[</span>i<span class="token punctuation">]</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token keyword">var</span> nextNode <span class="token operator">=</span> nextChild<span class="token punctuation">.</span><span class="token method function property-access">mount</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+        <span class="token comment">// Record that we need to swap the nodes</span>
+        operationQueue<span class="token punctuation">.</span><span class="token method function property-access">push</span><span class="token punctuation">(</span><span class="token punctuation">{</span><span class="token literal-property property">type</span><span class="token operator">:</span> <span class="token string">'REPLACE'</span><span class="token punctuation">,</span> prevNode<span class="token punctuation">,</span> nextNode<span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+        nextRenderedChildren<span class="token punctuation">.</span><span class="token method function property-access">push</span><span class="token punctuation">(</span>nextChild<span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token keyword control-flow">continue</span><span class="token punctuation">;</span>
+      <span class="token punctuation">}</span>
+
+      <span class="token comment">// If we can update an existing internal instance,</span>
+      <span class="token comment">// just let it receive the next element and handle its own update.</span>
+      prevChild<span class="token punctuation">.</span><span class="token method function property-access">receive</span><span class="token punctuation">(</span>nextChildren<span class="token punctuation">[</span>i<span class="token punctuation">]</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+      nextRenderedChildren<span class="token punctuation">.</span><span class="token method function property-access">push</span><span class="token punctuation">(</span>prevChild<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+
+    <span class="token comment">// Finally, unmount any children that don't exist:</span>
+    <span class="token keyword control-flow">for</span> <span class="token punctuation">(</span><span class="token keyword">var</span> j <span class="token operator">=</span> nextChildren<span class="token punctuation">.</span><span class="token property-access">length</span><span class="token punctuation">;</span> j <span class="token operator">&#x3C;</span> prevChildren<span class="token punctuation">.</span><span class="token property-access">length</span><span class="token punctuation">;</span> j<span class="token operator">++</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+      <span class="token keyword">var</span> prevChild <span class="token operator">=</span> prevRenderedChildren<span class="token punctuation">[</span>j<span class="token punctuation">]</span><span class="token punctuation">;</span>
+      <span class="token keyword">var</span> node <span class="token operator">=</span> prevChild<span class="token punctuation">.</span><span class="token method function property-access">getHostNode</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+      prevChild<span class="token punctuation">.</span><span class="token method function property-access">unmount</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+      <span class="token comment">// Record that we need to remove the node</span>
+      operationQueue<span class="token punctuation">.</span><span class="token method function property-access">push</span><span class="token punctuation">(</span><span class="token punctuation">{</span><span class="token literal-property property">type</span><span class="token operator">:</span> <span class="token string">'REMOVE'</span><span class="token punctuation">,</span> node<span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+
+    <span class="token comment">// Point the list of rendered children to the updated version.</span>
+    <span class="token keyword">this</span><span class="token punctuation">.</span><span class="token property-access">renderedChildren</span> <span class="token operator">=</span> nextRenderedChildren<span class="token punctuation">;</span>
+
+    <span class="token comment">// ...</span></code></pre>
+        <p>最後のステップとして、DOM 操作を実行します。ここでも、実際のリコンサイラのコードは要素の移動を扱わなければいけないので、より複雑になります：</p>
+        <pre class="language-js"><code class="language-js">    <span class="token comment">// ...</span>
+
+    <span class="token comment">// Process the operation queue.</span>
+    <span class="token keyword control-flow">while</span> <span class="token punctuation">(</span>operationQueue<span class="token punctuation">.</span><span class="token property-access">length</span> <span class="token operator">></span> <span class="token number">0</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+      <span class="token keyword">var</span> operation <span class="token operator">=</span> operationQueue<span class="token punctuation">.</span><span class="token method function property-access">shift</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+      <span class="token keyword control-flow">switch</span> <span class="token punctuation">(</span>operation<span class="token punctuation">.</span><span class="token property-access">type</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+      <span class="token keyword">case</span> <span class="token string">'ADD'</span><span class="token operator">:</span>
+        <span class="token keyword">this</span><span class="token punctuation">.</span><span class="token property-access">node</span><span class="token punctuation">.</span><span class="token method function property-access">appendChild</span><span class="token punctuation">(</span>operation<span class="token punctuation">.</span><span class="token property-access">node</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token keyword control-flow">break</span><span class="token punctuation">;</span>
+      <span class="token keyword">case</span> <span class="token string">'REPLACE'</span><span class="token operator">:</span>
+        <span class="token keyword">this</span><span class="token punctuation">.</span><span class="token property-access">node</span><span class="token punctuation">.</span><span class="token method function property-access">replaceChild</span><span class="token punctuation">(</span>operation<span class="token punctuation">.</span><span class="token property-access">nextNode</span><span class="token punctuation">,</span> operation<span class="token punctuation">.</span><span class="token property-access">prevNode</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token keyword control-flow">break</span><span class="token punctuation">;</span>
+      <span class="token keyword">case</span> <span class="token string">'REMOVE'</span><span class="token operator">:</span>
+        <span class="token keyword">this</span><span class="token punctuation">.</span><span class="token property-access">node</span><span class="token punctuation">.</span><span class="token method function property-access">removeChild</span><span class="token punctuation">(</span>operation<span class="token punctuation">.</span><span class="token property-access">node</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token keyword control-flow">break</span><span class="token punctuation">;</span>
+      <span class="token punctuation">}</span>
+    <span class="token punctuation">}</span>
+  <span class="token punctuation">}</span>
+<span class="token punctuation">}</span></code></pre>
+        <p>host コンポーネントの更新については以上です。</p>
+      </section>
+      <section id="top-level-updates" class="level3">
+        <h3>最上位コンポーネントの更新</h3>
+        <p>ここまでで <code>CompositeComponent</code> と <code>DOMComponent</code> の両方ともが <code>receive(nextElement)</code> メソッドを実装しているので、要素の type が前回と同じだった場合は最上位の <code>mountTree()</code>関数がそれを使えるよう、この関数を書き換えることができます：</p>
+        <pre class="language-js"><code class="language-js"><span class="token keyword">function</span> <span class="token function">mountTree</span><span class="token punctuation">(</span><span class="token parameter">element<span class="token punctuation">,</span> containerNode</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  <span class="token comment">// Check for an existing tree</span>
+  <span class="token keyword control-flow">if</span> <span class="token punctuation">(</span>containerNode<span class="token punctuation">.</span><span class="token property-access">firstChild</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token keyword">var</span> prevNode <span class="token operator">=</span> containerNode<span class="token punctuation">.</span><span class="token property-access">firstChild</span><span class="token punctuation">;</span>
+    <span class="token keyword">var</span> prevRootComponent <span class="token operator">=</span> prevNode<span class="token punctuation">.</span><span class="token property-access">_internalInstance</span><span class="token punctuation">;</span>
+    <span class="token keyword">var</span> prevElement <span class="token operator">=</span> prevRootComponent<span class="token punctuation">.</span><span class="token property-access">currentElement</span><span class="token punctuation">;</span>
+
+    <span class="token comment">// If we can, reuse the existing root component</span>
+    <span class="token keyword control-flow">if</span> <span class="token punctuation">(</span>prevElement<span class="token punctuation">.</span><span class="token property-access">type</span> <span class="token operator">===</span> element<span class="token punctuation">.</span><span class="token property-access">type</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+      prevRootComponent<span class="token punctuation">.</span><span class="token method function property-access">receive</span><span class="token punctuation">(</span>element<span class="token punctuation">)</span><span class="token punctuation">;</span>
+      <span class="token keyword control-flow">return</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+
+    <span class="token comment">// Otherwise, unmount the existing tree</span>
+    <span class="token function">unmountTree</span><span class="token punctuation">(</span>containerNode<span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token punctuation">}</span>
+
+  <span class="token comment">// ...</span>
+
+<span class="token punctuation">}</span></code></pre>
+        <p>これで、同じ型で <code>mountTree()</code> を 2 回呼び出しても、破壊的な変更にはなりません：</p>
+        <pre class="language-js"><code class="language-js"><span class="token keyword">var</span> rootEl <span class="token operator">=</span> <span class="token dom variable">document</span><span class="token punctuation">.</span><span class="token method function property-access">getElementById</span><span class="token punctuation">(</span><span class="token string">'root'</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+<span class="token function">mountTree</span><span class="token punctuation">(</span><span class="token operator">&#x3C;</span><span class="token maybe-class-name">App</span> <span class="token operator">/</span><span class="token operator">></span><span class="token punctuation">,</span> rootEl<span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token comment">// Reuses the existing DOM:</span>
+<span class="token function">mountTree</span><span class="token punctuation">(</span><span class="token operator">&#x3C;</span><span class="token maybe-class-name">App</span> <span class="token operator">/</span><span class="token operator">></span><span class="token punctuation">,</span> rootEl<span class="token punctuation">)</span><span class="token punctuation">;</span></code></pre>
+        <p>以上の処理が React 内部での動作の仕組みの基本です。</p>
+      </section>
+      <section id="what-we-left-out" class="level3">
+        <h3>このドキュメントで除外したもの</h3>
+        <p>このドキュメントは、実際のコードベースよりもシンプルなものになっています。ここでは言及しなかった重要なポイントがいくつかあります：</p>
+        <ul>
+          <li>
+            <p>コンポーネントは <code>null</code> をレンダーでき、リコンサイラは配列やレンダーされた出力における「空スロット」部分を扱うことができます。</p>
+          </li>
+          <li>
+            <p>リコンサイラは要素から <code>key</code> も読み取り、どの内部インスタンスが配列中のどの要素と対応するかを確認するのに使用します。実際の React の実装における複雑さのかなりの部分が、この箇所に関わるものです。</p>
+          </li>
+          <li>
+            <p>composite と host 型の内部インスタンスのクラスに加えて、"text" と "empty" コンポーネントのクラスもあります。それらはテキストノードと、<code>null</code> をレンダーすると得られる「空のスロット」を表します。</p>
+          </li>
+          <li>
+            <p>レンダラは<a href="./codebase-overview.html#dynamic-injection">依存性注入</a>を利用して host 内部クラスをリコンサイラに渡します。例えば、React DOM はリコンサイラに <code>ReactDOMComponent</code> を host 内部インスタンスの実装として使用するように指示します。</p>
+          </li>
+          <li>
+            <p>子要素のリストを更新するロジックは <code>ReactMultiChild</code> と呼ばれるミックスインに抽出され、そのミックスインが、React DOM および React Native 両方における host 内部インスタンスのクラスの実装に使用されます。</p>
+          </li>
+          <li>
+            <p>リコンサイラは composite 要素における <code>setState()</code> のサポートも実装しています。イベントハンドラ内部での複数の更新は、単一の更新にバッチ処理されます。</p>
+          </li>
+          <li>
+            <p>リコンサイラは、composite コンポーネントおよび host ノードへの ref の追加と削除についても対応しています。</p>
+          </li>
+          <li>
+            <p>DOM の準備ができあがった後に呼び出される、<code>componentDidMount()</code> や <code>componentDidUpdate()</code> のようなライフサイクルメソッドは <code>callback queues</code> に集められ、単一のバッチの中で実行されます。</p>
+          </li>
+          <li>
+            <p>React は現時点での更新についての情報を「トランザクション ("transaction")」と呼ばれる内部オブジェクトに格納します。トランザクションは、保留中のライフサイクルメソッドのキューや、警告の際に使用する現在の DOM のネスト構造、そしてある特定の更新に対して「グローバル」になっているその他あらゆるものの経過を追うのに重宝します。トランザクションによって React が更新後に「全てをクリーンアップする」よう保証できます。例えば、React DOM が提供するトランザクションクラスは、入力フィールドの選択状態を更新後に復元します。</p>
+          </li>
+        </ul>
+      </section>
+      <section id="jumping-into-the-code" class="level3">
+        <h3>コードに飛び込む</h3>
+        <ul>
+          <li>
+            <p><a href="https://github.com/facebook/react/blob/83381c1673d14cd16cf747e34c945291e5518a86/src/renderers/dom/client/ReactMount.js"><code>ReactMount</code></a> はこのチュートリアルにある <code>mountTree()</code> や <code>unmountTree()</code> のようなコードがある場所です。ここでは最上位コンポーネントのマウントやアンマウントが行われます。<a href="https://github.com/facebook/react/blob/83381c1673d14cd16cf747e34c945291e5518a86/src/renderers/native/ReactNativeMount.js"><code>ReactNativeMount</code></a> はその React Native 版です。</p>
+          </li>
+          <li>
+            <p><a href="https://github.com/facebook/react/blob/83381c1673d14cd16cf747e34c945291e5518a86/src/renderers/dom/shared/ReactDOMComponent.js"><code>ReactDOMComponent</code></a> はこのチュートリアルでの <code>DOMComponent</code> にあたります。これは、React DOM レンダラ向けの host コンポーネントクラスを実装するものです。<a href="https://github.com/facebook/react/blob/83381c1673d14cd16cf747e34c945291e5518a86/src/renderers/native/ReactNativeBaseComponent.js"><code>ReactNativeBaseComponent</code></a> はその React Native 版です。</p>
+          </li>
+          <li>
+            <p><a href="https://github.com/facebook/react/blob/83381c1673d14cd16cf747e34c945291e5518a86/src/renderers/shared/stack/reconciler/ReactCompositeComponent.js"><code>ReactCompositeComponent</code></a> はこのチュートリアルでの <code>CompositeComponent</code> にあたります。これは、ユーザ定義コンポーネントの呼び出しとその state の保持を扱います。</p>
+          </li>
+          <li>
+            <p><a href="https://github.com/facebook/react/blob/83381c1673d14cd16cf747e34c945291e5518a86/src/renderers/shared/stack/reconciler/instantiateReactComponent.js"><code>instantiateReactComponent</code></a> はある要素に対して構築すべき正しい内部インスタンスクラスを選ぶスイッチを持っています。これは、このチュートリアルにおける <code>instantiateComponent()</code> にあたります。</p>
+          </li>
+          <li>
+            <p><a href="https://github.com/facebook/react/blob/83381c1673d14cd16cf747e34c945291e5518a86/src/renderers/shared/stack/reconciler/ReactReconciler.js"><code>ReactReconciler</code></a> は <code>mountComponent()</code>、<code>receiveComponent()</code>、そして <code>unmountComponent()</code> メソッドのラッパーです。これは水面下で内部インスタンスの実装を呼び出しますが、それらに追加するコードも含んでおり、その追加コードは全ての内部インスタンスの実装で共有されます。</p>
+          </li>
+          <li>
+            <p><a href="https://github.com/facebook/react/blob/83381c1673d14cd16cf747e34c945291e5518a86/src/renderers/shared/stack/reconciler/ReactChildReconciler.js"><code>ReactChildReconciler</code></a> は子要素を要素の <code>key</code> に基づいてマウント、更新、そしてアンマウントするロジックを実装しています。</p>
+          </li>
+          <li>
+            <p><a href="https://github.com/facebook/react/blob/83381c1673d14cd16cf747e34c945291e5518a86/src/renderers/shared/stack/reconciler/ReactMultiChild.js"><code>ReactMultiChild</code></a> は、子要素の挿入、削除、そして移動の操作に関するキューの処理を、レンダラとは独立して実装します。</p>
+          </li>
+          <li>
+            <p><code>mount()</code> と <code>receive()</code>、そして <code>unmount()</code> は、実際の React のコードベースでは歴史的な理由から、<code>mountComponent()</code>、<code>receiveComponent()</code>、そして <code>unmountComponent()</code>と呼ばれていますが、これらは要素を受け取っています。</p>
+          </li>
+          <li>
+            <p>内部インスタンス上のプロパティ名は、<code>_currentElement</code> のようにアンダースコアから始まります。これらはコードベース全体を通じて、読み取り専用の public なフィールドと見なされます。</p>
+          </li>
+        </ul>
+      </section>
+      <section id="future-directions" class="level3">
+        <h3>今後の方向性</h3>
+        <p>stack リコンサイラには、同期的処理であることや、作業を中断したりチャンクに分割したりできないといったことなど、固有の制限があります。現在、<a href="https://github.com/acdlite/react-fiber-architecture">全く異なるアーキテクチャ</a>による<a href="./codebase-overview.html#fiber-reconciler">新たな Fiber リコンサイラ</a>の開発が進行中です。将来的には、stack リコンサイラをこれに置き換える予定ですが、現時点では同等の機能を提供するには程遠い状態です。</p>
+      </section>
+      <section id="next-steps" class="level3">
+        <h3>次のステップ</h3>
+        <p>
+          React の開発時に私たちが使用するガイドラインについて学ぶには、<a href="./design-principles.html">次の章</a>を読んでください。
+          <span style="float: footnote;"><a href="./index.html#toc">Go to TOC</a></span>
+        </p>
+      </section>
+    </section>
+  </body>
+</html>

@@ -1,0 +1,803 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="utf-8">
+    <title>Run time</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="https://raw.githubusercontent.com/shinokada/prism-coy-theme/main/theme_common.css">
+  </head>
+  <body>
+    <section id="run-time" class="level1">
+      <h1>Run time</h1>
+      <section id="svelte" class="level2">
+        <h2><code>svelte</code></h2>
+        <p><code>svelte</code> パッケージは、<a href="/tutorial/onmount">ライフサイクル関数</a> と <a href="/tutorial/context-api">context API</a> を公開します。</p>
+        <section id="onmount" class="level3">
+          <h3><code>onMount</code></h3>
+          <pre class="language-js"><code class="language-js"><span class="token function">onMount</span><span class="token punctuation">(</span><span class="token function-variable function">callback</span><span class="token operator">:</span> <span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token arrow operator">=></span> <span class="token keyword">void</span><span class="token punctuation">)</span></code></pre>
+          <pre class="language-js"><code class="language-js"><span class="token function">onMount</span><span class="token punctuation">(</span><span class="token function-variable function">callback</span><span class="token operator">:</span> <span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token arrow operator">=></span> <span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token arrow operator">=></span> <span class="token keyword">void</span><span class="token punctuation">)</span></code></pre>
+          <p><code>onMount</code> 関数は、コンポーネントが DOM にマウントされるとすぐに実行されるコールバックをスケジュールします。これはコンポーネントの初期化中に呼び出されなければなりません (ただし、コンポーネントの <em>内部</em> に存在する必要はありません。外部モジュールから呼び出すことができます)。</p>
+          <p><code>onMount</code> は <a href="04-run-time.html">サーバーサイドコンポーネント</a> の内部では実行されません。</p>
+          <pre class="language-sv"><code class="language-sv">&#x3C;script>
+	import { onMount } from 'svelte';
+
+	onMount(() => {
+		console.log('the component has mounted');
+	});
+&#x3C;/script></code></pre>
+          <p><code>onMount</code> から関数が返された場合、コンポーネントがアンマウントされたときに呼び出されます。</p>
+          <pre class="language-sv"><code class="language-sv">&#x3C;script>
+	import { onMount } from 'svelte';
+
+	onMount(() => {
+		const interval = setInterval(() => {
+			console.log('beep');
+		}, 1000);
+
+		return () => clearInterval(interval);
+	});
+&#x3C;/script></code></pre>
+          <blockquote>
+            <p>この挙動は、<code>onMount</code> に渡された関数が <em>同期的に</em> 値を返す場合にのみ動作します。<code>async</code> の関数は常に <code>Promise</code> を返すため、<em>同期的に</em> 値を返すことはできません。</p>
+          </blockquote>
+        </section>
+        <section id="beforeupdate" class="level3">
+          <h3><code>beforeUpdate</code></h3>
+          <pre class="language-js"><code class="language-js"><span class="token function">beforeUpdate</span><span class="token punctuation">(</span><span class="token function-variable function">callback</span><span class="token operator">:</span> <span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token arrow operator">=></span> <span class="token keyword">void</span><span class="token punctuation">)</span></code></pre>
+          <p>state が変化した後、コンポーネントが更新される直前に実行されるコールバックをスケジュールします。</p>
+          <blockquote>
+            <p>コールバックが最初に実行されるのは、初回の <code>onMount</code> の前になります。</p>
+          </blockquote>
+          <pre class="language-sv"><code class="language-sv">&#x3C;script>
+	import { beforeUpdate } from 'svelte';
+
+	beforeUpdate(() => {
+		console.log('the component is about to update');
+	});
+&#x3C;/script></code></pre>
+        </section>
+        <section id="afterupdate" class="level3">
+          <h3><code>afterUpdate</code></h3>
+          <pre class="language-js"><code class="language-js"><span class="token function">afterUpdate</span><span class="token punctuation">(</span><span class="token function-variable function">callback</span><span class="token operator">:</span> <span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token arrow operator">=></span> <span class="token keyword">void</span><span class="token punctuation">)</span></code></pre>
+          <p>コンポーネントが更新された直後に実行するコールバックをスケジュールします。</p>
+          <blockquote>
+            <p>コールバック実行が最初に実行されるのは、最初の <code>onMount</code> の後です</p>
+          </blockquote>
+          <pre class="language-sv"><code class="language-sv">&#x3C;script>
+	import { afterUpdate } from 'svelte';
+
+	afterUpdate(() => {
+		console.log('the component just updated');
+	});
+&#x3C;/script></code></pre>
+        </section>
+        <section id="ondestroy" class="level3">
+          <h3><code>onDestroy</code></h3>
+          <pre class="language-js"><code class="language-js"><span class="token function">onDestroy</span><span class="token punctuation">(</span><span class="token function-variable function">callback</span><span class="token operator">:</span> <span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token arrow operator">=></span> <span class="token keyword">void</span><span class="token punctuation">)</span></code></pre>
+          <p>コンポーネントがアンマウントされる直前に実行するコールバックをスケジュールします。</p>
+          <p><code>onMount</code>, <code>beforeUpdate</code>, <code>afterUpdate</code>, <code>onDestroy</code> のうち、サーバサイドコンポーネントの中で動作するのはこれだけです。</p>
+          <pre class="language-sv"><code class="language-sv">&#x3C;script>
+	import { onDestroy } from 'svelte';
+
+	onDestroy(() => {
+		console.log('the component is being destroyed');
+	});
+&#x3C;/script></code></pre>
+        </section>
+        <section id="tick" class="level3">
+          <h3><code>tick</code></h3>
+          <pre class="language-js"><code class="language-js"><span class="token literal-property property">promise</span><span class="token operator">:</span> <span class="token known-class-name class-name">Promise</span> <span class="token operator">=</span> <span class="token function">tick</span><span class="token punctuation">(</span><span class="token punctuation">)</span></code></pre>
+          <p>保留中の state の変更が適用されると resolve する promise を返します。もしくは何も保留していない場合に、その次のマイクロタスクで実行されます。</p>
+          <pre class="language-sv"><code class="language-sv">&#x3C;script>
+	import { beforeUpdate, tick } from 'svelte';
+
+	beforeUpdate(async () => {
+		console.log('the component is about to update');
+		await tick();
+		console.log('the component just updated');
+	});
+&#x3C;/script></code></pre>
+        </section>
+        <section id="setcontext" class="level3">
+          <h3><code>setContext</code></h3>
+          <pre class="language-js"><code class="language-js"><span class="token function">setContext</span><span class="token punctuation">(</span>key<span class="token operator">:</span> any<span class="token punctuation">,</span> <span class="token literal-property property">context</span><span class="token operator">:</span> any<span class="token punctuation">)</span></code></pre>
+          <p>任意の <code>context</code> オブジェクトを現在のコンポーネントと指定された <code>key</code> に関連付け、オブジェクトを返します。context は、コンポーネントの子 (スロットコンテンツを含む) が <code>getContext</code> で利用できるようになります。</p>
+          <p>ライフサイクル関数と同様に、これはコンポーネントの初期化時に呼ばれなければなりません。</p>
+          <pre class="language-sv"><code class="language-sv">&#x3C;script>
+	import { setContext } from 'svelte';
+
+	setContext('answer', 42);
+&#x3C;/script></code></pre>
+          <blockquote>
+            <p>context は本質的にリアクティブではありません。リアクティブな値が必要な場合は、context にストアを渡すことができます。これはリアクティブになります。</p>
+          </blockquote>
+        </section>
+        <section id="getcontext" class="level3">
+          <h3><code>getContext</code></h3>
+          <pre class="language-js"><code class="language-js"><span class="token literal-property property">context</span><span class="token operator">:</span> any <span class="token operator">=</span> <span class="token function">getContext</span><span class="token punctuation">(</span>key<span class="token operator">:</span> any<span class="token punctuation">)</span></code></pre>
+          <p>指定された <code>key</code> を持つ、最も近い親コンポーネントに属する context を取得します。コンポーネントの初期化中に呼び出されなければなりません。</p>
+          <pre class="language-sv"><code class="language-sv">&#x3C;script>
+	import { getContext } from 'svelte';
+
+	const answer = getContext('answer');
+&#x3C;/script></code></pre>
+        </section>
+        <section id="hascontext" class="level3">
+          <h3><code>hasContext</code></h3>
+          <pre class="language-js"><code class="language-js"><span class="token literal-property property">hasContext</span><span class="token operator">:</span> boolean <span class="token operator">=</span> <span class="token function">hasContext</span><span class="token punctuation">(</span>key<span class="token operator">:</span> any<span class="token punctuation">)</span></code></pre>
+          <p>与えられた <code>key</code> が親コンポーネントの context に設定されているかどうかをチェックします。コンポーネントの初期化時に呼び出されなければなりません。</p>
+          <pre class="language-sv"><code class="language-sv">&#x3C;script>
+	import { hasContext } from 'svelte';
+
+	if (hasContext('answer')) {
+		// do something
+	}
+&#x3C;/script></code></pre>
+        </section>
+        <section id="getallcontexts" class="level3">
+          <h3><code>getAllContexts</code></h3>
+          <pre class="language-js"><code class="language-js"><span class="token literal-property property">contexts</span><span class="token operator">:</span> <span class="token known-class-name class-name">Map</span><span class="token operator">&#x3C;</span>any<span class="token punctuation">,</span> any<span class="token operator">></span> <span class="token operator">=</span> <span class="token function">getAllContexts</span><span class="token punctuation">(</span><span class="token punctuation">)</span></code></pre>
+          <p>最も近い親コンポーネントにある全ての context マップを取得します。これはコンポーネントの初期化中に呼び出す必要があります。例えば、プログラムでコンポーネントを作成し、既存の context を渡したい場合などに便利です。</p>
+          <pre class="language-sv"><code class="language-sv">&#x3C;script>
+	import { getAllContexts } from 'svelte';
+
+	const contexts = getAllContexts();
+&#x3C;/script></code></pre>
+        </section>
+        <section id="createeventdispatcher" class="level3">
+          <h3><code>createEventDispatcher</code></h3>
+          <pre class="language-js"><code class="language-js"><span class="token literal-property property">dispatch</span><span class="token operator">:</span> <span class="token punctuation">(</span><span class="token punctuation">(</span><span class="token parameter"><span class="token literal-property property">name</span><span class="token operator">:</span> string<span class="token punctuation">,</span> detail<span class="token operator">?</span><span class="token operator">:</span> any<span class="token punctuation">,</span> options<span class="token operator">?</span><span class="token operator">:</span> <span class="token maybe-class-name">DispatchOptions</span></span><span class="token punctuation">)</span> <span class="token arrow operator">=></span> boolean<span class="token punctuation">)</span> <span class="token operator">=</span> <span class="token function">createEventDispatcher</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span></code></pre>
+          <p><a href="/docs%EF%BC%83template-syntax-component-directives-on-eventname">コンポーネントイベント</a> のディスパッチに使用できるイベントディスパッチャーを作成します。 イベントディスパッチャーは、 <code>name</code> と <code>detail</code> の2つの引数を取る関数です。</p>
+          <p><code>createEventDispatcher</code> で作成されたコンポーネントイベントは <a href="https://developer.mozilla.org/en-US/docs/Web/API/CustomEvent">カスタムイベント</a> を作成します。これらのイベントは <a href="https://developer.mozilla.org/en-US/docs/Learn/JavaScript/Building_blocks/Events#Event_bubbling_and_capture">バブリング</a> しません。引数 <code>detail</code> は <a href="https://developer.mozilla.org/en-US/docs/Web/API/CustomEvent/detail">CustomEvent.detail</a> プロパティに対応し、任意のタイプのデータを含むことができます。</p>
+          <pre class="language-sv"><code class="language-sv">&#x3C;script>
+	import { createEventDispatcher } from 'svelte';
+
+	const dispatch = createEventDispatcher();
+&#x3C;/script>
+
+&#x3C;button on:click="{() => dispatch('notify', 'detail value')}">Fire Event&#x3C;/button></code></pre>
+          <p>子コンポーネントからディスパッチされたイベントは、親でリッスンできます。 イベントがディスパッチされたときに提供されたデータはすべて、イベントオブジェクトの <code>detail</code>プロパティで利用できます。</p>
+          <pre class="language-sv"><code class="language-sv">&#x3C;script>
+	function callbackFunction(event) {
+		console.log(`Notify fired! Detail: ${event.detail}`)
+	}
+&#x3C;/script>
+
+&#x3C;Child on:notify="{callbackFunction}"/></code></pre>
+          <p>dispatch 関数に3番目のパラメータを渡すことで、イベントがキャンセルできるようになります。もしイベントが <code>event.preventDefault()</code> によってキャンセルされると、その関数は <code>false</code> を返します。それ以外の場合は <code>true</code> を返します。</p>
+          <pre class="language-sv"><code class="language-sv">&#x3C;script>
+	import { createEventDispatcher } from 'svelte';
+
+	const dispatch = createEventDispatcher();
+
+	function notify() {
+		const shouldContinue = dispatch('notify', 'detail value', { cancelable: true });
+		if (shouldContinue) {
+			// no one called preventDefault
+		} else {
+			// a listener called preventDefault
+		}
+	}
+&#x3C;/script></code></pre>
+        </section>
+      </section>
+      <section id="sveltestore" class="level2">
+        <h2><code>svelte/store</code></h2>
+        <p><code>svelte/store</code> モジュールは、<a href="04-run-time.html">readable</a>、<a href="04-run-time.html">writable</a>、 <a href="04-run-time.html">derived</a> ストアを作成するための関数をエクスポートします。</p>
+        <p>コンポーネントで<a href="02-component-format.html-script-4-prefix-stores-with-$-to-access-their-values">リアクティブな <code>$store</code> 構文</a>を便利に使うために、これらの関数を使用する必要がないことを覚えておいてください。<code>.subscribe</code> とそのサブスクライブの解除、（オプションで）<code>.set</code> を正しく実装したオブジェクトは有効なストアであり、その特殊な構文と Svelte に組み込まれた <a href="04-run-time.html"><code>derived</code> ストア</a>の両方で機能します。</p>
+        <p>これにより、Svelte で使用するための、ほぼすべての他のリアクティブ状態を扱うライブラリをラップすることが可能になります。続いて説明する正しい実装がどのようなものか理解するために、<a href="02-component-format.html-script-4-prefix-stores-with-$-to-access-their-values-store-contract">store contract</a> も読んでみてください。</p>
+        <section id="writable" class="level3">
+          <h3><code>writable</code></h3>
+          <pre class="language-js"><code class="language-js">store <span class="token operator">=</span> <span class="token function">writable</span><span class="token punctuation">(</span>value<span class="token operator">?</span><span class="token operator">:</span> any<span class="token punctuation">)</span></code></pre>
+          <pre class="language-js"><code class="language-js">store <span class="token operator">=</span> <span class="token function">writable</span><span class="token punctuation">(</span>value<span class="token operator">?</span><span class="token operator">:</span> any<span class="token punctuation">,</span> start<span class="token operator">?</span><span class="token operator">:</span> <span class="token punctuation">(</span><span class="token function-variable function">set</span><span class="token operator">:</span> <span class="token punctuation">(</span><span class="token parameter"><span class="token literal-property property">value</span><span class="token operator">:</span> any</span><span class="token punctuation">)</span> <span class="token arrow operator">=></span> <span class="token keyword">void</span><span class="token punctuation">)</span> <span class="token arrow operator">=></span> <span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token arrow operator">=></span> <span class="token keyword">void</span><span class="token punctuation">)</span></code></pre>
+          <p>「外部」コンポーネントから設定できる値を持つストアを作成する関数。これは、<code>set</code> と <code>update</code> 関数を併せ持つオブジェクトを作成します。</p>
+          <p><code>set</code> は、設定する値である1つの引数を受け取る関数です。ストア値が引数の値とまだ等しくない場合、ストア値は引数の値に設定されます。</p>
+          <p><code>update</code> は、コールバックである1つの引数を受け取る関数です。コールバックは、既存のストア値を引数として受け取り、ストアに設定される新しい値を返します。</p>
+          <pre class="language-js"><code class="language-js"><span class="token keyword module">import</span> <span class="token imports"><span class="token punctuation">{</span> writable <span class="token punctuation">}</span></span> <span class="token keyword module">from</span> <span class="token string">'svelte/store'</span><span class="token punctuation">;</span>
+
+<span class="token keyword">const</span> count <span class="token operator">=</span> <span class="token function">writable</span><span class="token punctuation">(</span><span class="token number">0</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+count<span class="token punctuation">.</span><span class="token method function property-access">subscribe</span><span class="token punctuation">(</span><span class="token parameter">value</span> <span class="token arrow operator">=></span> <span class="token punctuation">{</span>
+	<span class="token console class-name">console</span><span class="token punctuation">.</span><span class="token method function property-access">log</span><span class="token punctuation">(</span>value<span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">;</span> <span class="token comment">// logs '0'</span>
+
+count<span class="token punctuation">.</span><span class="token method function property-access">set</span><span class="token punctuation">(</span><span class="token number">1</span><span class="token punctuation">)</span><span class="token punctuation">;</span> <span class="token comment">// logs '1'</span>
+
+count<span class="token punctuation">.</span><span class="token method function property-access">update</span><span class="token punctuation">(</span><span class="token parameter">n</span> <span class="token arrow operator">=></span> n <span class="token operator">+</span> <span class="token number">1</span><span class="token punctuation">)</span><span class="token punctuation">;</span> <span class="token comment">// logs '2'</span></code></pre>
+          <p>関数が第2引数として渡された場合、サブスクライバーの数が0から1になると呼び出されます（ただし、1から2になった場合などには呼び出されません）。その関数には、ストアの値を変更する <code>set</code> 関数が渡されます。その関数は、サブスクライバーの数が1から0になったときに呼び出される <code>stop</code> 関数を返す必要があります。</p>
+          <pre class="language-js"><code class="language-js"><span class="token keyword module">import</span> <span class="token imports"><span class="token punctuation">{</span> writable <span class="token punctuation">}</span></span> <span class="token keyword module">from</span> <span class="token string">'svelte/store'</span><span class="token punctuation">;</span>
+
+<span class="token keyword">const</span> count <span class="token operator">=</span> <span class="token function">writable</span><span class="token punctuation">(</span><span class="token number">0</span><span class="token punctuation">,</span> <span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token arrow operator">=></span> <span class="token punctuation">{</span>
+	<span class="token console class-name">console</span><span class="token punctuation">.</span><span class="token method function property-access">log</span><span class="token punctuation">(</span><span class="token string">'got a subscriber'</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+	<span class="token keyword control-flow">return</span> <span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token arrow operator">=></span> <span class="token console class-name">console</span><span class="token punctuation">.</span><span class="token method function property-access">log</span><span class="token punctuation">(</span><span class="token string">'no more subscribers'</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+count<span class="token punctuation">.</span><span class="token method function property-access">set</span><span class="token punctuation">(</span><span class="token number">1</span><span class="token punctuation">)</span><span class="token punctuation">;</span> <span class="token comment">// does nothing</span>
+
+<span class="token keyword">const</span> unsubscribe <span class="token operator">=</span> count<span class="token punctuation">.</span><span class="token method function property-access">subscribe</span><span class="token punctuation">(</span><span class="token parameter">value</span> <span class="token arrow operator">=></span> <span class="token punctuation">{</span>
+	<span class="token console class-name">console</span><span class="token punctuation">.</span><span class="token method function property-access">log</span><span class="token punctuation">(</span>value<span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">;</span> <span class="token comment">// logs 'got a subscriber', then '1'</span>
+
+<span class="token function">unsubscribe</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span> <span class="token comment">// logs 'no more subscribers'</span></code></pre>
+          <p><code>writable</code> の値は、ページが更新されたときなど破棄されると失われるので注意してください。ただし、<code>localStorage</code> などに値を同期する独自ロジックを作ることはできます。</p>
+        </section>
+        <section id="readable" class="level3">
+          <h3><code>readable</code></h3>
+          <pre class="language-js"><code class="language-js">store <span class="token operator">=</span> <span class="token function">readable</span><span class="token punctuation">(</span>value<span class="token operator">?</span><span class="token operator">:</span> any<span class="token punctuation">,</span> start<span class="token operator">?</span><span class="token operator">:</span> <span class="token punctuation">(</span><span class="token function-variable function">set</span><span class="token operator">:</span> <span class="token punctuation">(</span><span class="token parameter"><span class="token literal-property property">value</span><span class="token operator">:</span> any</span><span class="token punctuation">)</span> <span class="token arrow operator">=></span> <span class="token keyword">void</span><span class="token punctuation">)</span> <span class="token arrow operator">=></span> <span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token arrow operator">=></span> <span class="token keyword">void</span><span class="token punctuation">)</span></code></pre>
+          <p>「外側」から値を設定できないストアを作成します。第1引数はストアの初期値です。<code>readable</code> の第2引数は <code>writable</code> の第2引数と同じです。</p>
+          <pre class="language-js"><code class="language-js"><span class="token keyword module">import</span> <span class="token imports"><span class="token punctuation">{</span> readable <span class="token punctuation">}</span></span> <span class="token keyword module">from</span> <span class="token string">'svelte/store'</span><span class="token punctuation">;</span>
+
+<span class="token keyword">const</span> time <span class="token operator">=</span> <span class="token function">readable</span><span class="token punctuation">(</span><span class="token keyword null nil">null</span><span class="token punctuation">,</span> <span class="token parameter"><span class="token keyword">set</span></span> <span class="token arrow operator">=></span> <span class="token punctuation">{</span>
+	<span class="token function">set</span><span class="token punctuation">(</span><span class="token keyword">new</span> <span class="token class-name">Date</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+	<span class="token keyword">const</span> interval <span class="token operator">=</span> <span class="token function">setInterval</span><span class="token punctuation">(</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token arrow operator">=></span> <span class="token punctuation">{</span>
+		<span class="token function">set</span><span class="token punctuation">(</span><span class="token keyword">new</span> <span class="token class-name">Date</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+	<span class="token punctuation">}</span><span class="token punctuation">,</span> <span class="token number">1000</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+	<span class="token keyword control-flow">return</span> <span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token arrow operator">=></span> <span class="token function">clearInterval</span><span class="token punctuation">(</span>interval<span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">;</span></code></pre>
+        </section>
+        <section id="derived" class="level3">
+          <h3><code>derived</code></h3>
+          <pre class="language-js"><code class="language-js">store <span class="token operator">=</span> <span class="token function">derived</span><span class="token punctuation">(</span>a<span class="token punctuation">,</span> <span class="token function-variable function">callback</span><span class="token operator">:</span> <span class="token punctuation">(</span><span class="token parameter"><span class="token literal-property property">a</span><span class="token operator">:</span> any</span><span class="token punctuation">)</span> <span class="token arrow operator">=></span> any<span class="token punctuation">)</span></code></pre>
+          <pre class="language-js"><code class="language-js">store <span class="token operator">=</span> <span class="token function">derived</span><span class="token punctuation">(</span>a<span class="token punctuation">,</span> <span class="token function-variable function">callback</span><span class="token operator">:</span> <span class="token punctuation">(</span>a<span class="token operator">:</span> any<span class="token punctuation">,</span> <span class="token function-variable function">set</span><span class="token operator">:</span> <span class="token punctuation">(</span><span class="token parameter"><span class="token literal-property property">value</span><span class="token operator">:</span> any</span><span class="token punctuation">)</span> <span class="token arrow operator">=></span> <span class="token keyword">void</span><span class="token punctuation">)</span> <span class="token arrow operator">=></span> <span class="token keyword">void</span> <span class="token operator">|</span> <span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token arrow operator">=></span> <span class="token keyword">void</span><span class="token punctuation">,</span> <span class="token literal-property property">initial_value</span><span class="token operator">:</span> any<span class="token punctuation">)</span></code></pre>
+          <pre class="language-js"><code class="language-js">store <span class="token operator">=</span> <span class="token function">derived</span><span class="token punctuation">(</span><span class="token punctuation">[</span>a<span class="token punctuation">,</span> <span class="token spread operator">...</span>b<span class="token punctuation">]</span><span class="token punctuation">,</span> <span class="token function-variable function">callback</span><span class="token operator">:</span> <span class="token punctuation">(</span><span class="token parameter"><span class="token punctuation">[</span>a<span class="token operator">:</span> any<span class="token punctuation">,</span> <span class="token spread operator">...</span>b<span class="token operator">:</span> any<span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token punctuation">]</span></span><span class="token punctuation">)</span> <span class="token arrow operator">=></span> any<span class="token punctuation">)</span></code></pre>
+          <pre class="language-js"><code class="language-js">store <span class="token operator">=</span> <span class="token function">derived</span><span class="token punctuation">(</span><span class="token punctuation">[</span>a<span class="token punctuation">,</span> <span class="token spread operator">...</span>b<span class="token punctuation">]</span><span class="token punctuation">,</span> <span class="token function-variable function">callback</span><span class="token operator">:</span> <span class="token punctuation">(</span><span class="token punctuation">[</span>a<span class="token operator">:</span> any<span class="token punctuation">,</span> <span class="token spread operator">...</span>b<span class="token operator">:</span> any<span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token punctuation">]</span><span class="token punctuation">,</span> <span class="token function-variable function">set</span><span class="token operator">:</span> <span class="token punctuation">(</span><span class="token parameter"><span class="token literal-property property">value</span><span class="token operator">:</span> any</span><span class="token punctuation">)</span> <span class="token arrow operator">=></span> <span class="token keyword">void</span><span class="token punctuation">)</span> <span class="token arrow operator">=></span> <span class="token keyword">void</span> <span class="token operator">|</span> <span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token arrow operator">=></span> <span class="token keyword">void</span><span class="token punctuation">,</span> <span class="token literal-property property">initial_value</span><span class="token operator">:</span> any<span class="token punctuation">)</span></code></pre>
+          <p>1つ以上の他のストアからストアを派生させます。これらの依存しているものが変化するたびに、コールバックが実行されます。</p>
+          <p>最もシンプルな例だと、<code>derived</code> は単一のストアを受け取り、コールバックは派生値を返します。</p>
+          <pre class="language-js"><code class="language-js"><span class="token keyword module">import</span> <span class="token imports"><span class="token punctuation">{</span> derived <span class="token punctuation">}</span></span> <span class="token keyword module">from</span> <span class="token string">'svelte/store'</span><span class="token punctuation">;</span>
+
+<span class="token keyword">const</span> doubled <span class="token operator">=</span> <span class="token function">derived</span><span class="token punctuation">(</span>a<span class="token punctuation">,</span> <span class="token parameter">$a</span> <span class="token arrow operator">=></span> $a <span class="token operator">*</span> <span class="token number">2</span><span class="token punctuation">)</span><span class="token punctuation">;</span></code></pre>
+          <p>コールバックは、第2引数に <code>set</code> を受け取り、しかるべき時にそれを呼び出すことで非同期に値を設定できます。</p>
+          <p>この場合、<code>derived</code> に第3引数として、<code>set</code> が初めて呼び出される前の派生ストアの初期値を渡すこともできます。</p>
+          <pre class="language-js"><code class="language-js"><span class="token keyword module">import</span> <span class="token imports"><span class="token punctuation">{</span> derived <span class="token punctuation">}</span></span> <span class="token keyword module">from</span> <span class="token string">'svelte/store'</span><span class="token punctuation">;</span>
+
+<span class="token keyword">const</span> delayed <span class="token operator">=</span> <span class="token function">derived</span><span class="token punctuation">(</span>a<span class="token punctuation">,</span> <span class="token punctuation">(</span><span class="token parameter">$a<span class="token punctuation">,</span> <span class="token keyword">set</span></span><span class="token punctuation">)</span> <span class="token arrow operator">=></span> <span class="token punctuation">{</span>
+	<span class="token function">setTimeout</span><span class="token punctuation">(</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token arrow operator">=></span> <span class="token function">set</span><span class="token punctuation">(</span>$a<span class="token punctuation">)</span><span class="token punctuation">,</span> <span class="token number">1000</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span><span class="token punctuation">,</span> <span class="token string">'one moment...'</span><span class="token punctuation">)</span><span class="token punctuation">;</span></code></pre>
+          <p>コールバックから関数を返すと、a）コールバックが再度実行される時や b）最後のサブスクライバーがサブスクライブを解除する時に呼び出されます。</p>
+          <pre class="language-js"><code class="language-js"><span class="token keyword module">import</span> <span class="token imports"><span class="token punctuation">{</span> derived <span class="token punctuation">}</span></span> <span class="token keyword module">from</span> <span class="token string">'svelte/store'</span><span class="token punctuation">;</span>
+
+<span class="token keyword">const</span> tick <span class="token operator">=</span> <span class="token function">derived</span><span class="token punctuation">(</span>frequency<span class="token punctuation">,</span> <span class="token punctuation">(</span><span class="token parameter">$frequency<span class="token punctuation">,</span> <span class="token keyword">set</span></span><span class="token punctuation">)</span> <span class="token arrow operator">=></span> <span class="token punctuation">{</span>
+	<span class="token keyword">const</span> interval <span class="token operator">=</span> <span class="token function">setInterval</span><span class="token punctuation">(</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token arrow operator">=></span> <span class="token punctuation">{</span>
+	  <span class="token function">set</span><span class="token punctuation">(</span><span class="token known-class-name class-name">Date</span><span class="token punctuation">.</span><span class="token method function property-access">now</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+	<span class="token punctuation">}</span><span class="token punctuation">,</span> <span class="token number">1000</span> <span class="token operator">/</span> $frequency<span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+	<span class="token keyword control-flow">return</span> <span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token arrow operator">=></span> <span class="token punctuation">{</span>
+		<span class="token function">clearInterval</span><span class="token punctuation">(</span>interval<span class="token punctuation">)</span><span class="token punctuation">;</span>
+	<span class="token punctuation">}</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span><span class="token punctuation">,</span> <span class="token string">'one moment...'</span><span class="token punctuation">)</span><span class="token punctuation">;</span></code></pre>
+          <p>どちらの場合も、第1引数として、ストア1つではなく、引数の配列を渡すことができます。</p>
+          <pre class="language-js"><code class="language-js"><span class="token keyword module">import</span> <span class="token imports"><span class="token punctuation">{</span> derived <span class="token punctuation">}</span></span> <span class="token keyword module">from</span> <span class="token string">'svelte/store'</span><span class="token punctuation">;</span>
+
+<span class="token keyword">const</span> summed <span class="token operator">=</span> <span class="token function">derived</span><span class="token punctuation">(</span><span class="token punctuation">[</span>a<span class="token punctuation">,</span> b<span class="token punctuation">]</span><span class="token punctuation">,</span> <span class="token punctuation">(</span><span class="token parameter"><span class="token punctuation">[</span>$a<span class="token punctuation">,</span> $b<span class="token punctuation">]</span></span><span class="token punctuation">)</span> <span class="token arrow operator">=></span> $a <span class="token operator">+</span> $b<span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+<span class="token keyword">const</span> delayed <span class="token operator">=</span> <span class="token function">derived</span><span class="token punctuation">(</span><span class="token punctuation">[</span>a<span class="token punctuation">,</span> b<span class="token punctuation">]</span><span class="token punctuation">,</span> <span class="token punctuation">(</span><span class="token parameter"><span class="token punctuation">[</span>$a<span class="token punctuation">,</span> $b<span class="token punctuation">]</span><span class="token punctuation">,</span> <span class="token keyword">set</span></span><span class="token punctuation">)</span> <span class="token arrow operator">=></span> <span class="token punctuation">{</span>
+	<span class="token function">setTimeout</span><span class="token punctuation">(</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token arrow operator">=></span> <span class="token function">set</span><span class="token punctuation">(</span>$a <span class="token operator">+</span> $b<span class="token punctuation">)</span><span class="token punctuation">,</span> <span class="token number">1000</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">;</span></code></pre>
+        </section>
+        <section id="get" class="level3">
+          <h3><code>get</code></h3>
+          <pre class="language-js"><code class="language-js"><span class="token literal-property property">value</span><span class="token operator">:</span> any <span class="token operator">=</span> <span class="token function">get</span><span class="token punctuation">(</span>store<span class="token punctuation">)</span></code></pre>
+          <p>通常は、ストアをサブスクライブして、ストア値が切り替わるたびに使用する方法で読み取るほうがよいでしょう。しかし、場合によっては、サブスクライブしていないストア値を取得する必要があります。<code>get</code> はそれを可能にします。</p>
+          <blockquote>
+            <p>これは、サブスクリプションを作成し、値を読み取ってから、サブスクリプションを解除することで機能します。したがって、ホットコードパスではお勧めしません。</p>
+          </blockquote>
+          <pre class="language-js"><code class="language-js"><span class="token keyword module">import</span> <span class="token imports"><span class="token punctuation">{</span> get <span class="token punctuation">}</span></span> <span class="token keyword module">from</span> <span class="token string">'svelte/store'</span><span class="token punctuation">;</span>
+
+<span class="token keyword">const</span> value <span class="token operator">=</span> <span class="token function">get</span><span class="token punctuation">(</span>store<span class="token punctuation">)</span><span class="token punctuation">;</span></code></pre>
+        </section>
+      </section>
+      <section id="sveltemotion" class="level2">
+        <h2><code>svelte/motion</code></h2>
+        <p><code>svelte/motion</code> モジュールは、<code>tweened</code> と <code>spring</code> という2つの関数をエクスポートします。これは書き込み可能なストアを作成するためのもので、値がすぐにではなく、<code>set</code> と <code>update</code> の後に時間の経過とともに変化するものです。</p>
+        <section id="tweened" class="level3">
+          <h3><code>tweened</code></h3>
+          <pre class="language-js"><code class="language-js">store <span class="token operator">=</span> <span class="token function">tweened</span><span class="token punctuation">(</span>value<span class="token operator">:</span> any<span class="token punctuation">,</span> options<span class="token punctuation">)</span></code></pre>
+          <p>トゥイーンされたストアは、一定の期間にわたって値を更新します。以下のオプションが利用可能です。</p>
+          <ul>
+            <li><code>delay</code> (<code>number</code>, default 0) — 開始前の待ち時間のミリ秒</li>
+            <li><code>duration</code> (<code>number</code> | <code>function</code>, default 400) — トゥイーンの持続時間のミリ秒</li>
+            <li><code>easing</code> (<code>function</code>, default <code>t => t</code>) — <a href="04-run-time.html">イージング関数</a></li>
+            <li><code>interpolate</code> (<code>function</code>) — 下記を参照してください。</li>
+          </ul>
+          <p><code>store.set</code> と <code>store.update</code> は、インスタンス化時に渡されたオプションを上書きする第2引数 <code>options</code> を受け取ることができます。</p>
+          <p>どちらの関数も、トゥイーンが完了すると resolve する promise を返します。トゥイーンが中断されると、promise は resolve されません。</p>
+          <p>Svelte は2つの数値、2つの配列、または2つのオブジェクトの間を補間します(配列とオブジェクトが同じ '形状' であり、それらの '子孫' プロパティも数値である限り)。</p>
+          <pre class="language-sv"><code class="language-sv">&#x3C;script>
+	import { tweened } from 'svelte/motion';
+	import { cubicOut } from 'svelte/easing';
+
+	const size = tweened(1, {
+		duration: 300,
+		easing: cubicOut
+	});
+
+	function handleClick() {
+		// これは size.update(n => n + 1) と等価です
+		$size += 1;
+	}
+&#x3C;/script>
+
+&#x3C;button
+	on:click={handleClick}
+	style="transform: scale({$size}); transform-origin: 0 0"
+>embiggen&#x3C;/button></code></pre>
+          <p>初期値が <code>undefined</code> または <code>null</code> の場合、最初の値の変更はすぐに有効になります。これは、プロパティをベースにしたトゥイーン値を設定していて、コンポーネントの最初のレンダリング時にモーションをかけたくない場合に便利です。</p>
+          <pre class="language-js"><code class="language-js"><span class="token keyword">const</span> size <span class="token operator">=</span> <span class="token function">tweened</span><span class="token punctuation">(</span><span class="token keyword nil">undefined</span><span class="token punctuation">,</span> <span class="token punctuation">{</span>
+	<span class="token literal-property property">duration</span><span class="token operator">:</span> <span class="token number">300</span><span class="token punctuation">,</span>
+	<span class="token literal-property property">easing</span><span class="token operator">:</span> cubicOut
+<span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+<span class="token literal-property property">$</span><span class="token operator">:</span> $size <span class="token operator">=</span> big <span class="token operator">?</span> <span class="token number">100</span> <span class="token operator">:</span> <span class="token number">10</span><span class="token punctuation">;</span></code></pre>
+          <p><code>interpolate</code> オプションを指定すると、<em>任意の</em> 値の間でトゥイーンを行うことができます。関数 <code>(a, b) => t => value</code> で、<code>a</code> は開始値、<code>b</code> は目標値、<code>t</code> は 0 から 1 の間の数値、<code>value</code> は結果です。例えば、<a href="https://github.com/d3/d3-interpolate">d3-interpolate</a> パッケージを使えば、2つの色の間をスムーズに補間することができます。</p>
+          <pre class="language-sv"><code class="language-sv">&#x3C;script>
+	import { interpolateLab } from 'd3-interpolate';
+	import { tweened } from 'svelte/motion';
+
+	const colors = [
+		'rgb(255, 62, 0)',
+		'rgb(64, 179, 255)',
+		'rgb(103, 103, 120)'
+	];
+
+	const color = tweened(colors[0], {
+		duration: 800,
+		interpolate: interpolateLab
+	});
+&#x3C;/script>
+
+{#each colors as c}
+	&#x3C;button
+		style="background-color: {c}; color: white; border: none;"
+		on:click="{e => color.set(c)}"
+	>{c}&#x3C;/button>
+{/each}
+
+&#x3C;h1 style="color: {$color}">{$color}&#x3C;/h1></code></pre>
+        </section>
+        <section id="spring" class="level3">
+          <h3><code>spring</code></h3>
+          <pre class="language-js"><code class="language-js">store <span class="token operator">=</span> <span class="token function">spring</span><span class="token punctuation">(</span>value<span class="token operator">:</span> any<span class="token punctuation">,</span> options<span class="token punctuation">)</span></code></pre>
+          <p><code>spring</code> ストアは、<code>stiffness</code> と <code>damping</code> パラメータに基づいて目標値まで徐々に変化します。<code>tweened</code> ストアが一定のタイミングで値を変化させるのに対し、<code>spring</code> ストアは既存の速度によって決定されるタイミングで変化するため、多くの状況でより自然に見える動きを可能にします。以下のオプションが利用可能です。</p>
+          <ul>
+            <li><code>stiffness</code> (<code>number</code>, default <code>0.15</code>) — 0 から 1 の間の値で、高い方が「よりタイトな」スプリングを意味します。</li>
+            <li><code>damping</code> (<code>number</code>, default <code>0.8</code>) — 0 から 1 の間の値で、少ない方が「より弾力のある」スプリングを意味します。</li>
+            <li><code>precision</code> (<code>number</code>, default <code>0.001</code>) — は、スプリングが「止まった」とみなされる閾値を決定します。少ない方がより精密であることを意味します。</li>
+          </ul>
+          <p>上記のオプションは全て spring のモーション中に変更することができ、すぐにその効果に反映されます。</p>
+          <pre class="language-js"><code class="language-js"><span class="token keyword">const</span> size <span class="token operator">=</span> <span class="token function">spring</span><span class="token punctuation">(</span><span class="token number">100</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+size<span class="token punctuation">.</span><span class="token property-access">stiffness</span> <span class="token operator">=</span> <span class="token number">0.3</span><span class="token punctuation">;</span>
+size<span class="token punctuation">.</span><span class="token property-access">damping</span> <span class="token operator">=</span> <span class="token number">0.4</span><span class="token punctuation">;</span>
+size<span class="token punctuation">.</span><span class="token property-access">precision</span> <span class="token operator">=</span> <span class="token number">0.005</span><span class="token punctuation">;</span></code></pre>
+          <p><a href="04-run-time.html"><code>tweened</code></a> ストアと同様に、<code>set</code> と <code>update</code> はスプリングが止まれば resolve する promise を返します。</p>
+          <p><code>set</code> と <code>update</code> はどちらも第2引数として <code>hard</code> または <code>soft</code> プロパティを持つオブジェクトを取ることができます。<code>{ hard: true }</code> は対象の値を即座に設定します。<code>{ soft: n }</code> は既存の運動量を <code>n</code> 秒間保持してから止まります。<code>{ soft: true }</code> は <code>{ soft: 0.5 }</code> と同等です。</p>
+          <pre class="language-js"><code class="language-js"><span class="token keyword">const</span> coords <span class="token operator">=</span> <span class="token function">spring</span><span class="token punctuation">(</span><span class="token punctuation">{</span> <span class="token literal-property property">x</span><span class="token operator">:</span> <span class="token number">50</span><span class="token punctuation">,</span> <span class="token literal-property property">y</span><span class="token operator">:</span> <span class="token number">50</span> <span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token comment">// updates the value immediately</span>
+coords<span class="token punctuation">.</span><span class="token method function property-access">set</span><span class="token punctuation">(</span><span class="token punctuation">{</span> <span class="token literal-property property">x</span><span class="token operator">:</span> <span class="token number">100</span><span class="token punctuation">,</span> <span class="token literal-property property">y</span><span class="token operator">:</span> <span class="token number">200</span> <span class="token punctuation">}</span><span class="token punctuation">,</span> <span class="token punctuation">{</span> <span class="token literal-property property">hard</span><span class="token operator">:</span> <span class="token boolean">true</span> <span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token comment">// preserves existing momentum for 1s</span>
+coords<span class="token punctuation">.</span><span class="token method function property-access">update</span><span class="token punctuation">(</span>
+	<span class="token punctuation">(</span><span class="token parameter">target_coords<span class="token punctuation">,</span> coords</span><span class="token punctuation">)</span> <span class="token arrow operator">=></span> <span class="token punctuation">{</span>
+		<span class="token keyword control-flow">return</span> <span class="token punctuation">{</span> <span class="token literal-property property">x</span><span class="token operator">:</span> target_coords<span class="token punctuation">.</span><span class="token property-access">x</span><span class="token punctuation">,</span> <span class="token literal-property property">y</span><span class="token operator">:</span> coords<span class="token punctuation">.</span><span class="token property-access">y</span> <span class="token punctuation">}</span><span class="token punctuation">;</span>
+	<span class="token punctuation">}</span><span class="token punctuation">,</span>
+	<span class="token punctuation">{</span> <span class="token literal-property property">soft</span><span class="token operator">:</span> <span class="token number">1</span> <span class="token punctuation">}</span>
+<span class="token punctuation">)</span><span class="token punctuation">;</span></code></pre>
+          <p><a href="/tutorial/spring">スプリングチュートリアルの例を参照してください。</a></p>
+          <pre class="language-sv"><code class="language-sv">&#x3C;script>
+	import { spring } from 'svelte/motion';
+
+	const coords = spring({ x: 50, y: 50 }, {
+		stiffness: 0.1,
+		damping: 0.25
+	});
+&#x3C;/script></code></pre>
+          <p>初期値が <code>undefined</code> または <code>null</code> の場合、最初の値の変更は <code>tweened</code> の場合と同様に即座に有効になります (上記を参照)。</p>
+          <pre class="language-js"><code class="language-js"><span class="token keyword">const</span> size <span class="token operator">=</span> <span class="token function">spring</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token literal-property property">$</span><span class="token operator">:</span> $size <span class="token operator">=</span> big <span class="token operator">?</span> <span class="token number">100</span> <span class="token operator">:</span> <span class="token number">10</span><span class="token punctuation">;</span></code></pre>
+        </section>
+      </section>
+      <section id="sveltetransition" class="level2">
+        <h2><code>svelte/transition</code></h2>
+        <p><code>svelte/transition</code> モジュールは7つの関数をエクスポートします。<code>fade</code>、<code>blur</code>、<code>fly</code>、 <code>slide</code>、<code>scale</code>、<code>draw</code>、<code>crossfade</code> の7つの関数をエクスポートします。これらは Svelte <a href="03-template-syntax.html"><code>transitions</code></a> で使用します。</p>
+        <section id="fade" class="level3">
+          <h3><code>fade</code></h3>
+          <pre class="language-sv"><code class="language-sv">transition:fade={params}</code></pre>
+          <pre class="language-sv"><code class="language-sv">in:fade={params}</code></pre>
+          <pre class="language-sv"><code class="language-sv">out:fade={params}</code></pre>
+          <p>要素の opacity を、<code>in</code> トランジションでは 0 から現在の opacity まで、<code>out</code> トランジションでは現在の opacity から 0 までアニメーションします。</p>
+          <p><code>fade</code> は以下のパラメータを受け付けます。</p>
+          <ul>
+            <li><code>delay</code> (<code>number</code>, default 0) — 開始前の待ち時間のミリ秒</li>
+            <li><code>duration</code> (<code>number</code>, default 400) — トランジションの持続時間のミリ秒</li>
+            <li><code>easing</code> (<code>function</code>, default <code>linear</code>) — <a href="04-run-time.html">イージング関数</a></li>
+          </ul>
+          <p><a href="/tutorial/transition">トランジション チュートリアル</a> で <code>fade</code> トランジションの動作を見ることができます。</p>
+          <pre class="language-sv"><code class="language-sv">&#x3C;script>
+	import { fade } from 'svelte/transition';
+&#x3C;/script>
+
+{#if condition}
+	&#x3C;div transition:fade="{{delay: 250, duration: 300}}">
+		fades in and out
+	&#x3C;/div>
+{/if}</code></pre>
+        </section>
+        <section id="blur" class="level3">
+          <h3><code>blur</code></h3>
+          <pre class="language-sv"><code class="language-sv">transition:blur={params}</code></pre>
+          <pre class="language-sv"><code class="language-sv">in:blur={params}</code></pre>
+          <pre class="language-sv"><code class="language-sv">out:blur={params}</code></pre>
+          <p>要素の opacity で <code>blur</code> フィルタをアニメーション化します。</p>
+          <p><code>blur</code> は以下のパラメータを受け付けます。</p>
+          <ul>
+            <li><code>delay</code> (<code>number</code>, default 0) —開始前の待ち時間のミリ秒</li>
+            <li><code>duration</code> (<code>number</code>, default 400) — アニメーションの持続時間のミリ秒</li>
+            <li><code>easing</code> (<code>function</code>, default <code>cubicInOut</code>) — <a href="04-run-time.html">イージング関数</a></li>
+            <li><code>opacity</code> (<code>number</code>, default 0) - アニメーション化する opacity の値</li>
+            <li><code>amount</code> (<code>number</code>, default 5) - ぼかしのサイズをピクセル単位で表します</li>
+          </ul>
+          <pre class="language-sv"><code class="language-sv">&#x3C;script>
+	import { blur } from 'svelte/transition';
+&#x3C;/script>
+
+{#if condition}
+	&#x3C;div transition:blur="{{amount: 10}}">
+		fades in and out
+	&#x3C;/div>
+{/if}</code></pre>
+        </section>
+        <section id="fly" class="level3">
+          <h3><code>fly</code></h3>
+          <pre class="language-sv"><code class="language-sv">transition:fly={params}</code></pre>
+          <pre class="language-sv"><code class="language-sv">in:fly={params}</code></pre>
+          <pre class="language-sv"><code class="language-sv">out:fly={params}</code></pre>
+          <p>要素の x と y の位置と opacity をアニメーション化します。<code>in</code> トランジションは、要素の現在の(デフォルトの)値からパラメータとして渡された値にアニメーションします。<code>out</code> トランジションは、指定された値から要素のデフォルト値にアニメーションします。</p>
+          <p><code>fly</code> は以下のパラメータを受け付けます。</p>
+          <ul>
+            <li><code>delay</code> (<code>number</code>, default 0) — 開始前の待ち時間のミリ秒</li>
+            <li><code>duration</code> (<code>number</code>, default 400) — トランジションの持続時間のミリ秒</li>
+            <li><code>easing</code> (<code>function</code>, default <code>cubicOut</code>) — <a href="04-run-time.html">イージング関数</a></li>
+            <li><code>x</code> (<code>number</code>, default 0) - アニメーションで移動する x 位置のオフセット</li>
+            <li><code>y</code> (<code>number</code>, default 0) - アニメーションで移動する y 位置のオフセット</li>
+            <li><code>opacity</code> (<code>number</code>, default 0) - アニメーションで変化する opacity のオフセット</li>
+          </ul>
+          <p><code>fly</code> トランジションの動作は <a href="/tutorial/adding-parameters-to-transitions">トランジション チュートリアル</a> で見ることができます。</p>
+          <pre class="language-sv"><code class="language-sv">&#x3C;script>
+	import { fly } from 'svelte/transition';
+	import { quintOut } from 'svelte/easing';
+&#x3C;/script>
+
+{#if condition}
+	&#x3C;div transition:fly="{{delay: 250, duration: 300, x: 100, y: 500, opacity: 0.5, easing: quintOut}}">
+		flies in and out
+	&#x3C;/div>
+{/if}</code></pre>
+        </section>
+        <section id="slide" class="level3">
+          <h3><code>slide</code></h3>
+          <pre class="language-sv"><code class="language-sv">transition:slide={params}</code></pre>
+          <pre class="language-sv"><code class="language-sv">in:slide={params}</code></pre>
+          <pre class="language-sv"><code class="language-sv">out:slide={params}</code></pre>
+          <p>要素をスライドさせて出し入れします。</p>
+          <p><code>slide</code> は下記のパラメータを受け付けます。</p>
+          <ul>
+            <li><code>delay</code> (<code>number</code>, default 0) — 開始前の待ち時間のミリ秒</li>
+            <li><code>duration</code> (<code>number</code>, default 400) — トランジションの持続時間のミリ秒</li>
+            <li><code>easing</code> (<code>function</code>, default <code>cubicOut</code>) — <a href="04-run-time.html">イージング関数</a></li>
+          </ul>
+          <pre class="language-sv"><code class="language-sv">&#x3C;script>
+	import { slide } from 'svelte/transition';
+	import { quintOut } from 'svelte/easing';
+&#x3C;/script>
+
+{#if condition}
+	&#x3C;div transition:slide="{{delay: 250, duration: 300, easing: quintOut }}">
+		slides in and out
+	&#x3C;/div>
+{/if}</code></pre>
+        </section>
+        <section id="scale" class="level3">
+          <h3><code>scale</code></h3>
+          <pre class="language-sv"><code class="language-sv">transition:scale={params}</code></pre>
+          <pre class="language-sv"><code class="language-sv">in:scale={params}</code></pre>
+          <pre class="language-sv"><code class="language-sv">out:scale={params}</code></pre>
+          <p>要素の opacity と scale をアニメーション化します。<code>in</code> トランジションは、要素の現在の(デフォルトの)値からパラメータとして渡された値にアニメーションします。<code>out</code> トランジションは、指定された値から要素のデフォルト値にアニメーションします。</p>
+          <p><code>scale</code> は以下のパラメータを受け付けます。</p>
+          <ul>
+            <li><code>delay</code> (<code>number</code>, default 0) — 開始前の待ち時間のミリ秒</li>
+            <li><code>duration</code> (<code>number</code>, default 400) — トランジションの持続時間のミリ秒</li>
+            <li><code>easing</code> (<code>function</code>, default <code>cubicOut</code>) — <a href="04-run-time.html">イージング関数</a></li>
+            <li><code>start</code> (<code>number</code>, default 0) - アニメーションで変化する scale の値</li>
+            <li><code>opacity</code> (<code>number</code>, default 0) - アニメーションで変化する opacity の値</li>
+          </ul>
+          <pre class="language-sv"><code class="language-sv">&#x3C;script>
+	import { scale } from 'svelte/transition';
+	import { quintOut } from 'svelte/easing';
+&#x3C;/script>
+
+{#if condition}
+	&#x3C;div transition:scale="{{duration: 500, delay: 500, opacity: 0.5, start: 0.5, easing: quintOut}}">
+		scales in and out
+	&#x3C;/div>
+{/if}</code></pre>
+        </section>
+        <section id="draw" class="level3">
+          <h3><code>draw</code></h3>
+          <pre class="language-sv"><code class="language-sv">transition:draw={params}</code></pre>
+          <pre class="language-sv"><code class="language-sv">in:draw={params}</code></pre>
+          <pre class="language-sv"><code class="language-sv">out:draw={params}</code></pre>
+          <p>SVG 要素のストロークを蛇が管の中を進むようにアニメーション化します。<code>in</code> トランジションはパスが見えない状態から始まり、時間の経過とともにパスが画面に描画されます。<code>out</code> トランジションはパスが見える状態から始まり、徐々にパスを消していきます。<code>draw</code> は <code>&#x3C;path></code> や <code>&#x3C;polyline></code> のように <code>getTotalLength</code> メソッドを持つ要素でのみ動作します。</p>
+          <p><code>draw</code> は以下のパラメータを受け付けます。</p>
+          <ul>
+            <li><code>delay</code> (<code>number</code>, default 0) — 開始前の待ち時間のミリ秒</li>
+            <li><code>speed</code> (<code>number</code>, default undefined) - アニメーションの速度、下記を参照してください</li>
+            <li><code>duration</code> (<code>number</code> | <code>function</code>, default 800) — トランジションの持続時間のミリ秒</li>
+            <li><code>easing</code> (<code>function</code>, default <code>cubicInOut</code>) — <a href="04-run-time.html">イージング関数</a></li>
+          </ul>
+          <p>速度パラメータ <code>speed</code> はパスの長さに対する遷移の持続時間を設定する手段です。これはパスの長さに適用される修飾子で <code>duration = length / speed</code> となります。1000ピクセルで速度が1のパスの持続時間は <code>1000ms</code> であり、速度を <code>0.5</code> に設定すると持続時間は2倍になり、<code>2</code> に設定すると半分になります。</p>
+          <pre class="language-sv"><code class="language-sv">&#x3C;script>
+	import { draw } from 'svelte/transition';
+	import { quintOut } from 'svelte/easing';
+&#x3C;/script>
+
+&#x3C;svg viewBox="0 0 5 5" xmlns="http://www.w3.org/2000/svg">
+	{#if condition}
+		&#x3C;path transition:draw="{{duration: 5000, delay: 500, easing: quintOut}}"
+					d="M2 1 h1 v1 h1 v1 h-1 v1 h-1 v-1 h-1 v-1 h1 z"
+					fill="none"
+					stroke="cornflowerblue"
+					stroke-width="0.1px"
+					stroke-linejoin="round"
+		/>
+	{/if}
+&#x3C;/svg>
+</code></pre>
+        </section>
+        <section id="crossfade" class="level3">
+          <h3><code>crossfade</code></h3>
+          <p><code>crossfade</code> 関数は <code>send</code> と <code>receive</code> という <a href="03-template-syntax.html">トランジション</a>のペアを作成します。ある要素が「送信」されると、それに対応する「受信」される要素を探し、その要素を相手の位置に変換してフェードアウトさせるトランジションを生成します。要素が「受信」されると、その逆が起こります。対応する要素がない場合は、<code>fallback</code> トランジションが使用されます。</p>
+          <p><code>crossfade</code> は下のパラメータを受け付けます:</p>
+          <ul>
+            <li><code>delay</code> (<code>number</code>, デフォルト 0) — 開始するまでのミリ秒</li>
+            <li><code>duration</code> (<code>number</code> | <code>function</code>, デフォルト 800) — トランジションが継続するミリ秒</li>
+            <li><code>easing</code> (<code>function</code>, デフォルト <code>cubicOut</code>) — <a href="04-run-time.html">イージング関数</a></li>
+            <li><code>fallback</code> (<code>function</code>) — 受信している要素に一致するものがない場合の送信時や、送信している要素がない場合の受信時に使用するフォールバック<a href="03-template-syntax.html">トランジション</a>です。</li>
+          </ul>
+          <pre class="language-sv"><code class="language-sv">&#x3C;script>
+	import { crossfade } from 'svelte/transition';
+	import { quintOut } from 'svelte/easing';
+
+	const [send, receive] = crossfade({
+		duration:1500,
+		easing: quintOut
+	});
+&#x3C;/script>
+
+{#if condition}
+	&#x3C;h1 in:send={{key}} out:receive={{key}}>BIG ELEM&#x3C;/h1>
+{:else}
+	&#x3C;small in:send={{key}} out:receive={{key}}>small elem&#x3C;/small>
+{/if}</code></pre>
+        </section>
+      </section>
+      <section id="svelteanimate" class="level2">
+        <h2><code>svelte/animate</code></h2>
+        <p><code>svelte/animate</code> モジュールは、Svelte <a href="/docs#template-syntax-element-directives-animate-fn">animations</a> で使用するための関数を1つエクスポートします。</p>
+        <section id="flip" class="level3">
+          <h3><code>flip</code></h3>
+          <pre class="language-sv"><code class="language-sv">animate:flip={params}</code></pre>
+          <p><code>flip</code> 関数は要素の開始位置と終了位置を計算し、その間で <code>x</code> と <code>y</code> の値を変換してアニメーションを行います。<code>flip</code> は <a href="https://aerotwist.com/blog/flip-your-animations/">First, Last, Invert, Play</a> の略です。</p>
+          <p><code>flip</code> は以下のパラメータを受け付けます。</p>
+          <ul>
+            <li><code>delay</code> (<code>number</code>, default 0) — 開始前の待ち時間のミリ秒</li>
+            <li><code>duration</code> (<code>number</code> | <code>function</code>, default <code>d => Math.sqrt(d) * 120</code>) — 下記を参照してください</li>
+            <li><code>easing</code> (<code>function</code>, default <code>cubicOut</code>) — <a href="04-run-time.html">イージング関数</a></li>
+          </ul>
+          <p><code>duration</code> は、以下のいずれかを指定することができます。</p>
+          <ul>
+            <li><code>number</code> はミリ秒単位です。</li>
+            <li>関数 <code>distance: number => duration: number</code> は、要素の移動距離をピクセル単位で受け取り、ミリ秒単位で返します。これにより、各要素の持続時間に対する移動距離を割り当てることができます。</li>
+          </ul>
+          <p><a href="/tutorial/animate">アニメーションのチュートリアル</a> で全ての例を見ることができます。</p>
+          <pre class="language-sv"><code class="language-sv">&#x3C;script>
+	import { flip } from 'svelte/animate';
+	import { quintOut } from 'svelte/easing';
+
+	let list = [1, 2, 3];
+&#x3C;/script>
+
+{#each list as n (n)}
+	&#x3C;div animate:flip="{{delay: 250, duration: 250, easing: quintOut}}">
+		{n}
+	&#x3C;/div>
+{/each}</code></pre>
+        </section>
+      </section>
+      <section id="svelteeasing" class="level2">
+        <h2><code>svelte/easing</code></h2>
+        <p>イージング関数は、時間の経過とともに変化する速度を指定するもので、Svelte に組み込まれたトランジションやアニメーション、tweened や spring ユーティリティの作業をする際に便利です。<code>svelte/easing</code> には、31の名前付きエクスポートが含まれています。<code>linear</code> イージング、10種類のイージング関数の3つのバリエーション <code>in</code>, <code>out</code>, <code>inOut</code> です。</p>
+        <p><a href="/examples">examples section</a> の <a href="/examples/easing">ease visualiser</a> で様々なイージングを試してみることができます。</p>
+        <p>
+          | ease | in | out | inOut |
+          | | --- | --- | --- |
+          | <strong>back</strong> | <code>backIn</code> | <code>backOut</code> | <code>backInOut</code> |
+          | <strong>bounce</strong> | <code>bounceIn</code> | <code>bounceOut</code> | <code>bounceInOut</code> |
+          | <strong>circ</strong> | <code>circIn</code> | <code>circOut</code> | <code>circInOut</code> |
+          | <strong>cubic</strong> | <code>cubicIn</code> | <code>cubicOut</code> | <code>cubicInOut</code> |
+          | <strong>elastic</strong> | <code>elasticIn</code> | <code>elasticOut</code> | <code>elasticInOut</code> |
+          | <strong>expo</strong> | <code>expoIn</code> | <code>expoOut</code> | <code>expoInOut</code> |
+          | <strong>quad</strong> | <code>quadIn</code> | <code>quadOut</code> | <code>quadInOut</code> |
+          | <strong>quart</strong> | <code>quartIn</code> | <code>quartOut</code> | <code>quartInOut</code> |
+          | <strong>quint</strong> | <code>quintIn</code> | <code>quintOut</code> | <code>quintInOut</code> |
+          | <strong>sine</strong> | <code>sineIn</code> | <code>sineOut</code> | <code>sineInOut</code> |
+        </p>
+      </section>
+      <section id="svelteregister" class="level2">
+        <h2><code>svelte/register</code></h2>
+        <p>Svelteコンポーネントをビルドせずに Node.js でレンダリングするには、<code>require('svelte/register')</code>を使います。その後 <code>require</code> を使って <code>.svelte</code> ファイルをインクルードすることができます。</p>
+        <pre class="language-js"><code class="language-js"><span class="token function">require</span><span class="token punctuation">(</span><span class="token string">'svelte/register'</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+<span class="token keyword">const</span> <span class="token maybe-class-name">App</span> <span class="token operator">=</span> <span class="token function">require</span><span class="token punctuation">(</span><span class="token string">'./App.svelte'</span><span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token keyword module">default</span><span class="token punctuation">;</span>
+
+<span class="token spread operator">...</span>
+
+<span class="token keyword">const</span> <span class="token punctuation">{</span> html<span class="token punctuation">,</span> css<span class="token punctuation">,</span> head <span class="token punctuation">}</span> <span class="token operator">=</span> <span class="token maybe-class-name">App</span><span class="token punctuation">.</span><span class="token method function property-access">render</span><span class="token punctuation">(</span><span class="token punctuation">{</span> <span class="token literal-property property">answer</span><span class="token operator">:</span> <span class="token number">42</span> <span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">;</span></code></pre>
+        <blockquote>
+          <p><code>.default</code>は、ネイティブの JavaScript モジュールから Node が認識する CommonJS モジュールに変換するために必要です。コンポーネントが JavaScript モジュールをインポートすると、Node での読み込みに失敗するので、代わりにバンドラを使う必要があることに注意してください。</p>
+        </blockquote>
+        <p>コンパイルオプションを設定したり、カスタムファイルの拡張子を使用したりするには、<code>register</code> フックを関数として呼び出します。</p>
+        <pre class="language-js"><code class="language-js"><span class="token function">require</span><span class="token punctuation">(</span><span class="token string">'svelte/register'</span><span class="token punctuation">)</span><span class="token punctuation">(</span><span class="token punctuation">{</span>
+  <span class="token literal-property property">extensions</span><span class="token operator">:</span> <span class="token punctuation">[</span><span class="token string">'.customextension'</span><span class="token punctuation">]</span><span class="token punctuation">,</span> <span class="token comment">// defaults to ['.html', '.svelte']</span>
+	<span class="token literal-property property">preserveComments</span><span class="token operator">:</span> <span class="token boolean">true</span>
+<span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">;</span></code></pre>
+      </section>
+      <section id="client-side-component-api" class="level2">
+        <h2>Client-side component API</h2>
+        <section id="creating-a-component" class="level3">
+          <h3>Creating a component</h3>
+          <pre class="language-js"><code class="language-js"><span class="token keyword">const</span> component <span class="token operator">=</span> <span class="token keyword">new</span> <span class="token class-name">Component</span><span class="token punctuation">(</span>options<span class="token punctuation">)</span></code></pre>
+          <p>クライアントサイドのコンポーネント、つまり <code>generate: 'dom'</code>（もしくは <code>generate</code> オプションを指定しないまま）でコンパイルされたコンポーネントは JavaScript のクラスです。</p>
+          <pre class="language-js"><code class="language-js"><span class="token keyword module">import</span> <span class="token imports"><span class="token maybe-class-name">App</span></span> <span class="token keyword module">from</span> <span class="token string">'./App.svelte'</span><span class="token punctuation">;</span>
+
+<span class="token keyword">const</span> app <span class="token operator">=</span> <span class="token keyword">new</span> <span class="token class-name">App</span><span class="token punctuation">(</span><span class="token punctuation">{</span>
+	<span class="token literal-property property">target</span><span class="token operator">:</span> <span class="token dom variable">document</span><span class="token punctuation">.</span><span class="token property-access">body</span><span class="token punctuation">,</span>
+	<span class="token literal-property property">props</span><span class="token operator">:</span> <span class="token punctuation">{</span>
+		<span class="token comment">// App.svelte に `export let answer` のようなものが</span>
+		<span class="token comment">// 含まれていると仮定:</span>
+		<span class="token literal-property property">answer</span><span class="token operator">:</span> <span class="token number">42</span>
+	<span class="token punctuation">}</span>
+<span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">;</span></code></pre>
+          <p>以下の初期化オプションを与えることができます。</p>
+          <p>
+            | オプション | デフォルト | 説明 |
+            | | --- | --- |
+            | <code>target</code> | <strong>none</strong> | レンダリング先の <code>HTMLElement</code> または <code>ShadowRoot</code>。このオプションは必須です
+            | <code>anchor</code> | <code>null</code> | <code>target</code> の子要素。これのすぐ前にコンポーネントがレンダリングされます
+            | <code>props</code> | <code>{}</code> | コンポーネントに渡すプロパティのオブジェクト
+            | <code>context</code> | <code>new Map()</code> | コンポーネントに提供するルートレベルの context のキーと値のペアの <code>Map</code>
+            | <code>hydrate</code> | <code>false</code> | 下記参照
+            | <code>intro</code> | <code>false</code> | <code>true</code> なら、その後の状態変化を待つのではなく、初回レンダリング時にトランジションを再生します。
+          </p>
+          <p><code>target</code> の既存の子要素はそのまま残されます。</p>
+          <p><code>hydrate</code> オプションは、新しい要素を作成するのではなく、既存の DOM を（大抵はサーバーサイドレンダリングから）アップグレードするよう Svelte に指示します。これはコンポーネントが <a href="05-compile-time.html"><code>hydratable: true</code> のオプション</a> でコンパイルされた場合にのみ機能します。<code>&#x3C;head></code> 要素のハイドレーションは、サーバーサイドレンダリングのコードも <code>hydratable: true</code> を使ってコンパイルされた場合にのみ適切に動作します。これは <code>head</code> 内の各要素にマーカーを追加して、コンポーネントがハイドレーション中にどの要素を除去すべきかを認識できるようにします。</p>
+          <p>通常、<code>target</code> の子要素はそのまま残されますが、<code>hydrate: true</code> ではすべての子要素が削除されます。そのため <code>anchor</code> オプションは <code>hydrate: true</code> と一緒に使用できません。</p>
+          <p>既存の DOM はコンポーネントと一致している必要はありません。Svelte は DOM をそのまま「修復」します。</p>
+          <pre class="language-js"><code class="language-js"><span class="token keyword module">import</span> <span class="token imports"><span class="token maybe-class-name">App</span></span> <span class="token keyword module">from</span> <span class="token string">'./App.svelte'</span><span class="token punctuation">;</span>
+
+<span class="token keyword">const</span> app <span class="token operator">=</span> <span class="token keyword">new</span> <span class="token class-name">App</span><span class="token punctuation">(</span><span class="token punctuation">{</span>
+	<span class="token literal-property property">target</span><span class="token operator">:</span> <span class="token dom variable">document</span><span class="token punctuation">.</span><span class="token method function property-access">querySelector</span><span class="token punctuation">(</span><span class="token string">'#server-rendered-html'</span><span class="token punctuation">)</span><span class="token punctuation">,</span>
+	<span class="token literal-property property">hydrate</span><span class="token operator">:</span> <span class="token boolean">true</span>
+<span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">;</span></code></pre>
+        </section>
+        <section id="set" class="level3">
+          <h3><code>$set</code></h3>
+          <pre class="language-js"><code class="language-js">component<span class="token punctuation">.</span><span class="token method function property-access">$set</span><span class="token punctuation">(</span>props<span class="token punctuation">)</span></code></pre>
+          <p>プログラムでインスタンスにプロパティ(props)をセットします。<code>component.$set({ x: 1 })</code> はコンポーネントの <code>&#x3C;script></code> ブロック内の <code>x = 1</code> と同じです。</p>
+          <p>このメソッドを呼ぶと次のマイクロタスクに更新がスケジュールされます。DOM は同期的に更新<em>されません</em>。</p>
+          <pre class="language-js"><code class="language-js">component<span class="token punctuation">.</span><span class="token method function property-access">$set</span><span class="token punctuation">(</span><span class="token punctuation">{</span> <span class="token literal-property property">answer</span><span class="token operator">:</span> <span class="token number">42</span> <span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">;</span></code></pre>
+        </section>
+        <section id="on" class="level3">
+          <h3><code>$on</code></h3>
+          <pre class="language-js"><code class="language-js">component<span class="token punctuation">.</span><span class="token method function property-access">$on</span><span class="token punctuation">(</span>event<span class="token punctuation">,</span> callback<span class="token punctuation">)</span></code></pre>
+          <p>コンポーネントが <code>event</code> をディスパッチするたびに、<code>callback</code> 関数が呼び出されるようにします。</p>
+          <p>呼び出されたときにイベントリスナーを削除する関数が返されます。</p>
+          <pre class="language-js"><code class="language-js"><span class="token keyword">const</span> off <span class="token operator">=</span> app<span class="token punctuation">.</span><span class="token method function property-access">$on</span><span class="token punctuation">(</span><span class="token string">'selected'</span><span class="token punctuation">,</span> <span class="token parameter">event</span> <span class="token arrow operator">=></span> <span class="token punctuation">{</span>
+	<span class="token console class-name">console</span><span class="token punctuation">.</span><span class="token method function property-access">log</span><span class="token punctuation">(</span>event<span class="token punctuation">.</span><span class="token property-access">detail</span><span class="token punctuation">.</span><span class="token property-access">selection</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+<span class="token function">off</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span></code></pre>
+        </section>
+        <section id="destroy" class="level3">
+          <h3><code>$destroy</code></h3>
+          <pre class="language-js"><code class="language-js">component<span class="token punctuation">.</span><span class="token method function property-access">$destroy</span><span class="token punctuation">(</span><span class="token punctuation">)</span></code></pre>
+          <p>DOM からコンポーネントを削除し、すべての <code>onDestroy</code> ハンドラをトリガします。</p>
+        </section>
+        <section id="component-props" class="level3">
+          <h3>Component props</h3>
+          <pre class="language-js"><code class="language-js">component<span class="token punctuation">.</span><span class="token property-access">prop</span></code></pre>
+          <pre class="language-js"><code class="language-js">component<span class="token punctuation">.</span><span class="token property-access">prop</span> <span class="token operator">=</span> value</code></pre>
+          <p>コンポーネントが <code>accessors: true</code> でコンパイルされている場合、各インスタンスはコンポーネントの各プロパティ(props)に対するゲッターとセッターを持ちます。値をセットすると（<code>component.$set(...)</code> によって起こるデフォルトの非同期更新ではなく）、<em>同期的な</em>更新が起こります。</p>
+          <p>カスタム要素としてコンパイルする場合を除き、デフォルトでは <code>accessors</code> は <code>false</code> です。</p>
+          <pre class="language-js"><code class="language-js"><span class="token console class-name">console</span><span class="token punctuation">.</span><span class="token method function property-access">log</span><span class="token punctuation">(</span>app<span class="token punctuation">.</span><span class="token property-access">count</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+app<span class="token punctuation">.</span><span class="token property-access">count</span> <span class="token operator">+=</span> <span class="token number">1</span><span class="token punctuation">;</span></code></pre>
+        </section>
+      </section>
+      <section id="custom-element-api" class="level2">
+        <h2>Custom element API</h2>
+        <p>Svelte コンポーネントは、<code>customElement: true</code> コンパイラオプションを使ってカスタム要素 (別名Webコンポーネント) にコンパイルすることもできます。コンポーネントのタグ名は <code>&#x3C;svelte:options></code> <a href="03-template-syntax.html">element</a> で指定する必要があります。</p>
+        <pre class="language-sv"><code class="language-sv">&#x3C;svelte:options tag="my-element" />
+
+&#x3C;script>
+	export let name = 'world';
+&#x3C;/script>
+
+&#x3C;h1>Hello {name}!&#x3C;/h1>
+&#x3C;slot>&#x3C;/slot></code></pre>
+        <p>あるいは、<code>tag={null}</code> を使って、カスタム要素の利用者がそれに名前を付けるべきであることを示します。</p>
+        <pre class="language-js"><code class="language-js"><span class="token keyword module">import</span> <span class="token imports"><span class="token maybe-class-name">MyElement</span></span> <span class="token keyword module">from</span> <span class="token string">'./MyElement.svelte'</span><span class="token punctuation">;</span>
+
+customElements<span class="token punctuation">.</span><span class="token method function property-access">define</span><span class="token punctuation">(</span><span class="token string">'my-element'</span><span class="token punctuation">,</span> <span class="token maybe-class-name">MyElement</span><span class="token punctuation">)</span><span class="token punctuation">;</span></code></pre>
+        <p>一度カスタム要素が定義されると、それを通常の DOM 要素として使用することができます。</p>
+        <pre class="language-js"><code class="language-js"><span class="token dom variable">document</span><span class="token punctuation">.</span><span class="token property-access">body</span><span class="token punctuation">.</span><span class="token property-access">innerHTML</span> <span class="token operator">=</span> <span class="token template-string"><span class="token template-punctuation string">`</span><span class="token html language-html">
+	<span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;</span>my-element</span><span class="token punctuation">></span></span>
+		<span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;</span>p</span><span class="token punctuation">></span></span>This is some slotted content<span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;/</span>p</span><span class="token punctuation">></span></span>
+	<span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;/</span>my-element</span><span class="token punctuation">></span></span>
+</span><span class="token template-punctuation string">`</span></span><span class="token punctuation">;</span></code></pre>
+        <p>デフォルトでは、カスタム要素は <code>accessors: true</code> でコンパイルされます。これは、任意の <a href="03-template-syntax.html">プロパティ</a> が DOM 要素のプロパティとして公開されることを意味します (また、可能であれば属性として読み書き可能です)。</p>
+        <p>これを防ぐには、<code>&#x3C;svelte:options></code> に <code>accessors={false}</code> を追加します。</p>
+        <pre class="language-js"><code class="language-js"><span class="token keyword">const</span> el <span class="token operator">=</span> <span class="token dom variable">document</span><span class="token punctuation">.</span><span class="token method function property-access">querySelector</span><span class="token punctuation">(</span><span class="token string">'my-element'</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+<span class="token comment">// get the current value of the 'name' prop</span>
+<span class="token console class-name">console</span><span class="token punctuation">.</span><span class="token method function property-access">log</span><span class="token punctuation">(</span>el<span class="token punctuation">.</span><span class="token property-access">name</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+<span class="token comment">// set a new value, updating the shadow DOM</span>
+el<span class="token punctuation">.</span><span class="token property-access">name</span> <span class="token operator">=</span> <span class="token string">'everybody'</span><span class="token punctuation">;</span></code></pre>
+        <p>カスタム要素は、非Svelteアプリで利用するためのコンポーネントをパッケージ化するのに便利な方法です。それらは純粋な HTML と JavaScript の同様に、<a href="https://custom-elements-everywhere.com/">ほとんどのフレームワーク</a> でも動作します。しかし、注意すべき重要な違いがいくつかあります。</p>
+        <ul>
+          <li>スタイルは単なる <em>scoped</em> ではなく <em>encapsulated（カプセル化）</em> です。これは、<code>:global(...)</code> 修飾子を持つスタイルを含む、コンポーネントにはないスタイル (<code>global.css</code> ファイルにあるような) はカスタム要素には適用されないことを意味します。</li>
+          <li>スタイルは、別の .css ファイルとして抽出されるのではなく、JavaScript の文字列としてコンポーネントにインライン化されます。</li>
+          <li>JavaScript が読み込まれるまでシャドウ DOM は見えないので、カスタム要素は一般的にサーバーサイドのレンダリングには適していません。</li>
+          <li>Svelte では、スロットコンテンツは <em>遅延して</em> レンダリングされます。DOMでは <em>先行して</em> レンダリングします。言い換えれば、コンポーネントの <code>&#x3C;slot></code> 要素が <code>{#if ...}</code> ブロックの中にあっても、常に作成されます。同様に、<code>{#each ...}</code> ブロックの中に <code>&#x3C;slot></code> 要素を含めても、スロットの内容が何度もレンダリングされることはありません。</li>
+          <li><code>let:</code> ディレクティブは何の効果もありません。</li>
+          <li>古いブラウザをサポートするにはポリフィルが必要です。</li>
+        </ul>
+      </section>
+      <section id="server-side-component-api" class="level2">
+        <h2>Server-side component API</h2>
+        <pre class="language-js"><code class="language-js"><span class="token keyword">const</span> result <span class="token operator">=</span> <span class="token maybe-class-name">Component</span><span class="token punctuation">.</span><span class="token method function property-access">render</span><span class="token punctuation">(</span><span class="token spread operator">...</span><span class="token punctuation">)</span></code></pre>
+        <p>クライアント側のコンポーネントとは異なり、サーバー側のコンポーネントはレンダリングしてもライフサイクルがありません。-- それらは HTML と CSS を作成するのが仕事です。そのため API が多少異なります。</p>
+        <p>サーバーサイドコンポーネントは任意のプロパティ(props)と一緒に呼びだせる <code>render</code> メソッドを公開しています。これは <code>head</code>、 <code>html</code>、 <code>css</code> プロパティを持つオブジェクトを返します。この <code>head</code> は見つけた <code>&#x3C;svelte:head></code> 要素の内容を含みます。</p>
+        <p>Svelte コンポーネントを直接 Node にインポートするには、<a href="04-run-time.html"><code>svelte/register</code></a> を使ってください。</p>
+        <pre class="language-js"><code class="language-js"><span class="token function">require</span><span class="token punctuation">(</span><span class="token string">'svelte/register'</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+<span class="token keyword">const</span> <span class="token maybe-class-name">App</span> <span class="token operator">=</span> <span class="token function">require</span><span class="token punctuation">(</span><span class="token string">'./App.svelte'</span><span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token keyword module">default</span><span class="token punctuation">;</span>
+
+<span class="token keyword">const</span> <span class="token punctuation">{</span> head<span class="token punctuation">,</span> html<span class="token punctuation">,</span> css <span class="token punctuation">}</span> <span class="token operator">=</span> <span class="token maybe-class-name">App</span><span class="token punctuation">.</span><span class="token method function property-access">render</span><span class="token punctuation">(</span><span class="token punctuation">{</span>
+	<span class="token literal-property property">answer</span><span class="token operator">:</span> <span class="token number">42</span>
+<span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">;</span></code></pre>
+        <p><code>.render()</code> メソッドは以下のパラメータを受け付けます:</p>
+        <p>
+          | パラメータ | デフォルト | 説明 |
+          | | --- | --- |
+          | <code>props</code> | <code>{}</code> | コンポーネントに渡すプロパティのオブジェクト
+          | <code>options</code> | <code>{}</code> | オプションのオブジェクト
+        </p>
+        <p><code>options</code> オブジェクトは、以下のオプションを取ります:</p>
+        <p>
+          | オプション | デフォルト | 説明 |
+          | | --- | --- |
+          | <code>context</code> | <code>new Map()</code> | コンポーネントに提供するルートレベルの context のキーと値のペアの <code>Map</code>
+        </p>
+        <pre class="language-js"><code class="language-js"><span class="token keyword">const</span> <span class="token punctuation">{</span> head<span class="token punctuation">,</span> html<span class="token punctuation">,</span> css <span class="token punctuation">}</span> <span class="token operator">=</span> <span class="token maybe-class-name">App</span><span class="token punctuation">.</span><span class="token method function property-access">render</span><span class="token punctuation">(</span>
+	<span class="token comment">// props</span>
+	<span class="token punctuation">{</span> <span class="token literal-property property">answer</span><span class="token operator">:</span> <span class="token number">42</span> <span class="token punctuation">}</span><span class="token punctuation">,</span>
+	<span class="token comment">// options</span>
+	<span class="token punctuation">{</span>
+		<span class="token literal-property property">context</span><span class="token operator">:</span> <span class="token keyword">new</span> <span class="token class-name">Map</span><span class="token punctuation">(</span><span class="token punctuation">[</span><span class="token punctuation">[</span><span class="token string">'context-key'</span><span class="token punctuation">,</span> <span class="token string">'context-value'</span><span class="token punctuation">]</span><span class="token punctuation">]</span><span class="token punctuation">)</span>
+	<span class="token punctuation">}</span>
+<span class="token punctuation">)</span><span class="token punctuation">;</span></code></pre>
+        <p><span style="float: footnote;"><a href="./index.html#toc">Go to TOC</a></span></p>
+      </section>
+    </section>
+  </body>
+</html>

@@ -1,0 +1,224 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <title>Continuous Integration</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="https://raw.githubusercontent.com/shinokada/prism-coy-theme/main/theme_common.css">
+  </head>
+  <body>
+    <section id="continuous-integration" class="level1">
+      <h1>Continuous Integration</h1>
+      <p>pnpm can easily be used in various continuous integration systems.</p>
+      <section id="travis" class="level2">
+        <h2>Travis</h2>
+        <p>
+          On [Travis CI], you can use pnpm for installing your dependencies by adding this
+          to your <code>.travis.yml</code> file:
+        </p>
+        <figure class="language-yaml">
+          <figcaption>.travis.yml</figcaption>
+          <pre class="language-yaml"><code class="language-yaml"><span class="token key atrule">cache</span><span class="token punctuation">:</span>
+  <span class="token key atrule">npm</span><span class="token punctuation">:</span> <span class="token boolean important">false</span>
+  <span class="token key atrule">directories</span><span class="token punctuation">:</span>
+    <span class="token punctuation">-</span> ~/.pnpm<span class="token punctuation">-</span>store
+<span class="token key atrule">before_install</span><span class="token punctuation">:</span>
+  <span class="token punctuation">-</span> curl <span class="token punctuation">-</span>f https<span class="token punctuation">:</span>//get.pnpm.io/v6.16.js <span class="token punctuation">|</span> node <span class="token punctuation">-</span> add <span class="token punctuation">-</span><span class="token punctuation">-</span>global pnpm@7
+  <span class="token punctuation">-</span> pnpm config set store<span class="token punctuation">-</span>dir ~/.pnpm<span class="token punctuation">-</span>store
+<span class="token key atrule">install</span><span class="token punctuation">:</span>
+  <span class="token punctuation">-</span> pnpm install</code></pre>
+        </figure>
+        <p><a href="https://travis-ci.org">Travis CI</a></p>
+      </section>
+      <section id="semaphore" class="level2">
+        <h2>Semaphore</h2>
+        <p>
+          On [Semaphore], you can use pnpm for installing and caching your dependencies by
+          adding this to your <code>.semaphore/semaphore.yml</code> file:
+        </p>
+        <figure class="language-yaml">
+          <figcaption>.semaphore/semaphore.yml</figcaption>
+          <pre class="language-yaml"><code class="language-yaml"><span class="token key atrule">version</span><span class="token punctuation">:</span> v1.0
+<span class="token key atrule">name</span><span class="token punctuation">:</span> Semaphore CI pnpm example
+<span class="token key atrule">agent</span><span class="token punctuation">:</span>
+  <span class="token key atrule">machine</span><span class="token punctuation">:</span>
+    <span class="token key atrule">type</span><span class="token punctuation">:</span> e1<span class="token punctuation">-</span>standard<span class="token punctuation">-</span><span class="token number">2</span>
+    <span class="token key atrule">os_image</span><span class="token punctuation">:</span> ubuntu1804
+<span class="token key atrule">blocks</span><span class="token punctuation">:</span>
+  <span class="token punctuation">-</span> <span class="token key atrule">name</span><span class="token punctuation">:</span> Install dependencies
+    <span class="token key atrule">task</span><span class="token punctuation">:</span>
+      <span class="token key atrule">jobs</span><span class="token punctuation">:</span>
+        <span class="token punctuation">-</span> <span class="token key atrule">name</span><span class="token punctuation">:</span> pnpm install
+          <span class="token key atrule">commands</span><span class="token punctuation">:</span>
+            <span class="token punctuation">-</span> curl <span class="token punctuation">-</span>f https<span class="token punctuation">:</span>//get.pnpm.io/v6.16.js <span class="token punctuation">|</span> node <span class="token punctuation">-</span> add <span class="token punctuation">-</span><span class="token punctuation">-</span>global pnpm@7
+            <span class="token punctuation">-</span> checkout
+            <span class="token punctuation">-</span> cache restore node<span class="token punctuation">-</span>$(checksum pnpm<span class="token punctuation">-</span>lock.yaml)
+            <span class="token punctuation">-</span> pnpm install
+            <span class="token punctuation">-</span> cache store node<span class="token punctuation">-</span>$(checksum pnpm<span class="token punctuation">-</span>lock.yaml) $(pnpm store path)</code></pre>
+        </figure>
+        <p><a href="https://semaphoreci.com">Semaphore</a></p>
+      </section>
+      <section id="appveyor" class="level2">
+        <h2>AppVeyor</h2>
+        <p>
+          On [AppVeyor], you can use pnpm for installing your dependencies by adding this
+          to your <code>appveyor.yml</code>:
+        </p>
+        <figure class="language-yaml">
+          <figcaption>appveyor.yml</figcaption>
+          <pre class="language-yaml"><code class="language-yaml"><span class="token key atrule">install</span><span class="token punctuation">:</span>
+  <span class="token punctuation">-</span> <span class="token key atrule">ps</span><span class="token punctuation">:</span> Install<span class="token punctuation">-</span>Product node $env<span class="token punctuation">:</span>nodejs_version
+  <span class="token punctuation">-</span> curl <span class="token punctuation">-</span>f https<span class="token punctuation">:</span>//get.pnpm.io/v6.16.js <span class="token punctuation">|</span> node <span class="token punctuation">-</span> add <span class="token punctuation">-</span><span class="token punctuation">-</span>global pnpm@7
+  <span class="token punctuation">-</span> pnpm install</code></pre>
+        </figure>
+        <p><a href="https://www.appveyor.com">AppVeyor</a></p>
+      </section>
+      <section id="github-actions" class="level2">
+        <h2>GitHub Actions</h2>
+        <p>
+          On GitHub Actions, you can use pnpm for installing and caching your dependencies
+          like so (belongs in <code>.github/workflows/NAME.yml</code>):
+        </p>
+        <figure class="language-yaml">
+          <figcaption>.github/workflows/NAME.yml</figcaption>
+          <pre class="language-yaml"><code class="language-yaml"><span class="token key atrule">name</span><span class="token punctuation">:</span> pnpm Example Workflow
+<span class="token key atrule">on</span><span class="token punctuation">:</span>
+  <span class="token key atrule">push</span><span class="token punctuation">:</span>
+<span class="token key atrule">jobs</span><span class="token punctuation">:</span>
+  <span class="token key atrule">build</span><span class="token punctuation">:</span>
+    <span class="token key atrule">runs-on</span><span class="token punctuation">:</span> ubuntu<span class="token punctuation">-</span><span class="token number">20.04</span>
+    <span class="token key atrule">strategy</span><span class="token punctuation">:</span>
+      <span class="token key atrule">matrix</span><span class="token punctuation">:</span>
+        <span class="token key atrule">node-version</span><span class="token punctuation">:</span> <span class="token punctuation">[</span><span class="token number">15</span><span class="token punctuation">]</span>
+    <span class="token key atrule">steps</span><span class="token punctuation">:</span>
+    <span class="token punctuation">-</span> <span class="token key atrule">uses</span><span class="token punctuation">:</span> actions/checkout@v3
+    <span class="token punctuation">-</span> <span class="token key atrule">uses</span><span class="token punctuation">:</span> pnpm/action<span class="token punctuation">-</span>setup@v2
+      <span class="token key atrule">with</span><span class="token punctuation">:</span>
+        <span class="token key atrule">version</span><span class="token punctuation">:</span> <span class="token number">7</span>
+    <span class="token punctuation">-</span> <span class="token key atrule">name</span><span class="token punctuation">:</span> Use Node.js $<span class="token punctuation">{</span><span class="token punctuation">{</span> matrix.node<span class="token punctuation">-</span>version <span class="token punctuation">}</span><span class="token punctuation">}</span>
+      <span class="token key atrule">uses</span><span class="token punctuation">:</span> actions/setup<span class="token punctuation">-</span>node@v3
+      <span class="token key atrule">with</span><span class="token punctuation">:</span>
+        <span class="token key atrule">node-version</span><span class="token punctuation">:</span> $<span class="token punctuation">{</span><span class="token punctuation">{</span> matrix.node<span class="token punctuation">-</span>version <span class="token punctuation">}</span><span class="token punctuation">}</span>
+        <span class="token key atrule">cache</span><span class="token punctuation">:</span> <span class="token string">'pnpm'</span>
+    <span class="token punctuation">-</span> <span class="token key atrule">name</span><span class="token punctuation">:</span> Install dependencies
+      <span class="token key atrule">run</span><span class="token punctuation">:</span> pnpm install</code></pre>
+        </figure>
+        <blockquote>
+          <p>Caching packages dependencies with <code>actions/setup-node@v2</code> requires you to install pnpm with version <strong>6.10+</strong>.</p>
+        </blockquote>
+      </section>
+      <section id="gitlab-ci" class="level2">
+        <h2>GitLab CI</h2>
+        <p>
+          On GitLab, you can use pnpm for installing and caching your dependencies
+          like so (belongs in <code>.gitlab-ci.yml</code>):
+        </p>
+        <figure class="language-yaml">
+          <figcaption>.gitlab-ci.yml</figcaption>
+          <pre class="language-yaml"><code class="language-yaml"><span class="token key atrule">stages</span><span class="token punctuation">:</span>
+  <span class="token punctuation">-</span> build
+
+<span class="token key atrule">build</span><span class="token punctuation">:</span>
+  <span class="token key atrule">stage</span><span class="token punctuation">:</span> build
+  <span class="token key atrule">image</span><span class="token punctuation">:</span> node<span class="token punctuation">:</span>14.16.0<span class="token punctuation">-</span>buster
+  <span class="token key atrule">before_script</span><span class="token punctuation">:</span>
+    <span class="token punctuation">-</span> curl <span class="token punctuation">-</span>f https<span class="token punctuation">:</span>//get.pnpm.io/v6.16.js <span class="token punctuation">|</span> node <span class="token punctuation">-</span> add <span class="token punctuation">-</span><span class="token punctuation">-</span>global pnpm@7
+    <span class="token punctuation">-</span> pnpm config set store<span class="token punctuation">-</span>dir .pnpm<span class="token punctuation">-</span>store
+  <span class="token key atrule">script</span><span class="token punctuation">:</span>
+    <span class="token punctuation">-</span> pnpm install <span class="token comment"># install dependencies</span>
+  <span class="token key atrule">cache</span><span class="token punctuation">:</span>
+    <span class="token key atrule">key</span><span class="token punctuation">:</span>
+      <span class="token key atrule">files</span><span class="token punctuation">:</span>
+        <span class="token punctuation">-</span> pnpm<span class="token punctuation">-</span>lock.yaml
+    <span class="token key atrule">paths</span><span class="token punctuation">:</span>
+      <span class="token punctuation">-</span> .pnpm<span class="token punctuation">-</span>store</code></pre>
+        </figure>
+      </section>
+      <section id="bitbucket-pipelines" class="level2">
+        <h2>Bitbucket Pipelines</h2>
+        <p>You can use pnpm for installing and caching your dependencies:</p>
+        <figure class="language-yaml">
+          <figcaption>.bitbucket-pipelines.yml</figcaption>
+          <pre class="language-yaml"><code class="language-yaml"><span class="token key atrule">definitions</span><span class="token punctuation">:</span>
+  <span class="token key atrule">caches</span><span class="token punctuation">:</span>
+    <span class="token key atrule">pnpm</span><span class="token punctuation">:</span> $BITBUCKET_CLONE_DIR/.pnpm<span class="token punctuation">-</span>store
+
+<span class="token key atrule">pipelines</span><span class="token punctuation">:</span>
+  <span class="token key atrule">pull-requests</span><span class="token punctuation">:</span>
+    <span class="token important">**:</span>
+      <span class="token punctuation">-</span> <span class="token key atrule">step</span><span class="token punctuation">:</span>
+          <span class="token key atrule">name</span><span class="token punctuation">:</span> Build and test
+          <span class="token key atrule">image</span><span class="token punctuation">:</span> node<span class="token punctuation">:</span>14.16.0
+          <span class="token key atrule">script</span><span class="token punctuation">:</span>
+            <span class="token punctuation">-</span> curl <span class="token punctuation">-</span>f https<span class="token punctuation">:</span>//get.pnpm.io/v6.16.js <span class="token punctuation">|</span> node <span class="token punctuation">-</span> add <span class="token punctuation">-</span><span class="token punctuation">-</span>global pnpm@7
+            <span class="token punctuation">-</span> pnpm install
+            <span class="token punctuation">-</span> pnpm run build <span class="token comment"># Replace with your build/test…etc. commands</span>
+          <span class="token key atrule">caches</span><span class="token punctuation">:</span>
+            <span class="token punctuation">-</span> pnpm</code></pre>
+        </figure>
+      </section>
+      <section id="azure-pipelines" class="level2">
+        <h2>Azure Pipelines</h2>
+        <p>On Azure Pipelines, you can use pnpm for installing and caching your dependencies by adding this to your <code>azure-pipelines.yml</code>:</p>
+        <figure class="language-yaml">
+          <figcaption>azure-pipelines.yml</figcaption>
+          <pre class="language-yaml"><code class="language-yaml"><span class="token key atrule">variables</span><span class="token punctuation">:</span>
+  <span class="token key atrule">pnpm_config_cache</span><span class="token punctuation">:</span> $(Pipeline.Workspace)/.pnpm<span class="token punctuation">-</span>store
+
+<span class="token key atrule">steps</span><span class="token punctuation">:</span>
+  <span class="token punctuation">-</span> <span class="token key atrule">task</span><span class="token punctuation">:</span> Cache@2
+    <span class="token key atrule">inputs</span><span class="token punctuation">:</span>
+      <span class="token key atrule">key</span><span class="token punctuation">:</span> <span class="token string">'pnpm | $(Agent.OS) | pnpm-lock.yaml'</span>
+      <span class="token key atrule">path</span><span class="token punctuation">:</span> $(pnpm_config_cache)
+    <span class="token key atrule">displayName</span><span class="token punctuation">:</span> Cache pnpm
+
+  <span class="token punctuation">-</span> <span class="token key atrule">script</span><span class="token punctuation">:</span> <span class="token punctuation">|</span><span class="token scalar string">
+      curl -f https://get.pnpm.io/v6.16.js | node - add --global pnpm@7
+      pnpm config set store-dir $(pnpm_config_cache)</span>
+    <span class="token key atrule">displayName</span><span class="token punctuation">:</span> Setup pnpm
+
+  <span class="token punctuation">-</span> <span class="token key atrule">script</span><span class="token punctuation">:</span> <span class="token punctuation">|</span><span class="token scalar string">
+      pnpm install
+      pnpm run build</span>
+    <span class="token key atrule">displayName</span><span class="token punctuation">:</span> pnpm install and build</code></pre>
+        </figure>
+      </section>
+      <section id="circleci" class="level2">
+        <h2>CircleCI</h2>
+        <p>On CircleCI, you can use pnpm for installing and caching your dependencies by adding this to your <code>.circleci/config.yml</code>:</p>
+        <figure class="language-yaml">
+          <figcaption>.circleci/config.yml</figcaption>
+          <pre class="language-yaml"><code class="language-yaml"><span class="token key atrule">version</span><span class="token punctuation">:</span> <span class="token number">2.1</span>
+
+<span class="token key atrule">jobs</span><span class="token punctuation">:</span>
+  <span class="token key atrule">build</span><span class="token punctuation">:</span> <span class="token comment"># this can be any name you choose</span>
+    <span class="token key atrule">docker</span><span class="token punctuation">:</span>
+      <span class="token punctuation">-</span> <span class="token key atrule">image</span><span class="token punctuation">:</span> node<span class="token punctuation">:</span><span class="token number">18</span>
+    <span class="token key atrule">resource_class</span><span class="token punctuation">:</span> large
+    <span class="token key atrule">parallelism</span><span class="token punctuation">:</span> <span class="token number">10</span>
+
+    <span class="token key atrule">steps</span><span class="token punctuation">:</span>
+      <span class="token punctuation">-</span> checkout
+      <span class="token punctuation">-</span> <span class="token key atrule">restore_cache</span><span class="token punctuation">:</span>
+          <span class="token key atrule">name</span><span class="token punctuation">:</span> Restore pnpm Package Cache
+          <span class="token key atrule">keys</span><span class="token punctuation">:</span>
+            <span class="token punctuation">-</span> pnpm<span class="token punctuation">-</span>packages<span class="token punctuation">-</span><span class="token punctuation">{</span><span class="token punctuation">{</span> checksum pnpm<span class="token punctuation">-</span>lock.yaml <span class="token punctuation">}</span><span class="token punctuation">}</span>
+      <span class="token punctuation">-</span> <span class="token key atrule">run</span><span class="token punctuation">:</span>
+          <span class="token key atrule">name</span><span class="token punctuation">:</span> Install pnpm package manager
+          <span class="token key atrule">command</span><span class="token punctuation">:</span> <span class="token punctuation">|</span><span class="token scalar string">
+            curl -L https://pnpm.js.org/pnpm.js | node - add --global pnpm@7</span>
+      <span class="token punctuation">-</span> <span class="token key atrule">run</span><span class="token punctuation">:</span>
+          <span class="token key atrule">name</span><span class="token punctuation">:</span> Install Dependencies
+          <span class="token key atrule">command</span><span class="token punctuation">:</span> <span class="token punctuation">|</span><span class="token scalar string">
+            pnpm install</span>
+      <span class="token punctuation">-</span> <span class="token key atrule">save_cache</span><span class="token punctuation">:</span>
+          <span class="token key atrule">name</span><span class="token punctuation">:</span> Save pnpm Package Cache
+          <span class="token key atrule">key</span><span class="token punctuation">:</span> pnpm<span class="token punctuation">-</span>packages<span class="token punctuation">-</span><span class="token punctuation">{</span><span class="token punctuation">{</span> checksum pnpm<span class="token punctuation">-</span>lock.yaml <span class="token punctuation">}</span><span class="token punctuation">}</span>
+          <span class="token key atrule">paths</span><span class="token punctuation">:</span>
+            <span class="token punctuation">-</span> node_modules</code></pre>
+        </figure>
+        <p><span style="float: footnote;"><a href="./index.html#toc">Go to TOC</a></span></p>
+      </section>
+    </section>
+  </body>
+</html>

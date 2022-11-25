@@ -1,0 +1,239 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <title>Reporter</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="https://raw.githubusercontent.com/shinokada/prism-coy-theme/main/theme_common.css">
+  </head>
+  <body>
+    <section id="reporter" class="level1">
+      <h1>Reporter</h1>
+      <section id="reporting-protocol" class="level2">
+        <h2>Reporting protocol</h2>
+        <section id="format" class="level3">
+          <h3>Format</h3>
+          <pre class="language-text"><code class="language-text">&#x3C;RS>key1:value1&#x3C;US>key2:value2&#x3C;US>key3:value3&#x3C;US>...&#x3C;ETB>
+&#x3C;RS>key1:value1&#x3C;US>key2:value2&#x3C;US>key3:value3&#x3C;US>...&#x3C;ETB>
+&#x3C;RS>key1:value1&#x3C;US>key2:value2&#x3C;US>key3:value3&#x3C;US>...&#x3C;ETB>
+...</code></pre>
+          <ul>
+            <li>The value may contain newlines.</li>
+            <li>Ignore data that is not enclosed in <code>RS</code> and <code>ETB</code>.
+              <ul>
+                <li>Note: The reporter will output the ignored data as is.</li>
+              </ul>
+            </li>
+            <li>The <code>RS</code>, <code>US</code>, and <code>ETB</code> in the value must be removed.</li>
+          </ul>
+        </section>
+        <section id="structure" class="level3">
+          <h3>Structure</h3>
+          <table>
+            <thead>
+              <tr>
+                <th>pair</th>
+                <th>type</th>
+                <th>number of times</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td></td>
+                <td>meta</td>
+                <td>1</td>
+              </tr>
+              <tr>
+                <td>+-----</td>
+                <td>begin</td>
+                <td>0..N (number of specfiles)</td>
+              </tr>
+              <tr>
+                <td>:　+--</td>
+                <td>example</td>
+                <td>0..N</td>
+              </tr>
+              <tr>
+                <td>:　:</td>
+                <td>statement</td>
+                <td>0..N</td>
+              </tr>
+              <tr>
+                <td>:　+--</td>
+                <td>result</td>
+                <td>same number of times as example</td>
+              </tr>
+              <tr>
+                <td>+-----</td>
+                <td>end</td>
+                <td>same number of times as begin</td>
+              </tr>
+              <tr>
+                <td></td>
+                <td>finished</td>
+                <td>1</td>
+              </tr>
+              <tr>
+                <td></td>
+                <td></td>
+                <td></td>
+              </tr>
+              <tr>
+                <td></td>
+                <td>error</td>
+                <td>0..N (can occur at any time)</td>
+              </tr>
+            </tbody>
+          </table>
+        </section>
+        <section id="types" class="level3">
+          <h3>types</h3>
+          <table>
+            <thead>
+              <tr>
+                <th>type</th>
+                <th>fields</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>meta</td>
+                <td>shell, shell_type, shell_version, info</td>
+              </tr>
+              <tr>
+                <td>begin</td>
+                <td>specfile</td>
+              </tr>
+              <tr>
+                <td>example</td>
+                <td>id, block_no, example_no, focused, description, lineno_range, stdout, stderr</td>
+              </tr>
+              <tr>
+                <td>statement</td>
+                <td>tag, lineno, [statement type fields...]</td>
+              </tr>
+              <tr>
+                <td>result</td>
+                <td>[result type fields...], trace</td>
+              </tr>
+              <tr>
+                <td>end</td>
+                <td>example_count</td>
+              </tr>
+              <tr>
+                <td>finished</td>
+                <td></td>
+              </tr>
+              <tr>
+                <td>error</td>
+                <td>lineno, note, message, failure_message</td>
+              </tr>
+            </tbody>
+          </table>
+        </section>
+        <section id="statement-type" class="level3">
+          <h3>statement type</h3>
+          <table>
+            <thead>
+              <tr>
+                <th>tag</th>
+                <th>fields</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>evaluation</td>
+                <td>note, fail:, evaluation</td>
+              </tr>
+              <tr>
+                <td>good</td>
+                <td>note, fail:, message</td>
+              </tr>
+              <tr>
+                <td>bad</td>
+                <td>note, fail:y, message, failure_message</td>
+              </tr>
+              <tr>
+                <td>warn</td>
+                <td>note, fail:?, message, failure_message</td>
+              </tr>
+              <tr>
+                <td>skip</td>
+                <td>note, fail:, message, skipid, temporary:?</td>
+              </tr>
+              <tr>
+                <td>pending</td>
+                <td>note, fail:, message, pending, temporary:?</td>
+              </tr>
+            </tbody>
+          </table>
+        </section>
+        <section id="result-type" class="level3">
+          <h3>result type</h3>
+          <table>
+            <thead>
+              <tr>
+                <th>tag</th>
+                <th>fields</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>succeeded</td>
+                <td>note, fail: , quick:</td>
+              </tr>
+              <tr>
+                <td>failed</td>
+                <td>note, fail:y, quick:y</td>
+              </tr>
+              <tr>
+                <td>warned</td>
+                <td>note, fail:?, quick:?</td>
+              </tr>
+              <tr>
+                <td>todo</td>
+                <td>note, fail: , quick:?, temporary:?,</td>
+              </tr>
+              <tr>
+                <td>fixed</td>
+                <td>note, fail:y, quick:?, temporary:?,</td>
+              </tr>
+              <tr>
+                <td>skipped</td>
+                <td>note, fail: , quick: , temporary:?,</td>
+              </tr>
+            </tbody>
+          </table>
+          <ul>
+            <li>warned
+              <ul>
+                <li>fail: 'y' if enabled warning-as-failure, otherwise empty</li>
+                <li>quick: 'y' if enabled warning-as-failure, otherwise empty</li>
+              </ul>
+            </li>
+            <li>todo
+              <ul>
+                <li>temporary: 'y' if pending statement is temporary, otherwise empty</li>
+                <li>quick: 'y' if it is temporary</li>
+              </ul>
+            </li>
+            <li>fixed
+              <ul>
+                <li>temporary: 'y' if pending statement is temporary, otherwise empty</li>
+                <li>quick: 'y' if it is temporary</li>
+              </ul>
+            </li>
+            <li>skipped
+              <ul>
+                <li>
+                  temporary: 'y' if pending statement is temporary, otherwise empty
+                  <span style="float: footnote;"><a href="./index.html#toc">Go to TOC</a></span>
+                </li>
+              </ul>
+            </li>
+          </ul>
+        </section>
+      </section>
+    </section>
+  </body>
+</html>

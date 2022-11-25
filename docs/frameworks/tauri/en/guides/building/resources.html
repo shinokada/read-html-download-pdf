@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <title>Embedding Additional Files</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="sidebar_position" content="8">
+    <link rel="stylesheet" href="https://raw.githubusercontent.com/shinokada/prism-coy-theme/main/theme_common.css">
+  </head>
+  <body>
+    <section id="embedding-additional-files" class="level1">
+      <h1>Embedding Additional Files</h1>
+      <p>You may need to include additional files in your application bundle that aren't part of your frontend (your <code>distDir</code>) directly or which are too big to be inlined into the binary. We call these files <code>resources</code>.</p>
+      <p>To bundle the files of your choice, you can add the <code>resources</code> property to the <code>tauri > bundle</code> object in your <code>tauri.conf.json</code> file.</p>
+      <p>See more about tauri.conf.json configuration <a href="../../api/config.md#tauri.bundle">here</a>.</p>
+      <p><code>resources</code> expects a list of strings targeting files either with absolute or relative paths. It supports glob patterns in case you need to include multiple files from a directory.</p>
+      <p>Here is a sample to illustrate the configuration. This is not a complete <code>tauri.conf.json</code> file:</p>
+      <figure class="language-json">
+        <figcaption>tauri.conf.json</figcaption>
+        <pre class="language-json"><code class="language-json"><span class="token punctuation">{</span>
+  tauri<span class="token operator">:</span> <span class="token punctuation">{</span>
+    bundle<span class="token operator">:</span> <span class="token punctuation">{</span>
+      resources<span class="token operator">:</span> <span class="token punctuation">[</span>
+        /absolute/path/to/textfile.txt<span class="token punctuation">,</span>
+        relative/path/to/jsonfile.json<span class="token punctuation">,</span>
+        resources<span class="token comment">/*
+      ]
+    },
+    allowlist: {
+      fs: {
+        scope: [$RESOURCE/*]
+      }
+    }
+  }
+}</span></code></pre>
+      </figure>
+      <blockquote>
+        <p>Absolute paths and paths containing parent components (<code>../</code>) can only be allowed via <code>$RESOURCE/*</code>. Relative paths like <code>path/to/file.txt</code> can be allowed explicitly via <code>$RESOURCE/path/to/file.txt</code>.</p>
+      </blockquote>
+      <section id="accessing-files-in-javascript" class="level2">
+        <h2>Accessing files in JavaScript</h2>
+        <p>In this example we want to bundle additional i18n json files that look like this:</p>
+        <figure class="language-json">
+          <figcaption>de.json</figcaption>
+          <pre class="language-json"><code class="language-json"><span class="token punctuation">{</span>
+  hello<span class="token operator">:</span> Guten Tag!<span class="token punctuation">,</span>
+  bye<span class="token operator">:</span> Auf Wiedersehen!
+<span class="token punctuation">}</span></code></pre>
+        </figure>
+        <p>In this case, we store these files in a <code>lang</code> directory next to the <code>tauri.conf.json</code>. For this we add <code>lang/*</code> to <code>resources</code> and <code>$RESOURCE/lang/*</code> to the fs scope as shown above.</p>
+        <p>Note that you must configure the allowlist to enable <code>path > all</code> and the <a href="../../api/js/fs/"><code>fs</code> APIs</a> you need, in this example <code>fs > readTextFile</code>.</p>
+        <pre class="language-javascript"><code class="language-javascript"><span class="token keyword module">import</span> <span class="token imports"><span class="token punctuation">{</span> resolveResource <span class="token punctuation">}</span></span> <span class="token keyword module">from</span> <span class="token string">'@tauri-apps/api/path'</span>
+<span class="token comment">// alternatively, use `window.__TAURI__.path.resolveResource`</span>
+<span class="token keyword module">import</span> <span class="token imports"><span class="token punctuation">{</span> readTextFile <span class="token punctuation">}</span></span> <span class="token keyword module">from</span> <span class="token string">'@tauri-apps/api/fs'</span>
+<span class="token comment">// alternatively, use `window.__TAURI__.fs.readTextFile`</span>
+
+<span class="token comment">// `lang/de.json` is the value specified on `tauri.conf.json > tauri > bundle > resources`</span>
+<span class="token keyword">const</span> resourcePath <span class="token operator">=</span> <span class="token keyword control-flow">await</span> <span class="token function">resolveResource</span><span class="token punctuation">(</span><span class="token string">'lang/de.json'</span><span class="token punctuation">)</span>
+<span class="token keyword">const</span> langDe <span class="token operator">=</span> <span class="token known-class-name class-name">JSON</span><span class="token punctuation">.</span><span class="token method function property-access">parse</span><span class="token punctuation">(</span><span class="token keyword control-flow">await</span> <span class="token function">readTextFile</span><span class="token punctuation">(</span>resourcePath<span class="token punctuation">)</span><span class="token punctuation">)</span>
+
+<span class="token console class-name">console</span><span class="token punctuation">.</span><span class="token method function property-access">log</span><span class="token punctuation">(</span>langDe<span class="token punctuation">.</span><span class="token property-access">hello</span><span class="token punctuation">)</span> <span class="token comment">// This will print 'Guten Tag!' to the devtools console</span></code></pre>
+      </section>
+      <section id="accessing-files-in-rust" class="level2">
+        <h2>Accessing files in Rust</h2>
+        <p>This is based on the example above. On the Rust side you need an instance of the <a href="https://docs.rs/tauri/latest/tauri/struct.PathResolver.html"><code>PathResolver</code></a> which you can get from <a href="https://docs.rs/tauri/latest/tauri/struct.App.html"><code>App</code></a> and <a href="https://docs.rs/tauri/latest/tauri/struct.AppHandle.html"><code>AppHandle</code></a>:</p>
+        <pre class="language-rust"><code class="language-rust"><span class="token namespace">tauri<span class="token punctuation">::</span></span><span class="token class-name">Builder</span><span class="token punctuation">::</span><span class="token function">default</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+  <span class="token punctuation">.</span><span class="token function">setup</span><span class="token punctuation">(</span><span class="token closure-params"><span class="token closure-punctuation punctuation">|</span>app<span class="token closure-punctuation punctuation">|</span></span> <span class="token punctuation">{</span>
+    <span class="token keyword">let</span> resource_path <span class="token operator">=</span> app<span class="token punctuation">.</span><span class="token function">path_resolver</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+      <span class="token punctuation">.</span><span class="token function">resolve_resource</span><span class="token punctuation">(</span>lang<span class="token operator">/</span>de<span class="token punctuation">.</span>json<span class="token punctuation">)</span>
+      <span class="token punctuation">.</span><span class="token function">expect</span><span class="token punctuation">(</span>failed to resolve resource<span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+    <span class="token keyword">let</span> file <span class="token operator">=</span> <span class="token namespace">std<span class="token punctuation">::</span>fs<span class="token punctuation">::</span></span><span class="token class-name">File</span><span class="token punctuation">::</span><span class="token function">open</span><span class="token punctuation">(</span><span class="token operator">&#x26;</span>resource_path<span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">unwrap</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token keyword">let</span> lang_de<span class="token punctuation">:</span> <span class="token namespace">serde_json<span class="token punctuation">::</span></span><span class="token class-name">Value</span> <span class="token operator">=</span> <span class="token namespace">serde_json<span class="token punctuation">::</span></span><span class="token function">from_reader</span><span class="token punctuation">(</span>file<span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">unwrap</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+    <span class="token macro property">println!</span><span class="token punctuation">(</span><span class="token punctuation">{</span><span class="token punctuation">}</span><span class="token punctuation">,</span> lang_de<span class="token punctuation">.</span><span class="token function">get</span><span class="token punctuation">(</span>hello<span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">unwrap</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span> <span class="token comment">// This will print 'Guten Tag!' to the terminal</span>
+
+    <span class="token class-name">Ok</span><span class="token punctuation">(</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+  <span class="token punctuation">}</span><span class="token punctuation">)</span></code></pre>
+        <pre class="language-rust"><code class="language-rust"><span class="token attribute attr-name">#[tauri::command]</span>
+<span class="token keyword">fn</span> <span class="token function-definition function">hello</span><span class="token punctuation">(</span>handle<span class="token punctuation">:</span> <span class="token namespace">tauri<span class="token punctuation">::</span></span><span class="token class-name">AppHandle</span><span class="token punctuation">)</span> <span class="token punctuation">-></span> <span class="token class-name">String</span> <span class="token punctuation">{</span>
+   <span class="token keyword">let</span> resource_path <span class="token operator">=</span> handle<span class="token punctuation">.</span><span class="token function">path_resolver</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+      <span class="token punctuation">.</span><span class="token function">resolve_resource</span><span class="token punctuation">(</span>lang<span class="token operator">/</span>de<span class="token punctuation">.</span>json<span class="token punctuation">)</span>
+      <span class="token punctuation">.</span><span class="token function">expect</span><span class="token punctuation">(</span>failed to resolve resource<span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+    <span class="token keyword">let</span> file <span class="token operator">=</span> <span class="token namespace">std<span class="token punctuation">::</span>fs<span class="token punctuation">::</span></span><span class="token class-name">File</span><span class="token punctuation">::</span><span class="token function">open</span><span class="token punctuation">(</span><span class="token operator">&#x26;</span>resource_path<span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">unwrap</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token keyword">let</span> lang_de<span class="token punctuation">:</span> <span class="token namespace">serde_json<span class="token punctuation">::</span></span><span class="token class-name">Value</span> <span class="token operator">=</span> <span class="token namespace">serde_json<span class="token punctuation">::</span></span><span class="token function">from_reader</span><span class="token punctuation">(</span>file<span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">unwrap</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+    lang_de<span class="token punctuation">.</span><span class="token function">get</span><span class="token punctuation">(</span>hello<span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">unwrap</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+<span class="token punctuation">}</span></code></pre>
+        <p><span style="float: footnote;"><a href="../../index.html#toc">Go to TOC</a></span></p>
+      </section>
+    </section>
+  </body>
+</html>

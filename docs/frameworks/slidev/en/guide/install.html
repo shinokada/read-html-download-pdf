@@ -1,0 +1,185 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <title>Installation</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="https://raw.githubusercontent.com/shinokada/prism-coy-theme/main/theme_common.css">
+  </head>
+  <body>
+    <section id="installation" class="level1">
+      <h1>Installation</h1>
+      <section id="starter-template" class="level2">
+        <h2>Starter Template</h2>
+        <blockquote>
+          <p>Slidev requires <a href="https://nodejs.org/"><strong>Node.js >=14.0</strong></a></p>
+        </blockquote>
+        <p>The best way to get started is using our official starter template.</p>
+        <p>With NPM:</p>
+        <pre class="language-bash"><code class="language-bash">$ <span class="token function">npm</span> init slidev@latest</code></pre>
+        <p>With Yarn:</p>
+        <pre class="language-bash"><code class="language-bash">$ <span class="token function">yarn</span> create slidev</code></pre>
+        <p>Follow the prompts and it will open up the slideshow at <code>http://localhost:3030/</code> automatically for you.</p>
+        <p>It also contains the basic setup and a short demo with instructions on how to get started with Slidev.</p>
+      </section>
+      <section id="install-manually" class="level2">
+        <h2>Install Manually</h2>
+        <p>If you still prefer to install Slidev manually or would like to integrate it into your existing projects, you can do:</p>
+        <pre class="language-bash"><code class="language-bash">$ <span class="token function">npm</span> <span class="token function">install</span> @slidev/cli @slidev/theme-default</code></pre>
+        <pre class="language-bash"><code class="language-bash">$ <span class="token function">touch</span> slides.md</code></pre>
+        <pre class="language-bash"><code class="language-bash">$ npx slidev</code></pre>
+        <blockquote>
+          <p>Please note if you are using <a href="https://pnpm.io">pnpm</a>, you will need to enable <a href="https://pnpm.io/npmrc#shamefully-hoist">shamefully-hoist</a> option for Slidev to work properly:</p>
+          <pre class="language-bash"><code class="language-bash"><span class="token builtin class-name">echo</span> <span class="token string">'shamefully-hoist=true'</span> <span class="token operator">>></span> .npmrc</code></pre>
+        </blockquote>
+      </section>
+      <section id="install-globally" class="level2">
+        <h2>Install Globally</h2>
+        <blockquote>
+          <p>Available since v0.14</p>
+        </blockquote>
+        <p>You can install Slidev globally with the following command</p>
+        <pre class="language-bash"><code class="language-bash">$ <span class="token function">npm</span> i -g @slidev/cli</code></pre>
+        <p>And then use <code>slidev</code> everywhere without creating a project every time.</p>
+        <pre class="language-bash"><code class="language-bash">$ slidev</code></pre>
+        <p>This command will also try to use local <code>@slidev/cli</code> if it has been found in the <code>node_modules</code>.</p>
+      </section>
+      <section id="install-on-docker" class="level2">
+        <h2>Install on Docker</h2>
+        <p>If you need a rapid way to run a presentation with containers, you can use the prebuilt <a href="https://hub.docker.com/r/tangramor/slidev">docker</a> image maintained by <a href="https://github.com/tangramor">tangramor</a>, or build your own.</p>
+        <p>Just run following command in your work folder:</p>
+        <pre class="language-bash"><code class="language-bash"><span class="token function">docker</span> run --name slidev --rm -it <span class="token punctuation">\</span>
+    --user <span class="token function">node</span> <span class="token punctuation">\</span>
+    -v <span class="token variable">${<span class="token environment constant">PWD</span>}</span>:/slidev <span class="token punctuation">\</span>
+    -p <span class="token number">3030</span>:3030 <span class="token punctuation">\</span>
+    tangramor/slidev:latest</code></pre>
+        <p>If your work folder is empty, it will generate a template <code>slides.md</code> and other related files under your work folder, and launch the server on port <code>3030</code>.</p>
+        <p>You can access your slides from <code>http://localhost:3030/</code></p>
+        <section id="build-deployable-image" class="level3">
+          <h3>Build deployable image</h3>
+          <p>Or you can create your own slidev project to a docker image with Dockerfile:</p>
+          <pre class="language-Dockerfile"><code class="language-Dockerfile">FROM tangramor/slidev:latest
+
+ADD . /slidev
+</code></pre>
+          <p>Create the docker image: <code>docker build -t myppt .</code></p>
+          <p>And run the container: <code>docker run --name myslides --rm --user node -p 3030:3030 myppt</code></p>
+          <p>You can visit your slides from <code>http://localhost:3030/</code></p>
+        </section>
+        <section id="build-hostable-spa-single-page-application" class="level3">
+          <h3>Build hostable SPA (Single Page Application)</h3>
+          <p>Run command <code>docker exec -i slidev npx slidev build</code> on the running container <code>slidev</code>. It will generate static HTML files under <code>dist</code> folder.</p>
+          <section id="host-on-github-pages" class="level4">
+            <h4>Host on Github Pages</h4>
+            <p>You can host <code>dist</code> in a static web site such as <a href="https://tangramor.github.io/slidev_docker/">Github Pages</a> or Gitlab Pages.</p>
+            <p>Because in Github pages the url may contain subfolder, so you need to modify the generated <code>index.html</code> to change <code>href="/assets/xxx</code> to <code>href="./assets/xxx</code>. Or you may use <code>--base=/&#x3C;subfolder>/</code> option during the build process, such as: <code>docker exec -i slidev npx slidev build --base=/slidev_docker/</code>.</p>
+            <p>And to avoid Jekyll build process, you need to add an empty file <code>.nojekyll</code>.</p>
+          </section>
+          <section id="host-by-docker" class="level4">
+            <h4>Host by docker</h4>
+            <p>You can also host it by yourself with docker:</p>
+            <pre class="language-bash"><code class="language-bash"><span class="token function">docker</span> run --name myslides --rm -p <span class="token number">80</span>:80 -v <span class="token variable">${<span class="token environment constant">PWD</span>}</span>/dist:/usr/share/nginx/html nginx:alpine</code></pre>
+            <p>Or create a static image with following Dockerfile:</p>
+            <pre class="language-Dockerfile"><code class="language-Dockerfile">FROM nginx:alpine
+
+COPY dist /usr/share/nginx/html</code></pre>
+            <p>Create the docker image: <code>docker build -t mystaticppt .</code></p>
+            <p>And run the container: <code>docker run --name myslides --rm -p 80:80 mystaticppt</code></p>
+            <p>You can visit your slides from http://localhost/</p>
+            <p>Refer to the <a href="https://github.com/tangramor/slidev_docker">tangramor/slidev_docker</a> for more details.</p>
+          </section>
+        </section>
+      </section>
+      <section id="command-line-interface-cli" class="level2">
+        <h2>Command Line Interface (CLI)</h2>
+        <p><code>@slidev/cli</code> Expose a few commands you can use with <code>npx slidev ...</code> or by adding scripts in your <code>package.json</code>:</p>
+        <pre class="language-json"><code class="language-json"><span class="token punctuation">{</span>
+  <span class="token property">"script"</span><span class="token operator">:</span> <span class="token punctuation">{</span>
+    <span class="token property">"dev"</span><span class="token operator">:</span> <span class="token string">"slidev"</span>
+  <span class="token punctuation">}</span>
+<span class="token punctuation">}</span></code></pre>
+        <p>In that case you will be able to run <code>npm run dev</code>.</p>
+        <p>You can pass options to any commands:</p>
+        <ul>
+          <li>boolean option are <code>true</code> if they are present, false otherwise (example: <code>slidev --open</code>)</li>
+          <li>some options can have values you can add just after the option or by using the <code>=</code> character (example: <code>slidev --port 8080</code> or <code>slidev --port=8080</code>)</li>
+        </ul>
+        <p>If you use npm scripts, don't forget to add <code>--</code> after the npm command:</p>
+        <pre class="language-bash"><code class="language-bash"><span class="token function">npm</span> run slidev -- --open</code></pre>
+        <section id="slidev-entry" class="level3">
+          <h3><code>slidev [entry]</code></h3>
+          <p>Start a local server for Slidev.</p>
+          <ul>
+            <li><code>[entry]</code> (<code>string</code>, default: <code>slides.md</code>): path to the slides markdown entry.</li>
+          </ul>
+          <p>Options:</p>
+          <ul>
+            <li><code>--port</code>, <code>-p</code> (<code>number</code>, default: <code>3030</code>): port number.</li>
+            <li><code>--open</code>, <code>-o</code> (<code>boolean</code>, default: <code>false</code>): open in browser.</li>
+            <li><code>--remote [password]</code> (<code>string</code>): listen to public host and enable remote control, if a value is passed then the presenter mode is private and only accessible by passing the given password in the URL query <code>password</code> parameter.</li>
+            <li><code>--log</code> (<code>'error', 'warn', 'info', 'silent'</code>, default: <code>'warn'</code>): Log level.</li>
+            <li><code>--force</code>, <code>-f</code> (<code>boolean</code>, default <code>false</code>): force the optimizer to ignore the cache and re-bundle.</li>
+            <li><code>--theme</code>, <code>-t</code> (<code>string</code>): override theme.</li>
+          </ul>
+        </section>
+        <section id="slidev-build-entry" class="level3">
+          <h3><code>slidev build [entry]</code></h3>
+          <p>Build hostable SPA.</p>
+          <ul>
+            <li><code>[entry]</code> (<code>string</code>, default: <code>slides.md</code>): path to the slides markdown entry.</li>
+          </ul>
+          <p>Options:</p>
+          <ul>
+            <li><code>--watch</code>, <code>-w</code> (<code>boolean</code>, default: <code>false</code>): build watch.</li>
+            <li><code>--out</code>, <code>-o</code> (<code>string</code>, default: <code>dist</code>): output dir.</li>
+            <li><code>--base</code> (<code>string</code>, default: <code>/</code>): base URL (see <a href="https://cli.vuejs.org/config/#publicpath">https://cli.vuejs.org/config/#publicpath</a>)</li>
+            <li><code>--download</code> (<code>boolean</code>, default: <code>false</code>): allow to download the slides as PDF inside the SPA.</li>
+            <li><code>--theme</code>, <code>-t</code> (<code>string</code>): override theme.</li>
+          </ul>
+        </section>
+        <section id="slidev-export-entry" class="level3">
+          <h3><code>slidev export [entry]</code></h3>
+          <p>Export slides to PDF (or other format).</p>
+          <ul>
+            <li><code>[entry]</code> (<code>string</code>, default: <code>slides.md</code>): path to the slides markdown entry.</li>
+          </ul>
+          <p>Options:</p>
+          <ul>
+            <li><code>--output</code> (<code>string</code>, default: use <code>exportFilename</code> (see <a href="https://sli.dev/custom/#frontmatter-configures">https://sli.dev/custom/#frontmatter-configures</a>) or use <code>[entry]-export</code>): path to the output.</li>
+            <li><code>--base</code> (<code>'pdf', 'png', 'md'</code>, default: <code>'pdf'</code>): output format.</li>
+            <li><code>--timeout</code> (<code>number</code>, default: <code>30000</code>): timeout for rendering the print page (see <a href="https://playwright.dev/docs/api/class-page#page-goto">https://playwright.dev/docs/api/class-page#page-goto</a>).</li>
+            <li><code>--range</code> (<code>string</code>): page ranges to export (example: <code>'1,4-5,6'</code>).</li>
+            <li><code>--dark</code> (<code>boolean</code>, default: <code>false</code>): export as dark theme.</li>
+            <li><code>--with-clicks</code>, <code>-c</code> (<code>boolean</code>, default: <code>false</code>): export pages for every clicks (see <a href="https://sli.dev/guide/animations.html#click-animations">https://sli.dev/guide/animations.html#click-animations</a>).</li>
+            <li><code>--theme</code>, <code>-t</code> (<code>string</code>): override theme.</li>
+          </ul>
+        </section>
+        <section id="slidev-format-entry" class="level3">
+          <h3><code>slidev format [entry]</code></h3>
+          <p>Format the markdown file.</p>
+          <ul>
+            <li><code>[entry]</code> (<code>string</code>, default: <code>slides.md</code>): path to the slides markdown entry.</li>
+          </ul>
+        </section>
+        <section id="slidev-theme-subcommand" class="level3">
+          <h3><code>slidev theme [subcommand]</code></h3>
+          <p>Theme related operations.</p>
+          <p>Subcommands:</p>
+          <ul>
+            <li><code>eject [entry]</code>: Eject current theme into local file system
+              <ul>
+                <li><code>[entry]</code> (<code>string</code>, default: <code>slides.md</code>): path to the slides markdown entry.</li>
+                <li>
+                  Options:
+                  <em><code>--dir</code> (<code>string</code>, default: <code>theme</code>): output dir.
+</em><code>--theme</code>, <code>-t</code> (<code>string</code>): override theme.
+                  <span style="float: footnote;"><a href="../index.html#toc">Go to TOC</a></span>
+                </li>
+              </ul>
+            </li>
+          </ul>
+        </section>
+      </section>
+    </section>
+  </body>
+</html>

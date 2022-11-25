@@ -1,0 +1,150 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <title>Multiwindow</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="https://raw.githubusercontent.com/shinokada/prism-coy-theme/main/theme_common.css">
+  </head>
+  <body>
+    <section id="multiwindow" class="level1">
+      <h1>Multiwindow</h1>
+      <p>Manage multiple windows on a single application.</p>
+      <section id="creating-a-window" class="level2">
+        <h2>Creating a window</h2>
+        <p>A window can be created statically from the Tauri configuration file or at runtime.</p>
+        <section id="static-window" class="level3">
+          <h3>Static window</h3>
+          <p>
+            Multiple windows can be created with the <a href="../../api/config.md#tauriconfig.windows">tauri.windows</a> configuration array.
+            The following JSON snippet demonstrates how to statically create several windows through the config:
+          </p>
+          <pre class="language-json"><code class="language-json"><span class="token punctuation">{</span>
+  tauri<span class="token operator">:</span> <span class="token punctuation">{</span>
+    windows<span class="token operator">:</span> <span class="token punctuation">[</span>
+      <span class="token punctuation">{</span>
+        label<span class="token operator">:</span> external<span class="token punctuation">,</span>
+        title<span class="token operator">:</span> Tauri Docs<span class="token punctuation">,</span>
+        url<span class="token operator">:</span> https<span class="token operator">:</span><span class="token comment">//tauri.app</span>
+      <span class="token punctuation">}</span><span class="token punctuation">,</span>
+      <span class="token punctuation">{</span>
+        label<span class="token operator">:</span> local<span class="token punctuation">,</span>
+        title<span class="token operator">:</span> Tauri<span class="token punctuation">,</span>
+        url<span class="token operator">:</span> index.html
+      <span class="token punctuation">}</span>
+    <span class="token punctuation">]</span>
+  <span class="token punctuation">}</span>
+<span class="token punctuation">}</span></code></pre>
+          <p>Note that the window label must be unique and can be used at runtime to access the window instance.</p>
+          <p>The complete list of configuration options available for static windows can be found in the <a href="../../api/config.md#windowconfig">WindowConfig</a> documentation.</p>
+        </section>
+        <section id="runtime-window" class="level3">
+          <h3>Runtime window</h3>
+          <p>You can also create windows at runtime either via the Rust layer or through the Tauri API.</p>
+          <section id="create-a-window-in-rust" class="level4">
+            <h4>Create a window in Rust</h4>
+            <p>A window can be created at runtime using the <a href="https://docs.rs/tauri/1.0.0/tauri/window/struct.WindowBuilder.html">WindowBuilder</a> struct.</p>
+            <p>To create a window, you must have an instance of the running <a href="https://docs.rs/tauri/1.0.0/tauri/struct.App.html">App</a> or an <a href="https://docs.rs/tauri/1.0.0/tauri/struct.AppHandle.html">AppHandle</a>.</p>
+            <section id="create-a-window-using-the-app-instance" class="level5">
+              <h5>Create a window using the <a href="https://docs.rs/tauri/1.0.0/tauri/struct.App.html">App</a> instance</h5>
+              <p>The <a href="https://docs.rs/tauri/1.0.0/tauri/struct.App.html">App</a> instance can be obtained in the setup hook or after a call to <a href="https://docs.rs/tauri/1.0.0/tauri/struct.Builder.html#method.build">Builder::build</a>.</p>
+              <pre class="language-rust"><code class="language-rust"><span class="token namespace">tauri<span class="token punctuation">::</span></span><span class="token class-name">Builder</span><span class="token punctuation">::</span><span class="token function">default</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+  <span class="token punctuation">.</span><span class="token function">setup</span><span class="token punctuation">(</span><span class="token closure-params"><span class="token closure-punctuation punctuation">|</span>app<span class="token closure-punctuation punctuation">|</span></span> <span class="token punctuation">{</span>
+    <span class="token keyword">let</span> docs_window <span class="token operator">=</span> <span class="token namespace">tauri<span class="token punctuation">::</span></span><span class="token class-name">WindowBuilder</span><span class="token punctuation">::</span><span class="token function">new</span><span class="token punctuation">(</span>
+      app<span class="token punctuation">,</span>
+      external<span class="token punctuation">,</span> <span class="token comment">/* the unique window label */</span>
+      <span class="token namespace">tauri<span class="token punctuation">::</span></span><span class="token class-name">WindowUrl</span><span class="token punctuation">::</span><span class="token class-name">External</span><span class="token punctuation">(</span>https<span class="token punctuation">:</span><span class="token operator">/</span><span class="token operator">/</span>tauri<span class="token punctuation">.</span>app<span class="token operator">/</span><span class="token punctuation">.</span><span class="token function">parse</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">unwrap</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+    <span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">build</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token operator">?</span><span class="token punctuation">;</span>
+    <span class="token keyword">let</span> local_window <span class="token operator">=</span> <span class="token namespace">tauri<span class="token punctuation">::</span></span><span class="token class-name">WindowBuilder</span><span class="token punctuation">::</span><span class="token function">new</span><span class="token punctuation">(</span>
+      app<span class="token punctuation">,</span>
+      local<span class="token punctuation">,</span>
+      <span class="token namespace">tauri<span class="token punctuation">::</span></span><span class="token class-name">WindowUrl</span><span class="token punctuation">::</span><span class="token class-name">App</span><span class="token punctuation">(</span>index<span class="token punctuation">.</span>html<span class="token punctuation">.</span><span class="token function">into</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+    <span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">build</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token operator">?</span><span class="token punctuation">;</span>
+    <span class="token class-name">Ok</span><span class="token punctuation">(</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+  <span class="token punctuation">}</span><span class="token punctuation">)</span></code></pre>
+              <p>
+                Using the setup hook ensures static windows and Tauri plugins are initialized.
+                Alternatively, you can create a window after building the <a href="https://docs.rs/tauri/1.0.0/tauri/struct.App.html">App</a>:
+              </p>
+              <pre class="language-rust"><code class="language-rust"><span class="token keyword">let</span> app <span class="token operator">=</span> <span class="token namespace">tauri<span class="token punctuation">::</span></span><span class="token class-name">Builder</span><span class="token punctuation">::</span><span class="token function">default</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+  <span class="token punctuation">.</span><span class="token function">build</span><span class="token punctuation">(</span><span class="token namespace">tauri<span class="token punctuation">::</span></span><span class="token macro property">generate_context!</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+  <span class="token punctuation">.</span><span class="token function">expect</span><span class="token punctuation">(</span>error <span class="token keyword">while</span> building tauri application<span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+<span class="token keyword">let</span> docs_window <span class="token operator">=</span> <span class="token namespace">tauri<span class="token punctuation">::</span></span><span class="token class-name">WindowBuilder</span><span class="token punctuation">::</span><span class="token function">new</span><span class="token punctuation">(</span>
+  <span class="token operator">&#x26;</span>app<span class="token punctuation">,</span>
+  external<span class="token punctuation">,</span> <span class="token comment">/* the unique window label */</span>
+  <span class="token namespace">tauri<span class="token punctuation">::</span></span><span class="token class-name">WindowUrl</span><span class="token punctuation">::</span><span class="token class-name">External</span><span class="token punctuation">(</span>https<span class="token punctuation">:</span><span class="token operator">/</span><span class="token operator">/</span>tauri<span class="token punctuation">.</span>app<span class="token operator">/</span><span class="token punctuation">.</span><span class="token function">parse</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">unwrap</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+<span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">build</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">expect</span><span class="token punctuation">(</span>failed to build window<span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+<span class="token keyword">let</span> local_window <span class="token operator">=</span> <span class="token namespace">tauri<span class="token punctuation">::</span></span><span class="token class-name">WindowBuilder</span><span class="token punctuation">::</span><span class="token function">new</span><span class="token punctuation">(</span>
+  <span class="token operator">&#x26;</span>app<span class="token punctuation">,</span>
+  local<span class="token punctuation">,</span>
+  <span class="token namespace">tauri<span class="token punctuation">::</span></span><span class="token class-name">WindowUrl</span><span class="token punctuation">::</span><span class="token class-name">App</span><span class="token punctuation">(</span>index<span class="token punctuation">.</span>html<span class="token punctuation">.</span><span class="token function">into</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+<span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">build</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token operator">?</span><span class="token punctuation">;</span></code></pre>
+              <p>This method is useful when you cannot move ownership of values to the setup closure.</p>
+            </section>
+            <section id="create-a-window-using-an-apphandle-instance" class="level5">
+              <h5>Create a window using an <a href="https://docs.rs/tauri/1.0.0/tauri/struct.AppHandle.html">AppHandle</a> instance</h5>
+              <p>An <a href="https://docs.rs/tauri/1.0.0/tauri/struct.AppHandle.html">AppHandle</a> instance can be obtained using the [<code>App::handle</code>] function or directly injected in Tauri commands.</p>
+              <pre class="language-rust"><code class="language-rust"><span class="token namespace">tauri<span class="token punctuation">::</span></span><span class="token class-name">Builder</span><span class="token punctuation">::</span><span class="token function">default</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+  <span class="token punctuation">.</span><span class="token function">setup</span><span class="token punctuation">(</span><span class="token closure-params"><span class="token closure-punctuation punctuation">|</span>app<span class="token closure-punctuation punctuation">|</span></span> <span class="token punctuation">{</span>
+    <span class="token keyword">let</span> handle <span class="token operator">=</span> app<span class="token punctuation">.</span><span class="token function">handle</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token namespace">std<span class="token punctuation">::</span>thread<span class="token punctuation">::</span></span><span class="token function">spawn</span><span class="token punctuation">(</span><span class="token keyword">move</span> <span class="token closure-params"><span class="token closure-punctuation punctuation">|</span><span class="token closure-punctuation punctuation">|</span></span> <span class="token punctuation">{</span>
+      <span class="token keyword">let</span> local_window <span class="token operator">=</span> <span class="token namespace">tauri<span class="token punctuation">::</span></span><span class="token class-name">WindowBuilder</span><span class="token punctuation">::</span><span class="token function">new</span><span class="token punctuation">(</span>
+        <span class="token operator">&#x26;</span>handle<span class="token punctuation">,</span>
+        local<span class="token punctuation">,</span>
+        <span class="token namespace">tauri<span class="token punctuation">::</span></span><span class="token class-name">WindowUrl</span><span class="token punctuation">::</span><span class="token class-name">App</span><span class="token punctuation">(</span>index<span class="token punctuation">.</span>html<span class="token punctuation">.</span><span class="token function">into</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+      <span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">build</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token operator">?</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token class-name">Ok</span><span class="token punctuation">(</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+  <span class="token punctuation">}</span><span class="token punctuation">)</span></code></pre>
+              <pre class="language-rust"><code class="language-rust"><span class="token attribute attr-name">#[tauri::command]</span>
+<span class="token keyword">async</span> <span class="token keyword">fn</span> <span class="token function-definition function">open_docs</span><span class="token punctuation">(</span>handle<span class="token punctuation">:</span> <span class="token namespace">tauri<span class="token punctuation">::</span></span><span class="token class-name">AppHandle</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  <span class="token keyword">let</span> docs_window <span class="token operator">=</span> <span class="token namespace">tauri<span class="token punctuation">::</span></span><span class="token class-name">WindowBuilder</span><span class="token punctuation">::</span><span class="token function">new</span><span class="token punctuation">(</span>
+    <span class="token operator">&#x26;</span>handle<span class="token punctuation">,</span>
+    external<span class="token punctuation">,</span> <span class="token comment">/* the unique window label */</span>
+    <span class="token namespace">tauri<span class="token punctuation">::</span></span><span class="token class-name">WindowUrl</span><span class="token punctuation">::</span><span class="token class-name">External</span><span class="token punctuation">(</span>https<span class="token punctuation">:</span><span class="token operator">/</span><span class="token operator">/</span>tauri<span class="token punctuation">.</span>app<span class="token operator">/</span><span class="token punctuation">.</span><span class="token function">parse</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">unwrap</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+  <span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">build</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">unwrap</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span></code></pre>info
+              <p>When creating windows in a Tauri command, ensure the command function is <code>async</code> to avoid a deadlock on Windows due to the <a href="https://github.com/tauri-apps/wry/issues/583">wry#583</a> issue.</p>
+            </section>
+          </section>
+          <section id="create-a-window-in-javascript" class="level4">
+            <h4>Create a window in JavaScript</h4>
+            <p>Using the Tauri API you can easily create a window at runtime by importing the <a href="../../api/js/window.md#webviewwindow">WebviewWindow</a> class.</p>
+            <pre class="language-js"><code class="language-js"><span class="token keyword module">import</span> <span class="token imports"><span class="token punctuation">{</span> <span class="token maybe-class-name">WebviewWindow</span> <span class="token punctuation">}</span></span> <span class="token keyword module">from</span> <span class="token string">'@tauri-apps/api/window'</span>
+<span class="token keyword">const</span> webview <span class="token operator">=</span> <span class="token keyword">new</span> <span class="token class-name">WebviewWindow</span><span class="token punctuation">(</span><span class="token string">'theUniqueLabel'</span><span class="token punctuation">,</span> <span class="token punctuation">{</span>
+  <span class="token literal-property property">url</span><span class="token operator">:</span> <span class="token string">'path/to/page.html'</span><span class="token punctuation">,</span>
+<span class="token punctuation">}</span><span class="token punctuation">)</span>
+<span class="token comment">// since the webview window is created asynchronously,</span>
+<span class="token comment">// Tauri emits the `tauri://created` and `tauri://error` to notify you of the creation response</span>
+webview<span class="token punctuation">.</span><span class="token method function property-access">once</span><span class="token punctuation">(</span><span class="token string">'tauri://created'</span><span class="token punctuation">,</span> <span class="token keyword">function</span> <span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  <span class="token comment">// webview window successfully created</span>
+<span class="token punctuation">}</span><span class="token punctuation">)</span>
+webview<span class="token punctuation">.</span><span class="token method function property-access">once</span><span class="token punctuation">(</span><span class="token string">'tauri://error'</span><span class="token punctuation">,</span> <span class="token keyword">function</span> <span class="token punctuation">(</span><span class="token parameter">e</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  <span class="token comment">// an error occurred during webview window creation</span>
+<span class="token punctuation">}</span><span class="token punctuation">)</span></code></pre>
+          </section>
+        </section>
+      </section>
+      <section id="accessing-a-window-at-runtime" class="level2">
+        <h2>Accessing a window at runtime</h2>
+        <p>The window instance can be queried using its label and the <a href="https://docs.rs/tauri/1.0.0/tauri/trait.Manager.html#method.get_window">get_window</a> method on Rust or <a href="../../api/js/window.md#getbylabel">WebviewWindow.getByLabel</a> on JavaScript.</p>
+        <pre class="language-rust"><code class="language-rust"><span class="token keyword">use</span> <span class="token namespace">tauri<span class="token punctuation">::</span></span><span class="token class-name">Manager</span><span class="token punctuation">;</span>
+<span class="token namespace">tauri<span class="token punctuation">::</span></span><span class="token class-name">Builder</span><span class="token punctuation">::</span><span class="token function">default</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+  <span class="token punctuation">.</span><span class="token function">setup</span><span class="token punctuation">(</span><span class="token closure-params"><span class="token closure-punctuation punctuation">|</span>app<span class="token closure-punctuation punctuation">|</span></span> <span class="token punctuation">{</span>
+    <span class="token keyword">let</span> main_window <span class="token operator">=</span> app<span class="token punctuation">.</span><span class="token function">get_window</span><span class="token punctuation">(</span>main<span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">unwrap</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token class-name">Ok</span><span class="token punctuation">(</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+  <span class="token punctuation">}</span><span class="token punctuation">)</span></code></pre>
+        <p>Note that you must import <a href="https://docs.rs/tauri/1.0.0/tauri/trait.Manager.html">tauri::Manager</a> to use the <a href="https://docs.rs/tauri/1.0.0/tauri/trait.Manager.html#method.get_window">get_window</a> method on <a href="https://docs.rs/tauri/1.0.0/tauri/struct.App.html">App</a> or <a href="https://docs.rs/tauri/1.0.0/tauri/struct.AppHandle.html">AppHandle</a> instances.</p>
+        <pre class="language-js"><code class="language-js"><span class="token keyword module">import</span> <span class="token imports"><span class="token punctuation">{</span> <span class="token maybe-class-name">WebviewWindow</span> <span class="token punctuation">}</span></span> <span class="token keyword module">from</span> <span class="token string">'@tauri-apps/api/window'</span>
+<span class="token keyword">const</span> mainWindow <span class="token operator">=</span> <span class="token maybe-class-name">WebviewWindow</span><span class="token punctuation">.</span><span class="token method function property-access">getByLabel</span><span class="token punctuation">(</span><span class="token string">'main'</span><span class="token punctuation">)</span></code></pre>
+      </section>
+      <section id="communicating-with-other-windows" class="level2">
+        <h2>Communicating with other windows</h2>
+        <p>Window communication can be done using the event system. See the <a href="./events.md">Event Guide</a> for more information.</p>
+        <p><span style="float: footnote;"><a href="../../index.html#toc">Go to TOC</a></span></p>
+      </section>
+    </section>
+  </body>
+</html>

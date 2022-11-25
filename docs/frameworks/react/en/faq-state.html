@@ -1,0 +1,102 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <title>Component State</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="https://raw.githubusercontent.com/shinokada/prism-coy-theme/main/theme_common.css">
+  </head>
+  <body>
+    <section id="component-state" class="level1">
+      <h1>Component State</h1>
+      <section id="what-does-setstate-do" class="level3">
+        <h3>What does <code>setState</code> do?</h3>
+        <p><code>setState()</code> schedules an update to a component's <code>state</code> object. When state changes, the component responds by re-rendering.</p>
+      </section>
+      <section id="what-is-the-difference-between-state-and-props" class="level3">
+        <h3>What is the difference between <code>state</code> and <code>props</code>?</h3>
+        <p><a href="./components-and-props.html"><code>props</code></a> (short for "properties") and <a href="./state-and-lifecycle.html"><code>state</code></a> are both plain JavaScript objects. While both hold information that influences the output of render, they are different in one important way: <code>props</code> get passed <em>to</em> the component (similar to function parameters) whereas <code>state</code> is managed <em>within</em> the component (similar to variables declared within a function).</p>
+        <p>Here are some good resources for further reading on when to use <code>props</code> vs <code>state</code>:</p>
+        <ul>
+          <li><a href="https://github.com/uberVU/react-guide/blob/master/props-vs-state.md">Props vs State</a></li>
+          <li><a href="https://lucybain.com/blog/2016/react-state-vs-pros/">ReactJS: Props vs. State</a></li>
+        </ul>
+      </section>
+      <section id="why-is-setstate-giving-me-the-wrong-value" class="level3">
+        <h3>Why is <code>setState</code> giving me the wrong value?</h3>
+        <p>In React, both <code>this.props</code> and <code>this.state</code> represent the <em>rendered</em> values, i.e. what's currently on the screen.</p>
+        <p>Calls to <code>setState</code> are asynchronous - don't rely on <code>this.state</code> to reflect the new value immediately after calling <code>setState</code>. Pass an updater function instead of an object if you need to compute values based on the current state (see below for details).</p>
+        <p>Example of code that will <em>not</em> behave as expected:</p>
+        <pre class="language-jsx"><code class="language-jsx"><span class="token function">incrementCount</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  <span class="token comment">// Note: this will *not* work as intended.</span>
+  <span class="token keyword">this</span><span class="token punctuation">.</span><span class="token method function property-access">setState</span><span class="token punctuation">(</span><span class="token punctuation">{</span><span class="token literal-property property">count</span><span class="token operator">:</span> <span class="token keyword">this</span><span class="token punctuation">.</span><span class="token property-access">state</span><span class="token punctuation">.</span><span class="token property-access">count</span> <span class="token operator">+</span> <span class="token number">1</span><span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+
+<span class="token function">handleSomething</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  <span class="token comment">// Let's say `this.state.count` starts at 0.</span>
+  <span class="token keyword">this</span><span class="token punctuation">.</span><span class="token method function property-access">incrementCount</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token keyword">this</span><span class="token punctuation">.</span><span class="token method function property-access">incrementCount</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token keyword">this</span><span class="token punctuation">.</span><span class="token method function property-access">incrementCount</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token comment">// When React re-renders the component, `this.state.count` will be 1, but you expected 3.</span>
+
+  <span class="token comment">// This is because `incrementCount()` function above reads from `this.state.count`,</span>
+  <span class="token comment">// but React doesn't update `this.state.count` until the component is re-rendered.</span>
+  <span class="token comment">// So `incrementCount()` ends up reading `this.state.count` as 0 every time, and sets it to 1.</span>
+
+  <span class="token comment">// The fix is described below!</span>
+<span class="token punctuation">}</span></code></pre>
+        <p>See below for how to fix this problem.</p>
+      </section>
+      <section id="how-do-i-update-state-with-values-that-depend-on-the-current-state" class="level3">
+        <h3>How do I update state with values that depend on the current state?</h3>
+        <p>Pass a function instead of an object to <code>setState</code> to ensure the call always uses the most updated version of state (see below).</p>
+      </section>
+      <section id="what-is-the-difference-between-passing-an-object-or-a-function-in-setstate" class="level3">
+        <h3>What is the difference between passing an object or a function in <code>setState</code>?</h3>
+        <p>Passing an update function allows you to access the current state value inside the updater. Since <code>setState</code> calls are batched, this lets you chain updates and ensure they build on top of each other instead of conflicting:</p>
+        <pre class="language-jsx"><code class="language-jsx"><span class="token function">incrementCount</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  <span class="token keyword">this</span><span class="token punctuation">.</span><span class="token method function property-access">setState</span><span class="token punctuation">(</span><span class="token punctuation">(</span><span class="token parameter">state</span><span class="token punctuation">)</span> <span class="token arrow operator">=></span> <span class="token punctuation">{</span>
+    <span class="token comment">// Important: read `state` instead of `this.state` when updating.</span>
+    <span class="token keyword control-flow">return</span> <span class="token punctuation">{</span><span class="token literal-property property">count</span><span class="token operator">:</span> state<span class="token punctuation">.</span><span class="token property-access">count</span> <span class="token operator">+</span> <span class="token number">1</span><span class="token punctuation">}</span>
+  <span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+
+<span class="token function">handleSomething</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  <span class="token comment">// Let's say `this.state.count` starts at 0.</span>
+  <span class="token keyword">this</span><span class="token punctuation">.</span><span class="token method function property-access">incrementCount</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token keyword">this</span><span class="token punctuation">.</span><span class="token method function property-access">incrementCount</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token keyword">this</span><span class="token punctuation">.</span><span class="token method function property-access">incrementCount</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+  <span class="token comment">// If you read `this.state.count` now, it would still be 0.</span>
+  <span class="token comment">// But when React re-renders the component, it will be 3.</span>
+<span class="token punctuation">}</span></code></pre>
+        <p><a href="./react-component.html#setstate">Learn more about setState</a></p>
+      </section>
+      <section id="when-is-setstate-asynchronous" class="level3">
+        <h3>When is <code>setState</code> asynchronous?</h3>
+        <p>Currently, <code>setState</code> is asynchronous inside event handlers.</p>
+        <p>This ensures, for example, that if both <code>Parent</code> and <code>Child</code> call <code>setState</code> during a click event, <code>Child</code> isn't re-rendered twice. Instead, React "flushes" the state updates at the end of the browser event. This results in significant performance improvements in larger apps.</p>
+        <p>This is an implementation detail so avoid relying on it directly. In the future versions, React will batch updates by default in more cases.</p>
+      </section>
+      <section id="why-doesnt-react-update-thisstate-synchronously" class="level3">
+        <h3>Why doesn't React update <code>this.state</code> synchronously?</h3>
+        <p>As explained in the previous section, React intentionally "waits" until all components call <code>setState()</code> in their event handlers before starting to re-render. This boosts performance by avoiding unnecessary re-renders.</p>
+        <p>However, you might still be wondering why React doesn't just update <code>this.state</code> immediately without re-rendering.</p>
+        <p>There are two main reasons:</p>
+        <ul>
+          <li>This would break the consistency between <code>props</code> and <code>state</code>, causing issues that are very hard to debug.</li>
+          <li>This would make some of the new features we're working on impossible to implement.</li>
+        </ul>
+        <p>This <a href="https://github.com/facebook/react/issues/11527#issuecomment-360199710">GitHub comment</a> dives deep into the specific examples.</p>
+      </section>
+      <section id="should-i-use-a-state-management-library-like-redux-or-mobx" class="level3">
+        <h3>Should I use a state management library like Redux or MobX?</h3>
+        <p><a href="https://redux.js.org/faq/general#when-should-i-use-redux">Maybe.</a></p>
+        <p>
+          It's a good idea to get to know React first, before adding in additional libraries. You can build quite complex applications using only React.
+          <span style="float: footnote;"><a href="./index.html#toc">Go to TOC</a></span>
+        </p>
+      </section>
+    </section>
+  </body>
+</html>

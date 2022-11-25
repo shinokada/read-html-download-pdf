@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <title>Web Components</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="https://raw.githubusercontent.com/shinokada/prism-coy-theme/main/theme_common.css">
+  </head>
+  <body>
+    <section id="web-components" class="level1">
+      <h1>Web Components</h1>
+      <p>React and <a href="https://developer.mozilla.org/en-US/docs/Web/Web_Components">Web Components</a> are built to solve different problems. Web Components provide strong encapsulation for reusable components, while React provides a declarative library that keeps the DOM in sync with your data. The two goals are complementary. As a developer, you are free to use React in your Web Components, or to use Web Components in React, or both.</p>
+      <p>Most people who use React don't use Web Components, but you may want to, especially if you are using third-party UI components that are written using Web Components.</p>
+      <section id="using-web-components-in-react" class="level2">
+        <h2>Using Web Components in React</h2>
+        <pre class="language-javascript"><code class="language-javascript"><span class="token keyword">class</span> <span class="token class-name">HelloMessage</span> <span class="token keyword">extends</span> <span class="token class-name">React<span class="token punctuation">.</span>Component</span> <span class="token punctuation">{</span>
+  <span class="token function">render</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token keyword control-flow">return</span> <span class="token operator">&#x3C;</span>div<span class="token operator">></span><span class="token maybe-class-name">Hello</span> <span class="token operator">&#x3C;</span>x<span class="token operator">-</span>search<span class="token operator">></span><span class="token punctuation">{</span><span class="token keyword">this</span><span class="token punctuation">.</span><span class="token property-access">props</span><span class="token punctuation">.</span><span class="token property-access">name</span><span class="token punctuation">}</span><span class="token operator">&#x3C;</span><span class="token operator">/</span>x<span class="token operator">-</span>search<span class="token operator">></span><span class="token operator">!</span><span class="token operator">&#x3C;</span><span class="token operator">/</span>div<span class="token operator">></span><span class="token punctuation">;</span>
+  <span class="token punctuation">}</span>
+<span class="token punctuation">}</span></code></pre>
+        <blockquote>
+          <p>Note:</p>
+          <p>Web Components often expose an imperative API. For instance, a <code>video</code> Web Component might expose <code>play()</code> and <code>pause()</code> functions. To access the imperative APIs of a Web Component, you will need to use a ref to interact with the DOM node directly. If you are using third-party Web Components, the best solution is to write a React component that behaves as a wrapper for your Web Component.</p>
+          <p>
+            Events emitted by a Web Component may not properly propagate through a React render tree.
+            You will need to manually attach event handlers to handle these events within your React components.
+          </p>
+        </blockquote>
+        <p>One common confusion is that Web Components use "class" instead of "className".</p>
+        <pre class="language-javascript"><code class="language-javascript"><span class="token keyword">function</span> <span class="token function"><span class="token maybe-class-name">BrickFlipbox</span></span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  <span class="token keyword control-flow">return</span> <span class="token punctuation">(</span>
+    <span class="token operator">&#x3C;</span>brick<span class="token operator">-</span>flipbox <span class="token keyword">class</span><span class="token operator">=</span><span class="token string">"demo"</span><span class="token operator">></span>
+      <span class="token operator">&#x3C;</span>div<span class="token operator">></span>front<span class="token operator">&#x3C;</span><span class="token operator">/</span>div<span class="token operator">></span>
+      <span class="token operator">&#x3C;</span>div<span class="token operator">></span>back<span class="token operator">&#x3C;</span><span class="token operator">/</span>div<span class="token operator">></span>
+    <span class="token operator">&#x3C;</span><span class="token operator">/</span>brick<span class="token operator">-</span>flipbox<span class="token operator">></span>
+  <span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span></code></pre>
+      </section>
+      <section id="using-react-in-your-web-components" class="level2">
+        <h2>Using React in your Web Components</h2>
+        <pre class="language-javascript"><code class="language-javascript"><span class="token keyword">class</span> <span class="token class-name">XSearch</span> <span class="token keyword">extends</span> <span class="token class-name">HTMLElement</span> <span class="token punctuation">{</span>
+  <span class="token function">connectedCallback</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token keyword">const</span> mountPoint <span class="token operator">=</span> <span class="token dom variable">document</span><span class="token punctuation">.</span><span class="token method function property-access">createElement</span><span class="token punctuation">(</span><span class="token string">'span'</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token keyword">this</span><span class="token punctuation">.</span><span class="token method function property-access">attachShadow</span><span class="token punctuation">(</span><span class="token punctuation">{</span> <span class="token literal-property property">mode</span><span class="token operator">:</span> <span class="token string">'open'</span> <span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token method function property-access">appendChild</span><span class="token punctuation">(</span>mountPoint<span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+    <span class="token keyword">const</span> name <span class="token operator">=</span> <span class="token keyword">this</span><span class="token punctuation">.</span><span class="token method function property-access">getAttribute</span><span class="token punctuation">(</span><span class="token string">'name'</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token keyword">const</span> url <span class="token operator">=</span> <span class="token string">'https://www.google.com/search?q='</span> <span class="token operator">+</span> <span class="token function">encodeURIComponent</span><span class="token punctuation">(</span>name<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token keyword">const</span> root <span class="token operator">=</span> <span class="token maybe-class-name">ReactDOM</span><span class="token punctuation">.</span><span class="token method function property-access">createRoot</span><span class="token punctuation">(</span>mountPoint<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    root<span class="token punctuation">.</span><span class="token method function property-access">render</span><span class="token punctuation">(</span><span class="token operator">&#x3C;</span>a href<span class="token operator">=</span><span class="token punctuation">{</span>url<span class="token punctuation">}</span><span class="token operator">></span><span class="token punctuation">{</span>name<span class="token punctuation">}</span><span class="token operator">&#x3C;</span><span class="token operator">/</span>a<span class="token operator">></span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token punctuation">}</span>
+<span class="token punctuation">}</span>
+customElements<span class="token punctuation">.</span><span class="token method function property-access">define</span><span class="token punctuation">(</span><span class="token string">'x-search'</span><span class="token punctuation">,</span> <span class="token maybe-class-name">XSearch</span><span class="token punctuation">)</span><span class="token punctuation">;</span></code></pre>
+        <blockquote>
+          <p>Note:</p>
+          <p>
+            This code <strong>will not</strong> work if you transform classes with Babel. See <a href="https://github.com/w3c/webcomponents/issues/587">this issue</a> for the discussion.
+            Include the <a href="https://github.com/webcomponents/polyfills/tree/master/packages/webcomponentsjs#custom-elements-es5-adapterjs">custom-elements-es5-adapter</a> before you load your web components to fix this issue.
+            <span style="float: footnote;"><a href="./index.html#toc">Go to TOC</a></span>
+          </p>
+        </blockquote>
+      </section>
+    </section>
+  </body>
+</html>

@@ -1,0 +1,234 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <title>The components Property</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="navigation.title" content="components">
+    <meta name="description" content="Nuxt 2.13+ can scan and auto import your components">
+    <meta name="menu" content="components">
+    <meta name="category" content="configuration-glossary">
+    <link rel="stylesheet" href="https://raw.githubusercontent.com/shinokada/prism-coy-theme/main/theme_common.css">
+  </head>
+  <body>
+    <section id="the-components-property" class="level1">
+      <h1>The components property</h1>
+      <p>Nuxt 2.13+ can scan and auto import your components using @nuxt/components module</p>
+      <hr>
+      <p>
+        alert
+        It is possible to use this feature with Nuxt 2.10 - 2.12. Just manually install and add <code>@nuxt/components</code> to <code>buildModules</code> inside <code>nuxt.config</code>.
+      </p>
+      <ul>
+        <li>Type: <code>Boolean</code> or <code>Array</code></li>
+        <li>Default: <code>false</code></li>
+      </ul>
+      <p>When set to <code>true</code> or an options object, Nuxt will include <a href="https://github.com/nuxt/components">@nuxt/components</a> and auto-import your components wherever you use them within your pages, layouts (and other components).</p>
+      <section id="info" class="level4">
+        <h4>Info</h4>
+        <p>For more information on how to use, please refer to <a href="./features/component-discovery">component auto-discovery documentation</a> for more information.</p>
+      </section>
+      <section id="configuration" class="level2">
+        <h2>Configuration</h2>
+        <pre class="language-js{}[nuxt.config.js]"><code class="language-js{}[nuxt.config.js]">export default {
+  // This will automatically load components from `~/components`
+  components: true
+}</code></pre>
+        <p>With <code>components: true</code>, by default the <code>~/components</code> directory will be included.</p>
+        <p>However you can customize auto-discovery behaviour by providing additional directories to scan:</p>
+        <pre class="language-js{}[nuxt.config.js]"><code class="language-js{}[nuxt.config.js]">export default {
+  components: [
+    // Equivalent to { path: '~/components' }
+    '~/components',
+    { path: '~/components/other', extensions: ['vue'] }
+  ]
+}</code></pre>
+        <section id="path" class="level4">
+          <h4>path</h4>
+          <p>Each item can be either string or object. A string value is a shortcut for <code>{ path }</code>.</p>
+        </section>
+        <section id="info-1" class="level4">
+          <h4>Info</h4>
+          <p>Don't worry about ordering or overlapping directories! The components module will take care of it. (Each file will be only matched once with longest path.)</p>
+        </section>
+        <section id="path-1" class="level3">
+          <h3>path</h3>
+          <ul>
+            <li>Required</li>
+            <li>Type: <code>String</code></li>
+          </ul>
+          <p>Path (absolute or relative) to the directory containing your components.</p>
+          <p>You can use Nuxt aliases (<code>~</code> or <code>@</code>) to refer to directories inside the project or directly use a npm package path (similar to using <code>require</code> within your project).</p>
+        </section>
+        <section id="extensions" class="level3">
+          <h3>extensions</h3>
+          <ul>
+            <li>Type: <code>Array&#x3C;string></code></li>
+            <li>Default:
+              <ul>
+                <li>Extensions supported by Nuxt builder (<code>builder.supportedExtensions</code>)</li>
+                <li>Default supported extensions <code>['vue', 'js']</code> or <code>['vue', 'js', 'ts', 'tsx']</code> depending on your environment</li>
+              </ul>
+            </li>
+          </ul>
+          <p><strong>Example:</strong> Support multi-file component structure</p>
+          <p>If you prefer to split your SFCs into <code>.js</code>, <code>.vue</code> and <code>.css</code>, you could choose only to scan for <code>.vue</code> files:</p>
+          <pre class="language-text"><code class="language-text">| components
+---| componentC
+| componentC.vue
+| componentC.js
+| componentC.scss</code></pre>
+          <pre class="language-js"><code class="language-js"><span class="token comment">// nuxt.config.js</span>
+<span class="token keyword module">export</span> <span class="token keyword module">default</span> <span class="token punctuation">{</span>
+  <span class="token literal-property property">components</span><span class="token operator">:</span> <span class="token punctuation">[</span><span class="token punctuation">{</span> <span class="token literal-property property">path</span><span class="token operator">:</span> <span class="token string">'~/components'</span><span class="token punctuation">,</span> <span class="token literal-property property">extensions</span><span class="token operator">:</span> <span class="token punctuation">[</span><span class="token string">'vue'</span><span class="token punctuation">]</span> <span class="token punctuation">}</span><span class="token punctuation">]</span>
+<span class="token punctuation">}</span></code></pre>
+        </section>
+        <section id="pattern" class="level3">
+          <h3>pattern</h3>
+          <ul>
+            <li>Type: <code>string</code> (<a href="https://github.com/isaacs/node-glob#glob-primer">glob pattern</a>)</li>
+            <li>Default: <code>**/*.${extensions.join(',')}</code></li>
+          </ul>
+          <p>Within the specified <code>path</code>, only files that match this pattern will be included.</p>
+        </section>
+        <section id="ignore" class="level3">
+          <h3>ignore</h3>
+          <ul>
+            <li>Type: <code>Array</code></li>
+            <li>Items: <code>string</code> (<a href="https://github.com/isaacs/node-glob#glob-primer">glob pattern</a>)</li>
+            <li>Default: <code>[]</code></li>
+          </ul>
+          <p>Patterns to exclude files within the specified <code>path</code>.</p>
+        </section>
+        <section id="prefix" class="level3">
+          <h3>prefix</h3>
+          <ul>
+            <li>Type: <code>String</code></li>
+            <li>Default: <code>''</code> (no prefix)</li>
+          </ul>
+          <p>Prefix all matched components.</p>
+          <p>The example below adds the <code>awesome-</code>/<code>Awesome</code> prefix to the name of components in the <code>awesome/</code> directory.</p>
+          <pre class="language-js"><code class="language-js"><span class="token comment">// nuxt.config.js</span>
+<span class="token keyword module">export</span> <span class="token keyword module">default</span> <span class="token punctuation">{</span>
+  <span class="token literal-property property">components</span><span class="token operator">:</span> <span class="token punctuation">[</span>
+    <span class="token string">'~/components'</span><span class="token punctuation">,</span>
+    <span class="token punctuation">{</span> <span class="token literal-property property">path</span><span class="token operator">:</span> <span class="token string">'~/components/awesome/'</span><span class="token punctuation">,</span> <span class="token literal-property property">prefix</span><span class="token operator">:</span> <span class="token string">'awesome'</span> <span class="token punctuation">}</span>
+  <span class="token punctuation">]</span>
+<span class="token punctuation">}</span></code></pre>
+          <pre class="language-bash"><code class="language-bash"><span class="token operator">|</span> components/
+---<span class="token operator">|</span> awesome/
+<span class="token operator">|</span> Button.vue
+---<span class="token operator">|</span> Button.vue</code></pre>
+          <pre class="language-html"><code class="language-html"><span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;</span>template</span><span class="token punctuation">></span></span>
+  <span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;</span>div</span><span class="token punctuation">></span></span>
+    <span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;</span>AwesomeButton</span><span class="token punctuation">></span></span>Click on me 🤘<span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;/</span>AwesomeButton</span><span class="token punctuation">></span></span>
+    <span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;</span>button</span><span class="token punctuation">></span></span>Click on me<span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;/</span>button</span><span class="token punctuation">></span></span>
+  <span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;/</span>div</span><span class="token punctuation">></span></span>
+<span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;/</span>template</span><span class="token punctuation">></span></span></code></pre>
+        </section>
+        <section id="pathprefix" class="level3">
+          <h3>pathPrefix</h3>
+          <ul>
+            <li>Type: <code>Boolean</code></li>
+            <li>Default: <code>true</code></li>
+          </ul>
+          <p>Prefix component name by its path.</p>
+        </section>
+        <section id="watch" class="level3">
+          <h3>watch</h3>
+          <ul>
+            <li>Type: <code>Boolean</code></li>
+            <li>Default: <code>true</code></li>
+          </ul>
+          <p>Watch the specified <code>path</code> for changes, including file additions and file deletions.</p>
+        </section>
+        <section id="transpile" class="level3">
+          <h3>transpile</h3>
+          <ul>
+            <li>Type: <code>Boolean</code></li>
+            <li>Default: <code>'auto'</code></li>
+          </ul>
+          <p>Transpile specified <code>path</code> using <a href="./configuration-glossary/configuration-build#transpile"><code>build.transpile</code></a>. By default (<code>'auto'</code>) it will set <code>transpile: true</code> if <code>node_modules/</code> is in <code>path</code>.</p>
+        </section>
+        <section id="level" class="level3">
+          <h3>level</h3>
+          <ul>
+            <li>Type: <code>Number</code></li>
+            <li>Default: <code>0</code></li>
+          </ul>
+          <p>Levels are used to define allow overwriting components that have the same name in two different directories. This can be useful for library authors who want to allow users to override their components, or for custom themes.</p>
+          <pre class="language-js"><code class="language-js"><span class="token keyword module">export</span> <span class="token keyword module">default</span> <span class="token punctuation">{</span>
+  <span class="token literal-property property">components</span><span class="token operator">:</span> <span class="token punctuation">[</span>
+    <span class="token string">'~/components'</span><span class="token punctuation">,</span> <span class="token comment">// default level is 0</span>
+    <span class="token punctuation">{</span> <span class="token literal-property property">path</span><span class="token operator">:</span> <span class="token string">'my-theme/components'</span><span class="token punctuation">,</span> <span class="token literal-property property">level</span><span class="token operator">:</span> <span class="token number">1</span> <span class="token punctuation">}</span>
+  <span class="token punctuation">]</span>
+<span class="token punctuation">}</span></code></pre>
+          <p>A component in <code>~/components</code> will then overwrite one with the same name in <code>my-theme/components</code>. The lowest value takes priority.</p>
+        </section>
+      </section>
+      <section id="advanced" class="level2">
+        <h2>Advanced</h2>
+        <section id="overwriting-components" class="level3">
+          <h3>Overwriting Components</h3>
+          <p>It is possible to have a way to overwrite components using the <a href="#level">level</a> option. This is very useful for modules and theme authors.</p>
+          <p>Considering this structure:</p>
+          <pre class="language-bash"><code class="language-bash"><span class="token operator">|</span> node_modules/
+---<span class="token operator">|</span> my-theme/
+<span class="token operator">|</span> components/
+<span class="token operator">|</span> Header.vue
+<span class="token operator">|</span> components/
+---<span class="token operator">|</span> Header.vue</code></pre>
+          <p>Then defining in the <code>nuxt.config</code>:</p>
+          <pre class="language-js"><code class="language-js"><span class="token literal-property property">components</span><span class="token operator">:</span> <span class="token punctuation">[</span>
+  <span class="token string">'~/components'</span><span class="token punctuation">,</span> <span class="token comment">// default level is 0</span>
+  <span class="token punctuation">{</span> <span class="token literal-property property">path</span><span class="token operator">:</span> <span class="token string">'node_modules/my-theme/components'</span><span class="token punctuation">,</span> <span class="token literal-property property">level</span><span class="token operator">:</span> <span class="token number">1</span> <span class="token punctuation">}</span>
+<span class="token punctuation">]</span></code></pre>
+          <p>Our <code>components/Header.vue</code> will overwrite our theme component since the lowest level takes priority.</p>
+        </section>
+        <section id="library-authors" class="level3">
+          <h3>Library Authors</h3>
+          <p>Making Vue Component libraries with automatic tree-shaking and component registration is now super easy ✨</p>
+          <p>This module exposes a hook named <code>components:dirs</code> so you can easily extend the directory list without requiring user configuration in your Nuxt module.</p>
+          <p>Imagine a directory structure like this:</p>
+          <pre class="language-bash"><code class="language-bash"><span class="token operator">|</span> node_modules/
+---<span class="token operator">|</span> awesome-ui/
+<span class="token operator">|</span> components/
+<span class="token operator">|</span> Alert.vue
+<span class="token operator">|</span> Button.vue
+<span class="token operator">|</span> nuxt.js
+<span class="token operator">|</span> pages/
+---<span class="token operator">|</span> index.vue
+<span class="token operator">|</span> nuxt.config.js</code></pre>
+          <p>Then in <code>awesome-ui/nuxt.js</code> you can use the <code>components:dir</code> hook:</p>
+          <pre class="language-js"><code class="language-js"><span class="token keyword module">import</span> <span class="token imports"><span class="token punctuation">{</span> join <span class="token punctuation">}</span></span> <span class="token keyword module">from</span> <span class="token string">'path'</span>
+
+<span class="token keyword module">export</span> <span class="token keyword module">default</span> <span class="token keyword">function</span> <span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  <span class="token keyword">this</span><span class="token punctuation">.</span><span class="token property-access">nuxt</span><span class="token punctuation">.</span><span class="token method function property-access">hook</span><span class="token punctuation">(</span><span class="token string">'components:dirs'</span><span class="token punctuation">,</span> <span class="token parameter">dirs</span> <span class="token arrow operator">=></span> <span class="token punctuation">{</span>
+    <span class="token comment">// Add ./components dir to the list</span>
+    dirs<span class="token punctuation">.</span><span class="token method function property-access">push</span><span class="token punctuation">(</span><span class="token punctuation">{</span>
+      <span class="token literal-property property">path</span><span class="token operator">:</span> <span class="token function">join</span><span class="token punctuation">(</span>__dirname<span class="token punctuation">,</span> <span class="token string">'components'</span><span class="token punctuation">)</span><span class="token punctuation">,</span>
+      <span class="token literal-property property">prefix</span><span class="token operator">:</span> <span class="token string">'awesome'</span>
+    <span class="token punctuation">}</span><span class="token punctuation">)</span>
+  <span class="token punctuation">}</span><span class="token punctuation">)</span>
+<span class="token punctuation">}</span></code></pre>
+          <p>That's it! Now in your project, you can import your ui library as a Nuxt module in your <code>nuxt.config.js</code>:</p>
+          <pre class="language-js"><code class="language-js"><span class="token keyword module">export</span> <span class="token keyword module">default</span> <span class="token punctuation">{</span>
+  <span class="token literal-property property">buildModules</span><span class="token operator">:</span> <span class="token punctuation">[</span><span class="token string">'@nuxt/components'</span><span class="token punctuation">,</span> <span class="token string">'awesome-ui/nuxt'</span><span class="token punctuation">]</span>
+<span class="token punctuation">}</span></code></pre>
+          <p>And directly use the module components (prefixed with <code>awesome-</code>), our <code>pages/index.vue</code>:</p>
+          <pre class="language-vue"><code class="language-vue">&#x3C;template>
+  &#x3C;div>
+    My &#x3C;AwesomeButton>UI button&#x3C;/AwesomeButton>!
+    &#x3C;awesome-alert>Here's an alert!&#x3C;/awesome-alert>
+  &#x3C;/div>
+&#x3C;/template></code></pre>
+          <p>It will automatically import the components only if used and also support HMR when updating your components in <code>node_modules/awesome-ui/components/</code>.</p>
+          <p>
+            <strong>Next</strong>: publish your <code>awesome-ui</code> module to <a href="https://www.npmjs.com">npm</a> and share it with the other Nuxters ✨
+            <span style="float: footnote;"><a href="../index.html#toc">Go to TOC</a></span>
+          </p>
+        </section>
+      </section>
+    </section>
+  </body>
+</html>

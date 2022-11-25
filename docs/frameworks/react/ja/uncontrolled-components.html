@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="utf-8">
+    <title>非制御コンポーネント</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="https://raw.githubusercontent.com/shinokada/prism-coy-theme/main/theme_common.css">
+  </head>
+  <body>
+    <section id="非制御コンポーネント" class="level1">
+      <h1>非制御コンポーネント</h1>
+      <p>ほとんどの場合では、フォームの実装には<a href="./forms.html#controlled-components">制御されたコンポーネント</a> (controlled component) を使用することをお勧めしています。制御されたコンポーネントでは、フォームのデータは React コンポーネントが扱います。非制御コンポーネント (uncontrolled component) はその代替となるものであり、フォームデータを DOM 自身が扱います。</p>
+      <p>非制御コンポーネントを記述するには、各 state の更新に対してイベントハンドラを書く代わりに、<a href="./refs-and-the-dom.html">ref を使用</a>して DOM からフォームの値を取得します。</p>
+      <p>例えば、以下のコードは非制御コンポーネントで 1 つの名前を受け取ります：</p>
+      <pre class="language-javascript{5,9,18}"><code class="language-javascript{5,9,18}">class NameForm extends React.Component {
+  constructor(props) {
+    super(props);
+    this.handleSubmit = this.handleSubmit.bind(this);
+    this.input = React.createRef();
+  }
+
+  handleSubmit(event) {
+    alert('A name was submitted: ' + this.input.current.value);
+    event.preventDefault();
+  }
+
+  render() {
+    return (
+      &#x3C;form onSubmit={this.handleSubmit}>
+        &#x3C;label>
+          Name:
+          &#x3C;input type="text" ref={this.input} />
+        &#x3C;/label>
+        &#x3C;input type="submit" value="Submit" />
+      &#x3C;/form>
+    );
+  }
+}</code></pre>
+      <p><a href="https://codepen.io/gaearon/pen/WooRWa?editors=0010"><strong>CodePen で試す</strong></a></p>
+      <p>非制御コンポーネントでは DOM に信頼できる情報源 (source of truth) を保持するため、使用すれば React と非 React のコードの統合が簡単になることがあります。汚くても構わないので速く記述したいと思うなら少しだけコード量も減らせます。そうでなければ、通常の制御されたコンポーネントを使用するべきです。</p>
+      <p>特定の状況に対してどちらのタイプのコンポーネントを使用すれば良いかまだはっきりしない場合は、<a href="https://goshakkk.name/controlled-vs-uncontrolled-inputs-react/">制御された入力 vs 非制御入力の記事</a>が参考になるでしょう。</p>
+      <section id="default-values" class="level3">
+        <h3>デフォルト値</h3>
+        <p>React のレンダーのライフサイクルでは、フォーム要素の <code>value</code> 属性は DOM の値を上書きします。非制御コンポーネントでは、React に初期値を指定させるが後続の更新処理には関与しないようにしたいことがよくあるでしょう。このケースを扱うために、<code>value</code> の代わりに <code>defaultValue</code> 属性を指定できます。コンポーネントのマウント後に <code>defaultValue</code> 属性の値を変更しても DOM 内の値の更新は引き起こされません。</p>
+        <pre class="language-javascript{7}"><code class="language-javascript{7}">render() {
+  return (
+    &#x3C;form onSubmit={this.handleSubmit}>
+      &#x3C;label>
+        Name:
+        &#x3C;input
+          defaultValue="Bob"
+          type="text"
+          ref={this.input} />
+      &#x3C;/label>
+      &#x3C;input type="submit" value="Submit" />
+    &#x3C;/form>
+  );
+}</code></pre>
+        <p>同様に、<code>&#x3C;input type="checkbox"></code> と <code>&#x3C;input type="radio"></code> が <code>defaultChecked</code> を、そして <code>&#x3C;select></code> と <code>&#x3C;textarea></code> が <code>defaultValue</code> をサポートしています。</p>
+      </section>
+      <section id="the-file-input-tag" class="level2">
+        <h2>ファイル input タグ</h2>
+        <p>HTML では、<code>&#x3C;input type="file"></code> を利用してユーザに 1 つ以上のファイルをデバイスストレージから選択させ、サーバにアップロードしたり <a href="https://developer.mozilla.org/en-US/docs/Web/API/File/Using_files_from_web_applications">File API</a> を通じて JavaScript で操作したりします。</p>
+        <pre class="language-html"><code class="language-html"><span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;</span>input</span> <span class="token attr-name">type</span><span class="token attr-value"><span class="token punctuation attr-equals">=</span><span class="token punctuation">"</span>file<span class="token punctuation">"</span></span> <span class="token punctuation">/></span></span></code></pre>
+        <p>React では、<code>&#x3C;input type="file" /></code> は値がユーザだけが設定できるものでありプログラムでは操作できないため、常に非制御コンポーネントです。</p>
+        <p>ファイルをやり取りするのに File API を使用してください。以下の例では <a href="./refs-and-the-dom.html">DOM ノードへの ref</a> を作成し submit ハンドラでファイルにアクセスしています。</p>
+        <p><code>embed:uncontrolled-components/input-type-file.js</code></p>
+        <p><strong><a href="codepen://uncontrolled-components/input-type-file">CodePen で試す</a></strong></p>
+        <p><span style="float: footnote;"><a href="./index.html#toc">Go to TOC</a></span></p>
+      </section>
+    </section>
+  </body>
+</html>

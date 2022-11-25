@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="utf-8">
+    <title>Packaging</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="https://raw.githubusercontent.com/shinokada/prism-coy-theme/main/theme_common.css">
+  </head>
+  <body>
+    <section id="packaging" class="level1">
+      <h1>Packaging</h1>
+      <blockquote>
+        <p><code>svelte-package</code> は現時点では experimental です。将来のリリースで後方互換性のない変更が行われる可能性があります。</p>
+      </blockquote>
+      <p>SvelteKit では、アプリを構築するだけでなく、<code>@sveltejs/package</code> パッケージを使用してコンポーネントライブラリを構築することもできます (<code>npm create svelte</code> にはこれを設定するためのオプションがあります)。</p>
+      <p>アプリを作成するとき、<code>src/routes</code> のコンテンツが公開される部分となります。<a href="../50-api-reference/30-modules.html#$lib"><code>src/lib</code></a> にはアプリの内部ライブラリが含まれます。</p>
+      <p>コンポーネントライブラリは、SvelteKitアプリと全く同じ構造を持ちますが、<code>src/lib</code> も公開される点が異なります。<code>src/routes</code> はライブラリに付随するドキュメントやデモサイトにもできますし、開発中に使用できるサンドボックスにもできます。</p>
+      <p><code>@sveltejs/package</code> の <code>svelte-package</code> コマンドを実行すると、<code>src/lib</code> のコンテンツを使用して、以下を含む <code>package</code> ディレクトリ (<a href="../50-api-reference/10-configuration.html#package">変更可能</a>) を生成します:</p>
+      <ul>
+        <li>カスタムで <code>include</code>/<code>exclude</code> オプションを <a href="../50-api-reference/10-configuration.html#package">設定</a> しない限り、<code>src/lib</code> にある全てのファイルが含まれます。Svelte コンポーネントはプリプロセスされ、TypeScript ファイルは JavaScript にトランスパイルされます。</li>
+        <li>Svelte、JavaScript、TypeScriptファイルのために生成される型定義 (<code>d.ts</code> ファイル)。これには <code>typescript >= 4.0.0</code> をインストールする必要があります。型定義は実装の隣に置かれ、手書きの <code>d.ts</code> ファイルはそのままコピーされます。<a href="../50-api-reference/10-configuration.html#package">生成を無効化</a> することもできますが、あまりおすすめしません。</li>
+        <li>プロジェクトのルート(root)からコピーされた <code>package.json</code> から、<code>"scripts"</code>、<code>"publishConfig.directory"</code>、<code>"publishConfig.linkDirectory"</code> フィールドを取り除いたもの。<code>"dependencies"</code> フィールドは含まれているため、ドキュメントやデモサイトにのみ必要なパッケージは <code>"devDependencies"</code> に追加してください。<code>"type": "module"</code> と <code>"exports"</code> フィールドは、オリジナルのファイルで定義されていない場合に追加されます。</li>
+      </ul>
+      <p><code>"exports"</code> フィールドにはパッケージのエントリーポイントが含まれます。デフォルトでは、アンダースコアで始まるファイル(またはアンダースコアで始まるディレクトリにあるファイル)を除いて、<code>src/lib</code> にある全てのファイルをエントリーポイントとして扱いますが、この動作は <a href="../50-api-reference/10-configuration.html#package">設定可能</a> です。もし <code>src/lib/index.js</code> や <code>src/lib/index.svelte</code> ファイルがある場合は、それがパッケージルートとして扱われます。</p>
+      <p>例えば、<code>src/lib/Foo.svelte</code> コンポーネントと、それを再エクスポートした <code>src/lib/index.js</code> モジュールがあった場合、ライブラリの利用者は次のどちらかを行うことができます。</p>
+      <pre class="language-js"><code class="language-js"><span class="token comment">// @filename: ambient.d.ts</span>
+declare module <span class="token string">'your-library'</span><span class="token punctuation">;</span>
+
+<span class="token comment">// @filename: index.js</span>
+<span class="token comment">// cut---</span>
+<span class="token keyword module">import</span> <span class="token imports"><span class="token punctuation">{</span> <span class="token maybe-class-name">Foo</span> <span class="token punctuation">}</span></span> <span class="token keyword module">from</span> <span class="token string">'your-library'</span><span class="token punctuation">;</span></code></pre>
+      <pre class="language-js"><code class="language-js"><span class="token comment">// @filename: ambient.d.ts</span>
+declare module <span class="token string">'your-library/Foo.svelte'</span><span class="token punctuation">;</span>
+
+<span class="token comment">// @filename: index.js</span>
+<span class="token comment">// cut---</span>
+<span class="token keyword module">import</span> <span class="token imports"><span class="token maybe-class-name">Foo</span></span> <span class="token keyword module">from</span> <span class="token string">'your-library/Foo.svelte'</span><span class="token punctuation">;</span></code></pre>
+      <blockquote>
+        <p>SvelteKit プロジェクトで利用することだけを意図している場合を除いて、<code>$app</code> などの <a href="../50-api-reference/30-modules.html">SvelteKit 固有のモジュール</a> をあなたのパッケージで使用するのは避けてください。例えば、<code>import { browser } from '$app/environment'</code> を使用するよりも、<a href="https://vitejs.dev/guide/env-and-mode.html#env-variables"><code>import.meta.env.SSR</code></a> を使用して全ての Vite ベースのプロジェクトで使用できるようにするか、もっと良いのは <a href="https://nodejs.org/api/packages.html#conditional-exports">Node conditional exports</a> を使用して全てのバンドラーで動作するようにすることです。また、<code>$app/stores</code> や <code>$app/navigation</code> などに直接依存せずに、現在の URL やナビゲーションアクション(navigation action)などをプロパティとして渡したいケースもあるでしょう。より一般的な方法でアプリを書くことで、テストや UI デモなどのためのツールのセットアップも簡単になります。</p>
+      </blockquote>
+      <section id="options" class="level2">
+        <h2>Options</h2>
+        <p><code>svelte-package</code> は以下のオプションを受け付けます:</p>
+        <ul>
+          <li><code>-w</code>/<code>--watch</code> — <code>src/lib</code> の中にあるファイルを監視し、パッケージを再ビルドします</li>
+        </ul>
+      </section>
+      <section id="publishing" class="level2">
+        <h2>Publishing</h2>
+        <p>生成されたパッケージをパブリッシュするには:</p>
+        <pre class="language-sh"><code class="language-sh">npm publish ./package</code></pre>
+        <p>上記の <code>./package</code> は生成されるディレクトリ名を参照しています。カスタムで <a href="../50-api-reference/10-configuration.html#package"><code>package.dir</code></a> を設定している場合は、適宜変更してください。</p>
+      </section>
+      <section id="注意事項" class="level2">
+        <h2>注意事項</h2>
+        <p>相対ファイルのインポートはすべて、Node の ESM アルゴリズムに従って完全に指定する必要があります。つまり、<code>src/lib/something/index.js</code> ファイルを <code>import { something } from './something</code> のようにインポートすることはできません。代わりに、<code>import { something } from './something/index.js</code> というようにインポートする必要があります。TypeScript を使用している場合は、<code>.ts</code> ファイルを同じ方法でインポートする必要がありますが、ファイルの末尾は <code>.ts</code> ではなく <code>.js</code> を使用します (これは我々の管理下ではなく、TypeScript チームが決定したことです)。<code>tsconfig.json</code> または <code>jsconfig.json</code> で <code>"moduleResolution": "NodeNext"</code> と設定することで、この問題を解決できます。</p>
+        <p>
+          比較的、これは実験的な機能であり、まだ完全に実装されていません。Svelte ファイル(プリプロセス済)と TypeScript ファイル(JavaScriptにトランスパイル済)を除き、全てのファイルはそのままコピーされます。
+          <span style="float: footnote;"><a href="../../index.html#toc">Go to TOC</a></span>
+        </p>
+      </section>
+    </section>
+  </body>
+</html>

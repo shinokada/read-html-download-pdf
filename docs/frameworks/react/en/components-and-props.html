@@ -1,0 +1,185 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <title>Components and Props</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="https://raw.githubusercontent.com/shinokada/prism-coy-theme/main/theme_common.css">
+  </head>
+  <body>
+    <section id="components-and-props" class="level1">
+      <h1>Components and Props</h1>
+      <p>Components let you split the UI into independent, reusable pieces, and think about each piece in isolation. This page provides an introduction to the idea of components. You can find a <a href="./react-component.html">detailed component API reference here</a>.</p>
+      <p>Conceptually, components are like JavaScript functions. They accept arbitrary inputs (called "props") and return React elements describing what should appear on the screen.</p>
+      <section id="function-and-class-components" class="level2">
+        <h2>Function and Class Components</h2>
+        <p>The simplest way to define a component is to write a JavaScript function:</p>
+        <pre class="language-js"><code class="language-js"><span class="token keyword">function</span> <span class="token function"><span class="token maybe-class-name">Welcome</span></span><span class="token punctuation">(</span><span class="token parameter">props</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  <span class="token keyword control-flow">return</span> <span class="token operator">&#x3C;</span>h1<span class="token operator">></span><span class="token maybe-class-name">Hello</span><span class="token punctuation">,</span> <span class="token punctuation">{</span>props<span class="token punctuation">.</span><span class="token property-access">name</span><span class="token punctuation">}</span><span class="token operator">&#x3C;</span><span class="token operator">/</span>h1<span class="token operator">></span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span></code></pre>
+        <p>This function is a valid React component because it accepts a single "props" (which stands for properties) object argument with data and returns a React element. We call such components "function components" because they are literally JavaScript functions.</p>
+        <p>You can also use an <a href="https://developer.mozilla.org/en/docs/Web/JavaScript/Reference/Classes">ES6 class</a> to define a component:</p>
+        <pre class="language-js"><code class="language-js"><span class="token keyword">class</span> <span class="token class-name">Welcome</span> <span class="token keyword">extends</span> <span class="token class-name">React<span class="token punctuation">.</span>Component</span> <span class="token punctuation">{</span>
+  <span class="token function">render</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token keyword control-flow">return</span> <span class="token operator">&#x3C;</span>h1<span class="token operator">></span><span class="token maybe-class-name">Hello</span><span class="token punctuation">,</span> <span class="token punctuation">{</span><span class="token keyword">this</span><span class="token punctuation">.</span><span class="token property-access">props</span><span class="token punctuation">.</span><span class="token property-access">name</span><span class="token punctuation">}</span><span class="token operator">&#x3C;</span><span class="token operator">/</span>h1<span class="token operator">></span><span class="token punctuation">;</span>
+  <span class="token punctuation">}</span>
+<span class="token punctuation">}</span></code></pre>
+        <p>The above two components are equivalent from React's point of view.</p>
+        <p>Function and Class components both have some additional features that we will discuss in the <a href="./state-and-lifecycle.html">next sections</a>.</p>
+      </section>
+      <section id="rendering-a-component" class="level2">
+        <h2>Rendering a Component</h2>
+        <p>Previously, we only encountered React elements that represent DOM tags:</p>
+        <pre class="language-js"><code class="language-js"><span class="token keyword">const</span> element <span class="token operator">=</span> <span class="token operator">&#x3C;</span>div <span class="token operator">/</span><span class="token operator">></span><span class="token punctuation">;</span></code></pre>
+        <p>However, elements can also represent user-defined components:</p>
+        <pre class="language-js"><code class="language-js"><span class="token keyword">const</span> element <span class="token operator">=</span> <span class="token operator">&#x3C;</span><span class="token maybe-class-name">Welcome</span> name<span class="token operator">=</span><span class="token string">"Sara"</span> <span class="token operator">/</span><span class="token operator">></span><span class="token punctuation">;</span></code></pre>
+        <p>When React sees an element representing a user-defined component, it passes JSX attributes and children to this component as a single object. We call this object "props".</p>
+        <p>For example, this code renders "Hello, Sara" on the page:</p>
+        <pre class="language-js{1,6}"><code class="language-js{1,6}">function Welcome(props) {
+  return &#x3C;h1>Hello, {props.name}&#x3C;/h1>;
+}
+
+const root = ReactDOM.createRoot(document.getElementById('root'));
+const element = &#x3C;Welcome name="Sara" />;
+root.render(element);</code></pre>
+        <p><strong><a href="https://codepen.io/gaearon/pen/YGYmEG?editors=1010">Try it on CodePen</a></strong></p>
+        <p>Let's recap what happens in this example:</p>
+        <ol>
+          <li>We call <code>root.render()</code> with the <code>&#x3C;Welcome name="Sara" /></code> element.</li>
+          <li>React calls the <code>Welcome</code> component with <code>{name: 'Sara'}</code> as the props.</li>
+          <li>Our <code>Welcome</code> component returns a <code>&#x3C;h1>Hello, Sara&#x3C;/h1></code> element as the result.</li>
+          <li>React DOM efficiently updates the DOM to match <code>&#x3C;h1>Hello, Sara&#x3C;/h1></code>.</li>
+        </ol>
+        <blockquote>
+          <p><strong>Note:</strong> Always start component names with a capital letter.</p>
+          <p>React treats components starting with lowercase letters as DOM tags. For example, <code>&#x3C;div /></code> represents an HTML div tag, but <code>&#x3C;Welcome /></code> represents a component and requires <code>Welcome</code> to be in scope.</p>
+          <p>To learn more about the reasoning behind this convention, please read <a href="./jsx-in-depth.html#user-defined-components-must-be-capitalized">JSX In Depth</a>.</p>
+        </blockquote>
+      </section>
+      <section id="composing-components" class="level2">
+        <h2>Composing Components</h2>
+        <p>Components can refer to other components in their output. This lets us use the same component abstraction for any level of detail. A button, a form, a dialog, a screen: in React apps, all those are commonly expressed as components.</p>
+        <p>For example, we can create an <code>App</code> component that renders <code>Welcome</code> many times:</p>
+        <pre class="language-js{8-10}"><code class="language-js{8-10}">function Welcome(props) {
+  return &#x3C;h1>Hello, {props.name}&#x3C;/h1>;
+}
+
+function App() {
+  return (
+    &#x3C;div>
+      &#x3C;Welcome name="Sara" />
+      &#x3C;Welcome name="Cahal" />
+      &#x3C;Welcome name="Edite" />
+    &#x3C;/div>
+  );
+}</code></pre>
+        <p><strong><a href="https://codepen.io/gaearon/pen/KgQKPr?editors=1010">Try it on CodePen</a></strong></p>
+        <p>Typically, new React apps have a single <code>App</code> component at the very top. However, if you integrate React into an existing app, you might start bottom-up with a small component like <code>Button</code> and gradually work your way to the top of the view hierarchy.</p>
+      </section>
+      <section id="extracting-components" class="level2">
+        <h2>Extracting Components</h2>
+        <p>Don't be afraid to split components into smaller components.</p>
+        <p>For example, consider this <code>Comment</code> component:</p>
+        <pre class="language-js"><code class="language-js"><span class="token keyword">function</span> <span class="token function"><span class="token maybe-class-name">Comment</span></span><span class="token punctuation">(</span><span class="token parameter">props</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  <span class="token keyword control-flow">return</span> <span class="token punctuation">(</span>
+    <span class="token operator">&#x3C;</span>div className<span class="token operator">=</span><span class="token string">"Comment"</span><span class="token operator">></span>
+      <span class="token operator">&#x3C;</span>div className<span class="token operator">=</span><span class="token string">"UserInfo"</span><span class="token operator">></span>
+        <span class="token operator">&#x3C;</span>img className<span class="token operator">=</span><span class="token string">"Avatar"</span>
+          src<span class="token operator">=</span><span class="token punctuation">{</span>props<span class="token punctuation">.</span><span class="token property-access">author</span><span class="token punctuation">.</span><span class="token property-access">avatarUrl</span><span class="token punctuation">}</span>
+          alt<span class="token operator">=</span><span class="token punctuation">{</span>props<span class="token punctuation">.</span><span class="token property-access">author</span><span class="token punctuation">.</span><span class="token property-access">name</span><span class="token punctuation">}</span>
+        <span class="token operator">/</span><span class="token operator">></span>
+        <span class="token operator">&#x3C;</span>div className<span class="token operator">=</span><span class="token string">"UserInfo-name"</span><span class="token operator">></span>
+          <span class="token punctuation">{</span>props<span class="token punctuation">.</span><span class="token property-access">author</span><span class="token punctuation">.</span><span class="token property-access">name</span><span class="token punctuation">}</span>
+        <span class="token operator">&#x3C;</span><span class="token operator">/</span>div<span class="token operator">></span>
+      <span class="token operator">&#x3C;</span><span class="token operator">/</span>div<span class="token operator">></span>
+      <span class="token operator">&#x3C;</span>div className<span class="token operator">=</span><span class="token string">"Comment-text"</span><span class="token operator">></span>
+        <span class="token punctuation">{</span>props<span class="token punctuation">.</span><span class="token property-access">text</span><span class="token punctuation">}</span>
+      <span class="token operator">&#x3C;</span><span class="token operator">/</span>div<span class="token operator">></span>
+      <span class="token operator">&#x3C;</span>div className<span class="token operator">=</span><span class="token string">"Comment-date"</span><span class="token operator">></span>
+        <span class="token punctuation">{</span><span class="token function">formatDate</span><span class="token punctuation">(</span>props<span class="token punctuation">.</span><span class="token property-access">date</span><span class="token punctuation">)</span><span class="token punctuation">}</span>
+      <span class="token operator">&#x3C;</span><span class="token operator">/</span>div<span class="token operator">></span>
+    <span class="token operator">&#x3C;</span><span class="token operator">/</span>div<span class="token operator">></span>
+  <span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span></code></pre>
+        <p><strong><a href="https://codepen.io/gaearon/pen/VKQwEo?editors=1010">Try it on CodePen</a></strong></p>
+        <p>It accepts <code>author</code> (an object), <code>text</code> (a string), and <code>date</code> (a date) as props, and describes a comment on a social media website.</p>
+        <p>This component can be tricky to change because of all the nesting, and it is also hard to reuse individual parts of it. Let's extract a few components from it.</p>
+        <p>First, we will extract <code>Avatar</code>:</p>
+        <pre class="language-js{3-6}"><code class="language-js{3-6}">function Avatar(props) {
+  return (
+    &#x3C;img className="Avatar"
+      src={props.user.avatarUrl}
+      alt={props.user.name}
+    />
+  );
+}</code></pre>
+        <p>The <code>Avatar</code> doesn't need to know that it is being rendered inside a <code>Comment</code>. This is why we have given its prop a more generic name: <code>user</code> rather than <code>author</code>.</p>
+        <p>We recommend naming props from the component's own point of view rather than the context in which it is being used.</p>
+        <p>We can now simplify <code>Comment</code> a tiny bit:</p>
+        <pre class="language-js{5}"><code class="language-js{5}">function Comment(props) {
+  return (
+    &#x3C;div className="Comment">
+      &#x3C;div className="UserInfo">
+        &#x3C;Avatar user={props.author} />
+        &#x3C;div className="UserInfo-name">
+          {props.author.name}
+        &#x3C;/div>
+      &#x3C;/div>
+      &#x3C;div className="Comment-text">
+        {props.text}
+      &#x3C;/div>
+      &#x3C;div className="Comment-date">
+        {formatDate(props.date)}
+      &#x3C;/div>
+    &#x3C;/div>
+  );
+}</code></pre>
+        <p>Next, we will extract a <code>UserInfo</code> component that renders an <code>Avatar</code> next to the user's name:</p>
+        <pre class="language-js{3-8}"><code class="language-js{3-8}">function UserInfo(props) {
+  return (
+    &#x3C;div className="UserInfo">
+      &#x3C;Avatar user={props.user} />
+      &#x3C;div className="UserInfo-name">
+        {props.user.name}
+      &#x3C;/div>
+    &#x3C;/div>
+  );
+}</code></pre>
+        <p>This lets us simplify <code>Comment</code> even further:</p>
+        <pre class="language-js{4}"><code class="language-js{4}">function Comment(props) {
+  return (
+    &#x3C;div className="Comment">
+      &#x3C;UserInfo user={props.author} />
+      &#x3C;div className="Comment-text">
+        {props.text}
+      &#x3C;/div>
+      &#x3C;div className="Comment-date">
+        {formatDate(props.date)}
+      &#x3C;/div>
+    &#x3C;/div>
+  );
+}</code></pre>
+        <p><strong><a href="https://codepen.io/gaearon/pen/rrJNJY?editors=1010">Try it on CodePen</a></strong></p>
+        <p>Extracting components might seem like grunt work at first, but having a palette of reusable components pays off in larger apps. A good rule of thumb is that if a part of your UI is used several times (<code>Button</code>, <code>Panel</code>, <code>Avatar</code>), or is complex enough on its own (<code>App</code>, <code>FeedStory</code>, <code>Comment</code>), it is a good candidate to be extracted to a separate component.</p>
+      </section>
+      <section id="props-are-read-only" class="level2">
+        <h2>Props are Read-Only</h2>
+        <p>Whether you declare a component <a href="#function-and-class-components">as a function or a class</a>, it must never modify its own props. Consider this <code>sum</code> function:</p>
+        <pre class="language-js"><code class="language-js"><span class="token keyword">function</span> <span class="token function">sum</span><span class="token punctuation">(</span><span class="token parameter">a<span class="token punctuation">,</span> b</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  <span class="token keyword control-flow">return</span> a <span class="token operator">+</span> b<span class="token punctuation">;</span>
+<span class="token punctuation">}</span></code></pre>
+        <p>Such functions are called <a href="https://en.wikipedia.org/wiki/Pure_function">"pure"</a> because they do not attempt to change their inputs, and always return the same result for the same inputs.</p>
+        <p>In contrast, this function is impure because it changes its own input:</p>
+        <pre class="language-js"><code class="language-js"><span class="token keyword">function</span> <span class="token function">withdraw</span><span class="token punctuation">(</span><span class="token parameter">account<span class="token punctuation">,</span> amount</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  account<span class="token punctuation">.</span><span class="token property-access">total</span> <span class="token operator">-=</span> amount<span class="token punctuation">;</span>
+<span class="token punctuation">}</span></code></pre>
+        <p>React is pretty flexible but it has a single strict rule:</p>
+        <p><strong>All React components must act like pure functions with respect to their props.</strong></p>
+        <p>
+          Of course, application UIs are dynamic and change over time. In the <a href="./state-and-lifecycle.html">next section</a>, we will introduce a new concept of "state". State allows React components to change their output over time in response to user actions, network responses, and anything else, without violating this rule.
+          <span style="float: footnote;"><a href="./index.html#toc">Go to TOC</a></span>
+        </p>
+      </section>
+    </section>
+  </body>
+</html>

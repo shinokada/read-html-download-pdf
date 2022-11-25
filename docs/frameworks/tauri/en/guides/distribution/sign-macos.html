@@ -1,0 +1,146 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <title>Code Signing macOS Applications</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="sidebar_label" content="macOS Code Signing">
+    <meta name="sidebar_position" content="4">
+    <link rel="stylesheet" href="https://raw.githubusercontent.com/shinokada/prism-coy-theme/main/theme_common.css">
+  </head>
+  <body>
+    <section id="code-signing-macos-applications" class="level1">
+      <h1>Code Signing macOS Applications</h1>
+      <p>This guide provides information on code signing and notarization for macOS applications.</p>
+      <blockquote>
+        <p>If you are not utilizing GitHub Actions to perform builds of OSX DMGs, you will need to ensure the environment variable <i>CI=true</i> exists. For more information refer to <a href="https://github.com/tauri-apps/tauri/issues/592">tauri-apps/tauri#592</a>.</p>
+      </blockquote>
+      <section id="requirements" class="level2">
+        <h2>Requirements</h2>
+        <ul>
+          <li>macOS 10.13.6 or later</li>
+          <li>Xcode 10 or later</li>
+          <li>An Apple Developer account enrolled in the <a href="https://developer.apple.com/programs/">Apple Developer Program</a></li>
+        </ul>
+        <p>For more details please read the developer article on <a href="https://developer.apple.com/documentation/security/notarizing_macos_software_before_distribution">notarizing macOS software before distribution</a>.</p>
+      </section>
+      <section id="tldr" class="level2">
+        <h2>tl;dr</h2>
+        <p>The Tauri code signing and notarization process is configured through the following environment variables:</p>
+        <ul>
+          <li><code>APPLE_SIGNING_IDENTITY</code>: the name of the keychain entry that contains the signing certificate.</li>
+          <li><code>APPLE_CERTIFICATE</code>: base64 string of the <code>.p12</code> certificate, exported from the keychain. Useful if you don't have the certificate on the keychain (e.g., CI machines).</li>
+          <li><code>APPLE_CERTIFICATE_PASSWORD</code>: the password for the <code>.p12</code> certificate.</li>
+          <li><code>APPLE_ID</code> and <code>APPLE_PASSWORD</code>: your Apple account email and an <a href="https://support.apple.com/en-ca/HT204397">app-specific password</a>. Only required to notarize the app.</li>
+          <li><code>APPLE_API_ISSUER</code> and <code>APPLE_API_KEY</code>: authentication with an App Store Connect API key instead of the Apple ID. Only required if you notarize the app.</li>
+          <li><code>APPLE_PROVIDER_SHORT_NAME</code>: Team provider short name. If your Apple ID is connected to multiple teams, you have to specify the provider short name of the team you want to use to notarize your app. You can list your account providers using <code>xcrun altool --list-providers -u AC_USERNAME -p AC_PASSWORD</code> as explained in the notarization <a href="https://developer.apple.com/documentation/security/notarizing_macos_software_before_distribution/customizing_the_notarization_workflow">workflow</a>.</li>
+        </ul>
+      </section>
+      <section id="signing-tauri-apps" class="level2">
+        <h2>Signing Tauri apps</h2>
+        <p>The first step to sign a macOS application is getting a signing certificate from the Apple Developer Program.</p>
+        <section id="creating-a-signing-certificate" class="level3">
+          <h3>Creating a signing certificate</h3>
+          <p>To create a new signing certificate, you must generate a Certificate Signing Request (CSR) file from your Mac computer. <a href="https://help.apple.com/developer-account/#/devbfa00fef7">Create a certificate signing request</a> describes creating a CSR.</p>
+          <p>On your Apple Developer account, navigate to the <a href="https://developer.apple.com/account/resources/certificates/list">Certificates, IDs &#x26; Profiles page</a> and click on the <code>Add</code> button to open the interface to create a new certificate. Choose the appropriate certificate type (<code>Apple Distribution</code> to submit apps to the App Store, and <code>Developer ID Application</code> to ship apps outside the App Store). Upload your CSR, and the certificate will be created.</p>
+          <blockquote>
+            <p>Only the Apple Developer <code>Account Holder</code> can create <em>Developer ID Application</em> certificates. But it can be associated with a different Apple ID by creating a CSR with a different user email address.</p>
+          </blockquote>
+        </section>
+        <section id="downloading-a-certificate" class="level3">
+          <h3>Downloading a certificate</h3>
+          <p>On <a href="https://developer.apple.com/account/resources/certificates/list">Certificates, IDs &#x26; Profiles page</a>, click on the certificate you want to use and click on the <code>Download</code> button. It saves a <code>.cer</code> file that installs the certificate on the keychain once opened. The name of the keychain entry represents the <code>signing identity</code>, which can also be found by executing <code>security find-identity -v -p codesigning</code>.</p>
+          <blockquote>
+            <p>A signing certificate is only valid if associated with your Apple ID. An invalid certificate won't be listed on the <i>Keychain Access > My Certificates</i> tab or the <i>security find-identity -v -p codesigning</i> output.</p>
+          </blockquote>
+        </section>
+        <section id="signing-the-tauri-application" class="level3">
+          <h3>Signing the Tauri application</h3>
+          <p>The signing configuration is provided to the Tauri bundler via environment variables. You need to configure the certificate to use and an optional authentication configuration to notarize the application.</p>
+          <section id="certificate-environment-variables" class="level4">
+            <h4>Certificate environment variables</h4>
+            <ul>
+              <li><code>APPLE_SIGNING_IDENTITY</code>: this is the <code>signing identity</code> we highlighted above. It must be defined to sign apps both locally and on CI machines.</li>
+            </ul>
+            <p>Additionally, to simplify the code signing process on CI, Tauri can install the certificate on the keychain for you if you define the <code>APPLE_CERTIFICATE</code> and <code>APPLE_CERTIFICATE_PASSWORD</code> environment variables.</p>
+            <ol>
+              <li>Open the <code>Keychain Access</code> app and find your certificate's keychain entry.</li>
+              <li>Expand the entry, double click on the key item, and select <code>Export $KEYNAME</code>.</li>
+              <li>Select the path to save the <code>.p12</code> file and define the exported certificate password.</li>
+              <li>Convert the <code>.p12</code> file to base64 running the following script on the terminal: <code>openssl base64 -in /path/to/certificate.p12 -out certificate-base64.txt</code>.</li>
+              <li>Set the contents of the <code>certificate-base64.txt</code> file to the <code>APPLE_CERTIFICATE</code> environment variable.</li>
+              <li>Set the certificate password to the <code>APPLE_CERTIFICATE_PASSWORD</code> environment variable.</li>
+            </ol>
+          </section>
+          <section id="authentication-environment-variables" class="level4">
+            <h4>Authentication environment variables</h4>
+            <p>These variables are only required to notarize the application.</p>
+            <blockquote>
+              <p>Notarization is required when using a <i>Developer ID Application</i> certificate.</p>
+            </blockquote>
+            <ul>
+              <li><code>APPLE_ID</code> and <code>APPLE_PASSWORD</code>: to authenticate with your Apple ID, set the <code>APPLE_ID</code> to your Apple account email (example: <code>export APPLE_ID=tauri@icloud.com</code>) and the <code>APPLE_PASSWORD</code> to an <a href="https://support.apple.com/en-ca/HT204397">app-specific password</a> for the Apple account.</li>
+              <li><code>APPLE_API_ISSUER</code> and <code>APPLE_API_KEY</code>: alternatively, you can authenticate using an App Store Connect API key. Open the App Store Connect's <a href="https://appstoreconnect.apple.com/access/users">Users and Access page</a>, select the <code>Keys</code> tab, click on the <code>Add</code> button and select a name and the <code>Developer</code> access. The <code>APPLE_API_ISSUER</code> (<code>Issuer ID</code>) is presented above the keys table, and the <code>APPLE_API_KEY</code> is the value on the <code>Key ID</code> column on that table. You also need to download the private key, which can only be done once and is only visible after a page reload (the button is shown on the table row for the newly created key). The private key file must be saved on <code>./private_keys</code>, <code>~/private_keys</code>, <code>~/.private_keys</code> or <code>~/.appstoreconnect/private_keys</code>, as stated on the <code>xcrun altool --help</code> command.</li>
+            </ul>
+          </section>
+        </section>
+        <section id="building-the-application" class="level3">
+          <h3>Building the application</h3>
+          <p>The Tauri bundler automatically signs and notarizes your application with all these environment variables set when running the <code>tauri build</code> command.</p>
+        </section>
+        <section id="example" class="level3">
+          <h3>Example</h3>
+          <p>The following example uses GitHub Actions to sign an application using the <a href="https://github.com/tauri-apps/tauri-action">Tauri action</a>.</p>
+          <p>We first define the environment variables we listed above as Secrets on GitHub.</p>
+          <blockquote>
+            <p>You can view <a href="https://docs.github.com/en/actions/reference/encrypted-secrets">this guide</a> to learn about GitHub secrets.</p>
+          </blockquote>
+          <p>Once we have established the GitHub Secrets, we create a GitHub publish workflow in <code>.github/workflows/main.yml</code>:</p>
+          <pre class="language-yml"><code class="language-yml"><span class="token key atrule">name</span><span class="token punctuation">:</span> <span class="token string">'publish'</span>
+<span class="token key atrule">on</span><span class="token punctuation">:</span>
+  <span class="token key atrule">push</span><span class="token punctuation">:</span>
+    <span class="token key atrule">branches</span><span class="token punctuation">:</span>
+      <span class="token punctuation">-</span> release
+
+<span class="token key atrule">jobs</span><span class="token punctuation">:</span>
+  <span class="token key atrule">publish-tauri</span><span class="token punctuation">:</span>
+    <span class="token key atrule">strategy</span><span class="token punctuation">:</span>
+      <span class="token key atrule">fail-fast</span><span class="token punctuation">:</span> <span class="token boolean important">false</span>
+      <span class="token key atrule">matrix</span><span class="token punctuation">:</span>
+        <span class="token key atrule">platform</span><span class="token punctuation">:</span> <span class="token punctuation">[</span>macos<span class="token punctuation">-</span>latest<span class="token punctuation">]</span>
+
+    <span class="token key atrule">runs-on</span><span class="token punctuation">:</span> $<span class="token punctuation">{</span><span class="token punctuation">{</span> matrix.platform <span class="token punctuation">}</span><span class="token punctuation">}</span>
+    <span class="token key atrule">steps</span><span class="token punctuation">:</span>
+      <span class="token punctuation">-</span> <span class="token key atrule">uses</span><span class="token punctuation">:</span> actions/checkout@v2
+      <span class="token punctuation">-</span> <span class="token key atrule">name</span><span class="token punctuation">:</span> setup node
+        <span class="token key atrule">uses</span><span class="token punctuation">:</span> actions/setup<span class="token punctuation">-</span>node@v2
+        <span class="token key atrule">with</span><span class="token punctuation">:</span>
+          <span class="token key atrule">node-version</span><span class="token punctuation">:</span> <span class="token number">12</span>
+      <span class="token punctuation">-</span> <span class="token key atrule">name</span><span class="token punctuation">:</span> install Rust stable
+        <span class="token key atrule">uses</span><span class="token punctuation">:</span> actions<span class="token punctuation">-</span>rs/toolchain@v1
+        <span class="token key atrule">with</span><span class="token punctuation">:</span>
+          <span class="token key atrule">toolchain</span><span class="token punctuation">:</span> stable
+      <span class="token punctuation">-</span> <span class="token key atrule">name</span><span class="token punctuation">:</span> install app dependencies and build it
+        <span class="token key atrule">run</span><span class="token punctuation">:</span> yarn <span class="token important">&#x26;&#x26;</span> yarn build
+      <span class="token punctuation">-</span> <span class="token key atrule">uses</span><span class="token punctuation">:</span> tauri<span class="token punctuation">-</span>apps/tauri<span class="token punctuation">-</span>action@v0
+        <span class="token key atrule">env</span><span class="token punctuation">:</span>
+          <span class="token key atrule">GITHUB_TOKEN</span><span class="token punctuation">:</span> $<span class="token punctuation">{</span><span class="token punctuation">{</span> secrets.GITHUB_TOKEN <span class="token punctuation">}</span><span class="token punctuation">}</span>
+          <span class="token key atrule">ENABLE_CODE_SIGNING</span><span class="token punctuation">:</span> $<span class="token punctuation">{</span><span class="token punctuation">{</span> secrets.APPLE_CERTIFICATE <span class="token punctuation">}</span><span class="token punctuation">}</span>
+          <span class="token key atrule">APPLE_CERTIFICATE</span><span class="token punctuation">:</span> $<span class="token punctuation">{</span><span class="token punctuation">{</span> secrets.APPLE_CERTIFICATE <span class="token punctuation">}</span><span class="token punctuation">}</span>
+          <span class="token key atrule">APPLE_CERTIFICATE_PASSWORD</span><span class="token punctuation">:</span> $<span class="token punctuation">{</span><span class="token punctuation">{</span> secrets.APPLE_CERTIFICATE_PASSWORD <span class="token punctuation">}</span><span class="token punctuation">}</span>
+          <span class="token key atrule">APPLE_SIGNING_IDENTITY</span><span class="token punctuation">:</span> $<span class="token punctuation">{</span><span class="token punctuation">{</span> secrets.APPLE_SIGNING_IDENTITY <span class="token punctuation">}</span><span class="token punctuation">}</span>
+          <span class="token key atrule">APPLE_ID</span><span class="token punctuation">:</span> $<span class="token punctuation">{</span><span class="token punctuation">{</span> secrets.APPLE_ID <span class="token punctuation">}</span><span class="token punctuation">}</span>
+          <span class="token key atrule">APPLE_PASSWORD</span><span class="token punctuation">:</span> $<span class="token punctuation">{</span><span class="token punctuation">{</span> secrets.APPLE_PASSWORD <span class="token punctuation">}</span><span class="token punctuation">}</span>
+        <span class="token key atrule">with</span><span class="token punctuation">:</span>
+          <span class="token key atrule">tagName</span><span class="token punctuation">:</span> app<span class="token punctuation">-</span>v__VERSION__ <span class="token comment"># the action automatically replaces \_\_VERSION\_\_ with the app version</span>
+          <span class="token key atrule">releaseName</span><span class="token punctuation">:</span> <span class="token string">'App v__VERSION__'</span>
+          <span class="token key atrule">releaseBody</span><span class="token punctuation">:</span> <span class="token string">'See the assets to download this version and install.'</span>
+          <span class="token key atrule">releaseDraft</span><span class="token punctuation">:</span> <span class="token boolean important">true</span>
+          <span class="token key atrule">prerelease</span><span class="token punctuation">:</span> <span class="token boolean important">false</span></code></pre>
+          <p>The workflow pulls the secrets from GitHub and defines them as environment variables before building the application using the Tauri action. The output is a GitHub release with the signed and notarized macOS application.</p>
+          <p><span style="float: footnote;"><a href="../../index.html#toc">Go to TOC</a></span></p>
+        </section>
+      </section>
+    </section>
+  </body>
+</html>

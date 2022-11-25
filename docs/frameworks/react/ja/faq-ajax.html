@@ -1,0 +1,127 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="utf-8">
+    <title>AJAX と API</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="https://raw.githubusercontent.com/shinokada/prism-coy-theme/main/theme_common.css">
+  </head>
+  <body>
+    <section id="ajax-と-api" class="level1">
+      <h1>AJAX と API</h1>
+      <section id="how-can-i-make-an-ajax-call" class="level3">
+        <h3>AJAX コールをする方法は？</h3>
+        <p>任意の AJAX ライブラリを React と共に利用可能です。人気のあるものとしては、<a href="https://github.com/axios/axios">Axios</a>、<a href="https://api.jquery.com/jQuery.ajax/">jQuery AJAX</a>、ブラウザ組み込みの <a href="https://developer.mozilla.org/en-US/docs/Web/API/Fetch_API">window.fetch</a> などがあります。</p>
+      </section>
+      <section id="where-in-the-component-lifecycle-should-i-make-an-ajax-call" class="level3">
+        <h3>コンポーネントのどのライフサイクルで AJAX コールすべきか？</h3>
+        <p>AJAX コールによるデータ取得は <a href="./react-component.html#mounting"><code>componentDidMount</code></a> のライフサイクルメソッドで行うべきです。データ取得後に <code>setState</code> でコンポーネントを更新できるようにするためです。</p>
+      </section>
+      <section id="example-using-ajax-results-to-set-local-state" class="level3">
+        <h3>例：ローカル state に AJAX の通信結果をセットする</h3>
+        <p>下記のコンポーネントは、<code>componentDidMount</code> で AJAX コールして得られたデータをローカルコンポーネントの state に流し込んでいます。</p>
+        <p>このサンプル API が返す JSON オブジェクトはこのようになります：</p>
+        <pre class="language-text"><code class="language-text">{
+  "items": [
+    { "id": 1, "name": "Apples",  "price": "$2" },
+    { "id": 2, "name": "Peaches", "price": "$5" }
+  ] 
+}</code></pre>
+        <pre class="language-jsx"><code class="language-jsx"><span class="token keyword">class</span> <span class="token class-name">MyComponent</span> <span class="token keyword">extends</span> <span class="token class-name">React<span class="token punctuation">.</span>Component</span> <span class="token punctuation">{</span>
+  <span class="token function">constructor</span><span class="token punctuation">(</span><span class="token parameter">props</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token keyword">super</span><span class="token punctuation">(</span>props<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token keyword">this</span><span class="token punctuation">.</span><span class="token property-access">state</span> <span class="token operator">=</span> <span class="token punctuation">{</span>
+      <span class="token literal-property property">error</span><span class="token operator">:</span> <span class="token keyword null nil">null</span><span class="token punctuation">,</span>
+      <span class="token literal-property property">isLoaded</span><span class="token operator">:</span> <span class="token boolean">false</span><span class="token punctuation">,</span>
+      <span class="token literal-property property">items</span><span class="token operator">:</span> <span class="token punctuation">[</span><span class="token punctuation">]</span>
+    <span class="token punctuation">}</span><span class="token punctuation">;</span>
+  <span class="token punctuation">}</span>
+
+  <span class="token function">componentDidMount</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token function">fetch</span><span class="token punctuation">(</span><span class="token string">"https://api.example.com/items"</span><span class="token punctuation">)</span>
+      <span class="token punctuation">.</span><span class="token method function property-access">then</span><span class="token punctuation">(</span><span class="token parameter">res</span> <span class="token arrow operator">=></span> res<span class="token punctuation">.</span><span class="token method function property-access">json</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+      <span class="token punctuation">.</span><span class="token method function property-access">then</span><span class="token punctuation">(</span>
+        <span class="token punctuation">(</span><span class="token parameter">result</span><span class="token punctuation">)</span> <span class="token arrow operator">=></span> <span class="token punctuation">{</span>
+          <span class="token keyword">this</span><span class="token punctuation">.</span><span class="token method function property-access">setState</span><span class="token punctuation">(</span><span class="token punctuation">{</span>
+            <span class="token literal-property property">isLoaded</span><span class="token operator">:</span> <span class="token boolean">true</span><span class="token punctuation">,</span>
+            <span class="token literal-property property">items</span><span class="token operator">:</span> result<span class="token punctuation">.</span><span class="token property-access">items</span>
+          <span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token punctuation">}</span><span class="token punctuation">,</span>
+        <span class="token comment">// 補足：コンポーネント内のバグによる例外を隠蔽しないためにも</span>
+        <span class="token comment">// catch()ブロックの代わりにここでエラーハンドリングすることが重要です</span>
+        <span class="token punctuation">(</span><span class="token parameter">error</span><span class="token punctuation">)</span> <span class="token arrow operator">=></span> <span class="token punctuation">{</span>
+          <span class="token keyword">this</span><span class="token punctuation">.</span><span class="token method function property-access">setState</span><span class="token punctuation">(</span><span class="token punctuation">{</span>
+            <span class="token literal-property property">isLoaded</span><span class="token operator">:</span> <span class="token boolean">true</span><span class="token punctuation">,</span>
+            error
+          <span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token punctuation">}</span>
+      <span class="token punctuation">)</span>
+  <span class="token punctuation">}</span>
+
+  <span class="token function">render</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token keyword">const</span> <span class="token punctuation">{</span> error<span class="token punctuation">,</span> isLoaded<span class="token punctuation">,</span> items <span class="token punctuation">}</span> <span class="token operator">=</span> <span class="token keyword">this</span><span class="token punctuation">.</span><span class="token property-access">state</span><span class="token punctuation">;</span>
+    <span class="token keyword control-flow">if</span> <span class="token punctuation">(</span>error<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+      <span class="token keyword control-flow">return</span> <span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;</span>div</span><span class="token punctuation">></span></span><span class="token plain-text">Error: </span><span class="token punctuation">{</span>error<span class="token punctuation">.</span><span class="token property-access">message</span><span class="token punctuation">}</span><span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;/</span>div</span><span class="token punctuation">></span></span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span> <span class="token keyword control-flow">else</span> <span class="token keyword control-flow">if</span> <span class="token punctuation">(</span><span class="token operator">!</span>isLoaded<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+      <span class="token keyword control-flow">return</span> <span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;</span>div</span><span class="token punctuation">></span></span><span class="token plain-text">Loading...</span><span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;/</span>div</span><span class="token punctuation">></span></span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span> <span class="token keyword control-flow">else</span> <span class="token punctuation">{</span>
+      <span class="token keyword control-flow">return</span> <span class="token punctuation">(</span>
+        <span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;</span>ul</span><span class="token punctuation">></span></span><span class="token plain-text">
+          </span><span class="token punctuation">{</span>items<span class="token punctuation">.</span><span class="token method function property-access">map</span><span class="token punctuation">(</span><span class="token parameter">item</span> <span class="token arrow operator">=></span> <span class="token punctuation">(</span>
+            <span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;</span>li</span> <span class="token attr-name">key</span><span class="token script language-javascript"><span class="token script-punctuation punctuation">=</span><span class="token punctuation">{</span>item<span class="token punctuation">.</span><span class="token property-access">id</span><span class="token punctuation">}</span></span><span class="token punctuation">></span></span><span class="token plain-text">
+              </span><span class="token punctuation">{</span>item<span class="token punctuation">.</span><span class="token property-access">name</span><span class="token punctuation">}</span><span class="token plain-text"> </span><span class="token punctuation">{</span>item<span class="token punctuation">.</span><span class="token property-access">price</span><span class="token punctuation">}</span><span class="token plain-text">
+            </span><span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;/</span>li</span><span class="token punctuation">></span></span>
+          <span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">}</span><span class="token plain-text">
+        </span><span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;/</span>ul</span><span class="token punctuation">></span></span>
+      <span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+  <span class="token punctuation">}</span>
+<span class="token punctuation">}</span></code></pre>
+        <p>こちらが<a href="./hooks-intro.html">フック</a>による同等版です：</p>
+        <pre class="language-js"><code class="language-js"><span class="token keyword">function</span> <span class="token function"><span class="token maybe-class-name">MyComponent</span></span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  <span class="token keyword">const</span> <span class="token punctuation">[</span>error<span class="token punctuation">,</span> setError<span class="token punctuation">]</span> <span class="token operator">=</span> <span class="token function">useState</span><span class="token punctuation">(</span><span class="token keyword null nil">null</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token keyword">const</span> <span class="token punctuation">[</span>isLoaded<span class="token punctuation">,</span> setIsLoaded<span class="token punctuation">]</span> <span class="token operator">=</span> <span class="token function">useState</span><span class="token punctuation">(</span><span class="token boolean">false</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token keyword">const</span> <span class="token punctuation">[</span>items<span class="token punctuation">,</span> setItems<span class="token punctuation">]</span> <span class="token operator">=</span> <span class="token function">useState</span><span class="token punctuation">(</span><span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+  <span class="token comment">// Note: the empty deps array [] means</span>
+  <span class="token comment">// this useEffect will run once</span>
+  <span class="token comment">// similar to componentDidMount()</span>
+  <span class="token function">useEffect</span><span class="token punctuation">(</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token arrow operator">=></span> <span class="token punctuation">{</span>
+    <span class="token function">fetch</span><span class="token punctuation">(</span><span class="token string">"https://api.example.com/items"</span><span class="token punctuation">)</span>
+      <span class="token punctuation">.</span><span class="token method function property-access">then</span><span class="token punctuation">(</span><span class="token parameter">res</span> <span class="token arrow operator">=></span> res<span class="token punctuation">.</span><span class="token method function property-access">json</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+      <span class="token punctuation">.</span><span class="token method function property-access">then</span><span class="token punctuation">(</span>
+        <span class="token punctuation">(</span><span class="token parameter">result</span><span class="token punctuation">)</span> <span class="token arrow operator">=></span> <span class="token punctuation">{</span>
+          <span class="token function">setIsLoaded</span><span class="token punctuation">(</span><span class="token boolean">true</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+          <span class="token function">setItems</span><span class="token punctuation">(</span>result<span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token punctuation">}</span><span class="token punctuation">,</span>
+        <span class="token comment">// Note: it's important to handle errors here</span>
+        <span class="token comment">// instead of a catch() block so that we don't swallow</span>
+        <span class="token comment">// exceptions from actual bugs in components.</span>
+        <span class="token punctuation">(</span><span class="token parameter">error</span><span class="token punctuation">)</span> <span class="token arrow operator">=></span> <span class="token punctuation">{</span>
+          <span class="token function">setIsLoaded</span><span class="token punctuation">(</span><span class="token boolean">true</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+          <span class="token function">setError</span><span class="token punctuation">(</span>error<span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token punctuation">}</span>
+      <span class="token punctuation">)</span>
+  <span class="token punctuation">}</span><span class="token punctuation">,</span> <span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token punctuation">)</span>
+
+  <span class="token keyword control-flow">if</span> <span class="token punctuation">(</span>error<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token keyword control-flow">return</span> <span class="token operator">&#x3C;</span>div<span class="token operator">></span><span class="token known-class-name class-name">Error</span><span class="token operator">:</span> <span class="token punctuation">{</span>error<span class="token punctuation">.</span><span class="token property-access">message</span><span class="token punctuation">}</span><span class="token operator">&#x3C;</span><span class="token operator">/</span>div<span class="token operator">></span><span class="token punctuation">;</span>
+  <span class="token punctuation">}</span> <span class="token keyword control-flow">else</span> <span class="token keyword control-flow">if</span> <span class="token punctuation">(</span><span class="token operator">!</span>isLoaded<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token keyword control-flow">return</span> <span class="token operator">&#x3C;</span>div<span class="token operator">></span><span class="token maybe-class-name">Loading</span><span class="token spread operator">...</span><span class="token operator">&#x3C;</span><span class="token operator">/</span>div<span class="token operator">></span><span class="token punctuation">;</span>
+  <span class="token punctuation">}</span> <span class="token keyword control-flow">else</span> <span class="token punctuation">{</span>
+    <span class="token keyword control-flow">return</span> <span class="token punctuation">(</span>
+      <span class="token operator">&#x3C;</span>ul<span class="token operator">></span>
+        <span class="token punctuation">{</span>items<span class="token punctuation">.</span><span class="token method function property-access">map</span><span class="token punctuation">(</span><span class="token parameter">item</span> <span class="token arrow operator">=></span> <span class="token punctuation">(</span>
+          <span class="token operator">&#x3C;</span>li key<span class="token operator">=</span><span class="token punctuation">{</span>item<span class="token punctuation">.</span><span class="token property-access">id</span><span class="token punctuation">}</span><span class="token operator">></span>
+            <span class="token punctuation">{</span>item<span class="token punctuation">.</span><span class="token property-access">name</span><span class="token punctuation">}</span> <span class="token punctuation">{</span>item<span class="token punctuation">.</span><span class="token property-access">price</span><span class="token punctuation">}</span>
+          <span class="token operator">&#x3C;</span><span class="token operator">/</span>li<span class="token operator">></span>
+        <span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">}</span>
+      <span class="token operator">&#x3C;</span><span class="token operator">/</span>ul<span class="token operator">></span>
+    <span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token punctuation">}</span>
+<span class="token punctuation">}</span></code></pre>
+        <p><span style="float: footnote;"><a href="./index.html#toc">Go to TOC</a></span></p>
+      </section>
+    </section>
+  </body>
+</html>

@@ -1,0 +1,248 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="utf-8">
+    <title>フォーム</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="https://raw.githubusercontent.com/shinokada/prism-coy-theme/main/theme_common.css">
+  </head>
+  <body>
+    <section id="フォーム" class="level1">
+      <h1>フォーム</h1>
+      <p>HTML のフォーム要素は当然のこととして内部に何らかの状態を持っていますので、フォーム要素は React において他の DOM 要素とちょっと異なる動作をします。例えば、このプレーン HTML によるフォームは 1 つの名前を受け付けます：</p>
+      <pre class="language-html"><code class="language-html"><span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;</span>form</span><span class="token punctuation">></span></span>
+  <span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;</span>label</span><span class="token punctuation">></span></span>
+    Name:
+    <span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;</span>input</span> <span class="token attr-name">type</span><span class="token attr-value"><span class="token punctuation attr-equals">=</span><span class="token punctuation">"</span>text<span class="token punctuation">"</span></span> <span class="token attr-name">name</span><span class="token attr-value"><span class="token punctuation attr-equals">=</span><span class="token punctuation">"</span>name<span class="token punctuation">"</span></span> <span class="token punctuation">/></span></span>
+  <span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;/</span>label</span><span class="token punctuation">></span></span>
+  <span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;</span>input</span> <span class="token attr-name">type</span><span class="token attr-value"><span class="token punctuation attr-equals">=</span><span class="token punctuation">"</span>submit<span class="token punctuation">"</span></span> <span class="token attr-name">value</span><span class="token attr-value"><span class="token punctuation attr-equals">=</span><span class="token punctuation">"</span>Submit<span class="token punctuation">"</span></span> <span class="token punctuation">/></span></span>
+<span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;/</span>form</span><span class="token punctuation">></span></span></code></pre>
+      <p>このフォームは、ユーザがフォームを送信した際に新しいページに移動する、という、HTML フォームとしてのデフォルトの動作をします。React でこの振る舞いが必要なら、そのまま動きます。しかし大抵のケースでは、フォームの送信に応答してユーザがフォームに入力したデータにアクセスするような JavaScript 関数があった方が便利です。これを実現する標準的な方法は、"制御された (controlled) コンポーネント" と呼ばれるテクニックを使うことです。</p>
+      <section id="controlled-components" class="level2">
+        <h2>制御されたコンポーネント</h2>
+        <p>HTML では <code>&#x3C;input></code>、<code>&#x3C;textarea></code>、そして <code>&#x3C;select></code> のようなフォーム要素は通常、自身で状態を保持しており、ユーザの入力に基づいてそれを更新します。React では、変更されうる状態は通常はコンポーネントの state プロパティに保持され、<a href="./react-component.html#setstate"><code>setState()</code></a> 関数でのみ更新されます。</p>
+        <p>React の state を "信頼できる唯一の情報源 (single source of truth)" とすることで、上述の 2 つの状態を結合させることができます。そうすることで、フォームをレンダーしている React コンポーネントが、後続するユーザ入力でフォームで起きることも制御できるようになります。このような方法で React によって値が制御される入力フォーム要素は「制御されたコンポーネント」と呼ばれます。</p>
+        <p>例えば、前述のフォームの例において、フォーム送信時に名前をログに残すようにしたい場合、フォームを制御されたコンポーネントとして書くことができます：</p>
+        <pre class="language-javascript{4,10-12,21,24}"><code class="language-javascript{4,10-12,21,24}">class NameForm extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = {value: ''};
+
+    this.handleChange = this.handleChange.bind(this);
+    this.handleSubmit = this.handleSubmit.bind(this);
+  }
+
+  handleChange(event) {
+    this.setState({value: event.target.value});
+  }
+
+  handleSubmit(event) {
+    alert('A name was submitted: ' + this.state.value);
+    event.preventDefault();
+  }
+
+  render() {
+    return (
+      &#x3C;form onSubmit={this.handleSubmit}>
+        &#x3C;label>
+          Name:
+          &#x3C;input type="text" value={this.state.value} onChange={this.handleChange} />
+        &#x3C;/label>
+        &#x3C;input type="submit" value="Submit" />
+      &#x3C;/form>
+    );
+  }
+}</code></pre>
+        <p><a href="https://codepen.io/gaearon/pen/VmmPgp?editors=0010"><strong>Try it on CodePen</strong></a></p>
+        <p>フォーム要素の <code>value</code> 属性が設定されているので、表示される値は常に <code>this.state.value</code> となり、React の state が信頼できる情報源となります。<code>handleChange</code> はキーストロークごとに実行されて React の state を更新するので、表示される値はユーザがタイプするたびに更新されます。</p>
+        <p>制御されたコンポーネントを使うと、ユーザ入力の値は常に React の state によって制御されるようになります。これによりタイプするコード量は少し増えますが、その値を他の UI 要素に渡したり、他のイベントハンドラからリセットしたりできるようになります。</p>
+      </section>
+      <section id="the-textarea-tag" class="level2">
+        <h2>textarea タグ</h2>
+        <p>HTML では、<code>&#x3C;textarea></code> 要素はテキストを子要素として定義します。</p>
+        <pre class="language-html"><code class="language-html"><span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;</span>textarea</span><span class="token punctuation">></span></span>
+  Hello there, this is some text in a text area
+<span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;/</span>textarea</span><span class="token punctuation">></span></span></code></pre>
+        <p>React では、<code>&#x3C;textarea></code> は代わりに <code>value</code> 属性を使用します。こうすることで、<code>&#x3C;textarea></code> を使用するフォームは単一行の入力フォームと非常に似た書き方ができるようになります：</p>
+        <pre class="language-javascript{4-6,12-14,26}"><code class="language-javascript{4-6,12-14,26}">class EssayForm extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = {
+      value: 'Please write an essay about your favorite DOM element.'
+    };
+
+    this.handleChange = this.handleChange.bind(this);
+    this.handleSubmit = this.handleSubmit.bind(this);
+  }
+
+  handleChange(event) {
+    this.setState({value: event.target.value});
+  }
+
+  handleSubmit(event) {
+    alert('An essay was submitted: ' + this.state.value);
+    event.preventDefault();
+  }
+
+  render() {
+    return (
+      &#x3C;form onSubmit={this.handleSubmit}>
+        &#x3C;label>
+          Essay:
+          &#x3C;textarea value={this.state.value} onChange={this.handleChange} />
+        &#x3C;/label>
+        &#x3C;input type="submit" value="Submit" />
+      &#x3C;/form>
+    );
+  }
+}</code></pre>
+        <p><code>this.state.value</code> がコンストラクタで初期化されているので、テキストエリアには始めからテキストが入っていることに注意してください。</p>
+      </section>
+      <section id="the-select-tag" class="level2">
+        <h2>select タグ</h2>
+        <p>HTML では、<code>&#x3C;select></code> はドロップダウンリストを作成します。例えばこの HTML は味についてのドロップダウンリストを作成しています：</p>
+        <pre class="language-html"><code class="language-html"><span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;</span>select</span><span class="token punctuation">></span></span>
+  <span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;</span>option</span> <span class="token attr-name">value</span><span class="token attr-value"><span class="token punctuation attr-equals">=</span><span class="token punctuation">"</span>grapefruit<span class="token punctuation">"</span></span><span class="token punctuation">></span></span>Grapefruit<span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;/</span>option</span><span class="token punctuation">></span></span>
+  <span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;</span>option</span> <span class="token attr-name">value</span><span class="token attr-value"><span class="token punctuation attr-equals">=</span><span class="token punctuation">"</span>lime<span class="token punctuation">"</span></span><span class="token punctuation">></span></span>Lime<span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;/</span>option</span><span class="token punctuation">></span></span>
+  <span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;</span>option</span> <span class="token attr-name">selected</span> <span class="token attr-name">value</span><span class="token attr-value"><span class="token punctuation attr-equals">=</span><span class="token punctuation">"</span>coconut<span class="token punctuation">"</span></span><span class="token punctuation">></span></span>Coconut<span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;/</span>option</span><span class="token punctuation">></span></span>
+  <span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;</span>option</span> <span class="token attr-name">value</span><span class="token attr-value"><span class="token punctuation attr-equals">=</span><span class="token punctuation">"</span>mango<span class="token punctuation">"</span></span><span class="token punctuation">></span></span>Mango<span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;/</span>option</span><span class="token punctuation">></span></span>
+<span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;/</span>select</span><span class="token punctuation">></span></span></code></pre>
+        <p>
+          <code>selected</code> 属性があるため Coconut オプションが最初に選択されていることに注意してください。この <code>selected</code> 属性の代わりに React は <code>value</code> 属性を親の <code>select</code> タグで使用します。一箇所で更新すればよいだけなので、制御されたコンポーネントを使う場合にはこちらがより便利です。
+          例えば：
+        </p>
+        <pre class="language-javascript{4,10-12,24}"><code class="language-javascript{4,10-12,24}">class FlavorForm extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = {value: 'coconut'};
+
+    this.handleChange = this.handleChange.bind(this);
+    this.handleSubmit = this.handleSubmit.bind(this);
+  }
+
+  handleChange(event) {
+    this.setState({value: event.target.value});
+  }
+
+  handleSubmit(event) {
+    alert('Your favorite flavor is: ' + this.state.value);
+    event.preventDefault();
+  }
+
+  render() {
+    return (
+      &#x3C;form onSubmit={this.handleSubmit}>
+        &#x3C;label>
+          Pick your favorite flavor:
+          &#x3C;select value={this.state.value} onChange={this.handleChange}>
+            &#x3C;option value="grapefruit">Grapefruit&#x3C;/option>
+            &#x3C;option value="lime">Lime&#x3C;/option>
+            &#x3C;option value="coconut">Coconut&#x3C;/option>
+            &#x3C;option value="mango">Mango&#x3C;/option>
+          &#x3C;/select>
+        &#x3C;/label>
+        &#x3C;input type="submit" value="Submit" />
+      &#x3C;/form>
+    );
+  }
+}</code></pre>
+        <p><a href="https://codepen.io/gaearon/pen/JbbEzX?editors=0010"><strong>Try it on CodePen</strong></a></p>
+        <p>全体的に見て <code>&#x3C;input type="text"></code>、<code>&#x3C;textarea></code>、そして <code>&#x3C;select></code> が非常に似た動作をするようになっています。これらはすべて、制御されたコンポーネントを実装する時に使うことができる <code>value</code> 属性を受け取ります。</p>
+        <blockquote>
+          <p>補足</p>
+          <p><code>value</code> 属性に配列を渡すことで、<code>select</code> タグ内の複数のオプションを選択することができます：</p>
+          <pre class="language-js"><code class="language-js"><span class="token operator">&#x3C;</span>select multiple<span class="token operator">=</span><span class="token punctuation">{</span><span class="token boolean">true</span><span class="token punctuation">}</span> value<span class="token operator">=</span><span class="token punctuation">{</span><span class="token punctuation">[</span><span class="token string">'B'</span><span class="token punctuation">,</span> <span class="token string">'C'</span><span class="token punctuation">]</span><span class="token punctuation">}</span><span class="token operator">></span></code></pre>
+        </blockquote>
+        <p>##file input タグ {#the-file-input-tag}</p>
+        <p>HTML では、<code>&#x3C;input type="file"></code> によってユーザにデバイス内の 1 つ以上のファイルを選ばせて、それをサーバにアップロードしたり <a href="https://developer.mozilla.org/en-US/docs/Web/API/File/Using_files_from_web_applications">File API</a> を使って JavaScript で操作したりすることができます。</p>
+        <pre class="language-html"><code class="language-html"><span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;</span>input</span> <span class="token attr-name">type</span><span class="token attr-value"><span class="token punctuation attr-equals">=</span><span class="token punctuation">"</span>file<span class="token punctuation">"</span></span> <span class="token punctuation">/></span></span></code></pre>
+        <p>この値は読み取り専用ですので、これは<strong>非制御</strong>コンポーネントになります。<a href="./uncontrolled-components.html#the-file-input-tag">このドキュメントの後の方</a>で、他の非制御コンポーネントと併せて説明しています。</p>
+      </section>
+      <section id="handling-multiple-inputs" class="level2">
+        <h2>複数の入力の処理</h2>
+        <p>複数の制御された <code>input</code> 要素を処理する必要がある場合、それぞれの入力要素に <code>name</code> 属性を追加すれば、ハンドラ関数に <code>event.target.name</code> に基づいて処理を選択させるようにできます。</p>
+        <p>例えば：</p>
+        <pre class="language-javascript{15,18,28,37}"><code class="language-javascript{15,18,28,37}">class Reservation extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = {
+      isGoing: true,
+      numberOfGuests: 2
+    };
+
+    this.handleInputChange = this.handleInputChange.bind(this);
+  }
+
+  handleInputChange(event) {
+    const target = event.target;
+    const value = target.type === 'checkbox' ? target.checked : target.value;
+    const name = target.name;
+
+    this.setState({
+      [name]: value
+    });
+  }
+
+  render() {
+    return (
+      &#x3C;form>
+        &#x3C;label>
+          Is going:
+          &#x3C;input
+            name="isGoing"
+            type="checkbox"
+            checked={this.state.isGoing}
+            onChange={this.handleInputChange} />
+        &#x3C;/label>
+        &#x3C;br />
+        &#x3C;label>
+          Number of guests:
+          &#x3C;input
+            name="numberOfGuests"
+            type="number"
+            value={this.state.numberOfGuests}
+            onChange={this.handleInputChange} />
+        &#x3C;/label>
+      &#x3C;/form>
+    );
+  }
+}</code></pre>
+        <p><a href="https://codepen.io/gaearon/pen/wgedvV?editors=0010"><strong>Try it on CodePen</strong></a></p>
+        <p>渡された入力名に対応する state のキーを更新するのに用いた ES6 の <a href="https://developer.mozilla.org/en/docs/Web/JavaScript/Reference/Operators/Object_initializer#Computed_property_names">computed property name</a> 構文の使い方に注意してください：</p>
+        <pre class="language-js{2}"><code class="language-js{2}">this.setState({
+  [name]: value
+});</code></pre>
+        <p>これは以下の ES5 のコードと同等です：</p>
+        <pre class="language-js{2}"><code class="language-js{2}">var partialState = {};
+partialState[name] = value;
+this.setState(partialState);</code></pre>
+        <p>また、<code>setState()</code> は自動的に<a href="./state-and-lifecycle.html#state-updates-are-merged">部分的な state を現在の state にマージする</a>ので、変更された部分のみで呼び出せば大丈夫です。</p>
+      </section>
+      <section id="controlled-input-null-value" class="level2">
+        <h2>制御された入力における null 値</h2>
+        <p>
+          <a href="./forms.html#controlled-components">制御されたコンポーネント</a>で <code>value</code> プロパティに値を指定することで、変更させたくない場合にユーザが値を変更できないようになります。もしも
+          <code>value</code> を指定したのに入力フィールドが依然変更可能であるという場合は、<code>value</code> を誤って <code>undefined</code> もしくは <code>null</code> に設定してしまったのかもしれません。
+        </p>
+        <p>以下のコードでこれを示しています（入力フィールドは最初はロックされていますが、短い遅延の後に編集可能になります）。</p>
+        <pre class="language-javascript"><code class="language-javascript"><span class="token maybe-class-name">ReactDOM</span><span class="token punctuation">.</span><span class="token method function property-access">createRoot</span><span class="token punctuation">(</span>mountNode<span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token method function property-access">render</span><span class="token punctuation">(</span><span class="token operator">&#x3C;</span>input value<span class="token operator">=</span><span class="token string">"hi"</span> <span class="token operator">/</span><span class="token operator">></span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+<span class="token function">setTimeout</span><span class="token punctuation">(</span><span class="token keyword">function</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  <span class="token maybe-class-name">ReactDOM</span><span class="token punctuation">.</span><span class="token method function property-access">createRoot</span><span class="token punctuation">(</span>mountNode<span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token method function property-access">render</span><span class="token punctuation">(</span><span class="token operator">&#x3C;</span>input value<span class="token operator">=</span><span class="token punctuation">{</span><span class="token keyword null nil">null</span><span class="token punctuation">}</span> <span class="token operator">/</span><span class="token operator">></span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span><span class="token punctuation">,</span> <span class="token number">1000</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+</code></pre>
+      </section>
+      <section id="alternatives-to-controlled-components" class="level2">
+        <h2>制御されたコンポーネントの代替手段</h2>
+        <p>制御されたコンポーネントは、あらゆる種類のデータの変更に対してイベントハンドラを書き、あらゆる入力状態を React コンポーネントに通してやる必要があるため、時としてうんざりすることがあります。このことは既存のコードベースを React に変換する場合や、React アプリケーションを非 React のライブラリと統合する場合に、特に問題化します。これらの状況においては、入力フォームを実装する代替手段である<a href="./uncontrolled-components.html">非制御コンポーネント</a>を検討してみてください。</p>
+      </section>
+      <section id="fully-fledged-solutions" class="level2">
+        <h2>本格的なソリューション</h2>
+        <p>
+          入力値のバリデーション、訪問済みフィールドの追跡やフォーム送信を含む完全なソリューションをお探しの場合は、<a href="https://jaredpalmer.com/formik">Formik</a> が人気のある選択肢のひとつです。しかしながらこれは制御されたコンポーネントや state の管理と同じ原理で作成されていますので、これらについて学ぶことを無視しないようにしましょう。
+          <span style="float: footnote;"><a href="./index.html#toc">Go to TOC</a></span>
+        </p>
+      </section>
+    </section>
+  </body>
+</html>

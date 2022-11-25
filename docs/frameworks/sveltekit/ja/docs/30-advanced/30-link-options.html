@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="utf-8">
+    <title>Link options</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="https://raw.githubusercontent.com/shinokada/prism-coy-theme/main/theme_common.css">
+  </head>
+  <body>
+    <section id="link-options" class="level1">
+      <h1>Link options</h1>
+      <p>SvelteKit では、アプリのルート(routes)間の移動に、(フレームワーク固有の <code>&#x3C;Link></code> コンポーネントではなく) <code>&#x3C;a></code> 要素を使用します。ユーザーが、<code>href</code> がアプリのものであるリンク (外部サイトではないリンク) をクリックする場合、SvelteKit はそのコードをインポートし、データを取得するために必要な <code>load</code> 関数を呼び出して、新しいページに移動します。</p>
+      <p><code>data-sveltekit-*</code> 属性でリンクの挙動をカスタマイズすることができます。これらは <code>&#x3C;a></code> 自身やその親要素に適用することができます。</p>
+      <section id="data-sveltekit-prefetch" class="level2">
+        <h2>data-sveltekit-prefetch</h2>
+        <p>コードのインポートとページのデータの取得を先取りするためには、<code>data-sveltekit-prefetch</code> 属性を使用します。これによって、ナビゲーションをトリガーする <code>click</code> イベントを待つのではなく、ユーザーがリンクをホバーしたり(デスクトップの場合)、タッチしたり(モバイルの場合)するとすぐにすべての読み込みを開始します。通常、これによって数百ミリ秒稼ぐことができ、この差は遅延を感じるインターフェイスときびきび動くインターフェイスの違いとなります。</p>
+        <p>この挙動を全体に適用するには、この属性を親要素 (または <code>src/app.html</code> の <code>&#x3C;body></code>) に追加してください:</p>
+        <pre class="language-html"><code class="language-html">/// file: src/routes/+layout.svelte
+<span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;</span>main</span> <span class="token attr-name">data-sveltekit-prefetch</span><span class="token punctuation">></span></span>
+	<span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;</span>slot</span> <span class="token punctuation">/></span></span>
+<span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;/</span>main</span><span class="token punctuation">></span></span></code></pre>
+        <blockquote>
+          <p>また、プログラムで <code>$app/navigation</code> の <code>prefetch</code> を呼び出すこともできます。</p>
+        </blockquote>
+      </section>
+      <section id="data-sveltekit-reload" class="level2">
+        <h2>data-sveltekit-reload</h2>
+        <p>時には、SvelteKit にリンクを処理させないで、ブラウザに処理をさせる必要があります。<code>data-sveltekit-reload</code> 属性をリンクに追加すると…</p>
+        <pre class="language-html"><code class="language-html"><span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;</span>a</span> <span class="token attr-name">data-sveltekit-reload</span> <span class="token attr-name">href</span><span class="token attr-value"><span class="token punctuation attr-equals">=</span><span class="token punctuation">"</span>/path<span class="token punctuation">"</span></span><span class="token punctuation">></span></span>Path<span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;/</span>a</span><span class="token punctuation">></span></span></code></pre>
+        <p>…リンクがクリックされたときにフルページナビゲーションが発生します。</p>
+        <p><code>rel="external"</code> 属性があるリンクも同様に扱われます。加えて、<a href="../20-core-concepts/40-page-options.html#prerender">プリレンダリング中</a> は無視されます。</p>
+      </section>
+      <section id="data-sveltekit-noscroll" class="level2">
+        <h2>data-sveltekit-noscroll</h2>
+        <p>内部のリンクに移動するとき、SvelteKit はブラウザのデフォルトのナビゲーションの挙動を模倣します: ユーザーがページの左上に来るように、スクロールポジションを 0,0 に変更します (リンクに <code>#hash</code> が含まれている場合は、ID が一致する要素までスクロールします)。</p>
+        <p>特定のケースでは、この挙動を無効化したいことがあるでしょう。<code>data-sveltekit-noscroll</code> 属性をリンクに追加すると…</p>
+        <pre class="language-html"><code class="language-html"><span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;</span>a</span> <span class="token attr-name">href</span><span class="token attr-value"><span class="token punctuation attr-equals">=</span><span class="token punctuation">"</span>path<span class="token punctuation">"</span></span> <span class="token attr-name">data-sveltekit-noscroll</span><span class="token punctuation">></span></span>Path<span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;/</span>a</span><span class="token punctuation">></span></span></code></pre>
+        <p>…リンクがクリックされたあとのスクロールを中止します。</p>
+      </section>
+      <section id="disabling-options" class="level2">
+        <h2>Disabling options</h2>
+        <p>これらのオプションが有効になっている要素の中でこれらのオプションを無効にするには、<code>"off"</code> 値を使用します:</p>
+        <pre class="language-html"><code class="language-html"><span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;</span>div</span> <span class="token attr-name">data-sveltekit-prefetch</span><span class="token punctuation">></span></span>
+	<span class="token comment">&#x3C;!-- これらのリンクはプリフェッチされます --></span>
+	<span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;</span>a</span> <span class="token attr-name">href</span><span class="token attr-value"><span class="token punctuation attr-equals">=</span><span class="token punctuation">"</span>/a<span class="token punctuation">"</span></span><span class="token punctuation">></span></span>a<span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;/</span>a</span><span class="token punctuation">></span></span>
+	<span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;</span>a</span> <span class="token attr-name">href</span><span class="token attr-value"><span class="token punctuation attr-equals">=</span><span class="token punctuation">"</span>/b<span class="token punctuation">"</span></span><span class="token punctuation">></span></span>b<span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;/</span>a</span><span class="token punctuation">></span></span>
+	<span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;</span>a</span> <span class="token attr-name">href</span><span class="token attr-value"><span class="token punctuation attr-equals">=</span><span class="token punctuation">"</span>/c<span class="token punctuation">"</span></span><span class="token punctuation">></span></span>c<span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;/</span>a</span><span class="token punctuation">></span></span>
+
+	<span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;</span>div</span> <span class="token attr-name">data-sveltekit-prefetch</span><span class="token attr-value"><span class="token punctuation attr-equals">=</span><span class="token punctuation">"</span>off<span class="token punctuation">"</span></span><span class="token punctuation">></span></span>
+		<span class="token comment">&#x3C;!-- これらのリンクはプリフェッチされません --></span>
+		<span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;</span>a</span> <span class="token attr-name">href</span><span class="token attr-value"><span class="token punctuation attr-equals">=</span><span class="token punctuation">"</span>/d<span class="token punctuation">"</span></span><span class="token punctuation">></span></span>d<span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;/</span>a</span><span class="token punctuation">></span></span>
+		<span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;</span>a</span> <span class="token attr-name">href</span><span class="token attr-value"><span class="token punctuation attr-equals">=</span><span class="token punctuation">"</span>/e<span class="token punctuation">"</span></span><span class="token punctuation">></span></span>e<span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;/</span>a</span><span class="token punctuation">></span></span>
+		<span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;</span>a</span> <span class="token attr-name">href</span><span class="token attr-value"><span class="token punctuation attr-equals">=</span><span class="token punctuation">"</span>/f<span class="token punctuation">"</span></span><span class="token punctuation">></span></span>f<span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;/</span>a</span><span class="token punctuation">></span></span>
+	<span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;/</span>div</span><span class="token punctuation">></span></span>
+<span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;/</span>div</span><span class="token punctuation">></span></span></code></pre>
+        <p>条件によって要素に属性を適用する場合は、このようにします:</p>
+        <pre class="language-html"><code class="language-html"><span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;</span>div</span> <span class="token attr-name">data-sveltekit-reload</span><span class="token attr-value"><span class="token punctuation attr-equals">=</span>{shouldReload</span> <span class="token attr-name">?</span> <span class="token attr-name">''</span> <span class="token attr-name">:</span> <span class="token attr-name">'off'}</span><span class="token punctuation">></span></span></code></pre>
+        <blockquote>
+          <p>
+            HTML では <code>&#x3C;element attribute></code> と <code>&#x3C;element attribute=""></code> が同等であるため、これがうまく動作します
+            <span style="float: footnote;"><a href="../../index.html#toc">Go to TOC</a></span>
+          </p>
+        </blockquote>
+      </section>
+    </section>
+  </body>
+</html>

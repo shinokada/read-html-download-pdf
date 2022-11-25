@@ -1,0 +1,315 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="utf-8">
+    <title>高階 (Higher-Order) コンポーネント</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="https://raw.githubusercontent.com/shinokada/prism-coy-theme/main/theme_common.css">
+  </head>
+  <body>
+    <section id="高階-higher-order-コンポーネント" class="level1">
+      <h1>高階 (Higher-Order) コンポーネント</h1>
+      <p>高階コンポーネント (higher-order component; HOC) はコンポーネントのロジックを再利用するための React における応用テクニックです。HOC それ自体は React の API の一部ではありません。HOC は、React のコンポジションの性質から生まれる設計パターンです。</p>
+      <p>具体的には、<strong>高階コンポーネントとは、あるコンポーネントを受け取って新規のコンポーネントを返すような関数です。</strong></p>
+      <pre class="language-js"><code class="language-js"><span class="token keyword">const</span> <span class="token maybe-class-name">EnhancedComponent</span> <span class="token operator">=</span> <span class="token function">higherOrderComponent</span><span class="token punctuation">(</span><span class="token maybe-class-name">WrappedComponent</span><span class="token punctuation">)</span><span class="token punctuation">;</span></code></pre>
+      <p>コンポーネントが props を UI に変換するのに対して、高階コンポーネントはコンポーネントを別のコンポーネントに変換します。</p>
+      <p>HOC は Redux における <a href="https://github.com/reactjs/react-redux/blob/master/docs/api/connect.md#connectmapstatetoprops-mapdispatchtoprops-mergeprops-options"><code>connect</code></a> や Relay における <a href="https://relay.dev/docs/v10.1.3/fragment-container/#createfragmentcontainer"><code>createFragmentContainer</code></a> のように、サードパーティ製の React ライブラリでは一般的なものです。</p>
+      <p>このドキュメントでは、なぜ高階コンポーネントが便利で、自身でどのように記述するのかを説明します。</p>
+      <section id="use-hocs-for-cross-cutting-concerns" class="level2">
+        <h2>横断的関心事に HOC を適用する</h2>
+        <blockquote>
+          <p><strong>補足</strong></p>
+          <p>以前に横断的関心事を処理する方法としてミックスインをお勧めしました。私たちはその後にミックスインはそれが持つ価値以上の問題を引き起こすことに気づきました。ミックスインから離れる理由と、既存のコンポーネントを移行する方法については<a href="/blog/2016/07/13/mixins-considered-harmful.html">こちらの詳細な記事を読んでください</a>。</p>
+        </blockquote>
+        <p>コンポーネントは React のコード再利用における基本単位です。しかし、いくつかのパターンの中には、これまでのコンポーネントが素直に当てはまらないことがあることに気づいたかもしれません。</p>
+        <p>例えば、コメントのリストを描画するのに外部のデータソースの購読を行う <code>CommentList</code> コンポーネントがあるとしましょう：</p>
+        <pre class="language-js"><code class="language-js"><span class="token keyword">class</span> <span class="token class-name">CommentList</span> <span class="token keyword">extends</span> <span class="token class-name">React<span class="token punctuation">.</span>Component</span> <span class="token punctuation">{</span>
+  <span class="token function">constructor</span><span class="token punctuation">(</span><span class="token parameter">props</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token keyword">super</span><span class="token punctuation">(</span>props<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token keyword">this</span><span class="token punctuation">.</span><span class="token property-access">handleChange</span> <span class="token operator">=</span> <span class="token keyword">this</span><span class="token punctuation">.</span><span class="token method function property-access">handleChange</span><span class="token punctuation">.</span><span class="token method function property-access">bind</span><span class="token punctuation">(</span><span class="token keyword">this</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token keyword">this</span><span class="token punctuation">.</span><span class="token property-access">state</span> <span class="token operator">=</span> <span class="token punctuation">{</span>
+      <span class="token comment">// "DataSource" is some global data source</span>
+      <span class="token literal-property property">comments</span><span class="token operator">:</span> <span class="token maybe-class-name">DataSource</span><span class="token punctuation">.</span><span class="token method function property-access">getComments</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+    <span class="token punctuation">}</span><span class="token punctuation">;</span>
+  <span class="token punctuation">}</span>
+
+  <span class="token function">componentDidMount</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token comment">// Subscribe to changes</span>
+    <span class="token maybe-class-name">DataSource</span><span class="token punctuation">.</span><span class="token method function property-access">addChangeListener</span><span class="token punctuation">(</span><span class="token keyword">this</span><span class="token punctuation">.</span><span class="token property-access">handleChange</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token punctuation">}</span>
+
+  <span class="token function">componentWillUnmount</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token comment">// Clean up listener</span>
+    <span class="token maybe-class-name">DataSource</span><span class="token punctuation">.</span><span class="token method function property-access">removeChangeListener</span><span class="token punctuation">(</span><span class="token keyword">this</span><span class="token punctuation">.</span><span class="token property-access">handleChange</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token punctuation">}</span>
+
+  <span class="token function">handleChange</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token comment">// Update component state whenever the data source changes</span>
+    <span class="token keyword">this</span><span class="token punctuation">.</span><span class="token method function property-access">setState</span><span class="token punctuation">(</span><span class="token punctuation">{</span>
+      <span class="token literal-property property">comments</span><span class="token operator">:</span> <span class="token maybe-class-name">DataSource</span><span class="token punctuation">.</span><span class="token method function property-access">getComments</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+    <span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token punctuation">}</span>
+
+  <span class="token function">render</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token keyword control-flow">return</span> <span class="token punctuation">(</span>
+      <span class="token operator">&#x3C;</span>div<span class="token operator">></span>
+        <span class="token punctuation">{</span><span class="token keyword">this</span><span class="token punctuation">.</span><span class="token property-access">state</span><span class="token punctuation">.</span><span class="token property-access">comments</span><span class="token punctuation">.</span><span class="token method function property-access">map</span><span class="token punctuation">(</span><span class="token punctuation">(</span><span class="token parameter">comment</span><span class="token punctuation">)</span> <span class="token arrow operator">=></span> <span class="token punctuation">(</span>
+          <span class="token operator">&#x3C;</span><span class="token maybe-class-name">Comment</span> comment<span class="token operator">=</span><span class="token punctuation">{</span>comment<span class="token punctuation">}</span> key<span class="token operator">=</span><span class="token punctuation">{</span>comment<span class="token punctuation">.</span><span class="token property-access">id</span><span class="token punctuation">}</span> <span class="token operator">/</span><span class="token operator">></span>
+        <span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">}</span>
+      <span class="token operator">&#x3C;</span><span class="token operator">/</span>div<span class="token operator">></span>
+    <span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token punctuation">}</span>
+<span class="token punctuation">}</span></code></pre>
+        <p>後になって、前述のパターンと似たような形で、1 件のブログ記事に関する情報を購読するコンポーネントを書くとしましょう：</p>
+        <pre class="language-js"><code class="language-js"><span class="token keyword">class</span> <span class="token class-name">BlogPost</span> <span class="token keyword">extends</span> <span class="token class-name">React<span class="token punctuation">.</span>Component</span> <span class="token punctuation">{</span>
+  <span class="token function">constructor</span><span class="token punctuation">(</span><span class="token parameter">props</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token keyword">super</span><span class="token punctuation">(</span>props<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token keyword">this</span><span class="token punctuation">.</span><span class="token property-access">handleChange</span> <span class="token operator">=</span> <span class="token keyword">this</span><span class="token punctuation">.</span><span class="token method function property-access">handleChange</span><span class="token punctuation">.</span><span class="token method function property-access">bind</span><span class="token punctuation">(</span><span class="token keyword">this</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token keyword">this</span><span class="token punctuation">.</span><span class="token property-access">state</span> <span class="token operator">=</span> <span class="token punctuation">{</span>
+      <span class="token literal-property property">blogPost</span><span class="token operator">:</span> <span class="token maybe-class-name">DataSource</span><span class="token punctuation">.</span><span class="token method function property-access">getBlogPost</span><span class="token punctuation">(</span>props<span class="token punctuation">.</span><span class="token property-access">id</span><span class="token punctuation">)</span>
+    <span class="token punctuation">}</span><span class="token punctuation">;</span>
+  <span class="token punctuation">}</span>
+
+  <span class="token function">componentDidMount</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token maybe-class-name">DataSource</span><span class="token punctuation">.</span><span class="token method function property-access">addChangeListener</span><span class="token punctuation">(</span><span class="token keyword">this</span><span class="token punctuation">.</span><span class="token property-access">handleChange</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token punctuation">}</span>
+
+  <span class="token function">componentWillUnmount</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token maybe-class-name">DataSource</span><span class="token punctuation">.</span><span class="token method function property-access">removeChangeListener</span><span class="token punctuation">(</span><span class="token keyword">this</span><span class="token punctuation">.</span><span class="token property-access">handleChange</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token punctuation">}</span>
+
+  <span class="token function">handleChange</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token keyword">this</span><span class="token punctuation">.</span><span class="token method function property-access">setState</span><span class="token punctuation">(</span><span class="token punctuation">{</span>
+      <span class="token literal-property property">blogPost</span><span class="token operator">:</span> <span class="token maybe-class-name">DataSource</span><span class="token punctuation">.</span><span class="token method function property-access">getBlogPost</span><span class="token punctuation">(</span><span class="token keyword">this</span><span class="token punctuation">.</span><span class="token property-access">props</span><span class="token punctuation">.</span><span class="token property-access">id</span><span class="token punctuation">)</span>
+    <span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token punctuation">}</span>
+
+  <span class="token function">render</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token keyword control-flow">return</span> <span class="token operator">&#x3C;</span><span class="token maybe-class-name">TextBlock</span> text<span class="token operator">=</span><span class="token punctuation">{</span><span class="token keyword">this</span><span class="token punctuation">.</span><span class="token property-access">state</span><span class="token punctuation">.</span><span class="token property-access">blogPost</span><span class="token punctuation">}</span> <span class="token operator">/</span><span class="token operator">></span><span class="token punctuation">;</span>
+  <span class="token punctuation">}</span>
+<span class="token punctuation">}</span></code></pre>
+        <p><code>CommentList</code> と <code>BlogPost</code> は同一ではありません。<code>DataSource</code> に対して異なるメソッドを呼び出し、異なる出力を描画します。しかし、それらの実装の大部分は同じです：</p>
+        <ul>
+          <li>コンポーネントのマウント時に、<code>DataSource</code> にイベントリスナを登録する。</li>
+          <li>リスナの内部で、<code>setState</code> をデータソースが変更されるたびに呼び出す。</li>
+          <li>コンポーネントのアンマウント時には、イベントリスナを削除する。</li>
+        </ul>
+        <p>大規模なアプリケーションにおいては、<code>DataSource</code> を購読して <code>setState</code> を呼び出すという同様のパターンが何度も発生することが想像できるでしょう。1 つの場所にロジックを定義し、多数のコンポーネントを横断してロジックを共有可能にするような抽象化が欲しいところです。このような場合には高階コンポーネントが有効です。</p>
+        <p>コンポーネントを作成するような関数を書いて、<code>DataSource</code> からデータを受け取る、<code>CommentList</code> や <code>BlogPost</code> のようなコンポーネントを作り出せます。その関数は引数の 1 つとして子コンポーネントを受け取り、その子コンポーネントは購読したデータを props の一部として受け取ります。この関数を <code>withSubscription</code> と呼ぶことにしましょう。</p>
+        <pre class="language-js"><code class="language-js"><span class="token keyword">const</span> <span class="token maybe-class-name">CommentListWithSubscription</span> <span class="token operator">=</span> <span class="token function">withSubscription</span><span class="token punctuation">(</span>
+  <span class="token maybe-class-name">CommentList</span><span class="token punctuation">,</span>
+  <span class="token punctuation">(</span><span class="token parameter"><span class="token maybe-class-name">DataSource</span></span><span class="token punctuation">)</span> <span class="token arrow operator">=></span> <span class="token maybe-class-name">DataSource</span><span class="token punctuation">.</span><span class="token method function property-access">getComments</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+<span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+<span class="token keyword">const</span> <span class="token maybe-class-name">BlogPostWithSubscription</span> <span class="token operator">=</span> <span class="token function">withSubscription</span><span class="token punctuation">(</span>
+  <span class="token maybe-class-name">BlogPost</span><span class="token punctuation">,</span>
+  <span class="token punctuation">(</span><span class="token parameter"><span class="token maybe-class-name">DataSource</span><span class="token punctuation">,</span> props</span><span class="token punctuation">)</span> <span class="token arrow operator">=></span> <span class="token maybe-class-name">DataSource</span><span class="token punctuation">.</span><span class="token method function property-access">getBlogPost</span><span class="token punctuation">(</span>props<span class="token punctuation">.</span><span class="token property-access">id</span><span class="token punctuation">)</span>
+<span class="token punctuation">)</span><span class="token punctuation">;</span></code></pre>
+        <p>1 つ目の引数はラップされるコンポーネントです。2 つ目の引数は、与えられた <code>DataSource</code> と現在の props をもとに、関心のあるデータを取り出します。</p>
+        <p><code>CommentListWithSubscription</code> と <code>BlogPostWithSubscription</code> が描画されると、<code>CommentList</code> と <code>BlogPost</code> は <code>DataSource</code> から取得した最新データを <code>data</code> プロパティとして受け取ります：</p>
+        <pre class="language-js"><code class="language-js"><span class="token comment">// This function takes a component...</span>
+<span class="token keyword">function</span> <span class="token function">withSubscription</span><span class="token punctuation">(</span><span class="token parameter"><span class="token maybe-class-name">WrappedComponent</span><span class="token punctuation">,</span> selectData</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  <span class="token comment">// ...and returns another component...</span>
+  <span class="token keyword control-flow">return</span> <span class="token keyword">class</span> <span class="token class-name">extends</span> <span class="token maybe-class-name">React</span><span class="token punctuation">.</span><span class="token property-access"><span class="token maybe-class-name">Component</span></span> <span class="token punctuation">{</span>
+    <span class="token function">constructor</span><span class="token punctuation">(</span><span class="token parameter">props</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+      <span class="token keyword">super</span><span class="token punctuation">(</span>props<span class="token punctuation">)</span><span class="token punctuation">;</span>
+      <span class="token keyword">this</span><span class="token punctuation">.</span><span class="token property-access">handleChange</span> <span class="token operator">=</span> <span class="token keyword">this</span><span class="token punctuation">.</span><span class="token method function property-access">handleChange</span><span class="token punctuation">.</span><span class="token method function property-access">bind</span><span class="token punctuation">(</span><span class="token keyword">this</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+      <span class="token keyword">this</span><span class="token punctuation">.</span><span class="token property-access">state</span> <span class="token operator">=</span> <span class="token punctuation">{</span>
+        <span class="token literal-property property">data</span><span class="token operator">:</span> <span class="token function">selectData</span><span class="token punctuation">(</span><span class="token maybe-class-name">DataSource</span><span class="token punctuation">,</span> props<span class="token punctuation">)</span>
+      <span class="token punctuation">}</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+
+    <span class="token function">componentDidMount</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+      <span class="token comment">// ... that takes care of the subscription...</span>
+      <span class="token maybe-class-name">DataSource</span><span class="token punctuation">.</span><span class="token method function property-access">addChangeListener</span><span class="token punctuation">(</span><span class="token keyword">this</span><span class="token punctuation">.</span><span class="token property-access">handleChange</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+
+    <span class="token function">componentWillUnmount</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+      <span class="token maybe-class-name">DataSource</span><span class="token punctuation">.</span><span class="token method function property-access">removeChangeListener</span><span class="token punctuation">(</span><span class="token keyword">this</span><span class="token punctuation">.</span><span class="token property-access">handleChange</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+
+    <span class="token function">handleChange</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+      <span class="token keyword">this</span><span class="token punctuation">.</span><span class="token method function property-access">setState</span><span class="token punctuation">(</span><span class="token punctuation">{</span>
+        <span class="token literal-property property">data</span><span class="token operator">:</span> <span class="token function">selectData</span><span class="token punctuation">(</span><span class="token maybe-class-name">DataSource</span><span class="token punctuation">,</span> <span class="token keyword">this</span><span class="token punctuation">.</span><span class="token property-access">props</span><span class="token punctuation">)</span>
+      <span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+
+    <span class="token function">render</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+      <span class="token comment">// ... and renders the wrapped component with the fresh data!</span>
+      <span class="token comment">// Notice that we pass through any additional props</span>
+      <span class="token keyword control-flow">return</span> <span class="token operator">&#x3C;</span><span class="token maybe-class-name">WrappedComponent</span> data<span class="token operator">=</span><span class="token punctuation">{</span><span class="token keyword">this</span><span class="token punctuation">.</span><span class="token property-access">state</span><span class="token punctuation">.</span><span class="token property-access">data</span><span class="token punctuation">}</span> <span class="token punctuation">{</span><span class="token spread operator">...</span><span class="token keyword">this</span><span class="token punctuation">.</span><span class="token property-access">props</span><span class="token punctuation">}</span> <span class="token operator">/</span><span class="token operator">></span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+  <span class="token punctuation">}</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span></code></pre>
+        <p>HOC は入力のコンポーネントを改変したり、振る舞いをコピーするのに継承を利用したりしません。むしろ HOC は元のコンポーネントをコンテナコンポーネント内に<em>ラップする</em>ことで<em>組み合わせる</em>のです。HOC は副作用のない純関数です。</p>
+        <p>それだけです！ ラップされたコンポーネントはコンテナの props のすべてに加えて新規のプロパティである <code>data</code> を受け取り、出力の描画に使用します。外側にある HOC は渡すデータが使われる方法や理由には関心がありませんし、ラップされたコンポーネントの側はデータがどこからやって来たのかには関心を持ちません。</p>
+        <p><code>withSubscription</code> は通常の関数なので、引数を好きなだけ増やしたり減らしたりできます。例えば、<code>data</code> プロパティの名前を変更可能にして、HOC をラップされるコンポーネントから更に分離させることもできるでしょう。もしくは <code>shouldComponentUpdate</code> を設定する引数を受け取ったり、データソースを設定する引数を受け取りたいこともあるかもしれません。HOC ではコンポーネントがどのように定義されるかを完全に管理できるため、上述のことは全て実現できます。</p>
+        <p>コンポーネントのように、<code>withSubscription</code> とラップされるコンポーネントの間の契約は完全に props に基づいています。これにより同じ props をラップされるコンポーネントに与える限りは、ある HOC を他の HOC と簡単に交換できます。このことは例えばデータ取得ライブラリを変更する場合に便利でしょう。</p>
+      </section>
+      <section id="dont-mutate-the-original-component-use-composition" class="level2">
+        <h2>元のコンポーネントを変更するのではなく、コンポジションを使うこと</h2>
+        <p>HOC の中でコンポーネントのプロトタイプを変更したり、あるいは何にせよコンポーネントに変更を加えたりしたくなる誘惑に負けてはいけません。</p>
+        <pre class="language-js"><code class="language-js"><span class="token keyword">function</span> <span class="token function">logProps</span><span class="token punctuation">(</span><span class="token parameter"><span class="token maybe-class-name">InputComponent</span></span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  <span class="token class-name">InputComponent</span><span class="token punctuation">.</span><span class="token property-access">prototype</span><span class="token punctuation">.</span><span class="token method-variable function-variable method function property-access">componentDidUpdate</span> <span class="token operator">=</span> <span class="token keyword">function</span><span class="token punctuation">(</span><span class="token parameter">prevProps</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token console class-name">console</span><span class="token punctuation">.</span><span class="token method function property-access">log</span><span class="token punctuation">(</span><span class="token string">'Current props: '</span><span class="token punctuation">,</span> <span class="token keyword">this</span><span class="token punctuation">.</span><span class="token property-access">props</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token console class-name">console</span><span class="token punctuation">.</span><span class="token method function property-access">log</span><span class="token punctuation">(</span><span class="token string">'Previous props: '</span><span class="token punctuation">,</span> prevProps<span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token punctuation">}</span><span class="token punctuation">;</span>
+  <span class="token comment">// The fact that we're returning the original input is a hint that it has</span>
+  <span class="token comment">// been mutated.</span>
+  <span class="token keyword control-flow">return</span> <span class="token maybe-class-name">InputComponent</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+
+<span class="token comment">// EnhancedComponent will log whenever props are received</span>
+<span class="token keyword">const</span> <span class="token maybe-class-name">EnhancedComponent</span> <span class="token operator">=</span> <span class="token function">logProps</span><span class="token punctuation">(</span><span class="token maybe-class-name">InputComponent</span><span class="token punctuation">)</span><span class="token punctuation">;</span></code></pre>
+        <p>このコードにはいくつかの問題があります。1 つは入力のコンポーネントを改変されたコンポーネントとは別に再利用できなくなってしまうことです。さらに悪いことに、もしこの <code>EnhancedComponent</code> に別の HOC を適用し、それが<em>同様に</em> <code>componentDidUpdate</code> に変更を加えるものであった場合、最初の HOC が加えた機能は上書きされてしまいます！ またこの HOC はライフサイクルメソッドを持たない関数コンポーネントには機能しません。</p>
+        <p>コンポーネントの改変を行うような HOC は不完全な抽象化です。つまり、利用する側は他の HOC との競合を避けるため、どのように実装されているかを知っておく必要があるのです。</p>
+        <p>改変を行う代わりに、HOC はコンテナコンポーネントで入力されたコンポーネントをラップすることによるコンポジションを使用するべきです：</p>
+        <pre class="language-js"><code class="language-js"><span class="token keyword">function</span> <span class="token function">logProps</span><span class="token punctuation">(</span><span class="token parameter"><span class="token maybe-class-name">WrappedComponent</span></span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  <span class="token keyword control-flow">return</span> <span class="token keyword">class</span> <span class="token class-name">extends</span> <span class="token maybe-class-name">React</span><span class="token punctuation">.</span><span class="token property-access"><span class="token maybe-class-name">Component</span></span> <span class="token punctuation">{</span>
+    <span class="token function">componentDidUpdate</span><span class="token punctuation">(</span><span class="token parameter">prevProps</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+      <span class="token console class-name">console</span><span class="token punctuation">.</span><span class="token method function property-access">log</span><span class="token punctuation">(</span><span class="token string">'Current props: '</span><span class="token punctuation">,</span> <span class="token keyword">this</span><span class="token punctuation">.</span><span class="token property-access">props</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+      <span class="token console class-name">console</span><span class="token punctuation">.</span><span class="token method function property-access">log</span><span class="token punctuation">(</span><span class="token string">'Previous props: '</span><span class="token punctuation">,</span> prevProps<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+    <span class="token function">render</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+      <span class="token comment">// Wraps the input component in a container, without mutating it. Good!</span>
+      <span class="token keyword control-flow">return</span> <span class="token operator">&#x3C;</span><span class="token maybe-class-name">WrappedComponent</span> <span class="token punctuation">{</span><span class="token spread operator">...</span><span class="token keyword">this</span><span class="token punctuation">.</span><span class="token property-access">props</span><span class="token punctuation">}</span> <span class="token operator">/</span><span class="token operator">></span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+  <span class="token punctuation">}</span>
+<span class="token punctuation">}</span></code></pre>
+        <p>この HOC は改変を行うバージョンと同等の機能を持ちつつ、衝突の可能性を回避しています。クラス型と関数コンポーネントのどちらでも同様にうまく動作します。そして純関数なので、自分自身を含めた他の HOC と組み合わせることができます。</p>
+        <p>おそらく HOC と<strong>コンテナコンポーネント</strong>と呼ばれるパターンの類似性に気づいたでしょう。コンテナコンポーネントは高レベルと低レベルの関心事の責任を分離する戦略の一部です。コンテナはデータ購読や state を管理してコンポーネントに props を渡し、渡された側のコンポーネントは UI の描画などの事柄を取り扱います。HOC はコンテナをその実装の一部として使用します。HOC をパラメータ化されたコンテナコンポーネントの定義であると考えることができます。</p>
+      </section>
+      <section id="convention-pass-unrelated-props-through-to-the-wrapped-component" class="level2">
+        <h2>規則：自身に関係のない props はラップされるコンポーネントにそのまま渡すこと</h2>
+        <p>HOC はコンポーネントに機能を追加するものです。その props にもとづく契約は大きく変更すべきではありません。HOC の返り値のコンポーネントはラップされたコンポーネントと似たようなインターフェースを持つことが期待されます。</p>
+        <p>HOC はその特定の関心とは関係のない props はラップされる関数に渡すべきです。大抵の HOC はこのような描画メソッドを持ちます：</p>
+        <pre class="language-js"><code class="language-js"><span class="token function">render</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  <span class="token comment">// Filter out extra props that are specific to this HOC and shouldn't be</span>
+  <span class="token comment">// passed through</span>
+  <span class="token keyword">const</span> <span class="token punctuation">{</span> extraProp<span class="token punctuation">,</span> <span class="token spread operator">...</span>passThroughProps <span class="token punctuation">}</span> <span class="token operator">=</span> <span class="token keyword">this</span><span class="token punctuation">.</span><span class="token property-access">props</span><span class="token punctuation">;</span>
+
+  <span class="token comment">// Inject props into the wrapped component. These are usually state values or</span>
+  <span class="token comment">// instance methods.</span>
+  <span class="token keyword">const</span> injectedProp <span class="token operator">=</span> someStateOrInstanceMethod<span class="token punctuation">;</span>
+
+  <span class="token comment">// Pass props to wrapped component</span>
+  <span class="token keyword control-flow">return</span> <span class="token punctuation">(</span>
+    <span class="token operator">&#x3C;</span><span class="token maybe-class-name">WrappedComponent</span>
+      injectedProp<span class="token operator">=</span><span class="token punctuation">{</span>injectedProp<span class="token punctuation">}</span>
+      <span class="token punctuation">{</span><span class="token spread operator">...</span>passThroughProps<span class="token punctuation">}</span>
+    <span class="token operator">/</span><span class="token operator">></span>
+  <span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span></code></pre>
+        <p>この決まり事により、HOC が可能な限り柔軟で再利用しやすいものになります。</p>
+      </section>
+      <section id="convention-maximizing-composability" class="level2">
+        <h2>規則：組み立てやすさを最大限保つこと</h2>
+        <p>すべての HOC が同じ見た目になるわけではありません。引数としてラップされるコンポーネント 1 つだけを受け取ることがあります。</p>
+        <pre class="language-js"><code class="language-js"><span class="token keyword">const</span> <span class="token maybe-class-name">NavbarWithRouter</span> <span class="token operator">=</span> <span class="token function">withRouter</span><span class="token punctuation">(</span><span class="token maybe-class-name">Navbar</span><span class="token punctuation">)</span><span class="token punctuation">;</span></code></pre>
+        <p>通常、HOC は追加の引数を受け取ります。この Relay からの例では、config オブジェクトがコンポーネントのデータ依存を指定するために使われています：</p>
+        <pre class="language-js"><code class="language-js"><span class="token keyword">const</span> <span class="token maybe-class-name">CommentWithRelay</span> <span class="token operator">=</span> <span class="token maybe-class-name">Relay</span><span class="token punctuation">.</span><span class="token method function property-access">createContainer</span><span class="token punctuation">(</span><span class="token maybe-class-name">Comment</span><span class="token punctuation">,</span> config<span class="token punctuation">)</span><span class="token punctuation">;</span></code></pre>
+        <p>もっとも一般的な HOC の型シグネチャはこのようなものです：</p>
+        <pre class="language-js"><code class="language-js"><span class="token comment">// React Redux's `connect`</span>
+<span class="token keyword">const</span> <span class="token maybe-class-name">ConnectedComment</span> <span class="token operator">=</span> <span class="token function">connect</span><span class="token punctuation">(</span>commentSelector<span class="token punctuation">,</span> commentActions<span class="token punctuation">)</span><span class="token punctuation">(</span><span class="token maybe-class-name">CommentList</span><span class="token punctuation">)</span><span class="token punctuation">;</span></code></pre>
+        <p><em>これは何なのでしょう?!</em> バラバラにしてみると、何が起こっているのかを理解しやすくなります。</p>
+        <pre class="language-js"><code class="language-js"><span class="token comment">// connect is a function that returns another function</span>
+<span class="token keyword">const</span> enhance <span class="token operator">=</span> <span class="token function">connect</span><span class="token punctuation">(</span>commentListSelector<span class="token punctuation">,</span> commentListActions<span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token comment">// The returned function is a HOC, which returns a component that is connected</span>
+<span class="token comment">// to the Redux store</span>
+<span class="token keyword">const</span> <span class="token maybe-class-name">ConnectedComment</span> <span class="token operator">=</span> <span class="token function">enhance</span><span class="token punctuation">(</span><span class="token maybe-class-name">CommentList</span><span class="token punctuation">)</span><span class="token punctuation">;</span></code></pre>
+        <p>言い換えれば、<code>connect</code> は高階コンポーネントを返す高階関数なのです！</p>
+        <p>この形式は分かりにくかったり不要なものに思えるかもしれませんが、便利な性質を持っています。<code>connect</code> 関数によって返されるもののような単一引数の HOC は、<code>Component => Component</code> という型シグネチャを持ちます。入力の型と出力の型が同じ関数は一緒に組み合わせるのが大変簡単なのです。</p>
+        <pre class="language-js"><code class="language-js"><span class="token comment">// Instead of doing this...</span>
+<span class="token keyword">const</span> <span class="token maybe-class-name">EnhancedComponent</span> <span class="token operator">=</span> <span class="token function">withRouter</span><span class="token punctuation">(</span><span class="token function">connect</span><span class="token punctuation">(</span>commentSelector<span class="token punctuation">)</span><span class="token punctuation">(</span><span class="token maybe-class-name">WrappedComponent</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+
+<span class="token comment">// ... you can use a function composition utility</span>
+<span class="token comment">// compose(f, g, h) is the same as (...args) => f(g(h(...args)))</span>
+<span class="token keyword">const</span> enhance <span class="token operator">=</span> <span class="token function">compose</span><span class="token punctuation">(</span>
+  <span class="token comment">// These are both single-argument HOCs</span>
+  withRouter<span class="token punctuation">,</span>
+  <span class="token function">connect</span><span class="token punctuation">(</span>commentSelector<span class="token punctuation">)</span>
+<span class="token punctuation">)</span>
+<span class="token keyword">const</span> <span class="token maybe-class-name">EnhancedComponent</span> <span class="token operator">=</span> <span class="token function">enhance</span><span class="token punctuation">(</span><span class="token maybe-class-name">WrappedComponent</span><span class="token punctuation">)</span></code></pre>
+        <p>（この性質を使えば、<code>connect</code> や他の機能追加方式の HOC をデコレータ（提唱中の JavaScript の実験的機能）で使用することも可能になります）</p>
+        <p><code>compose</code> ユーティリティ関数は lodash（<a href="https://lodash.com/docs/#flowRight"><code>lodash.flowRight</code></a> として）、<a href="https://redux.js.org/api/compose">Redux</a>、そして <a href="https://ramdajs.com/docs/#compose">Ramda</a> といった多くのサードパーティ製ライブラリから提供されています。</p>
+      </section>
+      <section id="convention-wrap-the-display-name-for-easy-debugging" class="level2">
+        <h2>規則：デバッグしやすくするため表示名をラップすること</h2>
+        <p>HOC により作成されたコンテナコンポーネントは他のあらゆるコンポーネントと同様、<a href="https://github.com/facebook/react/tree/main/packages/react-devtools">React Developer Tools</a> に表示されます。デバッグを容易にするため、HOC の結果だと分かるよう表示名を選んでください。</p>
+        <p>最も一般的な手法は、ラップされるコンポーネントの表示名をラップすることです。つまり高階コンポーネントが <code>withSubscription</code> と名付けられ、ラップされるコンポーネントの表示名が <code>CommentList</code> である場合、<code>WithSubscription(CommentList)</code> という表示名を使用しましょう：</p>
+        <pre class="language-js"><code class="language-js"><span class="token keyword">function</span> <span class="token function">withSubscription</span><span class="token punctuation">(</span><span class="token parameter"><span class="token maybe-class-name">WrappedComponent</span></span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  <span class="token keyword">class</span> <span class="token class-name">WithSubscription</span> <span class="token keyword">extends</span> <span class="token class-name">React<span class="token punctuation">.</span>Component</span> <span class="token punctuation">{</span><span class="token comment">/* ... */</span><span class="token punctuation">}</span>
+  <span class="token maybe-class-name">WithSubscription</span><span class="token punctuation">.</span><span class="token property-access">displayName</span> <span class="token operator">=</span> <span class="token template-string"><span class="token template-punctuation string">`</span><span class="token string">WithSubscription(</span><span class="token interpolation"><span class="token interpolation-punctuation punctuation">${</span><span class="token function">getDisplayName</span><span class="token punctuation">(</span><span class="token maybe-class-name">WrappedComponent</span><span class="token punctuation">)</span><span class="token interpolation-punctuation punctuation">}</span></span><span class="token string">)</span><span class="token template-punctuation string">`</span></span><span class="token punctuation">;</span>
+  <span class="token keyword control-flow">return</span> <span class="token maybe-class-name">WithSubscription</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+
+<span class="token keyword">function</span> <span class="token function">getDisplayName</span><span class="token punctuation">(</span><span class="token parameter"><span class="token maybe-class-name">WrappedComponent</span></span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  <span class="token keyword control-flow">return</span> <span class="token maybe-class-name">WrappedComponent</span><span class="token punctuation">.</span><span class="token property-access">displayName</span> <span class="token operator">||</span> <span class="token maybe-class-name">WrappedComponent</span><span class="token punctuation">.</span><span class="token property-access">name</span> <span class="token operator">||</span> <span class="token string">'Component'</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span></code></pre>
+      </section>
+      <section id="caveats" class="level2">
+        <h2>注意事項</h2>
+        <p>高階コンポーネントには、あなたが React を始めて間もないならすぐには分からないような、いくつかの注意事項があります。</p>
+        <section id="dont-use-hocs-inside-the-render-method" class="level3">
+          <h3>render メソッド内部で HOC を使用しないこと</h3>
+          <p>React の差分アルゴリズム（<a href="./reconciliation.html">Reconciliation</a> と呼ばれる）は、既存のサブツリーを更新すべきかそれを破棄して新しいものをマウントすべきかを決定する際に、コンポーネントの型が同一かどうかの情報を利用します。<code>render</code> メソッドから返されるコンポーネントが以前の描画から返されたコンポーネントと（<code>===</code>で検証して）同一だった場合、React はサブツリーを新しいツリーとの差分を取りながら再帰的に更新します。コンポーネントが同一でなければ、以前のサブツリーは完全にアンマウントされます。</p>
+          <p>通常このことを考慮する必要はありません。ですが HOC に関しては考えるべきことです。このことが、render メソッド中でコンポーネントに HOC を適用してはいけないということを意味しているからです：</p>
+          <pre class="language-js"><code class="language-js"><span class="token function">render</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  <span class="token comment">// A new version of EnhancedComponent is created on every render</span>
+  <span class="token comment">// EnhancedComponent1 !== EnhancedComponent2</span>
+  <span class="token keyword">const</span> <span class="token maybe-class-name">EnhancedComponent</span> <span class="token operator">=</span> <span class="token function">enhance</span><span class="token punctuation">(</span><span class="token maybe-class-name">MyComponent</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token comment">// That causes the entire subtree to unmount/remount each time!</span>
+  <span class="token keyword control-flow">return</span> <span class="token operator">&#x3C;</span><span class="token maybe-class-name">EnhancedComponent</span> <span class="token operator">/</span><span class="token operator">></span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span></code></pre>
+          <p>ここでの問題はパフォーマンスだけではありません。コンポーネントの再マウントによりコンポーネントとその子要素全ての state が失われるのです。</p>
+          <p>こうするのではなく、結果としてのコンポーネントが 1 回だけつくられるようにするため、コンポーネント定義の外で HOC を適用してください。そうすれば、レンダー間でその同一性が保たれるようになるでしょう。何にせよ、通常の場合これが望ましい実装になります。</p>
+          <p>HOC を動的に適用する必要があるような稀なケースでも、コンポーネントのライフサイクルメソッドやコンストラクタの中で行うようにしましょう。</p>
+        </section>
+        <section id="static-methods-must-be-copied-over" class="level3">
+          <h3>静的メソッドは必ずコピーすること</h3>
+          <p>React のコンポーネントで静的メソッドを定義することは便利であることがあります。例えば、Relay のコンテナは GraphQL fragment のコンポジションを容易に実現するため、<code>getFragment</code> という静的メソッドを公開しています。</p>
+          <p>しかし、HOC をコンポーネントに適用すると、元のコンポーネントはコンテナコンポーネントにラップされます。つまり新しいコンポーネントは元のコンポーネントの静的メソッドを 1 つも持っていないということになってしまいます。</p>
+          <pre class="language-js"><code class="language-js"><span class="token comment">// Define a static method</span>
+<span class="token maybe-class-name">WrappedComponent</span><span class="token punctuation">.</span><span class="token method-variable function-variable method function property-access">staticMethod</span> <span class="token operator">=</span> <span class="token keyword">function</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span><span class="token comment">/*...*/</span><span class="token punctuation">}</span>
+<span class="token comment">// Now apply a HOC</span>
+<span class="token keyword">const</span> <span class="token maybe-class-name">EnhancedComponent</span> <span class="token operator">=</span> <span class="token function">enhance</span><span class="token punctuation">(</span><span class="token maybe-class-name">WrappedComponent</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+<span class="token comment">// The enhanced component has no static method</span>
+<span class="token keyword">typeof</span> <span class="token maybe-class-name">EnhancedComponent</span><span class="token punctuation">.</span><span class="token property-access">staticMethod</span> <span class="token operator">===</span> <span class="token string">'undefined'</span> <span class="token comment">// true</span></code></pre>
+          <p>この問題を解決するために、コンテナコンポーネントを返す前にメソッドをコピーすることができます。</p>
+          <pre class="language-js"><code class="language-js"><span class="token keyword">function</span> <span class="token function">enhance</span><span class="token punctuation">(</span><span class="token parameter"><span class="token maybe-class-name">WrappedComponent</span></span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  <span class="token keyword">class</span> <span class="token class-name">Enhance</span> <span class="token keyword">extends</span> <span class="token class-name">React<span class="token punctuation">.</span>Component</span> <span class="token punctuation">{</span><span class="token comment">/*...*/</span><span class="token punctuation">}</span>
+  <span class="token comment">// Must know exactly which method(s) to copy :(</span>
+  <span class="token maybe-class-name">Enhance</span><span class="token punctuation">.</span><span class="token property-access">staticMethod</span> <span class="token operator">=</span> <span class="token maybe-class-name">WrappedComponent</span><span class="token punctuation">.</span><span class="token property-access">staticMethod</span><span class="token punctuation">;</span>
+  <span class="token keyword control-flow">return</span> <span class="token maybe-class-name">Enhance</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span></code></pre>
+          <p>しかし、この方法ではどのメソッドがコピーされる必要があるのか正確に知っておく必要があります。<a href="https://github.com/mridgway/hoist-non-react-statics">hoist-non-react-statics</a> を使用することで、全ての非 React の静的メソッドを自動的にコピーできます：</p>
+          <pre class="language-js"><code class="language-js"><span class="token keyword module">import</span> <span class="token imports">hoistNonReactStatic</span> <span class="token keyword module">from</span> <span class="token string">'hoist-non-react-statics'</span><span class="token punctuation">;</span>
+<span class="token keyword">function</span> <span class="token function">enhance</span><span class="token punctuation">(</span><span class="token parameter"><span class="token maybe-class-name">WrappedComponent</span></span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  <span class="token keyword">class</span> <span class="token class-name">Enhance</span> <span class="token keyword">extends</span> <span class="token class-name">React<span class="token punctuation">.</span>Component</span> <span class="token punctuation">{</span><span class="token comment">/*...*/</span><span class="token punctuation">}</span>
+  <span class="token function">hoistNonReactStatic</span><span class="token punctuation">(</span><span class="token maybe-class-name">Enhance</span><span class="token punctuation">,</span> <span class="token maybe-class-name">WrappedComponent</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token keyword control-flow">return</span> <span class="token maybe-class-name">Enhance</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span></code></pre>
+          <p>もう 1 つの解決策となりうる方法はコンポーネント自身とは分離して静的メソッドをエクスポートすることです。</p>
+          <pre class="language-js"><code class="language-js"><span class="token comment">// Instead of...</span>
+<span class="token maybe-class-name">MyComponent</span><span class="token punctuation">.</span><span class="token property-access">someFunction</span> <span class="token operator">=</span> someFunction<span class="token punctuation">;</span>
+<span class="token keyword module">export</span> <span class="token keyword module">default</span> <span class="token maybe-class-name">MyComponent</span><span class="token punctuation">;</span>
+
+<span class="token comment">// ...export the method separately...</span>
+<span class="token keyword module">export</span> <span class="token exports"><span class="token punctuation">{</span> someFunction <span class="token punctuation">}</span></span><span class="token punctuation">;</span>
+
+<span class="token comment">// ...and in the consuming module, import both</span>
+<span class="token keyword module">import</span> <span class="token imports"><span class="token maybe-class-name">MyComponent</span><span class="token punctuation">,</span> <span class="token punctuation">{</span> someFunction <span class="token punctuation">}</span></span> <span class="token keyword module">from</span> <span class="token string">'./MyComponent.js'</span><span class="token punctuation">;</span></code></pre>
+        </section>
+        <section id="refs-arent-passed-through" class="level3">
+          <h3>ref 属性は渡されない</h3>
+          <p>高階コンポーネントの通例としては、すべての props はラップされたコンポーネントに渡されますが、ref に関してはそうではありません。これは <code>ref</code> 属性が（<code>key</code> と同様）実際のプロパティではなく、React によって特別に処理されているものだからです。HOC から出力されたコンポーネントの要素に ref 属性を追加する場合、ref 属性はラップされた内側のコンポーネントではなく、最も外側のコンテナコンポーネントを参照します。</p>
+          <p>
+            この問題の解決方法は（React 16.3 で導入された）<code>React.forwardRef</code> API を使うことです。<a href="./forwarding-refs.html">詳しくは ref のフォワーディングの章をご覧ください</a>。
+            <span style="float: footnote;"><a href="./index.html#toc">Go to TOC</a></span>
+          </p>
+        </section>
+      </section>
+    </section>
+  </body>
+</html>

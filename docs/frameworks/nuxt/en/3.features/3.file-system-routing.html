@@ -1,0 +1,377 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <title>File System Routing</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="Nuxt automatically generates the vue-router configuration based on your file tree of Vue files inside the pages directory. When you create a .vue file in your pages directory you will have basic routing working with no extra configuration needed.">
+    <meta name="category" content="features">
+    <link rel="stylesheet" href="https://raw.githubusercontent.com/shinokada/prism-coy-theme/main/theme_common.css">
+  </head>
+  <body>
+    <section id="file-system-routing" class="level1">
+      <h1>File system routing</h1>
+      <p>Nuxt automatically generates the vue-router configuration based on your file tree of Vue files inside the pages directory. When you create a .vue file in your pages directory you will have basic routing working with no extra configuration needed.</p>
+      <hr>
+      <p>Sometimes you might need to create dynamic routes or nested routes or you might need to further configure the router property. This chapter will go through everything you need to know in order to get the best out of your router.</p>
+      <section id="info" class="level4">
+        <h4>Info</h4>
+        <p>Nuxt gives you automatic code splitting for your routes, no configuration is needed</p>
+      </section>
+      <section id="info-1" class="level4">
+        <h4>Info</h4>
+        <p>Use the <a href="./features/nuxt-components#the-nuxtlink-component">NuxtLink component</a> to navigate between pages</p>
+        <pre class="language-html"><code class="language-html"><span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;</span>template</span><span class="token punctuation">></span></span>
+  <span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;</span>NuxtLink</span> <span class="token attr-name">to</span><span class="token attr-value"><span class="token punctuation attr-equals">=</span><span class="token punctuation">"</span>/<span class="token punctuation">"</span></span><span class="token punctuation">></span></span>Home page<span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;/</span>NuxtLink</span><span class="token punctuation">></span></span>
+<span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;/</span>template</span><span class="token punctuation">></span></span></code></pre>
+      </section>
+      <section id="basic-routes" class="level2">
+        <h2>Basic Routes</h2>
+        <p>This file tree:</p>
+        <pre class="language-text"><code class="language-text">pages/
+--| user/
+-----| index.vue
+-----| one.vue
+--| index.vue</code></pre>
+        <p>will automatically generate:</p>
+        <pre class="language-js"><code class="language-js"><span class="token literal-property property">router</span><span class="token operator">:</span> <span class="token punctuation">{</span>
+  <span class="token literal-property property">routes</span><span class="token operator">:</span> <span class="token punctuation">[</span>
+    <span class="token punctuation">{</span>
+      <span class="token literal-property property">name</span><span class="token operator">:</span> <span class="token string">'index'</span><span class="token punctuation">,</span>
+      <span class="token literal-property property">path</span><span class="token operator">:</span> <span class="token string">'/'</span><span class="token punctuation">,</span>
+      <span class="token literal-property property">component</span><span class="token operator">:</span> <span class="token string">'pages/index.vue'</span>
+    <span class="token punctuation">}</span><span class="token punctuation">,</span>
+    <span class="token punctuation">{</span>
+      <span class="token literal-property property">name</span><span class="token operator">:</span> <span class="token string">'user'</span><span class="token punctuation">,</span>
+      <span class="token literal-property property">path</span><span class="token operator">:</span> <span class="token string">'/user'</span><span class="token punctuation">,</span>
+      <span class="token literal-property property">component</span><span class="token operator">:</span> <span class="token string">'pages/user/index.vue'</span>
+    <span class="token punctuation">}</span><span class="token punctuation">,</span>
+    <span class="token punctuation">{</span>
+      <span class="token literal-property property">name</span><span class="token operator">:</span> <span class="token string">'user-one'</span><span class="token punctuation">,</span>
+      <span class="token literal-property property">path</span><span class="token operator">:</span> <span class="token string">'/user/one'</span><span class="token punctuation">,</span>
+      <span class="token literal-property property">component</span><span class="token operator">:</span> <span class="token string">'pages/user/one.vue'</span>
+    <span class="token punctuation">}</span>
+  <span class="token punctuation">]</span>
+<span class="token punctuation">}</span></code></pre>
+      </section>
+      <section id="dynamic-routes" class="level2">
+        <h2>Dynamic Routes</h2>
+        <p>Sometimes it is not possible to know the name of the route such as when we make a call to an API to get a list of users or blog posts. We call these dynamic routes. To create a dynamic route you need to add an underscore (<code>_</code>) before the <code>.vue</code> file name or before the name of the directory. You can name the file or directory anything you want but you must prefix it with an underscore.</p>
+        <p>This file tree:</p>
+        <pre class="language-text"><code class="language-text">pages/
+--| _slug/
+-----| comments.vue
+-----| index.vue
+--| users/
+-----| _id.vue
+--| index.vue</code></pre>
+        <p>will automatically generate:</p>
+        <pre class="language-js"><code class="language-js"><span class="token literal-property property">router</span><span class="token operator">:</span> <span class="token punctuation">{</span>
+  <span class="token literal-property property">routes</span><span class="token operator">:</span> <span class="token punctuation">[</span>
+    <span class="token punctuation">{</span>
+      <span class="token literal-property property">name</span><span class="token operator">:</span> <span class="token string">'index'</span><span class="token punctuation">,</span>
+      <span class="token literal-property property">path</span><span class="token operator">:</span> <span class="token string">'/'</span><span class="token punctuation">,</span>
+      <span class="token literal-property property">component</span><span class="token operator">:</span> <span class="token string">'pages/index.vue'</span>
+    <span class="token punctuation">}</span><span class="token punctuation">,</span>
+    <span class="token punctuation">{</span>
+      <span class="token literal-property property">name</span><span class="token operator">:</span> <span class="token string">'users-id'</span><span class="token punctuation">,</span>
+      <span class="token literal-property property">path</span><span class="token operator">:</span> <span class="token string">'/users/:id?'</span><span class="token punctuation">,</span>
+      <span class="token literal-property property">component</span><span class="token operator">:</span> <span class="token string">'pages/users/_id.vue'</span>
+    <span class="token punctuation">}</span><span class="token punctuation">,</span>
+    <span class="token punctuation">{</span>
+      <span class="token literal-property property">name</span><span class="token operator">:</span> <span class="token string">'slug'</span><span class="token punctuation">,</span>
+      <span class="token literal-property property">path</span><span class="token operator">:</span> <span class="token string">'/:slug'</span><span class="token punctuation">,</span>
+      <span class="token literal-property property">component</span><span class="token operator">:</span> <span class="token string">'pages/_slug/index.vue'</span>
+    <span class="token punctuation">}</span><span class="token punctuation">,</span>
+    <span class="token punctuation">{</span>
+      <span class="token literal-property property">name</span><span class="token operator">:</span> <span class="token string">'slug-comments'</span><span class="token punctuation">,</span>
+      <span class="token literal-property property">path</span><span class="token operator">:</span> <span class="token string">'/:slug/comments'</span><span class="token punctuation">,</span>
+      <span class="token literal-property property">component</span><span class="token operator">:</span> <span class="token string">'pages/_slug/comments.vue'</span>
+    <span class="token punctuation">}</span>
+  <span class="token punctuation">]</span>
+<span class="token punctuation">}</span></code></pre>
+        <section id="info-2" class="level4">
+          <h4>Info</h4>
+          <p>As you can see the route named <code>users-id</code> has the path <code>:id?</code> which makes it optional, if you want to make it required, create an <code>index.vue</code> file in the <code>users/_id</code> directory instead.</p>
+        </section>
+        <section id="info-3" class="level4">
+          <h4>Info</h4>
+          <p>As of Nuxt >= v2.13 there is a crawler installed that will now crawl your link tags and generate your dynamic routes based on those links. However if you have pages that are not linked to such as a secret page, then you will need to manually generate those dynamic routes.</p>
+        </section>
+        <section id="next" class="level4">
+          <h4>Next</h4>
+          <p><a href="./concepts/static-site-generation">Generate dynamic routes</a> for static sites</p>
+        </section>
+        <section id="locally-accessing-route-params" class="level3">
+          <h3>Locally Accessing Route Params</h3>
+          <p>You can access the current route parameters within your local page or component by referencing <code>this.$route.params.{parameterName}</code>. For example, if you had a dynamic users page (<code>users/_id.vue</code>) and wanted to access the <code>id</code> parameter to load the user or process information, you could access the variable like this: <code>this.$route.params.id</code>.</p>
+        </section>
+      </section>
+      <section id="nested-routes" class="level2">
+        <h2>Nested Routes</h2>
+        <p>Nuxt lets you create nested routes by using the children routes of vue-router. To define the parent component of a nested route, you need to create a Vue file with the same name as the directory which contains your children views.</p>
+        <section id="warning" class="level4">
+          <h4>Warning</h4>
+          <p>Don't forget to include the <a href="./features/nuxt-components#the-nuxtchild-component">NuxtChild component</a> inside the parent component (<code>.vue</code> file).</p>
+          <p>This file tree:</p>
+          <pre class="language-text"><code class="language-text">pages/
+--| users/
+-----| _id.vue
+-----| index.vue
+--| users.vue</code></pre>
+          <p>will automatically generate:</p>
+          <pre class="language-js"><code class="language-js"><span class="token literal-property property">router</span><span class="token operator">:</span> <span class="token punctuation">{</span>
+  <span class="token literal-property property">routes</span><span class="token operator">:</span> <span class="token punctuation">[</span>
+    <span class="token punctuation">{</span>
+      <span class="token literal-property property">path</span><span class="token operator">:</span> <span class="token string">'/users'</span><span class="token punctuation">,</span>
+      <span class="token literal-property property">component</span><span class="token operator">:</span> <span class="token string">'pages/users.vue'</span><span class="token punctuation">,</span>
+      <span class="token literal-property property">children</span><span class="token operator">:</span> <span class="token punctuation">[</span>
+        <span class="token punctuation">{</span>
+          <span class="token literal-property property">path</span><span class="token operator">:</span> <span class="token string">''</span><span class="token punctuation">,</span>
+          <span class="token literal-property property">component</span><span class="token operator">:</span> <span class="token string">'pages/users/index.vue'</span><span class="token punctuation">,</span>
+          <span class="token literal-property property">name</span><span class="token operator">:</span> <span class="token string">'users'</span>
+        <span class="token punctuation">}</span><span class="token punctuation">,</span>
+        <span class="token punctuation">{</span>
+          <span class="token literal-property property">path</span><span class="token operator">:</span> <span class="token string">':id'</span><span class="token punctuation">,</span>
+          <span class="token literal-property property">component</span><span class="token operator">:</span> <span class="token string">'pages/users/_id.vue'</span><span class="token punctuation">,</span>
+          <span class="token literal-property property">name</span><span class="token operator">:</span> <span class="token string">'users-id'</span>
+        <span class="token punctuation">}</span>
+      <span class="token punctuation">]</span>
+    <span class="token punctuation">}</span>
+  <span class="token punctuation">]</span>
+<span class="token punctuation">}</span></code></pre>
+        </section>
+      </section>
+      <section id="dynamic-nested-routes" class="level2">
+        <h2>Dynamic Nested Routes</h2>
+        <p>This is not a common scenario, but it is possible with Nuxt to have dynamic children inside dynamic parents.</p>
+        <p>This file tree:</p>
+        <pre class="language-text"><code class="language-text">pages/
+--| _category/
+-----| _subCategory/
+| _id.vue
+| index.vue
+-----| _subCategory.vue
+-----| index.vue
+--| _category.vue
+--| index.vue</code></pre>
+        <p>will automatically generate:</p>
+        <pre class="language-js"><code class="language-js"><span class="token literal-property property">router</span><span class="token operator">:</span> <span class="token punctuation">{</span>
+  <span class="token literal-property property">routes</span><span class="token operator">:</span> <span class="token punctuation">[</span>
+    <span class="token punctuation">{</span>
+      <span class="token literal-property property">path</span><span class="token operator">:</span> <span class="token string">'/'</span><span class="token punctuation">,</span>
+      <span class="token literal-property property">component</span><span class="token operator">:</span> <span class="token string">'pages/index.vue'</span><span class="token punctuation">,</span>
+      <span class="token literal-property property">name</span><span class="token operator">:</span> <span class="token string">'index'</span>
+    <span class="token punctuation">}</span><span class="token punctuation">,</span>
+    <span class="token punctuation">{</span>
+      <span class="token literal-property property">path</span><span class="token operator">:</span> <span class="token string">'/:category'</span><span class="token punctuation">,</span>
+      <span class="token literal-property property">component</span><span class="token operator">:</span> <span class="token string">'pages/_category.vue'</span><span class="token punctuation">,</span>
+      <span class="token literal-property property">children</span><span class="token operator">:</span> <span class="token punctuation">[</span>
+        <span class="token punctuation">{</span>
+          <span class="token literal-property property">path</span><span class="token operator">:</span> <span class="token string">''</span><span class="token punctuation">,</span>
+          <span class="token literal-property property">component</span><span class="token operator">:</span> <span class="token string">'pages/_category/index.vue'</span><span class="token punctuation">,</span>
+          <span class="token literal-property property">name</span><span class="token operator">:</span> <span class="token string">'category'</span>
+        <span class="token punctuation">}</span><span class="token punctuation">,</span>
+        <span class="token punctuation">{</span>
+          <span class="token literal-property property">path</span><span class="token operator">:</span> <span class="token string">':subCategory'</span><span class="token punctuation">,</span>
+          <span class="token literal-property property">component</span><span class="token operator">:</span> <span class="token string">'pages/_category/_subCategory.vue'</span><span class="token punctuation">,</span>
+          <span class="token literal-property property">children</span><span class="token operator">:</span> <span class="token punctuation">[</span>
+            <span class="token punctuation">{</span>
+              <span class="token literal-property property">path</span><span class="token operator">:</span> <span class="token string">''</span><span class="token punctuation">,</span>
+              <span class="token literal-property property">component</span><span class="token operator">:</span> <span class="token string">'pages/_category/_subCategory/index.vue'</span><span class="token punctuation">,</span>
+              <span class="token literal-property property">name</span><span class="token operator">:</span> <span class="token string">'category-subCategory'</span>
+            <span class="token punctuation">}</span><span class="token punctuation">,</span>
+            <span class="token punctuation">{</span>
+              <span class="token literal-property property">path</span><span class="token operator">:</span> <span class="token string">':id'</span><span class="token punctuation">,</span>
+              <span class="token literal-property property">component</span><span class="token operator">:</span> <span class="token string">'pages/_category/_subCategory/_id.vue'</span><span class="token punctuation">,</span>
+              <span class="token literal-property property">name</span><span class="token operator">:</span> <span class="token string">'category-subCategory-id'</span>
+            <span class="token punctuation">}</span>
+          <span class="token punctuation">]</span>
+        <span class="token punctuation">}</span>
+      <span class="token punctuation">]</span>
+    <span class="token punctuation">}</span>
+  <span class="token punctuation">]</span>
+<span class="token punctuation">}</span></code></pre>
+      </section>
+      <section id="unknown-dynamic-nested-routes" class="level2">
+        <h2>Unknown Dynamic Nested Routes</h2>
+        <p>If you do not know the depth of your URL structure, you can use <code>_.vue</code> to dynamically match nested paths. This will handle requests that do not match a <em>more specific</em> route.</p>
+        <p>This file tree:</p>
+        <pre class="language-text"><code class="language-text">pages/
+--| people/
+-----| _id.vue
+-----| index.vue
+--| _.vue
+--| index.vue</code></pre>
+        <p>Will handle requests like this:</p>
+        <pre class="language-text"><code class="language-text">/ -> index.vue
+/people -> people/index.vue
+/people/123 -> people/_id.vue
+/about -> _.vue
+/about/careers -> _.vue
+/about/careers/chicago -> _.vue</code></pre>
+        <section id="info-4" class="level4">
+          <h4>Info</h4>
+          <p>Handling 404 pages is now up to the logic of the <code>_.vue</code> page.</p>
+        </section>
+      </section>
+      <section id="extending-the-router" class="level2">
+        <h2>Extending the router</h2>
+        <p>There are multiple ways to extend the routing with Nuxt:</p>
+        <ul>
+          <li><a href="https://github.com/nuxt-community/router-extras-module">router-extras-module</a> to customize the route parameters in the page</li>
+          <li>component<a href="https://github.com/nuxt-community/router-module">@nuxtjs/router</a> to overwrite the Nuxt router and write your own <code>router.js</code> file</li>
+          <li>Use the <a href="./configuration-glossary/configuration-router#extendroutes">router.extendRoutes</a> property in your <code>nuxt.config.js</code></li>
+        </ul>
+      </section>
+      <section id="the-router-property" class="level2">
+        <h2>The router Property</h2>
+        <p>The router property lets you customize the Nuxt router (vue-router).</p>
+        <pre class="language-js{}[nuxt.config.js]"><code class="language-js{}[nuxt.config.js]">export default {
+  router: {
+    // customize the Nuxt router
+  }
+}</code></pre>
+        <section id="base" class="level3">
+          <h3>Base:</h3>
+          <p>The base URL of the app. For example, if the entire single page application is served under <code>/app/</code>, then base should use the value <code>'/app/'</code>.</p>
+          <section id="next-1" class="level4">
+            <h4>Next</h4>
+            <p><a href="./configuration-glossary/configuration-router#base">Router Base Property</a></p>
+          </section>
+        </section>
+        <section id="extendroutes" class="level3">
+          <h3>extendRoutes</h3>
+          <p>You may want to extend the routes created by Nuxt. You can do so via the <code>extendRoutes</code> option.</p>
+          <p>Example of adding a custom route:</p>
+          <pre class="language-js{}[nuxt.config.js]"><code class="language-js{}[nuxt.config.js]">export default {
+  router: {
+    extendRoutes(routes, resolve) {
+      routes.push({
+        name: 'custom',
+        path: '*',
+        component: resolve(__dirname, 'pages/404.vue')
+      })
+    }
+  }
+}</code></pre>
+          <p>If you want to sort your routes, you can use the  <code>sortRoutes(routes)</code>  function from <code>@nuxt/utils</code>:</p>
+          <pre class="language-js{}[nuxt.config.js]"><code class="language-js{}[nuxt.config.js]">import { sortRoutes } from '@nuxt/utils'
+export default {
+  router: {
+    extendRoutes(routes, resolve) {
+      // Add some routes here ...
+
+      // and then sort them
+      sortRoutes(routes)
+    }
+  }
+}</code></pre>
+          <section id="warning-1" class="level4">
+            <h4>Warning</h4>
+            <p>The schema of the route should respect the <a href="https://v3.router.vuejs.org/">vue-router</a> schema.</p>
+          </section>
+          <section id="warning-2" class="level4">
+            <h4>Warning</h4>
+            <p>When adding routes that use <a href="./features/file-system-routing#nested-routes">Named Views</a>, don't forget to add the corresponding <code>chunkNames</code> of named <code>components</code>.</p>
+            <pre class="language-js{}[nuxt.config.js]"><code class="language-js{}[nuxt.config.js]">export default {
+  router: {
+    extendRoutes(routes, resolve) {
+      routes.push({
+        path: '/users/:id',
+        components: {
+          default: resolve(__dirname, 'pages/users'), // or routes[index].component
+          modal: resolve(__dirname, 'components/modal.vue')
+        },
+        chunkNames: {
+          modal: 'components/modal'
+        }
+      })
+    }
+  }
+}</code></pre>
+          </section>
+          <section id="next-2" class="level4">
+            <h4>Next</h4>
+            <p><a href="./configuration-glossary/configuration-router#extendroutes">extendRoutes Property</a></p>
+          </section>
+        </section>
+        <section id="fallback" class="level3">
+          <h3>fallback</h3>
+          <p>Controls whether the router should fallback to hash mode when the browser does not support history.pushState but mode is set to history.</p>
+          <section id="next-3" class="level4">
+            <h4>Next</h4>
+            <p><a href="./configuration-glossary/configuration-router#fallback">fallback Property</a></p>
+          </section>
+        </section>
+        <section id="mode" class="level3">
+          <h3>mode</h3>
+          <p>Configure the router mode, it is not recommended to change it due to server-side rendering.</p>
+          <section id="next-4" class="level4">
+            <h4>Next</h4>
+            <p><a href="./configuration-glossary/configuration-router#mode">mode Property</a></p>
+          </section>
+        </section>
+        <section id="parsequery--stringifyquery" class="level3">
+          <h3>parseQuery / stringifyQuery</h3>
+          <p>Provide custom query string parse / stringify functions.</p>
+          <section id="next-5" class="level4">
+            <h4>Next</h4>
+            <p><a href="./configuration-glossary/configuration-router#parsequery--stringifyquery">parseQuery / stringifyQuery Property</a></p>
+          </section>
+        </section>
+        <section id="routenamesplitter" class="level3">
+          <h3>routeNameSplitter</h3>
+          <p>You may want to change the separator between route names that Nuxt uses. You can do so via the <code>routeNameSplitter</code> option in your configuration file. Imagine we have the page file <code>pages/posts/_id.vue</code>. Nuxt will generate the route name programmatically, in this case <code>posts-id</code>. Changing the <code>routeNameSplitter</code> config to <code>/</code> the name will therefore change to <code>posts/id</code>.</p>
+          <pre class="language-js{}[nuxt.config.js]"><code class="language-js{}[nuxt.config.js]">export default {
+  router: {
+    routeNameSplitter: '/'
+  }
+}</code></pre>
+        </section>
+        <section id="scrollbehavior" class="level3">
+          <h3>scrollBehavior</h3>
+          <p>The <code>scrollBehavior</code> option lets you define a custom behavior for the scroll position between the routes. This method is called every time a page is rendered.</p>
+          <section id="next-6" class="level4">
+            <h4>Next</h4>
+            <p>To learn more about it, see <a href="https://v3.router.vuejs.org/guide/advanced/scroll-behavior.html">vue-router scrollBehavior documentation</a>.</p>
+            <p>Available since:v2.9.0:</p>
+            <p>In Nuxt you can use a file to overwrite the router scrollBehavior. This file should be placed in a folder called app.</p>
+            <p><code>~/app/router.scrollBehavior.js</code>.</p>
+            <p>Example of forcing the scroll position to the top for every route:</p>
+            <pre class="language-js{}[app/router.scrollBehavior.js]"><code class="language-js{}[app/router.scrollBehavior.js]">export default function (to, from, savedPosition) {
+  return { x: 0, y: 0 }
+}</code></pre>
+          </section>
+          <section id="next-7" class="level4">
+            <h4>Next</h4>
+            <p><a href="https://github.com/nuxt/nuxt.js/blob/dev/packages/vue-app/template/router.scrollBehavior.js">Nuxt default <code>router.scrollBehavior.js</code> file.</a></p>
+          </section>
+          <section id="next-8" class="level4">
+            <h4>Next</h4>
+            <p><a href="./configuration-glossary/configuration-router#scrollbehavior">scrollBehavior Property</a></p>
+          </section>
+        </section>
+        <section id="trailingslash" class="level3">
+          <h3>trailingSlash</h3>
+          <p>Available since: v2.10</p>
+          <p>If this option is set to true, trailing slashes will be appended to every route. If set to false, they'll be removed.</p>
+          <pre class="language-js{}[nuxt.config.js]"><code class="language-js{}[nuxt.config.js]">export default {
+  router: {
+    trailingSlash: true
+  }
+}</code></pre>
+          <section id="warning-3" class="level4">
+            <h4>Warning</h4>
+            <p>This option should not be set without preparation and has to be tested thoroughly. When setting <code>router.trailingSlash</code> to something else other than <code>undefined</code>(which is the default value), the opposite route will stop working. Thus 301 redirects should be in place and your <em>internal linking</em> has to be adapted correctly. If you set <code>trailingSlash</code> to <code>true</code>, then only <code>example.com/abc/</code> will work but not <code>example.com/abc</code>. On false, it's vice-versa.</p>
+          </section>
+          <section id="next-9" class="level4">
+            <h4>Next</h4>
+            <p><a href="./configuration-glossary/configuration-router#trailingslash">trailingSlash Property</a></p>
+            <p><span style="float: footnote;"><a href="../index.html#toc">Go to TOC</a></span></p>
+          </section>
+        </section>
+      </section>
+    </section>
+  </body>
+</html>

@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="utf-8">
+    <title>Accessibility</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="https://raw.githubusercontent.com/shinokada/prism-coy-theme/main/theme_common.css">
+  </head>
+  <body>
+    <section id="accessibility" class="level1">
+      <h1>Accessibility</h1>
+      <p>SvelteKit は、アプリにアクセシブルなプラットフォームをデフォルトで提供するよう努めています。Svelte の <a href="https://svelte.jp/docs#accessibility-warnings">コンパイル時のアクセシビリティチェック(compile-time accessibility checks)</a> は、あなたがビルドする SvelteKit アプリケーションにも適用されます。</p>
+      <p>ここでは、SvelteKit の組み込みのアクセシビリティ(accessibility)機能がどのように動作するか、そしてこれらの機能が可能な限りうまく動作するようにするために必要なことについて説明します。SvelteKit はアクセシブルな基盤を提供しますが、アプリケーションのコードをアクセシブルにするのはあなたの責任であることを覚えておいてください。もし、アクセシビリティ(accessibility)についてよく知らないのであれば、このガイドの <a href="../40-best-practices/10-accessibility.html#further-reading">"参考文献"</a> セクションで、その他のリソースを参照してください。</p>
+      <p>私たちは、アクセシビリティ(accessibility)を正しく行うのは難しいことだと認識しています。SvelteKit のアクセシビリティ対応について改善を提案したい方は、<a href="https://github.com/sveltejs/kit/issues">GitHub issue を作成</a> してください。</p>
+      <section id="route-announcements" class="level2">
+        <h2>Route announcements</h2>
+        <p>旧来のサーバーレンダリングアプリケーションでは、全てのナビゲーション (例えば、<code>&#x3C;a></code> タグをクリックするなど) で、ページのフルリロードを引き起こします。これが起こると、スクリーンリーダーやその他の支援技術が新しいページのタイトルを読み上げ、それによってユーザーはページが変更されたことを理解します。</p>
+        <p>SvelteKit では、ページ間のナビゲーションではページのリロードが発生しないため (<a href="../60-appendix/30-glossary.html#routing">クライアントサイドルーティング</a>として知られる)、SvelteKit はナビゲーションごとに新しいページ名が読み上げられるように<a href="https://developer.mozilla.org/ja/docs/Web/Accessibility/ARIA/ARIA_Live_Regions">ライブリージョン</a>をページに注入します。これは、<code>&#x3C;title></code> 要素を検査することで、アナウンスするページ名を決定します。</p>
+        <p>この動作のために、アプリの全ページにユニークで説明的なタイトルを付けるべきです。SvelteKit では、各ページに <code>&#x3C;svelte:head></code> 要素を配置することでこれを行うことができます:</p>
+        <pre class="language-svelte"><code class="language-svelte">/// file: src/routes/+page.svelte
+&#x3C;svelte:head>
+	&#x3C;title>Todo List&#x3C;/title>
+&#x3C;/svelte:head></code></pre>
+        <p>これにより、スクリーンリーダーやその他の支援技術が、ナビゲーション後に新しいページを識別することができるようになります。説明的なタイトルを提供することは、<a href="../40-best-practices/20-seo.html#manual-setup-title-and-meta">SEO</a> にとっても重要なことです。</p>
+      </section>
+      <section id="focus-management" class="level2">
+        <h2>Focus management</h2>
+        <p>旧来のサーバーレンダリングアプリケーションでは、ナビゲーションでフォーカスがページのトップにリセットされます。これによって、キーボードやスクリーンリーダーを使用して web をブラウジングする方が、ページの先頭からやり取りできるようになります。</p>
+        <p>クライアントサイドルーティング中にこの動作をシミュレートするために、SvelteKit は各ナビゲーション後に <code>&#x3C;body></code> 要素にフォーカスします。この動作をカスタマイズしたい場合は、<code>afterNavigate</code> hook を使用してカスタムのフォーカスマネジメントロジックを実装することができます:</p>
+        <pre class="language-js"><code class="language-js"><span class="token comment">/// &#x3C;reference types="@sveltejs/kit" /></span>
+<span class="token comment">// cut---</span>
+<span class="token keyword module">import</span> <span class="token imports"><span class="token punctuation">{</span> afterNavigate <span class="token punctuation">}</span></span> <span class="token keyword module">from</span> <span class="token string">'$app/navigation'</span><span class="token punctuation">;</span>
+
+<span class="token function">afterNavigate</span><span class="token punctuation">(</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token arrow operator">=></span> <span class="token punctuation">{</span>
+	<span class="token doc-comment comment">/** <span class="token keyword">@type</span> <span class="token class-name"><span class="token punctuation">{</span>HTMLElement <span class="token operator">|</span> <span class="token keyword null nil">null</span><span class="token punctuation">}</span></span> */</span>
+	<span class="token keyword">const</span> to_focus <span class="token operator">=</span> <span class="token dom variable">document</span><span class="token punctuation">.</span><span class="token method function property-access">querySelector</span><span class="token punctuation">(</span><span class="token string">'.focus-me'</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+	to_focus<span class="token operator">?.</span><span class="token method function property-access">focus</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">;</span></code></pre>
+        <p><a href="../50-api-reference/30-modules.html#$app-navigation-goto"><code>goto</code></a> 関数を使用して、プログラムで別のページにナビゲーションさせることもできます。デフォルトでは、これはクライアントサイドルーティングでリンクをクリックするのと同じ動作です。しかし <code>goto</code> は、<code>keepFocus</code> オプション を受け付けます。このオプションは、フォーカスをリセットする代わりに、現在フォーカスされている要素にフォーカスを保持したままにします。このオプションを有効にする場合は、現在フォーカスされている要素がナビゲーション後にもまだ存在することを確かめてください。もしその要素が存在しなければ、ユーザーのフォーカスは失われ、支援技術のユーザーにとって混乱した体験になります。</p>
+      </section>
+      <section id="the-lang-attribute" class="level2">
+        <h2>The "lang" attribute</h2>
+        <p>デフォルトでは、SvelteKit のページテンプレートには、ドキュメントのデフォルト言語に英語が設定されています。もしコンテンツが英語でない場合、<code>src/app.html</code> の <code>&#x3C;html></code> 要素を更新し、正しい <a href="https://developer.mozilla.org/ja/docs/Web/HTML/Global_attributes/lang#accessibility"><code>lang</code></a> 属性を持たせる必要があります。これによって、ドキュメントを読む支援技術が正しい発音を使えるようになります。例えば、コンテンツがドイツ語の場合、<code>app.html</code> を以下のように更新してください:</p>
+        <pre class="language-html"><code class="language-html">/// file: src/app.html
+<span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;</span>html</span> <span class="token attr-name">lang</span><span class="token attr-value"><span class="token punctuation attr-equals">=</span><span class="token punctuation">"</span>de<span class="token punctuation">"</span></span><span class="token punctuation">></span></span></code></pre>
+        <p>コンテンツが複数の言語で使用可能な場合、開いているページの言語に基づいて <code>lang</code> 属性を設定できるようにする必要があります。これは、SvelteKit の <a href="../30-advanced/20-hooks.html#server-hooks-handle">handle hook</a> を使用して行うことができます:</p>
+        <pre class="language-html"><code class="language-html">/// file: src/app.html
+<span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;</span>html</span> <span class="token attr-name">lang</span><span class="token attr-value"><span class="token punctuation attr-equals">=</span><span class="token punctuation">"</span>%lang%<span class="token punctuation">"</span></span><span class="token punctuation">></span></span></code></pre>
+        <pre class="language-js"><code class="language-js"><span class="token comment">/// file: src/hooks.server.js</span>
+<span class="token doc-comment comment">/**
+ * <span class="token keyword">@param</span> <span class="token class-name"><span class="token punctuation">{</span><span class="token keyword module">import</span><span class="token punctuation">(</span><span class="token string">'@sveltejs/kit'</span><span class="token punctuation">)</span><span class="token punctuation">.</span>RequestEvent<span class="token punctuation">}</span></span> <span class="token parameter">event</span>
+ */</span>
+<span class="token keyword">function</span> <span class="token function">get_lang</span><span class="token punctuation">(</span><span class="token parameter">event</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+	<span class="token keyword control-flow">return</span> <span class="token string">'en'</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+<span class="token comment">// cut---</span>
+<span class="token doc-comment comment">/** <span class="token keyword">@type</span> <span class="token class-name"><span class="token punctuation">{</span><span class="token keyword module">import</span><span class="token punctuation">(</span><span class="token string">'@sveltejs/kit'</span><span class="token punctuation">)</span><span class="token punctuation">.</span>Handle<span class="token punctuation">}</span></span> */</span>
+<span class="token keyword module">export</span> <span class="token keyword">function</span> <span class="token function">handle</span><span class="token punctuation">(</span><span class="token parameter"><span class="token punctuation">{</span> event<span class="token punctuation">,</span> resolve <span class="token punctuation">}</span></span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+	<span class="token keyword control-flow">return</span> <span class="token function">resolve</span><span class="token punctuation">(</span>event<span class="token punctuation">,</span> <span class="token punctuation">{</span>
+		<span class="token function-variable function">transformPageChunk</span><span class="token operator">:</span> <span class="token punctuation">(</span><span class="token parameter"><span class="token punctuation">{</span> html <span class="token punctuation">}</span></span><span class="token punctuation">)</span> <span class="token arrow operator">=></span> html<span class="token punctuation">.</span><span class="token method function property-access">replace</span><span class="token punctuation">(</span><span class="token string">'%lang%'</span><span class="token punctuation">,</span> <span class="token function">get_lang</span><span class="token punctuation">(</span>event<span class="token punctuation">)</span><span class="token punctuation">)</span>
+	<span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span></code></pre>
+      </section>
+      <section id="参考文献" class="level2">
+        <h2>参考文献</h2>
+        <p>ほとんどの場合、アクセシブルな SvelteKit アプリを構築するのはアクセシブルな Web アプリを構築するのと同じです。以下の一般的なアクセシビリティ(accessibility)に関するリソースから得られる情報は、どんな Web エクスペリエンスを構築する場合でも適用できるはずです</p>
+        <ul>
+          <li><a href="https://developer.mozilla.org/en-US/docs/Learn/Accessibility">MDN Web Docs: Accessibility</a></li>
+          <li><a href="https://www.a11yproject.com/">The A11y Project</a></li>
+          <li>
+            <a href="https://www.w3.org/WAI/WCAG21/quickref/">How to Meet WCAG (Quick Reference)</a>
+            <span style="float: footnote;"><a href="../../index.html#toc">Go to TOC</a></span>
+          </li>
+        </ul>
+      </section>
+    </section>
+  </body>
+</html>

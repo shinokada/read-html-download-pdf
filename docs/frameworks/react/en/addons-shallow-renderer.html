@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <title>Shallow Renderer</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="https://raw.githubusercontent.com/shinokada/prism-coy-theme/main/theme_common.css">
+  </head>
+  <body>
+    <section id="shallow-renderer" class="level1">
+      <h1>Shallow Renderer</h1>
+      <p><strong>Importing</strong></p>
+      <pre class="language-javascript"><code class="language-javascript"><span class="token keyword module">import</span> <span class="token imports"><span class="token maybe-class-name">ShallowRenderer</span></span> <span class="token keyword module">from</span> <span class="token string">'react-test-renderer/shallow'</span><span class="token punctuation">;</span> <span class="token comment">// ES6</span>
+<span class="token keyword">var</span> <span class="token maybe-class-name">ShallowRenderer</span> <span class="token operator">=</span> <span class="token function">require</span><span class="token punctuation">(</span><span class="token string">'react-test-renderer/shallow'</span><span class="token punctuation">)</span><span class="token punctuation">;</span> <span class="token comment">// ES5 with npm</span></code></pre>
+      <section id="overview" class="level2">
+        <h2>Overview</h2>
+        <p>When writing unit tests for React, shallow rendering can be helpful. Shallow rendering lets you render a component "one level deep" and assert facts about what its render method returns, without worrying about the behavior of child components, which are not instantiated or rendered. This does not require a DOM.</p>
+        <p>For example, if you have the following component:</p>
+        <pre class="language-javascript"><code class="language-javascript"><span class="token keyword">function</span> <span class="token function"><span class="token maybe-class-name">MyComponent</span></span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  <span class="token keyword control-flow">return</span> <span class="token punctuation">(</span>
+    <span class="token operator">&#x3C;</span>div<span class="token operator">></span>
+      <span class="token operator">&#x3C;</span>span className<span class="token operator">=</span><span class="token string">"heading"</span><span class="token operator">></span><span class="token maybe-class-name">Title</span><span class="token operator">&#x3C;</span><span class="token operator">/</span>span<span class="token operator">></span>
+      <span class="token operator">&#x3C;</span><span class="token maybe-class-name">Subcomponent</span> foo<span class="token operator">=</span><span class="token string">"bar"</span> <span class="token operator">/</span><span class="token operator">></span>
+    <span class="token operator">&#x3C;</span><span class="token operator">/</span>div<span class="token operator">></span>
+  <span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span></code></pre>
+        <p>Then you can assert:</p>
+        <pre class="language-javascript"><code class="language-javascript"><span class="token keyword module">import</span> <span class="token imports"><span class="token maybe-class-name">ShallowRenderer</span></span> <span class="token keyword module">from</span> <span class="token string">'react-test-renderer/shallow'</span><span class="token punctuation">;</span>
+
+<span class="token comment">// in your test:</span>
+<span class="token keyword">const</span> renderer <span class="token operator">=</span> <span class="token keyword">new</span> <span class="token class-name">ShallowRenderer</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+renderer<span class="token punctuation">.</span><span class="token method function property-access">render</span><span class="token punctuation">(</span><span class="token operator">&#x3C;</span><span class="token maybe-class-name">MyComponent</span> <span class="token operator">/</span><span class="token operator">></span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token keyword">const</span> result <span class="token operator">=</span> renderer<span class="token punctuation">.</span><span class="token method function property-access">getRenderOutput</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+<span class="token function">expect</span><span class="token punctuation">(</span>result<span class="token punctuation">.</span><span class="token property-access">type</span><span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token method function property-access">toBe</span><span class="token punctuation">(</span><span class="token string">'div'</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token function">expect</span><span class="token punctuation">(</span>result<span class="token punctuation">.</span><span class="token property-access">props</span><span class="token punctuation">.</span><span class="token property-access">children</span><span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token method function property-access">toEqual</span><span class="token punctuation">(</span><span class="token punctuation">[</span>
+  <span class="token operator">&#x3C;</span>span className<span class="token operator">=</span><span class="token string">"heading"</span><span class="token operator">></span><span class="token maybe-class-name">Title</span><span class="token operator">&#x3C;</span><span class="token operator">/</span>span<span class="token operator">></span><span class="token punctuation">,</span>
+  <span class="token operator">&#x3C;</span><span class="token maybe-class-name">Subcomponent</span> foo<span class="token operator">=</span><span class="token string">"bar"</span> <span class="token operator">/</span><span class="token operator">></span>
+<span class="token punctuation">]</span><span class="token punctuation">)</span><span class="token punctuation">;</span></code></pre>
+        <p>Shallow testing currently has some limitations, namely not supporting refs.</p>
+        <blockquote>
+          <p>Note:</p>
+          <p>We also recommend checking out Enzyme's <a href="https://airbnb.io/enzyme/docs/api/shallow.html">Shallow Rendering API</a>. It provides a nicer higher-level API over the same functionality.</p>
+        </blockquote>
+      </section>
+      <section id="reference" class="level2">
+        <h2>Reference</h2>
+        <section id="shallowrendererrender-shallowrendererrender" class="level3">
+          <h3><code>shallowRenderer.render()</code> {#shallowrendererrender}</h3>
+          <p>You can think of the shallowRenderer as a "place" to render the component you're testing, and from which you can extract the component's output.</p>
+          <p><code>shallowRenderer.render()</code> is similar to <a href="./react-dom-client.html#createroot"><code>root.render()</code></a> but it doesn't require DOM and only renders a single level deep. This means you can test components isolated from how their children are implemented.</p>
+        </section>
+        <section id="shallowrenderergetrenderoutput-shallowrenderergetrenderoutput" class="level3">
+          <h3><code>shallowRenderer.getRenderOutput()</code> {#shallowrenderergetrenderoutput}</h3>
+          <p>After <code>shallowRenderer.render()</code> has been called, you can use <code>shallowRenderer.getRenderOutput()</code> to get the shallowly rendered output.</p>
+          <p>
+            You can then begin to assert facts about the output.
+            <span style="float: footnote;"><a href="./index.html#toc">Go to TOC</a></span>
+          </p>
+        </section>
+      </section>
+    </section>
+  </body>
+</html>

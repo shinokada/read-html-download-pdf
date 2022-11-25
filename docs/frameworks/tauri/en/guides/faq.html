@@ -1,0 +1,99 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <title>Frequently Asked Questions</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="sidebar_position" content="10">
+    <meta name="description" content="Fixes for common issues">
+    <link rel="stylesheet" href="https://raw.githubusercontent.com/shinokada/prism-coy-theme/main/theme_common.css">
+  </head>
+  <body>
+    <section id="how-can-i-use-unpublished-tauri-changes" class="level2">
+      <h2>How can I use unpublished Tauri changes?</h2>
+      <p>To use Tauri from GitHub (bleeding edge version) you need to change your <code>Cargo.toml</code> file and update your CLI and API.</p>
+      <details>
+        <summary>Pulling the Rust crate from source</summary>
+        <p>Append this to your <code>Cargo.toml</code> file:</p>
+        <figure class="language-toml">
+          <figcaption>Cargo.toml</figcaption>
+          <pre class="language-toml"><code class="language-toml"><span class="token punctuation">[</span><span class="token table class-name">patch.crates-io</span><span class="token punctuation">]</span>
+<span class="token key property">tauri</span> <span class="token punctuation">=</span> <span class="token punctuation">{</span> <span class="token key property">git</span> <span class="token punctuation">=</span> https://github<span class="token punctuation">.</span>com/tauri-apps/tauri<span class="token punctuation">,</span> <span class="token key property">branch</span> <span class="token punctuation">=</span> dev <span class="token punctuation">}</span>
+<span class="token key property">tauri-build</span> <span class="token punctuation">=</span> <span class="token punctuation">{</span> <span class="token key property">git</span> <span class="token punctuation">=</span> https://github<span class="token punctuation">.</span>com/tauri-apps/tauri<span class="token punctuation">,</span> <span class="token key property">branch</span> <span class="token punctuation">=</span> dev <span class="token punctuation">}</span></code></pre>
+        </figure>
+        <p>This will force all your dependencies to use <code>tauri</code> and <code>tauri-build</code> from Git instead of crates.io.</p>
+      </details>
+      <details>
+        <summary>Using the Tauri CLI from source</summary>
+        <p>If you are using the Cargo CLI, you can install it directly from GitHub:</p>
+        <pre class="language-shell"><code class="language-shell">cargo <span class="token function">install</span> --git https://github.com/tauri-apps/tauri --branch dev tauri-cli</code></pre>
+        <p>If you are using the <code>@tauri-apps/cli</code> package, you will need to clone the repo and build it:</p>
+        <pre class="language-shell"><code class="language-shell"><span class="token function">git</span> clone https://github.com/tauri-apps/tauri
+<span class="token function">git</span> checkout dev
+<span class="token builtin class-name">cd</span> tauri/tooling/cli/node
+<span class="token function">yarn</span>
+<span class="token function">yarn</span> build</code></pre>
+        <p>To use it, run directly with node:</p>
+        <pre class="language-shell"><code class="language-shell"><span class="token function">node</span> /path/to/tauri/tooling/cli/node/tauri.js dev
+<span class="token function">node</span> /path/to/tauri/tooling/cli/node/tauri.js build</code></pre>
+        <p>Alternatively, you can run your app with Cargo directly:</p>
+        <pre class="language-shell"><code class="language-shell"><span class="token builtin class-name">cd</span> src-tauri
+cargo run --no-default-features <span class="token comment"># instead of tauri dev</span>
+cargo build <span class="token comment"># instead of tauri build - won't bundle your app though</span></code></pre>
+      </details>
+      <details>
+        <summary>Using the Tauri API from source</summary>
+        <p>
+          It is recommended to also use the Tauri API package from source when using the Tauri crate from GitHub (though it might not be needed).
+          To build it from source, run the following script:
+        </p>
+        <pre class="language-shell"><code class="language-shell"><span class="token function">git</span> clone https://github.com/tauri-apps/tauri
+<span class="token function">git</span> checkout dev
+<span class="token builtin class-name">cd</span> tauri/tooling/api
+<span class="token function">yarn</span>
+<span class="token function">yarn</span> build</code></pre>
+        <p>Now you can link it using yarn:</p>
+        <pre class="language-shell"><code class="language-shell"><span class="token builtin class-name">cd</span> dist
+<span class="token function">yarn</span> <span class="token function">link</span>
+<span class="token builtin class-name">cd</span> /path/to/your/project
+<span class="token function">yarn</span> <span class="token function">link</span> @tauri-apps/api</code></pre>
+        <p>Or you can change your package.json to point to the dist folder directly:</p>
+        <figure class="language-json">
+          <figcaption>package.json</figcaption>
+          <pre class="language-json"><code class="language-json"><span class="token punctuation">{</span>
+  dependencies<span class="token operator">:</span> <span class="token punctuation">{</span>
+    @tauri-apps/api<span class="token operator">:</span> /path/to/tauri/tooling/api/dist
+  <span class="token punctuation">}</span>
+<span class="token punctuation">}</span></code></pre>
+        </figure>
+      </details>
+    </section>
+    <section id="node-or-cargo" class="level2">
+      <h2>Should I use Node or Cargo?</h2>
+      <p>Even though installing the CLI through Cargo is the preferred option, it has to compile the whole binary from scratch when you install it. If you're in a CI environment or on a very slow machine you're better off choosing another installation method.</p>
+      <p>As the CLI is written in Rust, it is naturally available through <a href="https://crates.io/crates/tauri-cli">crates.io</a> and installable with Cargo.</p>
+      <p>We also compile the CLI as a native Node.js addon and distribute it <a href="https://www.npmjs.com/package/@tauri-apps/cli">via npm</a>. This has several advantages compared to the Cargo installation method:</p>
+      <ol>
+        <li>The CLI is pre-compiled, leading to much faster install times</li>
+        <li>You can pin a specific version in your package.json file</li>
+        <li>If you develop custom tooling around Tauri, you can import the CLI as a regular JavaScript module</li>
+        <li>You can install the CLI using a JavaScript manager:</li>
+      </ol>
+    </section>
+    <section id="recommended-browserlist" class="level2">
+      <h2>Recommended Browserlist</h2>
+      <p>We recommend using <code>es2021</code>, <code>last 3 Chrome versions</code>, and <code>safari13</code> for your browserlist and build targets. Tauri leverages the OS's native rendering engine (WebKit on macOS, WebView2 on Windows and WebKitGTK on Linux).</p>
+    </section>
+    <section id="build-conflict-with-homebrew-on-linux" class="level2">
+      <h2>Build Conflict with Homebrew on Linux</h2>
+      <p>Homebrew on Linux includes its own <code>pkg-config</code> (a utility to find libraries on the system). This can cause conflicts when installing the same <code>pkg-config</code> package for Tauri (usually installed through the package manager like <code>apt</code>). When you try to build a Tauri app it will try to invoke <code>pkg-config</code> and will end up invoking the one from Homebrew. If Homebrew wasn't used to install Tauri's dependencies, this can cause errors.</p>
+      <p>Errors will <em>usually</em> contain messages along the lines of <code>error: failed to run custom build command for X</code> - <code>Package Y was not found in the pkg-config search path.</code>. Note that you may see similar errors if the required dependencies are not installed at all.</p>
+      <p>There are two solutions to this issue:</p>
+      <ol>
+        <li><a href="https://docs.brew.sh/FAQ#how-do-i-uninstall-homebrew">Uninstall Homebrew</a></li>
+        <li>Set the <code>PKG_CONFIG_PATH</code> environment variable to point to the correct <code>pkg-config</code> before building a Tauri app</li>
+      </ol>
+      <p><span style="float: footnote;"><a href="../index.html#toc">Go to TOC</a></span></p>
+    </section>
+  </body>
+</html>

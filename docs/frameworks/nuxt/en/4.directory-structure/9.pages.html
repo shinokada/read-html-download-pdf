@@ -1,0 +1,238 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <title>Pages directory</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="navigation.title" content="pages">
+    <meta name="description" content="The pages directory contains your Application Views and Routes. Nuxt reads all the .vue files inside this directory and automatically creates the router configuration for you.">
+    <meta name="category" content="directory-structure">
+    <meta name="csb_link" content="https://codesandbox.io/embed/github/nuxt-academy/guides-examples/tree/master/04_directory_structure/11_pages?fontsize=14&#x26;hidenavigation=1&#x26;theme=dark">
+    <link rel="stylesheet" href="https://raw.githubusercontent.com/shinokada/prism-coy-theme/main/theme_common.css">
+  </head>
+  <body>
+    <section id="pages-directory" class="level1">
+      <h1>Pages directory</h1>
+      <p>The <code>pages</code> directory contains your Application Views and Routes. Nuxt reads all the <code>.vue</code> files inside this directory and automatically creates the router configuration for you.</p>
+      <hr>
+      <section id="info" class="level4">
+        <h4>Info</h4>
+        <p>You can also create routes with .js files and .ts files</p>
+        <p>Every Page component is a Vue component but Nuxt adds special attributes and functions to make the development of your universal application as easy as possible.</p>
+        <pre class="language-html{}[pages]"><code class="language-html{}[pages]">&#x3C;template>
+  &#x3C;h1 class="red">Hello {{ name }}!&#x3C;/h1>
+&#x3C;/template>
+
+&#x3C;script>
+  export default {
+    // page properties go here
+  }
+&#x3C;/script>
+
+&#x3C;style>
+  .red {
+    color: red;
+  }
+&#x3C;/style></code></pre>
+      </section>
+      <section id="dynamic-pages" class="level2">
+        <h2>Dynamic Pages</h2>
+        <p>Dynamic pages can be created when you don't know the name of the page due to it coming from an API or you don't want to have to create the same page over and over again. To create a dynamic page you need to add an underscore before the .vue file name or before the name of the directory, if you want the directory to be dynamic. You can name the file or directory anything you want but you must prefix it with an underscore.</p>
+        <p>If you've defined a file named <code>_slug.vue</code> in your pages folder, you can access the value using the context with params.slug</p>
+        <pre class="language-html{}[pages/_slug.vue]"><code class="language-html{}[pages/_slug.vue]">&#x3C;template>
+  &#x3C;h1>{{ slug }}&#x3C;/h1>
+&#x3C;/template>
+
+&#x3C;script>
+  export default {
+    async asyncData({ params }) {
+      const slug = params.slug // When calling /abc the slug will be "abc"
+      return { slug }
+    }
+  }
+&#x3C;/script></code></pre>
+        <p>If you've defined a file named <code>_slug.vue</code> inside a folder called <code>_book</code> you can access the value using the context with <code>params.slug</code> and <code>params.book</code></p>
+        <pre class="language-html{}[pages/_book/_slug.vue]"><code class="language-html{}[pages/_book/_slug.vue]">&#x3C;template>
+  &#x3C;h1>{{ book }} / {{ slug }}&#x3C;/h1>
+&#x3C;/template>
+
+&#x3C;script>
+  export default {
+    async asyncData({ params }) {
+      const book = params.book
+      const slug = params.slug
+      return { book, slug }
+    }
+  }
+&#x3C;/script></code></pre>
+      </section>
+      <section id="properties" class="level2">
+        <h2>Properties</h2>
+        <section id="asyncdata" class="level3">
+          <h3>asyncData</h3>
+          <p>asyncData is called every time before loading the component. It can be asynchronous and receives the context as an argument. The returned object will be merged with your data object.</p>
+          <pre class="language-js{}[pages/index.vue]"><code class="language-js{}[pages/index.vue]">export default {
+  asyncData(context) {
+    return { name: 'World' }
+  }
+}</code></pre>
+          <section id="next" class="level4">
+            <h4>Next</h4>
+            <p>See more on how asyncData works in our <a href="./features/data-fetching#async-data">Data Fetching</a> chapter</p>
+          </section>
+        </section>
+        <section id="fetch" class="level3">
+          <h3>fetch</h3>
+          <p>Every time you need to get asynchronous data you can use fetch. Fetch is called on server-side when rendering the route, and on client-side when navigating.</p>
+          <pre class="language-html"><code class="language-html"><span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;</span>script</span><span class="token punctuation">></span></span><span class="token script"><span class="token language-javascript">
+  <span class="token keyword module">export</span> <span class="token keyword module">default</span> <span class="token punctuation">{</span>
+    <span class="token function">data</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+      <span class="token keyword control-flow">return</span> <span class="token punctuation">{</span>
+        <span class="token literal-property property">posts</span><span class="token operator">:</span> <span class="token punctuation">[</span><span class="token punctuation">]</span>
+      <span class="token punctuation">}</span>
+    <span class="token punctuation">}</span><span class="token punctuation">,</span>
+    <span class="token keyword">async</span> <span class="token function">fetch</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+      <span class="token keyword">this</span><span class="token punctuation">.</span><span class="token property-access">posts</span> <span class="token operator">=</span> <span class="token keyword control-flow">await</span> <span class="token function">fetch</span><span class="token punctuation">(</span><span class="token string">'https://api.nuxtjs.dev/posts'</span><span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token method function property-access">then</span><span class="token punctuation">(</span><span class="token parameter">res</span> <span class="token arrow operator">=></span>
+        res<span class="token punctuation">.</span><span class="token method function property-access">json</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+      <span class="token punctuation">)</span>
+    <span class="token punctuation">}</span>
+  <span class="token punctuation">}</span>
+</span></span><span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;/</span>script</span><span class="token punctuation">></span></span></code></pre>
+          <section id="next-1" class="level4">
+            <h4>Next</h4>
+            <p>See more on how fetch works in our <a href="./features/data-fetching">Data Fetching</a> chapter</p>
+          </section>
+        </section>
+        <section id="head" class="level3">
+          <h3>head</h3>
+          <p>Set specific 
+            <meta> tags for the current page. Nuxt uses <code>vue-meta</code> to update the document head and meta attributes of your application.
+          </p>
+          <pre class="language-js{}[pages/index.vue]"><code class="language-js{}[pages/index.vue]">export default {
+  head() {
+    // Set Meta Tags for this Page
+  }
+}</code></pre>
+          <section id="next-2" class="level4">
+            <h4>Next</h4>
+            <p>See more in our <a href="./features/meta-tags-seo">Meta Tags and SEO</a> chapter</p>
+          </section>
+        </section>
+        <section id="layout" class="level3">
+          <h3>layout</h3>
+          <p>Specify a layout defined in the layouts directory.</p>
+          <pre class="language-js{}[pages/index.vue]"><code class="language-js{}[pages/index.vue]">export default {
+  layout: 'blog'
+}</code></pre>
+          <section id="next-3" class="level4">
+            <h4>Next</h4>
+            <p>See more on layouts in our <a href="./concepts/views#layouts">Views</a> chapter.</p>
+          </section>
+        </section>
+        <section id="loading" class="level3">
+          <h3>loading</h3>
+          <p>If set to false, prevents a page from automatically calling <code>this.$nuxt.$loading.finish()</code> as you enter it and <code>this.$nuxt.$loading.start()</code> as you leave it, allowing you to manually control the behavior, as <a href="/examples/loading/custom-loading-component">this example</a> shows.</p>
+          <pre class="language-js{}[pages/index.vue]"><code class="language-js{}[pages/index.vue]">export default {
+  loading: false
+}</code></pre>
+          <section id="info-1" class="level4">
+            <h4>Info</h4>
+            <p>Only applies if loading is also set in nuxt.config.js.</p>
+          </section>
+          <section id="next-4" class="level4">
+            <h4>Next</h4>
+            <p>See more in our <a href="./features/loading">Loading</a> chapter.</p>
+          </section>
+        </section>
+        <section id="transition" class="level3">
+          <h3>transition</h3>
+          <p>Defines a specific transition for the page.</p>
+          <pre class="language-js{}[pages/index.vue]"><code class="language-js{}[pages/index.vue]">export default {
+  transition: 'fade'
+}</code></pre>
+          <section id="next-5" class="level4">
+            <h4>Next</h4>
+            <p>See more on transitions in our <a href="./features/transitions">Transitions</a> chapter</p>
+          </section>
+        </section>
+        <section id="scrolltotop" class="level3">
+          <h3>scrollToTop</h3>
+          <p>The <code>scrollToTop</code> property lets you tell Nuxt to scroll to the top before rendering the page. By default, Nuxt scrolls to the top when you go to another page, but with child routes, Nuxt keeps the scroll position. If you want to tell Nuxt to scroll to the top when rendering your child route, set <code>scrollToTop</code> to <code>true</code></p>
+          <pre class="language-js{}[pages/index.vue]"><code class="language-js{}[pages/index.vue]">export default {
+  scrollToTop: true
+}</code></pre>
+          <p>Conversely, you can manually set <code>scrollToTop</code> to <code>false</code> on parent routes as well.</p>
+          <p>If you want to overwrite the default scroll behavior of Nuxt, take a look at the <a href="./configuration-glossary/configuration-router#scrollbehavior">scrollBehavior option</a>.</p>
+        </section>
+        <section id="middleware" class="level3">
+          <h3>middleware</h3>
+          <p>Defines middleware for this page. The middleware will be called before rendering the page.</p>
+          <pre class="language-js{}[pages/index.vue]"><code class="language-js{}[pages/index.vue]">export default {
+  middleware: 'auth'
+}</code></pre>
+          <section id="next-6" class="level4">
+            <h4>Next</h4>
+            <p>See more on middleware in our <a href="./directory-structure/middleware">Middleware</a> chapter</p>
+          </section>
+        </section>
+        <section id="the-watchquery-property" class="level3">
+          <h3>The watchQuery Property</h3>
+          <p>Use the <code>watchQuery</code> key to set up a watcher for query strings. If the defined strings change, all component methods (asyncData, fetch(context), validate, layout, ...) will be called. Watching is disabled by default to improve performance.</p>
+          <pre class="language-js{}[pages/index.vue]"><code class="language-js{}[pages/index.vue]">export default {
+  watchQuery: ['page']
+}</code></pre>
+          <section id="warning" class="level4">
+            <h4>Warning</h4>
+            <p><strong>Warning</strong>: The new <code>fetch</code> hook introduced in 2.12 is not affected by <code>watchQuery</code>. For more information see <a href="./features/data-fetching#the-fetch-hook">listening to query string changes</a>.</p>
+            <pre class="language-js{}[pages/index.vue]"><code class="language-js{}[pages/index.vue]">export default {
+  watchQuery: true
+}</code></pre>
+            <p>You can also use the function <code>watchQuery(newQuery, oldQuery)</code> to have more refined watchers.</p>
+            <pre class="language-js{}[pages/index.vue]"><code class="language-js{}[pages/index.vue]">export default {
+  watchQuery(newQuery, oldQuery) {
+    // Only execute component methods if the old query string contained `bar`
+    // and the new query string contains `foo`
+    return newQuery.foo &#x26;&#x26; oldQuery.bar
+  }
+}</code></pre>
+          </section>
+          <section id="next-7" class="level4">
+            <h4>Next</h4>
+            <p>See more on the watch query property in our <a href="./features/data-fetching">Data Fetching</a> chapter</p>
+          </section>
+        </section>
+        <section id="key" class="level3">
+          <h3>key</h3>
+          <p>Same as the <code>key</code> property that can be used on Vue components in templates as a hint for the virtual DOM, this property allows the key value to be defined from the page itself (rather than the parent component).</p>
+          <p>By default in Nuxt, this value will be the <code>$route.path</code>, meaning that navigating to a different route will ensure a clean page component is created. Logically equivalent to:</p>
+          <pre class="language-html"><code class="language-html"><span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;</span>router-view</span> <span class="token attr-name">:key</span><span class="token attr-value"><span class="token punctuation attr-equals">=</span><span class="token punctuation">"</span>$route.path<span class="token punctuation">"</span></span> <span class="token punctuation">/></span></span></code></pre>
+          <p>The property can be a <code>String</code> or a <code>Function</code> which takes the route as the first argument.</p>
+        </section>
+      </section>
+      <section id="ignoring-pages" class="level2">
+        <h2>Ignoring pages</h2>
+        <p>If you want to ignore pages so that they are not included in the generated <code>router.js</code> file then you can ignore them by prefixing them with a <code>-</code>.</p>
+        <p>For example, <code>pages/-about.vue</code> will be ignored.</p>
+        <section id="next-8" class="level4">
+          <h4>Next</h4>
+          <p>Checkout the <a href="./configuration-glossary/configuration-ignore">ignore option</a> to learn more about it.</p>
+        </section>
+      </section>
+      <section id="configuration" class="level2">
+        <h2>Configuration</h2>
+        <p>You can rename the <code>pages/</code> directory to something different by setting <code>dir.pages</code> option:</p>
+        <pre class="language-js{}[nuxt.config.js]"><code class="language-js{}[nuxt.config.js]">export default {
+  dir: {
+    // Rename `pages` directory to `routes`
+    pages: 'routes'
+  }
+}</code></pre>
+        <section id="next-9" class="level4">
+          <h4>Next</h4>
+          <p>Checkout the <a href="./configuration-glossary/configuration-dir">dir option</a> to learn more about it.</p>
+          <p><span style="float: footnote;"><a href="../index.html#toc">Go to TOC</a></span></p>
+        </section>
+      </section>
+    </section>
+  </body>
+</html>

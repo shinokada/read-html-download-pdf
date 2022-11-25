@@ -1,0 +1,193 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <title>Bridge</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="draft" content="true">
+    <link rel="stylesheet" href="https://raw.githubusercontent.com/shinokada/prism-coy-theme/main/theme_common.css">
+  </head>
+  <body>
+    <p>
+      import Rater from '@theme/Rater'
+      import useBaseUrl from '@docusaurus/useBaseUrl'
+    </p>
+    <div class="row">
+      <div class="col" col--4="">
+        <table>
+          <tbody>
+            <tr>
+              <td>Ease of Use</td>
+              <td>
+                <rater value="3/"></rater>
+              </td>
+            </tr>
+            <tr>
+              <td>Extensibility</td>
+              <td>
+                <rater value="5/"></rater>
+              </td>
+            </tr>
+            <tr>
+              <td>Performance</td>
+              <td>
+                <rater value="4/"></rater>
+              </td>
+            </tr>
+            <tr>
+              <td>Security</td>
+              <td>
+                <rater value="4/"></rater>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="col" col--4="" pattern-logo="">
+        <img src="{useBaseUrl(&#x27;img/recipes/Bridge.svg&#x27;)}" alt="Bridge">
+      </div>
+      <div class="col" col--4="">Pros:
+        <ul>
+          <li>Highly configurable</li>
+          <li>No Rust skills required</li>
+        </ul>Cons:
+        <ul>
+          <li>Some WebAPIs unavailable</li>
+          <li>Challenge to implement</li>
+        </ul>
+      </div>
+    </div>
+    <section id="description" class="level2">
+      <h2>Description</h2>
+      <p>The Bridge recipe is a secure pattern where messages are passed between brokers via an implicit bridge using the API. It isolates functionality to the specific scope and passes messages instead of functionality.</p>
+    </section>
+    <section id="diagram" class="level2">
+      <h2>Diagram</h2>
+      <pre class="language-mermaid"><code class="language-mermaid"><span class="token keyword">graph</span> TD
+  H<span class="token arrow operator">==></span>F
+  <span class="token keyword">subgraph</span> WEBVIEW
+    F<span class="token arrow operator">-.-</span>E
+  <span class="token keyword">end</span>
+  D<span class="token arrow operator">--></span>E
+  E<span class="token arrow operator">--></span>D
+  B<span class="token arrow operator">--></span>D
+  D<span class="token arrow operator">--></span>B
+  <span class="token keyword">subgraph</span> RUST
+    A<span class="token arrow operator">==></span>H
+    A<span class="token arrow operator">--></span>B
+    B<span class="token arrow operator">-.-</span>C
+    B<span class="token arrow operator">-.-</span>G
+  <span class="token keyword">end</span>
+  A<span class="token text string">[Binary]</span>
+  B<span class="token text string">{Rust Broker}</span>
+  C<span class="token text string">[Subprocess 2]</span>
+  G<span class="token text string">[Subprocess 1]</span>
+  D<span class="token text string">(( API BRIDGE ))</span>
+  E<span class="token text string">{JS Broker}</span>
+  F<span class="token text string">[Window]</span>
+  H<span class="token text string">{Bootstrap}</span>
+  <span class="token keyword">class</span> D apibridge
+  <span class="token keyword">class</span> RUST rust
+  <span class="token keyword">class</span> WEBVIEW webview</code></pre>
+    </section>
+    <section id="configuration" class="level2">
+      <h2>Configuration</h2>
+      <p>Here's what you need to add to your tauri.conf.json file:</p>
+      <pre class="language-json"><code class="language-json"><span class="token punctuation">{</span>
+  tauri<span class="token operator">:</span> <span class="token punctuation">{</span>
+    allowlist<span class="token operator">:</span> <span class="token punctuation">{</span>
+      all<span class="token operator">:</span> <span class="token boolean">false</span><span class="token punctuation">,</span>
+      clipboard<span class="token operator">:</span> <span class="token punctuation">{</span>
+        all<span class="token operator">:</span> <span class="token boolean">false</span><span class="token punctuation">,</span>
+        readText<span class="token operator">:</span> <span class="token boolean">false</span><span class="token punctuation">,</span>
+        writeText<span class="token operator">:</span> <span class="token boolean">false</span>
+      <span class="token punctuation">}</span><span class="token punctuation">,</span>
+      dialog<span class="token operator">:</span> <span class="token punctuation">{</span>
+        all<span class="token operator">:</span> <span class="token boolean">false</span><span class="token punctuation">,</span>
+        ask<span class="token operator">:</span> <span class="token boolean">false</span><span class="token punctuation">,</span>
+        confirm<span class="token operator">:</span> <span class="token boolean">false</span><span class="token punctuation">,</span>
+        message<span class="token operator">:</span> <span class="token boolean">false</span><span class="token punctuation">,</span>
+        open<span class="token operator">:</span> <span class="token boolean">false</span><span class="token punctuation">,</span>
+        save<span class="token operator">:</span> <span class="token boolean">false</span>
+      <span class="token punctuation">}</span><span class="token punctuation">,</span>
+      fs<span class="token operator">:</span> <span class="token punctuation">{</span>
+        all<span class="token operator">:</span> <span class="token boolean">false</span><span class="token punctuation">,</span>
+        copyFile<span class="token operator">:</span> <span class="token boolean">false</span><span class="token punctuation">,</span>
+        createDir<span class="token operator">:</span> <span class="token boolean">false</span><span class="token punctuation">,</span>
+        readDir<span class="token operator">:</span> <span class="token boolean">false</span><span class="token punctuation">,</span>
+        readFile<span class="token operator">:</span> <span class="token boolean">false</span><span class="token punctuation">,</span>
+        removeDir<span class="token operator">:</span> <span class="token boolean">false</span><span class="token punctuation">,</span>
+        removeFile<span class="token operator">:</span> <span class="token boolean">false</span><span class="token punctuation">,</span>
+        renameFile<span class="token operator">:</span> <span class="token boolean">false</span><span class="token punctuation">,</span>
+        scope<span class="token operator">:</span> <span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token punctuation">,</span>
+        writeFile<span class="token operator">:</span> <span class="token boolean">false</span>
+      <span class="token punctuation">}</span><span class="token punctuation">,</span>
+      globalShortcut<span class="token operator">:</span> <span class="token punctuation">{</span>
+        all<span class="token operator">:</span> <span class="token boolean">false</span>
+      <span class="token punctuation">}</span><span class="token punctuation">,</span>
+      http<span class="token operator">:</span> <span class="token punctuation">{</span>
+        all<span class="token operator">:</span> <span class="token boolean">false</span><span class="token punctuation">,</span>
+        request<span class="token operator">:</span> <span class="token boolean">false</span><span class="token punctuation">,</span>
+        scope<span class="token operator">:</span> <span class="token punctuation">[</span><span class="token punctuation">]</span>
+      <span class="token punctuation">}</span><span class="token punctuation">,</span>
+      notification<span class="token operator">:</span> <span class="token punctuation">{</span>
+        all<span class="token operator">:</span> <span class="token boolean">false</span>
+      <span class="token punctuation">}</span><span class="token punctuation">,</span>
+      os<span class="token operator">:</span> <span class="token punctuation">{</span>
+        all<span class="token operator">:</span> <span class="token boolean">false</span>
+      <span class="token punctuation">}</span><span class="token punctuation">,</span>
+      path<span class="token operator">:</span> <span class="token punctuation">{</span>
+        all<span class="token operator">:</span> <span class="token boolean">false</span>
+      <span class="token punctuation">}</span><span class="token punctuation">,</span>
+      process<span class="token operator">:</span> <span class="token punctuation">{</span>
+        all<span class="token operator">:</span> <span class="token boolean">false</span><span class="token punctuation">,</span>
+        exit<span class="token operator">:</span> <span class="token boolean">false</span><span class="token punctuation">,</span>
+        relaunch<span class="token operator">:</span> <span class="token boolean">false</span><span class="token punctuation">,</span>
+        relaunchDangerousAllowSymlinkMacos<span class="token operator">:</span> <span class="token boolean">false</span>
+      <span class="token punctuation">}</span><span class="token punctuation">,</span>
+      protocol<span class="token operator">:</span> <span class="token punctuation">{</span>
+        all<span class="token operator">:</span> <span class="token boolean">false</span><span class="token punctuation">,</span>
+        asset<span class="token operator">:</span> <span class="token boolean">false</span><span class="token punctuation">,</span>
+        assetScope<span class="token operator">:</span> <span class="token punctuation">[</span><span class="token punctuation">]</span>
+      <span class="token punctuation">}</span><span class="token punctuation">,</span>
+      shell<span class="token operator">:</span> <span class="token punctuation">{</span>
+        all<span class="token operator">:</span> <span class="token boolean">false</span><span class="token punctuation">,</span>
+        execute<span class="token operator">:</span> <span class="token boolean">false</span><span class="token punctuation">,</span>
+        open<span class="token operator">:</span> <span class="token boolean">false</span><span class="token punctuation">,</span>
+        scope<span class="token operator">:</span> <span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token punctuation">,</span>
+        sidecar<span class="token operator">:</span> <span class="token boolean">false</span>
+      <span class="token punctuation">}</span><span class="token punctuation">,</span>
+      window<span class="token operator">:</span> <span class="token punctuation">{</span>
+        all<span class="token operator">:</span> <span class="token boolean">false</span><span class="token punctuation">,</span>
+        center<span class="token operator">:</span> <span class="token boolean">false</span><span class="token punctuation">,</span>
+        close<span class="token operator">:</span> <span class="token boolean">false</span><span class="token punctuation">,</span>
+        create<span class="token operator">:</span> <span class="token boolean">false</span><span class="token punctuation">,</span>
+        hide<span class="token operator">:</span> <span class="token boolean">false</span><span class="token punctuation">,</span>
+        maximize<span class="token operator">:</span> <span class="token boolean">false</span><span class="token punctuation">,</span>
+        minimize<span class="token operator">:</span> <span class="token boolean">false</span><span class="token punctuation">,</span>
+        print<span class="token operator">:</span> <span class="token boolean">false</span><span class="token punctuation">,</span>
+        requestUserAttention<span class="token operator">:</span> <span class="token boolean">false</span><span class="token punctuation">,</span>
+        setAlwaysOnTop<span class="token operator">:</span> <span class="token boolean">false</span><span class="token punctuation">,</span>
+        setDecorations<span class="token operator">:</span> <span class="token boolean">false</span><span class="token punctuation">,</span>
+        setFocus<span class="token operator">:</span> <span class="token boolean">false</span><span class="token punctuation">,</span>
+        setFullscreen<span class="token operator">:</span> <span class="token boolean">false</span><span class="token punctuation">,</span>
+        setIcon<span class="token operator">:</span> <span class="token boolean">false</span><span class="token punctuation">,</span>
+        setMaxSize<span class="token operator">:</span> <span class="token boolean">false</span><span class="token punctuation">,</span>
+        setMinSize<span class="token operator">:</span> <span class="token boolean">false</span><span class="token punctuation">,</span>
+        setPosition<span class="token operator">:</span> <span class="token boolean">false</span><span class="token punctuation">,</span>
+        setResizable<span class="token operator">:</span> <span class="token boolean">false</span><span class="token punctuation">,</span>
+        setSize<span class="token operator">:</span> <span class="token boolean">false</span><span class="token punctuation">,</span>
+        setSkipTaskbar<span class="token operator">:</span> <span class="token boolean">false</span><span class="token punctuation">,</span>
+        setTitle<span class="token operator">:</span> <span class="token boolean">false</span><span class="token punctuation">,</span>
+        show<span class="token operator">:</span> <span class="token boolean">false</span><span class="token punctuation">,</span>
+        startDragging<span class="token operator">:</span> <span class="token boolean">false</span><span class="token punctuation">,</span>
+        unmaximize<span class="token operator">:</span> <span class="token boolean">false</span><span class="token punctuation">,</span>
+        unminimize<span class="token operator">:</span> <span class="token boolean">false</span>
+      <span class="token punctuation">}</span>
+    <span class="token punctuation">}</span>
+  <span class="token punctuation">}</span>
+<span class="token punctuation">}</span></code></pre>
+      <p><span style="float: footnote;"><a href="../../../index.html#toc">Go to TOC</a></span></p>
+    </section>
+  </body>
+</html>

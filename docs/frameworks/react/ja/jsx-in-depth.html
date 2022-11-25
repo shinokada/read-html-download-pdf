@@ -1,0 +1,335 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="utf-8">
+    <title>JSX を深く理解する</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="https://raw.githubusercontent.com/shinokada/prism-coy-theme/main/theme_common.css">
+  </head>
+  <body>
+    <section id="jsx-を深く理解する" class="level1">
+      <h1>JSX を深く理解する</h1>
+      <p>JSX とは、つまるところ <code>React.createElement(component, props, ...children)</code> の糖衣構文にすぎません。例として、次の JSX コードを見てみましょう。</p>
+      <pre class="language-js"><code class="language-js"><span class="token operator">&#x3C;</span><span class="token maybe-class-name">MyButton</span> color<span class="token operator">=</span><span class="token string">"blue"</span> shadowSize<span class="token operator">=</span><span class="token punctuation">{</span><span class="token number">2</span><span class="token punctuation">}</span><span class="token operator">></span>
+  <span class="token maybe-class-name">Click</span> <span class="token maybe-class-name">Me</span>
+<span class="token operator">&#x3C;</span><span class="token operator">/</span><span class="token maybe-class-name">MyButton</span><span class="token operator">></span></code></pre>
+      <p>これは以下のようにコンパイルされます。</p>
+      <pre class="language-js"><code class="language-js"><span class="token maybe-class-name">React</span><span class="token punctuation">.</span><span class="token method function property-access">createElement</span><span class="token punctuation">(</span>
+  <span class="token maybe-class-name">MyButton</span><span class="token punctuation">,</span>
+  <span class="token punctuation">{</span><span class="token literal-property property">color</span><span class="token operator">:</span> <span class="token string">'blue'</span><span class="token punctuation">,</span> <span class="token literal-property property">shadowSize</span><span class="token operator">:</span> <span class="token number">2</span><span class="token punctuation">}</span><span class="token punctuation">,</span>
+  <span class="token string">'Click Me'</span>
+<span class="token punctuation">)</span></code></pre>
+      <p>子要素を持たない場合には、自己クローズ (self-closing) タグを利用することもできます。次のコードを見てください。</p>
+      <pre class="language-js"><code class="language-js"><span class="token operator">&#x3C;</span>div className<span class="token operator">=</span><span class="token string">"sidebar"</span> <span class="token operator">/</span><span class="token operator">></span></code></pre>
+      <p>これは以下のようにコンパイルされます。</p>
+      <pre class="language-js"><code class="language-js"><span class="token maybe-class-name">React</span><span class="token punctuation">.</span><span class="token method function property-access">createElement</span><span class="token punctuation">(</span>
+  <span class="token string">'div'</span><span class="token punctuation">,</span>
+  <span class="token punctuation">{</span><span class="token literal-property property">className</span><span class="token operator">:</span> <span class="token string">'sidebar'</span><span class="token punctuation">}</span>
+<span class="token punctuation">)</span></code></pre>
+      <p>具体的に JSX がどのように JavaScript へ変換されるのかをテストしたい場合は、<a href="babel://jsx-simple-example">オンライン Babel コンパイラ</a>で試すことができます。</p>
+      <section id="specifying-the-react-element-type" class="level2">
+        <h2>React 要素の型を指定する</h2>
+        <p>JSX タグの先頭の部分は、React 要素の型を決定しています。</p>
+        <p>大文字で始まる型は JSX タグが React コンポーネントを参照していることを示しています。このような JSX タグはコンパイルを経てその大文字で始まる変数を直接参照するようになります。つまり JSX の <code>&#x3C;Foo /></code> 式を使用する場合、<code>Foo</code> がスコープになければなりません。</p>
+        <section id="react-must-be-in-scope" class="level3">
+          <h3>React がスコープ内にあること</h3>
+          <p>JSX は <code>React.createElement</code> の呼び出しへとコンパイルされるため、<code>React</code> ライブラリは常に JSX コードのスコープ内にある必要があります。</p>
+          <p>例えば以下のコードでは、<code>React</code> も <code>CustomButton</code> も JavaScript から直接は参照されていませんが、両方ともインポートされていることが必要です。</p>
+          <pre class="language-js{1,2,5}"><code class="language-js{1,2,5}">import React from 'react';
+import CustomButton from './CustomButton';
+
+function WarningButton() {
+  // return React.createElement(CustomButton, {color: 'red'}, null);
+  return &#x3C;CustomButton color="red" />;
+}</code></pre>
+          <p>JavaScript のバンドルツールを使わずに <code>&#x3C;script></code> タグから React を読み込んでいる場合は、<code>React</code> はグローバル変数として既にスコープに入っています。</p>
+        </section>
+        <section id="using-dot-notation-for-jsx-type" class="level3">
+          <h3>JSX 型にドット記法を使用する</h3>
+          <p>JSX の中においては、ドット記法を使うことによって React コンポーネントを参照することもできます。これは単一のモジュールがたくさんの React コンポーネントをエクスポートしているような場合に便利です。例えば、<code>MyComponents.DatePicker</code> というコンポーネントがあるのであれば、次のように JSX 内から直接利用することができます。</p>
+          <pre class="language-js{10}"><code class="language-js{10}">import React from 'react';
+
+const MyComponents = {
+  DatePicker: function DatePicker(props) {
+    return &#x3C;div>Imagine a {props.color} datepicker here.&#x3C;/div>;
+  }
+}
+
+function BlueDatePicker() {
+  return &#x3C;MyComponents.DatePicker color="blue" />;
+}</code></pre>
+        </section>
+        <section id="user-defined-components-must-be-capitalized" class="level3">
+          <h3>ユーザ定義のコンポーネントの名前は大文字で始めること</h3>
+          <p>ある要素の型が小文字から始まっているような場合、それは <code>&#x3C;div></code> や <code>&#x3C;span></code> のような組み込みのコンポーネントを参照しており、これらはそれぞれ <code>'div'</code> や <code>'span'</code> といった文字列に変換されて <code>React.createElement</code> に渡されます。一方で <code>&#x3C;Foo /></code> のように大文字で始まる型は <code>React.createElement(Foo)</code> にコンパイルされ、JavaScript ファイルにおいて定義あるいはインポートされたコンポーネントを参照します。</p>
+          <p>コンポーネントを命名するときには、大文字から始めるようにしてください。もしすでに小文字から始まるコンポーネントを作ってしまっていたら、JSX 内で利用する前にいちど大文字から始まる変数に代入しておきましょう。</p>
+          <p>例えば、以下のコードは期待通りには動きません。</p>
+          <pre class="language-js{3,4,10,11}"><code class="language-js{3,4,10,11}">import React from 'react';
+
+// 間違った例。これはコンポーネントなので、大文字ではじめなければいけません。
+function hello(props) {
+  // 正しい例。div は HTML タグなので、&#x3C;div> と書くのは正解です。
+  return &#x3C;div>Hello {props.toWhat}&#x3C;/div>;
+}
+
+function HelloWorld() {
+  // 間違った例。大文字ではじまっていないため、React は &#x3C;hello /> を HTML タグと認識してしまいます。
+  return &#x3C;hello toWhat="World" />;
+}</code></pre>
+          <p><code>hello</code> を <code>Hello</code> に書き換え、<code>&#x3C;Hello /></code> を使って参照するようにすれば、このコードはきちんと動作するようになります。</p>
+          <pre class="language-js{3,4,10,11}"><code class="language-js{3,4,10,11}">import React from 'react';
+
+// 正しい例。コンポーネントなので大文字からはじまっています。
+function Hello(props) {
+  // 正しい例。div は HTML タグなので、&#x3C;div> と書くのは正解です。
+  return &#x3C;div>Hello {props.toWhat}&#x3C;/div>;
+}
+
+function HelloWorld() {
+  // 正しい例。大文字ではじまっているため、React は &#x3C;Hello /> がコンポーネントだと認識できます。
+  return &#x3C;Hello toWhat="World" />;
+}</code></pre>
+        </section>
+        <section id="choosing-the-type-at-runtime" class="level3">
+          <h3>実行時に型を選択する</h3>
+          <p>一般的な式を React の要素の型として使用することはできません。どうしても一般的な式を使って要素の型を示したいのであれば、まずその式を大文字から始まる変数に代入してから利用しましょう。これはプロパティの値に応じて異なるコンポーネントを表示し分けたいような場合によくあるケースです。</p>
+          <pre class="language-js{10,11}"><code class="language-js{10,11}">import React from 'react';
+import { PhotoStory, VideoStory } from './stories';
+
+const components = {
+  photo: PhotoStory,
+  video: VideoStory
+};
+
+function Story(props) {
+  // 間違った例。式は JSX の型に指定できません。
+  return &#x3C;components[props.storyType] story={props.story} />;
+}</code></pre>
+          <p>大文字から始まる変数に型を代入することで、上のコードをきちんと動作するようにしてみましょう。</p>
+          <pre class="language-js{10-12}"><code class="language-js{10-12}">import React from 'react';
+import { PhotoStory, VideoStory } from './stories';
+
+const components = {
+  photo: PhotoStory,
+  video: VideoStory
+};
+
+function Story(props) {
+  // 正しい例。大文字で始まる変数は JSX の型に指定できます。
+  const SpecificStory = components[props.storyType];
+  return &#x3C;SpecificStory story={props.story} />;
+}</code></pre>
+        </section>
+      </section>
+      <section id="props-in-jsx" class="level2">
+        <h2>JSX における props</h2>
+        <p>JSX で props を指定するやり方はいくつかあります。</p>
+        <section id="javascript-expressions-as-props" class="level3">
+          <h3>プロパティとしての JavaScript 式</h3>
+          <p>任意の JavaScript 式は <code>{}</code> で囲むことによって props として渡すことができます。例として次の JSX を見てみましょう。</p>
+          <pre class="language-js"><code class="language-js"><span class="token operator">&#x3C;</span><span class="token maybe-class-name">MyComponent</span> foo<span class="token operator">=</span><span class="token punctuation">{</span><span class="token number">1</span> <span class="token operator">+</span> <span class="token number">2</span> <span class="token operator">+</span> <span class="token number">3</span> <span class="token operator">+</span> <span class="token number">4</span><span class="token punctuation">}</span> <span class="token operator">/</span><span class="token operator">></span></code></pre>
+          <p>この <code>MyComponent</code> について、<code>props.foo</code> の値は <code>10</code> 、つまり <code>1 + 2 + 3 + 4</code> という式が評価されます。</p>
+          <p><code>if</code> 文や <code>for</code> 文は JavaScript においては式ではないため、JSX 内で直接利用することはできません。代わりに JSX の近くで間接的に利用してみてください。次がその例です。</p>
+          <pre class="language-js{3-7}"><code class="language-js{3-7}">function NumberDescriber(props) {
+  let description;
+  if (props.number % 2 == 0) {
+    description = &#x3C;strong>even&#x3C;/strong>;
+  } else {
+    description = &#x3C;i>odd&#x3C;/i>;
+  }
+  return &#x3C;div>{props.number} is an {description} number&#x3C;/div>;
+}</code></pre>
+          <p>これについては、<a href="./conditional-rendering.html">条件付きレンダー</a>と<a href="./lists-and-keys.html">ループ</a>でさらに深く学ぶことができます。</p>
+        </section>
+        <section id="string-literals" class="level3">
+          <h3>文字列リテラル</h3>
+          <p>文字列リテラルを props として渡すことができます。そのため以下のふたつの JSX の式はまったく等しいものとなります。</p>
+          <pre class="language-js"><code class="language-js"><span class="token operator">&#x3C;</span><span class="token maybe-class-name">MyComponent</span> message<span class="token operator">=</span><span class="token string">"hello world"</span> <span class="token operator">/</span><span class="token operator">></span>
+
+<span class="token operator">&#x3C;</span><span class="token maybe-class-name">MyComponent</span> message<span class="token operator">=</span><span class="token punctuation">{</span><span class="token string">'hello world'</span><span class="token punctuation">}</span> <span class="token operator">/</span><span class="token operator">></span></code></pre>
+          <p>文字列リテラルを渡す際、その値における HTML エスケープは元の形に復元されます。そのため以下のふたつの JSX の式もまったく等しいものとなります。</p>
+          <pre class="language-js"><code class="language-js"><span class="token operator">&#x3C;</span><span class="token maybe-class-name">MyComponent</span> message<span class="token operator">=</span><span class="token string">"&#x26;lt;3"</span> <span class="token operator">/</span><span class="token operator">></span>
+
+<span class="token operator">&#x3C;</span><span class="token maybe-class-name">MyComponent</span> message<span class="token operator">=</span><span class="token punctuation">{</span><span class="token string">'&#x3C;3'</span><span class="token punctuation">}</span> <span class="token operator">/</span><span class="token operator">></span></code></pre>
+          <p>この振る舞いは多くの場合それほど重要なものではありませんが、包括的な解説の一環としてここで触れておきます。</p>
+        </section>
+        <section id="props-default-to-true" class="level3">
+          <h3>プロパティのデフォルト値は true</h3>
+          <p>プロパティに値を与えない場合、デフォルトの値は <code>true</code> となります。そのため以下のふたつの JSX の式はまったく等しいものとなります。</p>
+          <pre class="language-js"><code class="language-js"><span class="token operator">&#x3C;</span><span class="token maybe-class-name">MyTextBox</span> autocomplete <span class="token operator">/</span><span class="token operator">></span>
+
+<span class="token operator">&#x3C;</span><span class="token maybe-class-name">MyTextBox</span> autocomplete<span class="token operator">=</span><span class="token punctuation">{</span><span class="token boolean">true</span><span class="token punctuation">}</span> <span class="token operator">/</span><span class="token operator">></span></code></pre>
+          <p>特別な理由がある場合を除いて、このように値を省略することは推奨していません。<a href="https://developer.mozilla.org/en/docs/Web/JavaScript/Reference/Operators/Object_initializer#New_notations_in_ECMAScript_2015">ES6 におけるオブジェクトの簡略表記</a>においては、<code>{foo}</code> は <code>{foo: true}</code> ではなく <code>{foo: foo}</code> を意味するため、HTML の動作に似せて作られたこの機能はかえって混乱をきたす可能性があります。</p>
+        </section>
+        <section id="spread-attributes" class="level3">
+          <h3>属性の展開</h3>
+          <p><code>props</code> オブジェクトがあらかじめ存在しており、それを JSX に渡したいような場合は「スプレッド」構文である <code>...</code> を使用することで、props オブジェクトそのものを渡すことができます。そのため以下のふたつの JSX の式はまったく等しいものとなります。</p>
+          <pre class="language-js{7}"><code class="language-js{7}">function App1() {
+  return &#x3C;Greeting firstName="Ben" lastName="Hector" />;
+}
+
+function App2() {
+  const props = {firstName: 'Ben', lastName: 'Hector'};
+  return &#x3C;Greeting {...props} />;
+}</code></pre>
+          <p>また、コンポーネントが利用する適当なプロパティを取り出しつつ、残りのすべてのプロパティに対してスプレッド構文を利用することもできます。</p>
+          <pre class="language-js{2}"><code class="language-js{2}">const Button = props => {
+  const { kind, ...other } = props;
+  const className = kind === "primary" ? "PrimaryButton" : "SecondaryButton";
+  return &#x3C;button className={className} {...other} />;
+};
+
+const App = () => {
+  return (
+    &#x3C;div>
+      &#x3C;Button kind="primary" onClick={() => console.log("clicked!")}>
+        Hello World!
+      &#x3C;/Button>
+    &#x3C;/div>
+  );
+};</code></pre>
+          <p>
+            上の例では、<code>kind</code> プロパティは無事に取り出され、DOM 中の <code>&#x3C;button></code> 要素には<em>渡されていません</em>。
+            残りのプロパティは <code>...other</code> オブジェクトにより渡され、このコンポーネントを柔軟性の高いものにしています。上記のコードは <code>onClick</code> や <code>children</code> プロパティを渡していることが見てとれるはずです。
+          </p>
+          <p>スプレッド演算子は便利ではありますが、コンポーネント内で利用しないプロパティを不用意に渡してしまったり、意味をなさない HTML 属性を DOM に渡してしまうようなことが容易に起きえます。そのためこの構文は慎重に利用してください。</p>
+        </section>
+      </section>
+      <section id="children-in-jsx" class="level2">
+        <h2>JSX における子要素</h2>
+        <p>開始タグと終了タグの両方を含む JSX 式においては、タグに囲まれた部分は、<code>props.children</code> という特別なプロパティとして渡されます。このような子要素を渡す方法はいくつかあります。</p>
+        <section id="string-literals-1" class="level3">
+          <h3>文字列リテラル</h3>
+          <p>開始タグと終了タグの間に文字列を挟んでいる場合、その文字列が <code>props.children</code> となります。これは HTML 要素を JSX 内で利用するような場合よくあるケースです。次の例を見てください。</p>
+          <pre class="language-js"><code class="language-js"><span class="token operator">&#x3C;</span><span class="token maybe-class-name">MyComponent</span><span class="token operator">></span><span class="token maybe-class-name">Hello</span> world<span class="token operator">!</span><span class="token operator">&#x3C;</span><span class="token operator">/</span><span class="token maybe-class-name">MyComponent</span><span class="token operator">></span></code></pre>
+          <p>この JSX は正しく動作します。この場合 <code>props.children</code> は <code>MyComponent</code> において、単なる文字列 <code>"Hello world!"</code> となります。HTML エスケープは元の文字列に復元されるため、多くの場合は以下のように HTML を書くように JSX を書くことができます。</p>
+          <pre class="language-html"><code class="language-html"><span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;</span>div</span><span class="token punctuation">></span></span>This is valid HTML <span class="token entity named-entity" title="&#x26;">&#x26;amp;</span> JSX at the same time.<span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;/</span>div</span><span class="token punctuation">></span></span></code></pre>
+          <p>JSX は行の先頭と末尾の空白文字を削除し、また空白行も削除します。タグに隣接する改行も削除され、文字列リテラル内での改行は 1 つの空白文字に置き換えられます。そのため以下の例はすべて同じものを表示します。</p>
+          <pre class="language-js"><code class="language-js"><span class="token operator">&#x3C;</span>div<span class="token operator">></span><span class="token maybe-class-name">Hello</span> <span class="token maybe-class-name">World</span><span class="token operator">&#x3C;</span><span class="token operator">/</span>div<span class="token operator">></span>
+
+<span class="token operator">&#x3C;</span>div<span class="token operator">></span>
+  <span class="token maybe-class-name">Hello</span> <span class="token maybe-class-name">World</span>
+<span class="token operator">&#x3C;</span><span class="token operator">/</span>div<span class="token operator">></span>
+
+<span class="token operator">&#x3C;</span>div<span class="token operator">></span>
+  <span class="token maybe-class-name">Hello</span>
+  <span class="token maybe-class-name">World</span>
+<span class="token operator">&#x3C;</span><span class="token operator">/</span>div<span class="token operator">></span>
+
+<span class="token operator">&#x3C;</span>div<span class="token operator">></span>
+
+  <span class="token maybe-class-name">Hello</span> <span class="token maybe-class-name">World</span>
+<span class="token operator">&#x3C;</span><span class="token operator">/</span>div<span class="token operator">></span></code></pre>
+        </section>
+        <section id="jsx-children" class="level3">
+          <h3>子要素としての JSX 要素</h3>
+          <p>JSX 要素を子要素として渡すこともできます。これはネストしたコンポーネントを表示したいときに活用することができます。</p>
+          <pre class="language-js"><code class="language-js"><span class="token operator">&#x3C;</span><span class="token maybe-class-name">MyContainer</span><span class="token operator">></span>
+  <span class="token operator">&#x3C;</span><span class="token maybe-class-name">MyFirstComponent</span> <span class="token operator">/</span><span class="token operator">></span>
+  <span class="token operator">&#x3C;</span><span class="token maybe-class-name">MySecondComponent</span> <span class="token operator">/</span><span class="token operator">></span>
+<span class="token operator">&#x3C;</span><span class="token operator">/</span><span class="token maybe-class-name">MyContainer</span><span class="token operator">></span></code></pre>
+          <p>異なる型の子要素を混在させることができるため、文字列リテラルを JSX 要素と同時に子要素として渡すことができます。この点においても JSX と HTML は似ており、次のような例は JSX としても HTML としても正しく動作します。</p>
+          <pre class="language-html"><code class="language-html"><span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;</span>div</span><span class="token punctuation">></span></span>
+  Here is a list:
+  <span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;</span>ul</span><span class="token punctuation">></span></span>
+    <span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;</span>li</span><span class="token punctuation">></span></span>Item 1<span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;/</span>li</span><span class="token punctuation">></span></span>
+    <span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;</span>li</span><span class="token punctuation">></span></span>Item 2<span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;/</span>li</span><span class="token punctuation">></span></span>
+  <span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;/</span>ul</span><span class="token punctuation">></span></span>
+<span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;/</span>div</span><span class="token punctuation">></span></span></code></pre>
+          <p>また React コンポーネントは要素の配列を返すこともできます。</p>
+          <pre class="language-js"><code class="language-js"><span class="token function">render</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  <span class="token comment">// リスト化するだけのために要素を用意する必要はありません！</span>
+  <span class="token keyword control-flow">return</span> <span class="token punctuation">[</span>
+    <span class="token comment">// key 属性を書き忘れないようにしてください :)</span>
+    <span class="token operator">&#x3C;</span>li key<span class="token operator">=</span><span class="token string">"A"</span><span class="token operator">></span><span class="token maybe-class-name">First</span> item<span class="token operator">&#x3C;</span><span class="token operator">/</span>li<span class="token operator">></span><span class="token punctuation">,</span>
+    <span class="token operator">&#x3C;</span>li key<span class="token operator">=</span><span class="token string">"B"</span><span class="token operator">></span><span class="token maybe-class-name">Second</span> item<span class="token operator">&#x3C;</span><span class="token operator">/</span>li<span class="token operator">></span><span class="token punctuation">,</span>
+    <span class="token operator">&#x3C;</span>li key<span class="token operator">=</span><span class="token string">"C"</span><span class="token operator">></span><span class="token maybe-class-name">Third</span> item<span class="token operator">&#x3C;</span><span class="token operator">/</span>li<span class="token operator">></span><span class="token punctuation">,</span>
+  <span class="token punctuation">]</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span></code></pre>
+        </section>
+        <section id="javascript-expressions-as-children" class="level3">
+          <h3>子要素としての JavaScript 式</h3>
+          <p>任意の JavaScript の式は <code>{}</code> で囲むことによって子要素として渡すことができます。そのため以下の JSX の式はまったく等しいものとなります。</p>
+          <pre class="language-js"><code class="language-js"><span class="token operator">&#x3C;</span><span class="token maybe-class-name">MyComponent</span><span class="token operator">></span>foo<span class="token operator">&#x3C;</span><span class="token operator">/</span><span class="token maybe-class-name">MyComponent</span><span class="token operator">></span>
+
+<span class="token operator">&#x3C;</span><span class="token maybe-class-name">MyComponent</span><span class="token operator">></span><span class="token punctuation">{</span><span class="token string">'foo'</span><span class="token punctuation">}</span><span class="token operator">&#x3C;</span><span class="token operator">/</span><span class="token maybe-class-name">MyComponent</span><span class="token operator">></span></code></pre>
+          <p>これは長さの決まっていない JSX 式のリストを表示したいような場合に特に便利に使うことができます。次の例は HTML の表を表示します。</p>
+          <pre class="language-js{2,9}"><code class="language-js{2,9}">function Item(props) {
+  return &#x3C;li>{props.message}&#x3C;/li>;
+}
+
+function TodoList() {
+  const todos = ['finish doc', 'submit pr', 'nag dan to review'];
+  return (
+    &#x3C;ul>
+      {todos.map((message) => &#x3C;Item key={message} message={message} />)}
+    &#x3C;/ul>
+  );
+}</code></pre>
+          <p>JavaScript の式は異なる型の子要素と併用することができるため、テンプレートリテラルの代わりに次のような書き方をすることもできます。</p>
+          <pre class="language-js{2}"><code class="language-js{2}">function Hello(props) {
+  return &#x3C;div>Hello {props.addressee}!&#x3C;/div>;
+}</code></pre>
+        </section>
+        <section id="functions-as-children" class="level3">
+          <h3>子要素としての関数</h3>
+          <p>JSX タグに挟まれた JavaScript 式は、通常は文字列や React 要素、あるいはこれらのリストとして評価されます。しかし、他のあらゆる props と同様に <code>props.children</code> にも任意のデータを渡すことができ、そのデータとは必ずしも React がレンダーできるものに限りません。例えば独自コンポーネントに <code>props.children</code> を通してコールバックを定義することもできるのです。</p>
+          <pre class="language-js{4,13}"><code class="language-js{4,13}">// numTimes の数だけ子要素のコールバックを呼び出し、コンポーネントを繰り返し作成する
+function Repeat(props) {
+  let items = [];
+  for (let i = 0; i &#x3C; props.numTimes; i++) {
+    items.push(props.children(i));
+  }
+  return &#x3C;div>{items}&#x3C;/div>;
+}
+
+function ListOfTenThings() {
+  return (
+    &#x3C;Repeat numTimes={10}>
+      {(index) => &#x3C;div key={index}>This is item {index} in the list&#x3C;/div>}
+    &#x3C;/Repeat>
+  );
+}</code></pre>
+          <p>独自コンポーネントに渡される子要素は、レンダーが実行されるまでに React が理解できる要素に変換されている限りにおいては、どのようなものでも構いません。このようなやり方は一般的ではありませんが、JSX をさらに拡張したくなった時には活用してみてください。</p>
+        </section>
+        <section id="booleans-null-and-undefined-are-ignored" class="level3">
+          <h3>真偽値、null、undefined は無視される</h3>
+          <p><code>true</code> と <code>false</code>、<code>null</code>、そして <code>undefined</code> は子要素として渡すことができます。これらは何もレンダーしません。以下の JSX の式はすべて同じ結果となります。</p>
+          <pre class="language-js"><code class="language-js"><span class="token operator">&#x3C;</span>div <span class="token operator">/</span><span class="token operator">></span>
+
+<span class="token operator">&#x3C;</span>div<span class="token operator">></span><span class="token operator">&#x3C;</span><span class="token operator">/</span>div<span class="token operator">></span>
+
+<span class="token operator">&#x3C;</span>div<span class="token operator">></span><span class="token punctuation">{</span><span class="token boolean">false</span><span class="token punctuation">}</span><span class="token operator">&#x3C;</span><span class="token operator">/</span>div<span class="token operator">></span>
+
+<span class="token operator">&#x3C;</span>div<span class="token operator">></span><span class="token punctuation">{</span><span class="token keyword null nil">null</span><span class="token punctuation">}</span><span class="token operator">&#x3C;</span><span class="token operator">/</span>div<span class="token operator">></span>
+
+<span class="token operator">&#x3C;</span>div<span class="token operator">></span><span class="token punctuation">{</span><span class="token keyword nil">undefined</span><span class="token punctuation">}</span><span class="token operator">&#x3C;</span><span class="token operator">/</span>div<span class="token operator">></span>
+
+<span class="token operator">&#x3C;</span>div<span class="token operator">></span><span class="token punctuation">{</span><span class="token boolean">true</span><span class="token punctuation">}</span><span class="token operator">&#x3C;</span><span class="token operator">/</span>div<span class="token operator">></span></code></pre>
+          <p>これは条件に応じて React 要素を表示する際に活用できます。次の例は <code>showHeader</code> が <code>true</code> のときに限って <code>&#x3C;Header /></code> が表示されます。</p>
+          <pre class="language-js{2}"><code class="language-js{2}">&#x3C;div>
+  {showHeader &#x26;&#x26; &#x3C;Header />}
+  &#x3C;Content />
+&#x3C;/div></code></pre>
+          <p>1 つ注意点として、数値 <code>0</code> のように <a href="https://developer.mozilla.org/en-US/docs/Glossary/Falsy">"falsy" な（偽と評価される）いくつかの値</a>は、React によって表示されます。つまり次のコードは <code>props.messages</code> が空の配列のときには <code>0</code> が表示されてしまうため、期待通りには動作しません。</p>
+          <pre class="language-js{2}"><code class="language-js{2}">&#x3C;div>
+  {props.messages.length &#x26;&#x26;
+    &#x3C;MessageList messages={props.messages} />
+  }
+&#x3C;/div></code></pre>
+          <p><code>&#x26;&#x26;</code> の前の式が必ず真偽値となるようにすれば、期待通りに動作します。</p>
+          <pre class="language-js{2}"><code class="language-js{2}">&#x3C;div>
+  {props.messages.length > 0 &#x26;&#x26;
+    &#x3C;MessageList messages={props.messages} />
+  }
+&#x3C;/div></code></pre>
+          <p>反対に、<code>false</code>、<code>true</code>、<code>null</code>、または <code>undefined</code> といった値を表示したいのであれば、まず<a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String#String_conversion">文字列に変換</a>する必要があります。</p>
+          <pre class="language-js{2}"><code class="language-js{2}">&#x3C;div>
+  My JavaScript variable is {String(myVariable)}.
+&#x3C;/div></code></pre>
+          <p><span style="float: footnote;"><a href="./index.html#toc">Go to TOC</a></span></p>
+        </section>
+      </section>
+    </section>
+  </body>
+</html>

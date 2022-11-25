@@ -1,0 +1,258 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="utf-8">
+    <title>state のリフトアップ</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="https://raw.githubusercontent.com/shinokada/prism-coy-theme/main/theme_common.css">
+  </head>
+  <body>
+    <section id="state-のリフトアップ" class="level1">
+      <h1>state のリフトアップ</h1>
+      <p>しばしば、いくつかのコンポーネントが同一の変化するデータを反映する必要がある場合があります。そんなときは最も近い共通の祖先コンポーネントへ共有されている state をリフトアップすることを推奨します。これを、実際にはどのように行うかを見てみましょう。</p>
+      <p>この章では、与えられた温度で水が沸騰するかどうかを計算する温度計算ソフトを作成します。</p>
+      <p><code>BoilingVerdict</code> というコンポーネントから始めましょう。これは温度を <code>celsius</code> という props として受け取り、水が沸騰するのに十分な温度かどうかを表示します。</p>
+      <pre class="language-js{3,5}"><code class="language-js{3,5}">function BoilingVerdict(props) {
+  if (props.celsius >= 100) {
+    return &#x3C;p>The water would boil.&#x3C;/p>;
+  }
+  return &#x3C;p>The water would not boil.&#x3C;/p>;
+}</code></pre>
+      <p>次に <code>Calculator</code> と呼ばれるコンポーネントを作成します。温度を入力するための <code>&#x3C;input></code> 要素をレンダーし、入力された値を <code>this.state.temperature</code> に保持します。</p>
+      <p>加えて、現在の入力値を判定する <code>BoilingVerdict</code> もレンダーします。</p>
+      <pre class="language-js{5,9,13,17-21}"><code class="language-js{5,9,13,17-21}">class Calculator extends React.Component {
+  constructor(props) {
+    super(props);
+    this.handleChange = this.handleChange.bind(this);
+    this.state = {temperature: ''};
+  }
+
+  handleChange(e) {
+    this.setState({temperature: e.target.value});
+  }
+
+  render() {
+    const temperature = this.state.temperature;
+    return (
+      &#x3C;fieldset>
+        &#x3C;legend>Enter temperature in Celsius:&#x3C;/legend>
+        &#x3C;input
+          value={temperature}
+          onChange={this.handleChange} />
+        &#x3C;BoilingVerdict
+          celsius={parseFloat(temperature)} />
+      &#x3C;/fieldset>
+    );
+  }
+}</code></pre>
+      <p><a href="https://codepen.io/gaearon/pen/ZXeOBm?editors=0010"><strong>Try it on CodePen</strong></a></p>
+      <section id="adding-a-second-input" class="level2">
+        <h2>2 つ目の入力を追加する</h2>
+        <p>新しい要件は、摂氏の入力に加えて、華氏の入力もできるようにして、それらを同期させておくことです。</p>
+        <p><code>Calculator</code> から <code>TemperatureInput</code> コンポーネントを抽出するところから始めましょう。props として、<code>"c"</code> もしくは <code>"f"</code> の値をとる <code>scale</code> を新しく追加します：</p>
+        <pre class="language-js{1-4,19,22}"><code class="language-js{1-4,19,22}">const scaleNames = {
+  c: 'Celsius',
+  f: 'Fahrenheit'
+};
+
+class TemperatureInput extends React.Component {
+  constructor(props) {
+    super(props);
+    this.handleChange = this.handleChange.bind(this);
+    this.state = {temperature: ''};
+  }
+
+  handleChange(e) {
+    this.setState({temperature: e.target.value});
+  }
+
+  render() {
+    const temperature = this.state.temperature;
+    const scale = this.props.scale;
+    return (
+      &#x3C;fieldset>
+        &#x3C;legend>Enter temperature in {scaleNames[scale]}:&#x3C;/legend>
+        &#x3C;input value={temperature}
+               onChange={this.handleChange} />
+      &#x3C;/fieldset>
+    );
+  }
+}</code></pre>
+        <p>これで <code>Calculator</code> を 2 つの別個の温度入力フィールドをレンダーするように変更することができます：</p>
+        <pre class="language-js{5,6}"><code class="language-js{5,6}">class Calculator extends React.Component {
+  render() {
+    return (
+      &#x3C;div>
+        &#x3C;TemperatureInput scale="c" />
+        &#x3C;TemperatureInput scale="f" />
+      &#x3C;/div>
+    );
+  }
+}</code></pre>
+        <p><a href="https://codepen.io/gaearon/pen/jGBryx?editors=0010"><strong>Try it on CodePen</strong></a></p>
+        <p>2 つの入力フィールドが用意できました。しかし、片方に温度を入力しても、もう片方は更新されません。これは要件を満たしていません： 2 つの入力フィールドを同期させたいのです。</p>
+        <p><code>Calculator</code> から <code>BoilingVerdict</code> を表示することもできません。<code>Calculator</code> は <code>TemperatureInput</code> の中に隠されている現在の温度を知らないのです。</p>
+      </section>
+      <section id="writing-conversion-functions" class="level2">
+        <h2>変換関数の作成</h2>
+        <p>まず、摂氏から華氏に変換するものとその反対のものと、2 つの関数を書きます。</p>
+        <pre class="language-js"><code class="language-js"><span class="token keyword">function</span> <span class="token function">toCelsius</span><span class="token punctuation">(</span><span class="token parameter">fahrenheit</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  <span class="token keyword control-flow">return</span> <span class="token punctuation">(</span>fahrenheit <span class="token operator">-</span> <span class="token number">32</span><span class="token punctuation">)</span> <span class="token operator">*</span> <span class="token number">5</span> <span class="token operator">/</span> <span class="token number">9</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+
+<span class="token keyword">function</span> <span class="token function">toFahrenheit</span><span class="token punctuation">(</span><span class="token parameter">celsius</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  <span class="token keyword control-flow">return</span> <span class="token punctuation">(</span>celsius <span class="token operator">*</span> <span class="token number">9</span> <span class="token operator">/</span> <span class="token number">5</span><span class="token punctuation">)</span> <span class="token operator">+</span> <span class="token number">32</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span></code></pre>
+        <p>これら 2 つの関数は数字を変換します。次に文字列で表現された <code>temperature</code> と変換関数を引数に取り文字列を返す、別の関数を作成します。この関数を一方の入力の値をもう一方の入力に基づいて計算するのに使用します。</p>
+        <p>常に値が小数第 3 位までで四捨五入されるようにし、無効な <code>temperature</code> には空の文字列を返します。</p>
+        <pre class="language-js"><code class="language-js"><span class="token keyword">function</span> <span class="token function">tryConvert</span><span class="token punctuation">(</span><span class="token parameter">temperature<span class="token punctuation">,</span> convert</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  <span class="token keyword">const</span> input <span class="token operator">=</span> <span class="token function">parseFloat</span><span class="token punctuation">(</span>temperature<span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token keyword control-flow">if</span> <span class="token punctuation">(</span><span class="token known-class-name class-name">Number</span><span class="token punctuation">.</span><span class="token method function property-access">isNaN</span><span class="token punctuation">(</span>input<span class="token punctuation">)</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token keyword control-flow">return</span> <span class="token string">''</span><span class="token punctuation">;</span>
+  <span class="token punctuation">}</span>
+  <span class="token keyword">const</span> output <span class="token operator">=</span> <span class="token function">convert</span><span class="token punctuation">(</span>input<span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token keyword">const</span> rounded <span class="token operator">=</span> <span class="token known-class-name class-name">Math</span><span class="token punctuation">.</span><span class="token method function property-access">round</span><span class="token punctuation">(</span>output <span class="token operator">*</span> <span class="token number">1000</span><span class="token punctuation">)</span> <span class="token operator">/</span> <span class="token number">1000</span><span class="token punctuation">;</span>
+  <span class="token keyword control-flow">return</span> rounded<span class="token punctuation">.</span><span class="token method function property-access">toString</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span></code></pre>
+        <p>例えば、<code>tryConvert('abc', toCelsius)</code> は空の文字列を返し、<code>tryConvert('10.22', toFahrenheit)</code> は <code>'50.396'</code> を返します。</p>
+      </section>
+      <section id="lifting-state-up" class="level2">
+        <h2>state のリフトアップ</h2>
+        <p>現時点では、両方の <code>TemperatureInput</code> コンポーネントは独立してローカルの state を保持しています：</p>
+        <pre class="language-js{5,9,13}"><code class="language-js{5,9,13}">class TemperatureInput extends React.Component {
+  constructor(props) {
+    super(props);
+    this.handleChange = this.handleChange.bind(this);
+    this.state = {temperature: ''};
+  }
+
+  handleChange(e) {
+    this.setState({temperature: e.target.value});
+  }
+
+  render() {
+    const temperature = this.state.temperature;
+    // ...  </code></pre>
+        <p>しかし、2 つの入力フィールドはお互いに同期されていて欲しいのです。摂氏の入力フィールドを更新したら、華氏の入力フィールドも華氏に変換された温度で反映されて欲しいですし、逆も同じです。</p>
+        <p>React での state の共有は、state を、それを必要とするコンポーネントすべての直近の共通祖先コンポーネントに移動することによって実現します。これを "state のリフトアップ (lifting state up)" と呼びます。<code>TemperatureInput</code> からローカルの state を削除して <code>Calculator</code> に移動しましょう。</p>
+        <p><code>Calculator</code> が共有の state を保持すれば、それが両方の入力における現在の温度の "信頼できる情報源 (source of truth)" となります。それによって、両方に対して相互に一貫性のある値を持たせることができるようになります。両方の <code>TemperatureInput</code> コンポーネントの props は同じ親コンポーネント <code>Calculator</code> から与えられるので、2 つの入力は常に同期されているようになります。</p>
+        <p>それでは、どのように動作するのかひとつずつ見ていきましょう。</p>
+        <p>まず、<code>TemperatureInput</code> コンポーネントの <code>this.state.temperature</code> を <code>this.props.temperature</code> に置き換えます。とりあえず、<code>this.props.temperature</code> は既にあるものだとしておきましょう。後でこれは <code>Calculator</code> から渡すようにします：</p>
+        <pre class="language-js{3}"><code class="language-js{3}">  render() {
+    // Before: const temperature = this.state.temperature;
+    const temperature = this.props.temperature;
+    // ...</code></pre>
+        <p><a href="./components-and-props.html#props-are-read-only">props が読み取り専用である</a>ことは周知の通りです。<code>temperature</code> がローカルの state に格納されている間は、<code>TemperatureInput</code> は <code>this.setState()</code> を呼び出すだけでそれを変更することができました。しかし今や、<code>temperature</code> は親コンポーネントから与えられる props の一部ですから、<code>TemperatureInput</code> はそれを制御できません。</p>
+        <p>通常 React では、コンポーネントを "制御された (controlled)" ものとすることでこの問題を解決します。DOM である <code>&#x3C;input></code> が <code>value</code> と <code>onChange</code> プロパティの両方を受け取るように、カスタムコンポーネントの <code>TemperatureInput</code> は <code>temperature</code> と <code>onTemperatureChange</code> の両方を親コンポーネントの <code>Calculator</code> から受け取ることができます。</p>
+        <p>ここで、<code>TemperatureInput</code> が自身の温度を更新したい場合、<code>this.props.onTemperatureChange</code> を呼び出します：</p>
+        <pre class="language-js{3}"><code class="language-js{3}">  handleChange(e) {
+    // Before: this.setState({temperature: e.target.value});
+    this.props.onTemperatureChange(e.target.value);
+    // ...</code></pre>
+        <blockquote>
+          <p>補足：</p>
+          <p>カスタムコンポーネントの <code>temperature</code> や <code>onTemperatureChange</code> といった props の名前に特別な意味があるわけではありません。慣習に則り <code>value</code> や <code>onChange</code> など、他の任意の名前を使うこともできます。</p>
+        </blockquote>
+        <p><code>onTemperatureChange</code> プロパティは親コンポーネント <code>Calculator</code> から <code>temperature</code> プロパティと共に渡されます。親コンポーネントは入力の変化に応じて自身のローカル state を更新し、結果的に両方の入力フォームは新しい値で再レンダーされます。<code>Calculator</code> をどう実装するかはこの後すぐに見ていきましょう。</p>
+        <p><code>Calculator</code> の変更点を見ていく前に、<code>TemperatureInput</code> コンポーネントで行った変更をおさらいしましょう。ローカルの state を削除し、<code>this.state.temperature</code> の代わりに <code>this.props.temperature</code> を読み取るようにしました。また、変更を加えたい場合は <code>this.setState()</code> を呼び出す代わりに <code>Calculator</code> から与えられる <code>this.props.onTemperatureChange()</code> を呼び出すことにしました：</p>
+        <pre class="language-js{8,12}"><code class="language-js{8,12}">class TemperatureInput extends React.Component {
+  constructor(props) {
+    super(props);
+    this.handleChange = this.handleChange.bind(this);
+  }
+
+  handleChange(e) {
+    this.props.onTemperatureChange(e.target.value);
+  }
+
+  render() {
+    const temperature = this.props.temperature;
+    const scale = this.props.scale;
+    return (
+      &#x3C;fieldset>
+        &#x3C;legend>Enter temperature in {scaleNames[scale]}:&#x3C;/legend>
+        &#x3C;input value={temperature}
+               onChange={this.handleChange} />
+      &#x3C;/fieldset>
+    );
+  }
+}</code></pre>
+        <p>では <code>Calculator</code> コンポーネントの番です。</p>
+        <p>現時点での入力の <code>temperature</code> と <code>scale</code> を、このコンポーネントのローカルな state に保存することにします。これは入力コンポーネントから "リフトアップ" したものであり、両方にとっての "信頼出来る情報源" として振る舞うことになります。これは、両方の入力コンポーネントをレンダーするために必要となる最小のデータの形です。</p>
+        <p>例えば、摂氏側の入力に 37 と打ち込こむと、<code>Calculator</code> コンポーネントの state は以下のようになります：</p>
+        <pre class="language-js"><code class="language-js"><span class="token punctuation">{</span>
+  <span class="token literal-property property">temperature</span><span class="token operator">:</span> <span class="token string">'37'</span><span class="token punctuation">,</span>
+  <span class="token literal-property property">scale</span><span class="token operator">:</span> <span class="token string">'c'</span>
+<span class="token punctuation">}</span></code></pre>
+        <p>その後に華氏の入力フィールドを 212 に変更すると、<code>Calculator</code> の state は以下のようになります：</p>
+        <pre class="language-js"><code class="language-js"><span class="token punctuation">{</span>
+  <span class="token literal-property property">temperature</span><span class="token operator">:</span> <span class="token string">'212'</span><span class="token punctuation">,</span>
+  <span class="token literal-property property">scale</span><span class="token operator">:</span> <span class="token string">'f'</span>
+<span class="token punctuation">}</span></code></pre>
+        <p>両方の入力を保存することもできましたが、それは不必要だと分かります。最後に変更された値とそれが示す単位を保存すれば十分なのです。現時点での <code>temperature</code> と <code>scale</code> の 2 つさえあれば、もう一方の値は推測することができます。</p>
+        <p>同じ state から値が算出されるので、2 つの入力コンポーネントは常に同期します。</p>
+        <pre class="language-js{6,10,14,18-21,27-28,31-32,34}"><code class="language-js{6,10,14,18-21,27-28,31-32,34}">class Calculator extends React.Component {
+  constructor(props) {
+    super(props);
+    this.handleCelsiusChange = this.handleCelsiusChange.bind(this);
+    this.handleFahrenheitChange = this.handleFahrenheitChange.bind(this);
+    this.state = {temperature: '', scale: 'c'};
+  }
+
+  handleCelsiusChange(temperature) {
+    this.setState({scale: 'c', temperature});
+  }
+
+  handleFahrenheitChange(temperature) {
+    this.setState({scale: 'f', temperature});
+  }
+
+  render() {
+    const scale = this.state.scale;
+    const temperature = this.state.temperature;
+    const celsius = scale === 'f' ? tryConvert(temperature, toCelsius) : temperature;
+    const fahrenheit = scale === 'c' ? tryConvert(temperature, toFahrenheit) : temperature;
+
+    return (
+      &#x3C;div>
+        &#x3C;TemperatureInput
+          scale="c"
+          temperature={celsius}
+          onTemperatureChange={this.handleCelsiusChange} />
+        &#x3C;TemperatureInput
+          scale="f"
+          temperature={fahrenheit}
+          onTemperatureChange={this.handleFahrenheitChange} />
+        &#x3C;BoilingVerdict
+          celsius={parseFloat(celsius)} />
+      &#x3C;/div>
+    );
+  }
+}</code></pre>
+        <p><a href="https://codepen.io/gaearon/pen/WZpxpz?editors=0010"><strong>Try it on CodePen</strong></a></p>
+        <p>これで、どちらの入力コンポーネントを編集したかに関わらず、<code>Calculator</code> の <code>this.state.temperature</code> と <code>this.state.scale</code> が更新されます。片方の入力コンポーネントはあらゆるユーザからの入力が保持されるよう値をそのまま受け取り、もう片方の入力コンポーネントの値はそれに基づいて常に再計算されます。</p>
+        <p>入力値を変更した際に何が起こるのかをおさらいしましょう：</p>
+        <ul>
+          <li>React は DOM の <code>&#x3C;input></code> で <code>onChange</code> として指定された関数を呼び出します。この章の場合、<code>TemperatureInput</code> の <code>handleChange</code> メソッドが呼び出される関数になります。</li>
+          <li><code>TemperatureInput</code> の <code>handleChange</code> メソッドは <code>this.props.onTemperatureChange()</code> に新しい値を与えて呼び出します。<code>onTemperatureChange</code> を含む props は親コンポーネントである <code>Calculator</code> から与えられます。</li>
+          <li>前回のレンダー時に、<code>Calculator</code> は摂氏の <code>TemperatureInput</code> の <code>onTemperatureChange</code> には自身の <code>handleCelsiusChange</code> メソッドを指定し、華氏の <code>TemperatureInput</code> の <code>onTemperatureChange</code> には自身の <code>handleFahrenheitChange</code> を指定していたのでした。そのため、どちらの入力フィールドを編集したかによって、2 つの <code>Calculator</code> メソッドのどちらが呼び出されるかが決まります。</li>
+          <li>これらのメソッド内では、<code>Calculator</code> コンポーネントが新しい入力値と更新した方の入力値の単位を <code>this.setState()</code> に与えて呼び出して、React に <code>Calculator</code> コンポーネント自身を再レンダーさせます。</li>
+          <li>React は <code>Calculator</code> コンポーネントの <code>render</code> メソッドを呼び出して、UI がどのような見た目になるべきかを学びます。両方の入力コンポーネントの値が、現在の温度とアクティブな単位に基づいて再計算されます。温度の変換処理はここで行われます。</li>
+          <li>React は <code>Calculator</code> により与えられた新しい props で各 <code>TemperatureInput</code> の <code>render</code> メソッドを呼び出します。React はそれらの UI がどのような見た目になるかを学びます。</li>
+          <li>React は props として摂氏温度を与えて、<code>BoilingVerdict</code> コンポーネントの <code>render</code> メソッドを呼び出します。</li>
+          <li>React DOM は沸騰したかどうかの判定結果と入力コンポーネントの値によって、DOM を更新します。変更された入力コンポーネントは現在の値によって、もう一方の入力コンポーネントは変換された温度によって更新されます。</li>
+        </ul>
+        <p>全ての更新は同じ手順で実行されるので、2 つの入力コンポーネントは常に同期を保つことができます。</p>
+      </section>
+      <section id="lessons-learned" class="level2">
+        <h2>この章で学んだこと</h2>
+        <p>React アプリケーションで変化するどのようなデータも単一の "信頼出来る情報源" であるべきです。通常、state はレンダー時にそれを必要とするコンポーネントに最初に追加されます。それから、他のコンポーネントもその state を必要としているなら、直近の共通祖先コンポーネントにその state をリフトアップすることができます。異なるコンポーネント間で state を同期しようとする代わりに、<a href="./state-and-lifecycle.html#the-data-flows-down">トップダウン型のデータフロー</a>の力を借りるべきです。</p>
+        <p>state のリフトアップは双方向のバインディング (two-way binding) を行う方法より多くの "ボイラープレート" コードを生み出しますが、その効果としてバグを発見して切り出す作業が少なく済むようになります。あらゆる state はいずれかのコンポーネント内に "存在" し、そのコンポーネントのみがその state を変更できるので、バグが潜む範囲は大幅に削減されます。加えて、ユーザ入力を拒否したり変換したりする任意の独自ロジックを実装することもできます。</p>
+        <p>props もしくは state から派生的に作りだす事のできるデータについては、おそらく state に保持すべきではないでしょう。例えば、今回は <code>celsiusValue</code> と <code>fahrenheitValue</code> の両方を保存する代わりに、最後に変更された <code>temperature</code> と、その値の <code>scale</code> のみを保存しています。もう一方の入力の値は常に <code>render()</code> メソッド内で計算することができます。これにより元のユーザ入力の精度を全く損なうことなくもう一方の入力フィールドに丸めを適用したり、もう一方の入力フィールドをクリアしたりできます。</p>
+        <p>UI で何かおかしな箇所があれば、<a href="https://github.com/facebook/react/tree/main/packages/react-devtools">React Developer Tools</a> を使用して props を調査したり state の更新について責任を持っているコンポーネントに辿り着くまでツリーをさかのぼることができます。これによりバグをその原因まで追いかけることができます。</p>
+        <img src="../images/docs/react-devtools-state.gif" alt="Monitoring State in React DevTools" max-width="100%" height="100%">
+        <p><span style="float: footnote;"><a href="./index.html#toc">Go to TOC</a></span></p>
+      </section>
+    </section>
+  </body>
+</html>

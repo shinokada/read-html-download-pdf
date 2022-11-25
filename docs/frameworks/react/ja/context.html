@@ -1,0 +1,238 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="utf-8">
+    <title>コンテクスト</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="https://raw.githubusercontent.com/shinokada/prism-coy-theme/main/theme_common.css">
+  </head>
+  <body>
+    <section id="コンテクスト" class="level1">
+      <h1>コンテクスト</h1>
+      <p>コンテクストは各階層で手動でプロパティを下に渡すことなく、コンポーネントツリー内でデータを渡す方法を提供します。</p>
+      <p>典型的な React アプリケーションでは、データは props を通してトップダウン（親から子）で渡されますが、このようなやり方は、アプリケーション内の多くのコンポーネントから必要とされる特定のタイプのプロパティ（例： ロケール設定、UI テーマ）にとっては面倒です。コンテクストはツリーの各階層で明示的にプロパティを渡すことなく、コンポーネント間でこれらの様な値を共有する方法を提供します。</p>
+      <ul>
+        <li><a href="#when-to-use-context">コンテクストをいつ使用すべきか</a></li>
+        <li><a href="#before-you-use-context">コンテクストを使用する前に</a></li>
+        <li><a href="#api">API</a>
+          <ul>
+            <li><a href="#reactcreatecontext">React.createContext</a></li>
+            <li><a href="#contextprovider">Context.Provider</a></li>
+            <li><a href="#classcontexttype">Class.contextType</a></li>
+            <li><a href="#contextconsumer">Context.Consumer</a></li>
+            <li><a href="#contextdisplayname">Context.displayName</a></li>
+          </ul>
+        </li>
+        <li><a href="#examples">例</a>
+          <ul>
+            <li><a href="#dynamic-context">動的なコンテクスト</a></li>
+            <li><a href="#updating-context-from-a-nested-component">ネストしたコンポーネントからコンテクストを更新する</a></li>
+            <li><a href="#consuming-multiple-contexts">複数のコンテクストを使用する</a></li>
+          </ul>
+        </li>
+        <li><a href="#caveats">注意事項</a></li>
+        <li><a href="#legacy-api">レガシーな API</a></li>
+      </ul>
+      <section id="when-to-use-context" class="level2">
+        <h2>コンテクストをいつ使用すべきか</h2>
+        <p>コンテクストは、ある React コンポーネントのツリーに対して「グローバル」とみなすことができる、現在の認証済みユーザ・テーマ・優先言語といったデータを共有するために設計されています。例えば、以下のコードでは Button コンポーネントをスタイルする為に、手動で "theme" プロパティを通しています。</p>
+        <p><code>embed:context/motivation-problem.js</code></p>
+        <p>コンテクストを使用することで、中間の要素群を経由してプロパティを渡すことを避けることができます。</p>
+        <p><code>embed:context/motivation-solution.js</code></p>
+      </section>
+      <section id="before-you-use-context" class="level2">
+        <h2>コンテクストを使用する前に</h2>
+        <p>コンテクストは主に、何らかのデータが、ネストレベルの異なる<em>多く</em>のコンポーネントからアクセスできる必要がある時に使用されます。コンテクストはコンポーネントの再利用をより難しくする為、慎重に利用してください。</p>
+        <p><strong>もし多くの階層を経由していくつかの props を渡すことを避けたいだけであれば、<a href="./composition-vs-inheritance.html">コンポーネントコンポジション</a>は多くの場合、コンテクストよりシンプルな解決策です。</strong></p>
+        <p>例えば、深くネストされた <code>Link</code> と <code>Avatar</code> コンポーネントがプロパティを読み取ることが出来るように、<code>user</code> と <code>avatarSize</code> プロパティをいくつかの階層下へ渡す <code>Page</code> コンポーネントを考えてみましょう。</p>
+        <pre class="language-js"><code class="language-js"><span class="token operator">&#x3C;</span><span class="token maybe-class-name">Page</span> user<span class="token operator">=</span><span class="token punctuation">{</span>user<span class="token punctuation">}</span> avatarSize<span class="token operator">=</span><span class="token punctuation">{</span>avatarSize<span class="token punctuation">}</span> <span class="token operator">/</span><span class="token operator">></span>
+<span class="token comment">// ... Page コンポーネントは以下をレンダー ...</span>
+<span class="token operator">&#x3C;</span><span class="token maybe-class-name">PageLayout</span> user<span class="token operator">=</span><span class="token punctuation">{</span>user<span class="token punctuation">}</span> avatarSize<span class="token operator">=</span><span class="token punctuation">{</span>avatarSize<span class="token punctuation">}</span> <span class="token operator">/</span><span class="token operator">></span>
+<span class="token comment">// ... PageLayout コンポーネントは以下をレンダー ...</span>
+<span class="token operator">&#x3C;</span><span class="token maybe-class-name">NavigationBar</span> user<span class="token operator">=</span><span class="token punctuation">{</span>user<span class="token punctuation">}</span> avatarSize<span class="token operator">=</span><span class="token punctuation">{</span>avatarSize<span class="token punctuation">}</span> <span class="token operator">/</span><span class="token operator">></span>
+<span class="token comment">// ... NavigationBar コンポーネントは以下をレンダー ...</span>
+<span class="token operator">&#x3C;</span><span class="token maybe-class-name">Link</span> href<span class="token operator">=</span><span class="token punctuation">{</span>user<span class="token punctuation">.</span><span class="token property-access">permalink</span><span class="token punctuation">}</span><span class="token operator">></span>
+  <span class="token operator">&#x3C;</span><span class="token maybe-class-name">Avatar</span> user<span class="token operator">=</span><span class="token punctuation">{</span>user<span class="token punctuation">}</span> size<span class="token operator">=</span><span class="token punctuation">{</span>avatarSize<span class="token punctuation">}</span> <span class="token operator">/</span><span class="token operator">></span>
+<span class="token operator">&#x3C;</span><span class="token operator">/</span><span class="token maybe-class-name">Link</span><span class="token operator">></span></code></pre>
+        <p>最終的に <code>Avatar</code> コンポーネントだけがプロパティを必要としているのであれば、多くの階層を通して <code>user</code> と <code>avatarSize</code> プロパティを下に渡すことは冗長に感じるかもしれません。また、<code>Avatar</code> コンポーネントが上のコンポーネントから追加のプロパティを必要とする時はいつでも、全ての間の階層にも追加しないといけないことも厄介です。</p>
+        <p><strong>コンテクストを使用せずに</strong>この問題を解決する 1 つの手法は、<a href="./composition-vs-inheritance.html#containment"><code>Avatar</code> コンポーネント自身を渡す</a>ようにするというもので、そうすれば間のコンポーネントは <code>user</code> や <code>avatarSize</code> プロパティを知る必要はありません。</p>
+        <pre class="language-js"><code class="language-js"><span class="token keyword">function</span> <span class="token function"><span class="token maybe-class-name">Page</span></span><span class="token punctuation">(</span><span class="token parameter">props</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  <span class="token keyword">const</span> user <span class="token operator">=</span> props<span class="token punctuation">.</span><span class="token property-access">user</span><span class="token punctuation">;</span>
+  <span class="token keyword">const</span> userLink <span class="token operator">=</span> <span class="token punctuation">(</span>
+    <span class="token operator">&#x3C;</span><span class="token maybe-class-name">Link</span> href<span class="token operator">=</span><span class="token punctuation">{</span>user<span class="token punctuation">.</span><span class="token property-access">permalink</span><span class="token punctuation">}</span><span class="token operator">></span>
+      <span class="token operator">&#x3C;</span><span class="token maybe-class-name">Avatar</span> user<span class="token operator">=</span><span class="token punctuation">{</span>user<span class="token punctuation">}</span> size<span class="token operator">=</span><span class="token punctuation">{</span>props<span class="token punctuation">.</span><span class="token property-access">avatarSize</span><span class="token punctuation">}</span> <span class="token operator">/</span><span class="token operator">></span>
+    <span class="token operator">&#x3C;</span><span class="token operator">/</span><span class="token maybe-class-name">Link</span><span class="token operator">></span>
+  <span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token keyword control-flow">return</span> <span class="token operator">&#x3C;</span><span class="token maybe-class-name">PageLayout</span> userLink<span class="token operator">=</span><span class="token punctuation">{</span>userLink<span class="token punctuation">}</span> <span class="token operator">/</span><span class="token operator">></span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+
+<span class="token comment">// これで以下のようになります。</span>
+<span class="token operator">&#x3C;</span><span class="token maybe-class-name">Page</span> user<span class="token operator">=</span><span class="token punctuation">{</span>user<span class="token punctuation">}</span> avatarSize<span class="token operator">=</span><span class="token punctuation">{</span>avatarSize<span class="token punctuation">}</span> <span class="token operator">/</span><span class="token operator">></span>
+<span class="token comment">// ... Page コンポーネントは以下をレンダー ...</span>
+<span class="token operator">&#x3C;</span><span class="token maybe-class-name">PageLayout</span> userLink<span class="token operator">=</span><span class="token punctuation">{</span><span class="token spread operator">...</span><span class="token punctuation">}</span> <span class="token operator">/</span><span class="token operator">></span>
+<span class="token comment">// ... PageLayout コンポーネントは以下をレンダー ...</span>
+<span class="token operator">&#x3C;</span><span class="token maybe-class-name">NavigationBar</span> userLink<span class="token operator">=</span><span class="token punctuation">{</span><span class="token spread operator">...</span><span class="token punctuation">}</span> <span class="token operator">/</span><span class="token operator">></span>
+<span class="token comment">// ... NavigationBar コンポーネントは以下をレンダー ...</span>
+<span class="token punctuation">{</span>props<span class="token punctuation">.</span><span class="token property-access">userLink</span><span class="token punctuation">}</span></code></pre>
+        <p>この変更により、一番上の Page コンポーネントだけが、<code>Link</code> と <code>Avatar</code> コンポーネントの <code>user</code> と <code>avatarSize</code> の使い道について知る必要があります。</p>
+        <p>この<em>制御の反転</em>はアプリケーション内で取り回す必要のあるプロパティの量を減らし、ルートコンポーネントにより多くの制御を与えることにより、多くのケースでコードを綺麗にすることができます。しかし、このような制御の反転がすべてのケースで正しい選択となるわけではありません。ツリー内の上層に複雑性が移ることは、それら高い階層のコンポーネントをより複雑にして、低い階層のコンポーネントに必要以上の柔軟性を強制します。</p>
+        <p>コンポーネントに対して 1 つの子までという制限はありません。複数の子を渡したり、子のために複数の別々の「スロット」を持つことさえできます。<a href="./composition-vs-inheritance.html#containment">ドキュメントはここにあります。</a></p>
+        <pre class="language-js"><code class="language-js"><span class="token keyword">function</span> <span class="token function"><span class="token maybe-class-name">Page</span></span><span class="token punctuation">(</span><span class="token parameter">props</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  <span class="token keyword">const</span> user <span class="token operator">=</span> props<span class="token punctuation">.</span><span class="token property-access">user</span><span class="token punctuation">;</span>
+  <span class="token keyword">const</span> content <span class="token operator">=</span> <span class="token operator">&#x3C;</span><span class="token maybe-class-name">Feed</span> user<span class="token operator">=</span><span class="token punctuation">{</span>user<span class="token punctuation">}</span> <span class="token operator">/</span><span class="token operator">></span><span class="token punctuation">;</span>
+  <span class="token keyword">const</span> topBar <span class="token operator">=</span> <span class="token punctuation">(</span>
+    <span class="token operator">&#x3C;</span><span class="token maybe-class-name">NavigationBar</span><span class="token operator">></span>
+      <span class="token operator">&#x3C;</span><span class="token maybe-class-name">Link</span> href<span class="token operator">=</span><span class="token punctuation">{</span>user<span class="token punctuation">.</span><span class="token property-access">permalink</span><span class="token punctuation">}</span><span class="token operator">></span>
+        <span class="token operator">&#x3C;</span><span class="token maybe-class-name">Avatar</span> user<span class="token operator">=</span><span class="token punctuation">{</span>user<span class="token punctuation">}</span> size<span class="token operator">=</span><span class="token punctuation">{</span>props<span class="token punctuation">.</span><span class="token property-access">avatarSize</span><span class="token punctuation">}</span> <span class="token operator">/</span><span class="token operator">></span>
+      <span class="token operator">&#x3C;</span><span class="token operator">/</span><span class="token maybe-class-name">Link</span><span class="token operator">></span>
+    <span class="token operator">&#x3C;</span><span class="token operator">/</span><span class="token maybe-class-name">NavigationBar</span><span class="token operator">></span>
+  <span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token keyword control-flow">return</span> <span class="token punctuation">(</span>
+    <span class="token operator">&#x3C;</span><span class="token maybe-class-name">PageLayout</span>
+      topBar<span class="token operator">=</span><span class="token punctuation">{</span>topBar<span class="token punctuation">}</span>
+      content<span class="token operator">=</span><span class="token punctuation">{</span>content<span class="token punctuation">}</span>
+    <span class="token operator">/</span><span class="token operator">></span>
+  <span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span></code></pre>
+        <p>このパターンは、そのすぐ上の親から子を切り離す必要がある多くのケースにとって十分です。レンダーの前に子が親とやり取りする必要がある場合、さらに<a href="./render-props.html">レンダープロップ</a>と合わせて使うことができます。</p>
+        <p>しかし、たまに同じデータがツリー内の異なるネスト階層にある多くのコンポーネントからアクセス可能であることが必要となります。コンテクストはそのようなデータとその変更を以下の全てのコンポーネントへ「ブロードキャスト」できます。コンテクストを使うことが他の手法よりシンプルである一般的な例としては、現在のロケール、テーマ、またはデータキャッシュの管理が挙げられます。</p>
+      </section>
+      <section id="api" class="level2">
+        <h2>API</h2>
+        <section id="reactcreatecontext-reactcreatecontext" class="level3">
+          <h3><code>React.createContext</code> {#reactcreatecontext}</h3>
+          <pre class="language-js"><code class="language-js"><span class="token keyword">const</span> <span class="token maybe-class-name">MyContext</span> <span class="token operator">=</span> <span class="token maybe-class-name">React</span><span class="token punctuation">.</span><span class="token method function property-access">createContext</span><span class="token punctuation">(</span>defaultValue<span class="token punctuation">)</span><span class="token punctuation">;</span></code></pre>
+          <p>コンテクストオブジェクトを作成します。React がこのコンテクストオブジェクトが登録されているコンポーネントをレンダーする場合、ツリー内の最も近い上位の一致する <code>Provider</code> から現在のコンテクストの値を読み取ります。</p>
+          <p><code>defaultValue</code> 引数は、コンポーネントがツリー内の上位に対応するプロバイダを持っていない場合のみ使用されます。このようなデフォルト値は、ラップしない単独でのコンポーネントのテストにて役に立ちます。補足： <code>undefined</code> をプロバイダの値として渡しても、コンシューマコンポーネントが <code>defaultValue</code> を使用することはありません。</p>
+        </section>
+        <section id="contextprovider-contextprovider" class="level3">
+          <h3><code>Context.Provider</code> {#contextprovider}</h3>
+          <pre class="language-js"><code class="language-js"><span class="token operator">&#x3C;</span><span class="token maybe-class-name">MyContext</span><span class="token punctuation">.</span><span class="token property-access"><span class="token maybe-class-name">Provider</span></span> value<span class="token operator">=</span><span class="token punctuation">{</span><span class="token comment">/* 何らかの値 */</span><span class="token punctuation">}</span><span class="token operator">></span></code></pre>
+          <p>全てのコンテクストオブジェクトにはプロバイダ (Provider) コンポーネントが付属しており、これによりコンシューマコンポーネントはコンテクストの変更を購読できます。</p>
+          <p>プロバイダコンポーネントは <code>value</code> プロパティを受け取り、これが子孫であるコンシューマコンポーネントに渡されます。1 つのプロバイダは多くのコンシューマと接続することができます。プロバイダはネストしてツリー内のより深い位置で値を上書きすることができます。</p>
+          <p>プロバイダの子孫の全てのコンシューマは、プロバイダの <code>value</code> プロパティが変更されるたびに再レンダーされます。プロバイダからその子孫コンシューマ（<a href="#classcontexttype"><code>.contextType</code></a> や <a href="./hooks-reference.html#usecontext"><code>useContext</code></a> を含む）への伝播は <code>shouldComponentUpdate</code> メソッドの影響を受けないため、コンシューマは祖先のコンポーネントが更新をスキップしている場合でも更新されます。</p>
+          <p>変更は、<a href="//developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object/is#Description"><code>Object.is</code></a> と同じアルゴリズムを使用し、新しい値と古い値の比較によって判断されます。</p>
+          <blockquote>
+            <p>補足</p>
+            <p>この方法で変更の有無を判断するため、オブジェクトを <code>value</code> として渡した場合にいくつかの問題が発生する可能性があります。詳細は<a href="#caveats">注意事項</a>を参照してください。</p>
+          </blockquote>
+        </section>
+        <section id="classcontexttype-classcontexttype" class="level3">
+          <h3><code>Class.contextType</code> {#classcontexttype}</h3>
+          <pre class="language-js"><code class="language-js"><span class="token keyword">class</span> <span class="token class-name">MyClass</span> <span class="token keyword">extends</span> <span class="token class-name">React<span class="token punctuation">.</span>Component</span> <span class="token punctuation">{</span>
+  <span class="token function">componentDidMount</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token keyword">let</span> value <span class="token operator">=</span> <span class="token keyword">this</span><span class="token punctuation">.</span><span class="token property-access">context</span><span class="token punctuation">;</span>
+    <span class="token comment">/* MyContextの値を使用し、マウント時に副作用を実行します */</span>
+  <span class="token punctuation">}</span>
+  <span class="token function">componentDidUpdate</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token keyword">let</span> value <span class="token operator">=</span> <span class="token keyword">this</span><span class="token punctuation">.</span><span class="token property-access">context</span><span class="token punctuation">;</span>
+    <span class="token comment">/* ... */</span>
+  <span class="token punctuation">}</span>
+  <span class="token function">componentWillUnmount</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token keyword">let</span> value <span class="token operator">=</span> <span class="token keyword">this</span><span class="token punctuation">.</span><span class="token property-access">context</span><span class="token punctuation">;</span>
+    <span class="token comment">/* ... */</span>
+  <span class="token punctuation">}</span>
+  <span class="token function">render</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token keyword">let</span> value <span class="token operator">=</span> <span class="token keyword">this</span><span class="token punctuation">.</span><span class="token property-access">context</span><span class="token punctuation">;</span>
+    <span class="token comment">/* MyContextの値に基づいて何かをレンダーします */</span>
+  <span class="token punctuation">}</span>
+<span class="token punctuation">}</span>
+<span class="token maybe-class-name">MyClass</span><span class="token punctuation">.</span><span class="token property-access">contextType</span> <span class="token operator">=</span> <span class="token maybe-class-name">MyContext</span><span class="token punctuation">;</span></code></pre>
+          <p>クラスの <code>contextType</code> プロパティには <a href="#reactcreatecontext"><code>React.createContext()</code></a> により作成されたコンテクストオブジェクトを指定することができます。これにより、<code>this.context</code> を使って、そのコンテクストタイプの最も近い現在値を利用できます。レンダー関数を含むあらゆるライフサイクルメソッドで参照できます。</p>
+          <blockquote>
+            <p>補足:</p>
+            <p>この API では、1 つのコンテクストだけ登録することができます。もし 2 つ以上を読み取る必要がある場合、<a href="#consuming-multiple-contexts">複数のコンテクストを使用する</a>を参照してください。</p>
+            <p>実験的な <a href="https://babeljs.io/docs/plugins/transform-class-properties/">public class fields syntax</a> を使用している場合、<strong>static</strong> クラスフィールドを使用することで <code>contextType</code> を初期化することができます。</p>
+          </blockquote>
+          <pre class="language-js"><code class="language-js"><span class="token keyword">class</span> <span class="token class-name">MyClass</span> <span class="token keyword">extends</span> <span class="token class-name">React<span class="token punctuation">.</span>Component</span> <span class="token punctuation">{</span>
+  <span class="token keyword">static</span> contextType <span class="token operator">=</span> <span class="token maybe-class-name">MyContext</span><span class="token punctuation">;</span>
+  <span class="token function">render</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token keyword">let</span> value <span class="token operator">=</span> <span class="token keyword">this</span><span class="token punctuation">.</span><span class="token property-access">context</span><span class="token punctuation">;</span>
+    <span class="token comment">/* 値に基づいて何かをレンダーします */</span>
+  <span class="token punctuation">}</span>
+<span class="token punctuation">}</span></code></pre>
+        </section>
+        <section id="contextconsumer-contextconsumer" class="level3">
+          <h3><code>Context.Consumer</code> {#contextconsumer}</h3>
+          <pre class="language-js"><code class="language-js"><span class="token operator">&#x3C;</span><span class="token maybe-class-name">MyContext</span><span class="token punctuation">.</span><span class="token property-access"><span class="token maybe-class-name">Consumer</span></span><span class="token operator">></span>
+  <span class="token punctuation">{</span><span class="token parameter">value</span> <span class="token arrow operator">=></span> <span class="token comment">/* コンテクストの値に基づいて何かをレンダーします */</span><span class="token punctuation">}</span>
+<span class="token operator">&#x3C;</span><span class="token operator">/</span><span class="token maybe-class-name">MyContext</span><span class="token punctuation">.</span><span class="token property-access"><span class="token maybe-class-name">Consumer</span></span><span class="token operator">></span></code></pre>
+          <p>コンテクストの変更を購読する React コンポーネントです。このコンポーネントを使うことで、<a href="./components-and-props.html#function-and-class-components">関数コンポーネント</a>内でコンテクストを購読することができます。</p>
+          <p><a href="./render-props.html#using-props-other-than-render">function as a child</a> が必要です。この関数は現在のコンテクストの値を受け取り、React ノードを返します。この関数に渡される引数 <code>value</code> は、ツリー内の上位で一番近いこのコンテクスト用のプロバイダの <code>value</code> プロパティと等しくなります。このコンテクスト用のプロバイダが上位に存在しない場合、引数の <code>value</code> は <code>createContext()</code> から渡された <code>defaultValue</code> と等しくなります。</p>
+          <blockquote>
+            <p>補足</p>
+            <p>"function as a child" パターンについてさらに情報が必要な場合は<a href="./render-props.html">レンダープロップ</a>を参照してください。</p>
+          </blockquote>
+        </section>
+        <section id="contextdisplayname-contextdisplayname" class="level3">
+          <h3><code>Context.displayName</code> {#contextdisplayname}</h3>
+          <p>コンテクストオブジェクトは <code>displayName</code> という文字列型のプロパティを有しています。React DevTools はこの文字列を利用してコンテクストの表示のしかたを決定します。</p>
+          <p>例えば以下のコンポーネントは DevTools で MyDisplayName と表示されます。</p>
+          <pre class="language-js{2}"><code class="language-js{2}">const MyContext = React.createContext(/* some value */);
+MyContext.displayName = 'MyDisplayName';
+
+&#x3C;MyContext.Provider> // "MyDisplayName.Provider" in DevTools
+&#x3C;MyContext.Consumer> // "MyDisplayName.Consumer" in DevTools</code></pre>
+        </section>
+      </section>
+      <section id="examples" class="level2">
+        <h2>例</h2>
+        <section id="dynamic-context" class="level3">
+          <h3>動的なコンテクスト</h3>
+          <p>テーマに動的な値を使用したより複雑な例：</p>
+          <p>
+            <strong>theme-context.js</strong>
+            <code>embed:context/theme-detailed-theme-context.js</code>
+          </p>
+          <p>
+            <strong>themed-button.js</strong>
+            <code>embed:context/theme-detailed-themed-button.js</code>
+          </p>
+          <p>
+            <strong>app.js</strong>
+            <code>embed:context/theme-detailed-app.js</code>
+          </p>
+        </section>
+        <section id="updating-context-from-a-nested-component" class="level3">
+          <h3>ネストしたコンポーネントからコンテクストを更新する</h3>
+          <p>コンポーネントツリーのどこか深くネストされたコンポーネントからコンテクストを更新することはよく必要になります。このケースでは、コンテクストを通して下に関数を渡すことで、コンシューマがコンテクストを更新可能にすることができます。</p>
+          <p>
+            <strong>theme-context.js</strong>
+            <code>embed:context/updating-nested-context-context.js</code>
+          </p>
+          <p>
+            <strong>theme-toggler-button.js</strong>
+            <code>embed:context/updating-nested-context-theme-toggler-button.js</code>
+          </p>
+          <p>
+            <strong>app.js</strong>
+            <code>embed:context/updating-nested-context-app.js</code>
+          </p>
+        </section>
+        <section id="consuming-multiple-contexts" class="level3">
+          <h3>複数のコンテクストを使用する</h3>
+          <p>コンテクストの再レンダーを高速に保つために、React は各コンテクストのコンシューマをツリー内の別々のノードにする必要があります。</p>
+          <p><code>embed:context/multiple-contexts.js</code></p>
+          <p>2 つ以上のコンテクストの値が一緒に使用されることが多い場合、両方を提供する独自のレンダープロップコンポーネントの作成を検討した方が良いかもしれません。</p>
+        </section>
+      </section>
+      <section id="caveats" class="level2">
+        <h2>注意事項</h2>
+        <p>コンテクストは参照の同一性を使用していつ再レンダーするかを決定するため、プロバイダの親が再レンダーするときにコンシューマで意図しないレンダーを引き起こす可能性があるいくつかの問題があります。例えば以下のコードでは、新しいオブジェクトが <code>value</code> に対して常に作成されるため、プロバイダが再レンダーするたびにすべてのコンシューマを再レンダーしてしまいます。</p>
+        <p><code>embed:context/reference-caveats-problem.js</code></p>
+        <p>この問題を回避するためには、親の state に値をリフトアップします。</p>
+        <p><code>embed:context/reference-caveats-solution.js</code></p>
+      </section>
+      <section id="legacy-api" class="level2">
+        <h2>レガシーな API</h2>
+        <blockquote>
+          <p>補足</p>
+          <p>
+            React は以前に実験的なコンテクスト API を公開していました。その古い API は全ての 16.x 系のリリースでサポートされる予定ですが、アプリケーションで使用しているのであれば、新しいバージョンにマイグレーションすべきです。レガシーな API は将来の React メジャーバージョンで削除されます。<a href="./legacy-context.html">レガシーなコンテクストのドキュメントはここにあります。</a>
+            <span style="float: footnote;"><a href="./index.html#toc">Go to TOC</a></span>
+          </p>
+        </blockquote>
+      </section>
+    </section>
+  </body>
+</html>

@@ -1,0 +1,123 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="utf-8">
+    <title>SvelteKit で X を使うにはどうすればよいですか？</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="https://raw.githubusercontent.com/shinokada/prism-coy-theme/main/theme_common.css">
+  </head>
+  <body>
+    <section id="sveltekit-で-x-を使うにはどうすればよいですか" class="level1">
+      <h1>SvelteKit で X を使うにはどうすればよいですか？</h1>
+      <p><a href="../60-appendix/20-additional-resources.html#integrations">ドキュメントのインテグレーションのセクション</a> をしっかり読み込んでください。それでも問題が解決しない場合のために、よくある問題の解決策を以下に示します。</p>
+      <section id="データベースのセットアップはどう行えばよいですか" class="level2">
+        <h2>データベースのセットアップはどう行えばよいですか？</h2>
+        <p>データベースに問い合わせを行うコードを <a href="../20-core-concepts/10-routing.html#server">サーバールート(server route)</a> に置いてください。.svelte ファイルの中でデータベースに問い合わせを行わないでください。コネクションをすぐにセットアップし、シングルトンとしてアプリ全体からクライアントにアクセスできるように <code>db.js</code> のようなものを作ることができます。<code>hooks.js</code> で1回セットアップするコードを実行し、データベースヘルパーを必要とするすべてのエンドポイントにインポートできます。</p>
+      </section>
+      <section id="ミドルウェアmiddlewareを使うにはどうすればよいですか" class="level2">
+        <h2>ミドルウェア(middleware)を使うにはどうすればよいですか？</h2>
+        <p><code>adapter-node</code> は、プロダクションモードで使用するためのミドルウェアを自分のサーバで構築します。開発モードでは、Vite プラグインを使用して Vite にミドルウェア(middleware) を追加することができます。例えば:</p>
+        <pre class="language-js"><code class="language-js"><span class="token comment">// @filename: ambient.d.ts</span>
+declare module <span class="token string">'@sveltejs/kit/vite'</span><span class="token punctuation">;</span> <span class="token comment">// TODO this feels unnecessary, why can't it 'see' the declarations?</span>
+
+<span class="token comment">// @filename: index.js</span>
+<span class="token comment">// cut---</span>
+<span class="token keyword module">import</span> <span class="token imports"><span class="token punctuation">{</span> sveltekit <span class="token punctuation">}</span></span> <span class="token keyword module">from</span> <span class="token string">'@sveltejs/kit/vite'</span><span class="token punctuation">;</span>
+
+<span class="token doc-comment comment">/** <span class="token keyword">@type</span> <span class="token class-name"><span class="token punctuation">{</span><span class="token keyword module">import</span><span class="token punctuation">(</span><span class="token string">'vite'</span><span class="token punctuation">)</span><span class="token punctuation">.</span>Plugin<span class="token punctuation">}</span></span> */</span>
+<span class="token keyword">const</span> myPlugin <span class="token operator">=</span> <span class="token punctuation">{</span>
+	<span class="token literal-property property">name</span><span class="token operator">:</span> <span class="token string">'log-request-middleware'</span><span class="token punctuation">,</span>
+	<span class="token function">configureServer</span><span class="token punctuation">(</span><span class="token parameter">server</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+		server<span class="token punctuation">.</span><span class="token property-access">middlewares</span><span class="token punctuation">.</span><span class="token method function property-access">use</span><span class="token punctuation">(</span><span class="token punctuation">(</span><span class="token parameter">req<span class="token punctuation">,</span> res<span class="token punctuation">,</span> next</span><span class="token punctuation">)</span> <span class="token arrow operator">=></span> <span class="token punctuation">{</span>
+			<span class="token console class-name">console</span><span class="token punctuation">.</span><span class="token method function property-access">log</span><span class="token punctuation">(</span><span class="token template-string"><span class="token template-punctuation string">`</span><span class="token string">Got request </span><span class="token interpolation"><span class="token interpolation-punctuation punctuation">${</span>req<span class="token punctuation">.</span><span class="token property-access">url</span><span class="token interpolation-punctuation punctuation">}</span></span><span class="token template-punctuation string">`</span></span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+			<span class="token function">next</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+		<span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+	<span class="token punctuation">}</span>
+<span class="token punctuation">}</span><span class="token punctuation">;</span>
+
+<span class="token doc-comment comment">/** <span class="token keyword">@type</span> <span class="token class-name"><span class="token punctuation">{</span><span class="token keyword module">import</span><span class="token punctuation">(</span><span class="token string">'vite'</span><span class="token punctuation">)</span><span class="token punctuation">.</span>UserConfig<span class="token punctuation">}</span></span> */</span>
+<span class="token keyword">const</span> config <span class="token operator">=</span> <span class="token punctuation">{</span>
+	<span class="token literal-property property">plugins</span><span class="token operator">:</span> <span class="token punctuation">[</span>myPlugin<span class="token punctuation">,</span> <span class="token function">sveltekit</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">]</span>
+<span class="token punctuation">}</span><span class="token punctuation">;</span>
+
+<span class="token keyword module">export</span> <span class="token keyword module">default</span> config<span class="token punctuation">;</span></code></pre>
+        <p>順序を制御する方法など、詳しくは <a href="https://ja.vitejs.dev/guide/api-plugin.html#configureserver">Vite の <code>configureServer</code> のドキュメント</a> をご覧ください。</p>
+      </section>
+      <section id="document-や-window-に依存しているクライアントサイドオンリーなライブラリはどう使えばよいですか" class="level2">
+        <h2><code>document</code> や <code>window</code> に依存しているクライアントサイドオンリーなライブラリはどう使えばよいですか？</h2>
+        <p>もし <code>document</code> や <code>window</code> 変数にアクセスする必要があったり、クライアントサイドだけで実行するコードが必要な場合は、<code>browser</code> チェックでラップしてください:</p>
+        <pre class="language-js"><code class="language-js"><span class="token comment">/// &#x3C;reference types="@sveltejs/kit" /></span>
+<span class="token comment">// cut---</span>
+<span class="token keyword module">import</span> <span class="token imports"><span class="token punctuation">{</span> browser <span class="token punctuation">}</span></span> <span class="token keyword module">from</span> <span class="token string">'$app/environment'</span><span class="token punctuation">;</span>
+
+<span class="token keyword control-flow">if</span> <span class="token punctuation">(</span>browser<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+	<span class="token comment">// client-only code here</span>
+<span class="token punctuation">}</span></code></pre>
+        <p>コンポーネントが最初にDOMにレンダリングされた後にコードを実行したい場合は、<code>onMount</code> で実行することもできます:</p>
+        <pre class="language-js"><code class="language-js"><span class="token comment">// @filename: ambient.d.ts</span>
+<span class="token comment">// @lib: ES2015</span>
+declare module <span class="token string">'some-browser-only-library'</span><span class="token punctuation">;</span>
+
+<span class="token comment">// @filename: index.js</span>
+<span class="token comment">// cut---</span>
+<span class="token keyword module">import</span> <span class="token imports"><span class="token punctuation">{</span> onMount <span class="token punctuation">}</span></span> <span class="token keyword module">from</span> <span class="token string">'svelte'</span><span class="token punctuation">;</span>
+
+<span class="token function">onMount</span><span class="token punctuation">(</span><span class="token keyword">async</span> <span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token arrow operator">=></span> <span class="token punctuation">{</span>
+	<span class="token keyword">const</span> <span class="token punctuation">{</span> method <span class="token punctuation">}</span> <span class="token operator">=</span> <span class="token keyword control-flow">await</span> <span class="token keyword module">import</span><span class="token punctuation">(</span><span class="token string">'some-browser-only-library'</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+	<span class="token function">method</span><span class="token punctuation">(</span><span class="token string">'hello world'</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">;</span></code></pre>
+        <p>使用したいライブラリに副作用がなければ静的にインポートすることができますし、サーバー側のビルドでツリーシェイクされ、<code>onMount</code> が自動的に no-op に置き換えられます:</p>
+        <pre class="language-js"><code class="language-js"><span class="token comment">// @filename: ambient.d.ts</span>
+<span class="token comment">// @lib: ES2015</span>
+declare module <span class="token string">'some-browser-only-library'</span><span class="token punctuation">;</span>
+
+<span class="token comment">// @filename: index.js</span>
+<span class="token comment">// cut---</span>
+<span class="token keyword module">import</span> <span class="token imports"><span class="token punctuation">{</span> onMount <span class="token punctuation">}</span></span> <span class="token keyword module">from</span> <span class="token string">'svelte'</span><span class="token punctuation">;</span>
+<span class="token keyword module">import</span> <span class="token imports"><span class="token punctuation">{</span> method <span class="token punctuation">}</span></span> <span class="token keyword module">from</span> <span class="token string">'some-browser-only-library'</span><span class="token punctuation">;</span>
+
+<span class="token function">onMount</span><span class="token punctuation">(</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token arrow operator">=></span> <span class="token punctuation">{</span>
+	<span class="token function">method</span><span class="token punctuation">(</span><span class="token string">'hello world'</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">;</span></code></pre>
+        <p>一方、ライブラリに副作用があっても静的にインポートをしたい場合は、<a href="https://github.com/bluwy/vite-plugin-iso-import">vite-plugin-iso-import</a> をチェックして <code>?client</code> インポートサフィックスをサポートしてください。このインポートは SSR ビルドでは取り除かれます。しかし、この手法を使用すると VS Code Intellisense が使用できなくなることにご注意ください。</p>
+        <pre class="language-js"><code class="language-js"><span class="token comment">// @filename: ambient.d.ts</span>
+<span class="token comment">// @lib: ES2015</span>
+declare module <span class="token string">'some-browser-only-library?client'</span><span class="token punctuation">;</span>
+
+<span class="token comment">// @filename: index.js</span>
+<span class="token comment">// cut---</span>
+<span class="token keyword module">import</span> <span class="token imports"><span class="token punctuation">{</span> onMount <span class="token punctuation">}</span></span> <span class="token keyword module">from</span> <span class="token string">'svelte'</span><span class="token punctuation">;</span>
+<span class="token keyword module">import</span> <span class="token imports"><span class="token punctuation">{</span> method <span class="token punctuation">}</span></span> <span class="token keyword module">from</span> <span class="token string">'some-browser-only-library?client'</span><span class="token punctuation">;</span>
+
+<span class="token function">onMount</span><span class="token punctuation">(</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token arrow operator">=></span> <span class="token punctuation">{</span>
+	<span class="token function">method</span><span class="token punctuation">(</span><span class="token string">'hello world'</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">;</span></code></pre>
+      </section>
+      <section id="yarn-を使用するにはどうすれば良いですか" class="level2">
+        <h2>Yarn を使用するにはどうすれば良いですか？</h2>
+        <section id="yarn-2-で動作しますか" class="level3">
+          <h3>Yarn 2 で動作しますか？</h3>
+          <p>多少は。Plug'n'Play 機能、通称 'pnp' は動きません (Node のモジュール解決アルゴリズムから逸脱しており、SvelteKitが<a href="https://blog.sindresorhus.com/get-ready-for-esm-aa53530b3f77">数多くのライブラリ</a>とともに使用している<a href="https://github.com/yarnpkg/berry/issues/638">ネイティブの JavaScript モジュールではまだ動作しません</a>)。<a href="https://yarnpkg.com/configuration/yarnrc#nodeLinker"><code>.yarnrc.yml</code></a> で <code>nodeLinker: 'node-modules'</code> を使用して pnp を無効にできますが、おそらく npm や <a href="https://pnpm.io/">pnpm</a> を使用するほうが簡単でしょう。同じように高速で効率的ですが、互換性に頭を悩ませることはありません。</p>
+        </section>
+        <section id="yarn-3-を使用するにはどうすれば良いですか" class="level3">
+          <h3>Yarn 3 を使用するにはどうすれば良いですか？</h3>
+          <p>現時点の、最新の Yarn (version 3) の ESM サポート は <a href="https://github.com/yarnpkg/berry/pull/2161">experimental</a> であるようです。</p>
+          <p>結果は異なるかもしれませんが、下記が有効なようです。</p>
+          <p>最初に新しいアプリケーションを作成します:</p>
+          <pre class="language-sh"><code class="language-sh">yarn create svelte myapp
+cd myapp</code></pre>
+          <p>そして Yarn Berry を有効にします:</p>
+          <pre class="language-sh"><code class="language-sh">yarn set version berry
+yarn install</code></pre>
+          <p><strong>Yarn 3 global cache</strong></p>
+          <p>Yarn Berry の興味深い機能の1つに、ディスク上のプロジェクトごとに複数のコピーを持つのではなく、パッケージ用に単一のグローバルキャッシュを持つことができる、というのがあります。しかし、<code>enableGlobalCache</code> の設定を true にするとビルドが失敗するため、<code>.yarnrc.yml</code> ファイルに以下を追加することを推奨します:</p>
+          <pre class="language-text"><code class="language-text">nodeLinker: node-modules</code></pre>
+          <p>
+            これによってパッケージはローカルの node_modules ディレクトリにダウンロードされますが、上記の問題は回避され、現時点では Yarn の version 3 を使用するベストな方法となります。
+            <span style="float: footnote;"><a href="../index.html#toc">Go to TOC</a></span>
+          </p>
+        </section>
+      </section>
+    </section>
+  </body>
+</html>
