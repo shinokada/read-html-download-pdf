@@ -1,17 +1,4 @@
-<!doctype html>
-<html lang="pl">
-  <head>
-    <meta charset="utf-8">
-    <title>Stan i cykl życia</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <link rel="stylesheet" href="https://raw.githubusercontent.com/shinokada/prism-coy-theme/main/theme_common.css">
-  </head>
-  <body>
-    <section id="stan-i-cykl-życia" class="level1">
-      <h1>Stan i cykl życia</h1>
-      <p>W tym poradniku wprowadzimy pojęcie stanu (ang. <em>state</em>) i cyklu życia (ang. <em>lifecycle</em>) komponentu reactowego. Więcej informacji na ten temat znajdziesz w <a href="./react-component.html">szczegółowej dokumentacji API komponentów</a>.</p>
-      <p>Wróćmy do przykładu tykającego zegara z <a href="./rendering-elements.html#updating-the-rendered-element">jednej z poprzednich lekcji</a>. W sekcji <a href="./rendering-elements.html#rendering-an-element-into-the-dom">"Renderowanie elementów"</a> nauczyliśmy się tylko jednego sposobu aktualizowania interfejsu aplikacji. Aby zmienić wynik renderowania, wywołujemy funkcję <code>root.render()</code>:</p>
-      <pre class="language-js{10}"><code class="language-js{10}">const root = ReactDOM.createRoot(document.getElementById('root'));
+<!doctypehtml><html lang="pl"><meta charset="utf-8"><title>Stan i cykl życia</title><meta name="viewport"content="width=device-width,initial-scale=1"><link rel="stylesheet"href="https://raw.githubusercontent.com/shinokada/prism-coy-theme/main/theme_common.css"><section id="stan-i-cykl-życia"class="level1"><h1>Stan i cykl życia</h1><p>W tym poradniku wprowadzimy pojęcie stanu (ang. <em>state</em>) i cyklu życia (ang. <em>lifecycle</em>) komponentu reactowego. Więcej informacji na ten temat znajdziesz w <a href="./react-component.html">szczegółowej dokumentacji API komponentów</a>.<p>Wróćmy do przykładu tykającego zegara z <a href="./rendering-elements.html#updating-the-rendered-element">jednej z poprzednich lekcji</a>. W sekcji <a href="./rendering-elements.html#rendering-an-element-into-the-dom">"Renderowanie elementów"</a> nauczyliśmy się tylko jednego sposobu aktualizowania interfejsu aplikacji. Aby zmienić wynik renderowania, wywołujemy funkcję <code>root.render()</code>:<pre class="language-js{10}"><code class="language-js{10}">const root = ReactDOM.createRoot(document.getElementById('root'));
   
 function tick() {
   const element = (
@@ -23,11 +10,7 @@ function tick() {
   root.render(element);
 }
 
-setInterval(tick, 1000);</code></pre>
-      <p><a href="https://codepen.io/gaearon/pen/gwoJZk?editors=0010"><strong>Przetestuj kod na CodePen</strong></a></p>
-      <p>W tym rozdziale dowiemy się, jak sprawić, by komponent <code>Clock</code> był w pełni hermetyczny i zdatny do wielokrotnego użytku. Wyposażymy go we własny timer, który będzie aktualizował się co sekundę.</p>
-      <p>Zacznijmy od wyizolowania kodu, który odpowiada za wygląd zegara:</p>
-      <pre class="language-js{5-8,13}"><code class="language-js{5-8,13}">const root = ReactDOM.createRoot(document.getElementById('root'));
+setInterval(tick, 1000);</code></pre><p><a href="https://codepen.io/gaearon/pen/gwoJZk?editors=0010"><strong>Przetestuj kod na CodePen</strong></a><p>W tym rozdziale dowiemy się, jak sprawić, by komponent <code>Clock</code> był w pełni hermetyczny i zdatny do wielokrotnego użytku. Wyposażymy go we własny timer, który będzie aktualizował się co sekundę.<p>Zacznijmy od wyizolowania kodu, który odpowiada za wygląd zegara:<pre class="language-js{5-8,13}"><code class="language-js{5-8,13}">const root = ReactDOM.createRoot(document.getElementById('root'));
 
 function Clock(props) {
   return (
@@ -42,34 +25,7 @@ function tick() {
   root.render(&#x3C;Clock date={new Date()} />);
 }
 
-setInterval(tick, 1000);</code></pre>
-      <p><a href="https://codepen.io/gaearon/pen/dpdoYR?editors=0010"><strong>Przetestuj kod na CodePen</strong></a></p>
-      <p>Brakuje jeszcze fragmentu, który spełniałby kluczowe założenie: inicjalizacja timera i aktualizowanie UI co sekundę powinny być zaimplementowane w komponencie <code>Clock</code>.</p>
-      <p>Idealnie byłoby móc napisać tylko tyle i oczekiwać, że <code>Clock</code> zajmie się resztą:</p>
-      <pre class="language-js{2}"><code class="language-js{2}">root.render(&#x3C;Clock />);</code></pre>
-      <p>Aby tak się stało, musimy dodać do komponentu "stan".</p>
-      <p>Stan przypomina trochę atrybuty (ang. <em>props</em>), jednak jest prywatny i w pełni kontrolowany przez dany komponent.</p>
-      <section id="converting-a-function-to-a-class" class="level2">
-        <h2>Przekształcanie funkcji w klasę</h2>
-        <p>Proces przekształcania komponentu funkcyjnego (takiego jak nasz <code>Clock</code>) w klasę można opisać w pięciu krokach:</p>
-        <ol>
-          <li>
-            <p>Stwórz <a href="https://developer.mozilla.org/pl/docs/Web/JavaScript/Reference/Classes">klasę zgodną ze standardem ES6</a> o tej samej nazwie i odziedzicz po klasie <code>React.Component</code> przy pomocy słowa kluczowego <code>extend</code>.</p>
-          </li>
-          <li>
-            <p>Dodaj pustą metodę o nazwie <code>render()</code>.</p>
-          </li>
-          <li>
-            <p>Przenieś ciało funkcji do ciała metody <code>render()</code>.</p>
-          </li>
-          <li>
-            <p>W <code>render()</code> zamień wszystkie <code>props</code> na <code>this.props</code>.</p>
-          </li>
-          <li>
-            <p>Usuń starą deklarację funkcji.</p>
-          </li>
-        </ol>
-        <pre class="language-js"><code class="language-js"><span class="token keyword">class</span> <span class="token class-name">Clock</span> <span class="token keyword">extends</span> <span class="token class-name">React<span class="token punctuation">.</span>Component</span> <span class="token punctuation">{</span>
+setInterval(tick, 1000);</code></pre><p><a href="https://codepen.io/gaearon/pen/dpdoYR?editors=0010"><strong>Przetestuj kod na CodePen</strong></a><p>Brakuje jeszcze fragmentu, który spełniałby kluczowe założenie: inicjalizacja timera i aktualizowanie UI co sekundę powinny być zaimplementowane w komponencie <code>Clock</code>.<p>Idealnie byłoby móc napisać tylko tyle i oczekiwać, że <code>Clock</code> zajmie się resztą:<pre class="language-js{2}"><code class="language-js{2}">root.render(&#x3C;Clock />);</code></pre><p>Aby tak się stało, musimy dodać do komponentu "stan".<p>Stan przypomina trochę atrybuty (ang. <em>props</em>), jednak jest prywatny i w pełni kontrolowany przez dany komponent.<section id="converting-a-function-to-a-class"class="level2"><h2>Przekształcanie funkcji w klasę</h2><p>Proces przekształcania komponentu funkcyjnego (takiego jak nasz <code>Clock</code>) w klasę można opisać w pięciu krokach:<ol><li><p>Stwórz <a href="https://developer.mozilla.org/pl/docs/Web/JavaScript/Reference/Classes">klasę zgodną ze standardem ES6</a> o tej samej nazwie i odziedzicz po klasie <code>React.Component</code> przy pomocy słowa kluczowego <code>extend</code>.<li><p>Dodaj pustą metodę o nazwie <code>render()</code>.<li><p>Przenieś ciało funkcji do ciała metody <code>render()</code>.<li><p>W <code>render()</code> zamień wszystkie <code>props</code> na <code>this.props</code>.<li><p>Usuń starą deklarację funkcji.</ol><pre class="language-js"><code class="language-js"><span class="token keyword">class</span> <span class="token class-name">Clock</span> <span class="token keyword">extends</span> <span class="token class-name">React<span class="token punctuation">.</span>Component</span> <span class="token punctuation">{</span>
   <span class="token function">render</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
     <span class="token keyword control-flow">return</span> <span class="token punctuation">(</span>
       <span class="token operator">&#x3C;</span>div<span class="token operator">></span>
@@ -78,18 +34,7 @@ setInterval(tick, 1000);</code></pre>
       <span class="token operator">&#x3C;</span><span class="token operator">/</span>div<span class="token operator">></span>
     <span class="token punctuation">)</span><span class="token punctuation">;</span>
   <span class="token punctuation">}</span>
-<span class="token punctuation">}</span></code></pre>
-        <p><a href="https://codepen.io/gaearon/pen/zKRGpo?editors=0010"><strong>Przetestuj kod na CodePen</strong></a></p>
-        <p>Komponent <code>Clock</code> przestał już być funkcją i od teraz jest klasą.</p>
-        <p>Metoda <code>render</code> zostanie automatycznie wywołana przy każdej zmianie. Dopóki będziemy renderować <code>&#x3C;Clock /></code> do tego samego węzła drzewa DOM, dopóty używana będzie jedna i ta sama instancja klasy <code>Clock</code>. Pozwala to na skorzystanie z dodatkowych funkcjonalności, takich jak lokalny stan czy metody cyklu życia komponentu.</p>
-      </section>
-      <section id="adding-local-state-to-a-class" class="level2">
-        <h2>Dodawanie lokalnego stanu do klasy</h2>
-        <p>Przenieśmy teraz <code>date</code> z atrybutów do stanu w trzech krokach:</p>
-        <ol>
-          <li>Zamień wystąpienia <code>this.props.date</code> na <code>this.state.date</code> w ciele metody <code>render()</code>:</li>
-        </ol>
-        <pre class="language-js{6}"><code class="language-js{6}">class Clock extends React.Component {
+<span class="token punctuation">}</span></code></pre><p><a href="https://codepen.io/gaearon/pen/zKRGpo?editors=0010"><strong>Przetestuj kod na CodePen</strong></a><p>Komponent <code>Clock</code> przestał już być funkcją i od teraz jest klasą.<p>Metoda <code>render</code> zostanie automatycznie wywołana przy każdej zmianie. Dopóki będziemy renderować <code>&#x3C;Clock /></code> do tego samego węzła drzewa DOM, dopóty używana będzie jedna i ta sama instancja klasy <code>Clock</code>. Pozwala to na skorzystanie z dodatkowych funkcjonalności, takich jak lokalny stan czy metody cyklu życia komponentu.</section><section id="adding-local-state-to-a-class"class="level2"><h2>Dodawanie lokalnego stanu do klasy</h2><p>Przenieśmy teraz <code>date</code> z atrybutów do stanu w trzech krokach:<ol><li>Zamień wystąpienia <code>this.props.date</code> na <code>this.state.date</code> w ciele metody <code>render()</code>:</ol><pre class="language-js{6}"><code class="language-js{6}">class Clock extends React.Component {
   render() {
     return (
       &#x3C;div>
@@ -98,11 +43,7 @@ setInterval(tick, 1000);</code></pre>
       &#x3C;/div>
     );
   }
-}</code></pre>
-        <ol start="2">
-          <li>Dodaj <a href="https://developer.mozilla.org/pl/docs/Web/JavaScript/Reference/Classes#Konstruktor">konstruktor klasy</a> i zainicjalizuj w nim pole <code>this.state</code>:</li>
-        </ol>
-        <pre class="language-js{4}"><code class="language-js{4}">class Clock extends React.Component {
+}</code></pre><ol start="2"><li>Dodaj <a href="https://developer.mozilla.org/pl/docs/Web/JavaScript/Reference/Classes#Konstruktor">konstruktor klasy</a> i zainicjalizuj w nim pole <code>this.state</code>:</ol><pre class="language-js{4}"><code class="language-js{4}">class Clock extends React.Component {
   constructor(props) {
     super(props);
     this.state = {date: new Date()};
@@ -116,20 +57,10 @@ setInterval(tick, 1000);</code></pre>
       &#x3C;/div>
     );
   }
-}</code></pre>
-        <p>Zwróć uwagę na argument <code>props</code> przekazywany do konstruktora bazowego za pomocą specjalnej funkcji <code>super()</code>:</p>
-        <pre class="language-js{2}"><code class="language-js{2}">  constructor(props) {
+}</code></pre><p>Zwróć uwagę na argument <code>props</code> przekazywany do konstruktora bazowego za pomocą specjalnej funkcji <code>super()</code>:<pre class="language-js{2}"><code class="language-js{2}">  constructor(props) {
     super(props);
     this.state = {date: new Date()};
-  }</code></pre>
-        <p>Komponenty klasowe zawsze powinny przekazywać <code>props</code> do konstruktora bazowego.</p>
-        <ol start="3">
-          <li>Usuń atrybut <code>date</code> z elementu <code>&#x3C;Clock /></code>:</li>
-        </ol>
-        <pre class="language-js{2}"><code class="language-js{2}">root.render(&#x3C;Clock />);</code></pre>
-        <p>Timer dodamy do komponentu nieco później.</p>
-        <p>W rezultacie powinniśmy otrzymać następujący kod:</p>
-        <pre class="language-js{2-5,11,18}"><code class="language-js{2-5,11,18}">class Clock extends React.Component {
+  }</code></pre><p>Komponenty klasowe zawsze powinny przekazywać <code>props</code> do konstruktora bazowego.<ol start="3"><li>Usuń atrybut <code>date</code> z elementu <code>&#x3C;Clock /></code>:</ol><pre class="language-js{2}"><code class="language-js{2}">root.render(&#x3C;Clock />);</code></pre><p>Timer dodamy do komponentu nieco później.<p>W rezultacie powinniśmy otrzymać następujący kod:<pre class="language-js{2-5,11,18}"><code class="language-js{2-5,11,18}">class Clock extends React.Component {
   constructor(props) {
     super(props);
     this.state = {date: new Date()};
@@ -146,17 +77,7 @@ setInterval(tick, 1000);</code></pre>
 }
 
 const root = ReactDOM.createRoot(document.getElementById('root'));
-root.render(&#x3C;Clock />);</code></pre>
-        <p><a href="https://codepen.io/gaearon/pen/KgQpJd?editors=0010"><strong>Przetestuj kod na CodePen</strong></a></p>
-        <p>Teraz sprawimy, by komponent <code>Clock</code> uruchomił własny timer i aktualizował go co sekundę.</p>
-      </section>
-      <section id="adding-lifecycle-methods-to-a-class" class="level2">
-        <h2>Dodawanie metod cyklu życia do klasy</h2>
-        <p>W aplikacjach o wielu komponentach istotne jest zwalnianie zasobów przy niszczeniu każdego z komponentów.</p>
-        <p>Chcielibyśmy <a href="https://developer.mozilla.org/pl/docs/Web/API/Window/setInterval">uruchamiać timer</a> przy każdym pierwszym wyrenderowaniu komponentu <code>Clock</code> do drzewa DOM. W Reakcie taki moment w cyklu życia komponentu nazywamy "montowaniem" (ang. <em>mounting</em>).</p>
-        <p>Chcemy również <a href="https://developer.mozilla.org/pl/docs/Web/API/Window/clearInterval">resetować timer</a> za każdym razem, gdy DOM wygenerowany przez <code>Clock</code> jest usuwany z dokumentu. W Reakcie taki moment nazywamy to "odmontowaniem" (ang. <em>unmounting</em>) komponentu.</p>
-        <p>W klasie możemy zadeklarować specjalne metody, które będą uruchamiały kod w momencie montowania i odmontowywania komponentu:</p>
-        <pre class="language-js{7-9,11-13}"><code class="language-js{7-9,11-13}">class Clock extends React.Component {
+root.render(&#x3C;Clock />);</code></pre><p><a href="https://codepen.io/gaearon/pen/KgQpJd?editors=0010"><strong>Przetestuj kod na CodePen</strong></a><p>Teraz sprawimy, by komponent <code>Clock</code> uruchomił własny timer i aktualizował go co sekundę.</section><section id="adding-lifecycle-methods-to-a-class"class="level2"><h2>Dodawanie metod cyklu życia do klasy</h2><p>W aplikacjach o wielu komponentach istotne jest zwalnianie zasobów przy niszczeniu każdego z komponentów.<p>Chcielibyśmy <a href="https://developer.mozilla.org/pl/docs/Web/API/Window/setInterval">uruchamiać timer</a> przy każdym pierwszym wyrenderowaniu komponentu <code>Clock</code> do drzewa DOM. W Reakcie taki moment w cyklu życia komponentu nazywamy "montowaniem" (ang. <em>mounting</em>).<p>Chcemy również <a href="https://developer.mozilla.org/pl/docs/Web/API/Window/clearInterval">resetować timer</a> za każdym razem, gdy DOM wygenerowany przez <code>Clock</code> jest usuwany z dokumentu. W Reakcie taki moment nazywamy to "odmontowaniem" (ang. <em>unmounting</em>) komponentu.<p>W klasie możemy zadeklarować specjalne metody, które będą uruchamiały kod w momencie montowania i odmontowywania komponentu:<pre class="language-js{7-9,11-13}"><code class="language-js{7-9,11-13}">class Clock extends React.Component {
   constructor(props) {
     super(props);
     this.state = {date: new Date()};
@@ -178,24 +99,14 @@ root.render(&#x3C;Clock />);</code></pre>
       &#x3C;/div>
     );
   }
-}</code></pre>
-        <p>Takie metody nazywamy "metodami cyklu życia".</p>
-        <p>Metoda <code>componentDidMount()</code> uruchamiana jest po wyrenderowaniu komponentu do drzewa DOM. To dobre miejsce na inicjalizację timera:</p>
-        <pre class="language-js{2-5}"><code class="language-js{2-5}">  componentDidMount() {
+}</code></pre><p>Takie metody nazywamy "metodami cyklu życia".<p>Metoda <code>componentDidMount()</code> uruchamiana jest po wyrenderowaniu komponentu do drzewa DOM. To dobre miejsce na inicjalizację timera:<pre class="language-js{2-5}"><code class="language-js{2-5}">  componentDidMount() {
     this.timerID = setInterval(
       () => this.tick(),
       1000
     );
-  }</code></pre>
-        <p>Zwróć uwagę, że identyfikator timera zapisujemy bezpośrednio do <code>this</code> (<code>this.timerID</code>).</p>
-        <p>Mimo że <code>this.props</code> jest ustawiane przez Reacta, a <code>this.state</code> jest specjalnym polem, to nic nie stoi na przeszkodzie, aby stworzyć dodatkowe pola, w których chcielibyśmy przechowywać wartości niezwiązane bezpośrednio z przepływem danych (jak nasz identyfikator timera).</p>
-        <p>Zatrzymaniem timera zajmie się metoda cyklu życia zwana <code>componentWillUnmount()</code>:</p>
-        <pre class="language-js{2}"><code class="language-js{2}">  componentWillUnmount() {
+  }</code></pre><p>Zwróć uwagę, że identyfikator timera zapisujemy bezpośrednio do <code>this</code> (<code>this.timerID</code>).<p>Mimo że <code>this.props</code> jest ustawiane przez Reacta, a <code>this.state</code> jest specjalnym polem, to nic nie stoi na przeszkodzie, aby stworzyć dodatkowe pola, w których chcielibyśmy przechowywać wartości niezwiązane bezpośrednio z przepływem danych (jak nasz identyfikator timera).<p>Zatrzymaniem timera zajmie się metoda cyklu życia zwana <code>componentWillUnmount()</code>:<pre class="language-js{2}"><code class="language-js{2}">  componentWillUnmount() {
     clearInterval(this.timerID);
-  }</code></pre>
-        <p>Na koniec zaimplementujemy metodę o nazwie <code>tick()</code>, którą komponent <code>Clock</code> będzie wywoływał co sekundę.</p>
-        <p>Użyjemy w niej <code>this.setState()</code>, aby zaplanować aktualizację lokalnego stanu komponentu:</p>
-        <pre class="language-js{18-22}"><code class="language-js{18-22}">class Clock extends React.Component {
+  }</code></pre><p>Na koniec zaimplementujemy metodę o nazwie <code>tick()</code>, którą komponent <code>Clock</code> będzie wywoływał co sekundę.<p>Użyjemy w niej <code>this.setState()</code>, aby zaplanować aktualizację lokalnego stanu komponentu:<pre class="language-js{18-22}"><code class="language-js{18-22}">class Clock extends React.Component {
   constructor(props) {
     super(props);
     this.state = {date: new Date()};
@@ -229,76 +140,26 @@ root.render(&#x3C;Clock />);</code></pre>
 }
 
 const root = ReactDOM.createRoot(document.getElementById('root'));
-root.render(&#x3C;Clock />);</code></pre>
-        <p><a href="https://codepen.io/gaearon/pen/amqdNA?editors=0010"><strong>Przetestuj kod na CodePen</strong></a></p>
-        <p>Teraz timer powinien już tykać co sekundę.</p>
-        <p>Podsumujmy, co dzieje się w powyższym kodzie i w jakiej kolejności wywoływane są metody:</p>
-        <ol>
-          <li>
-            <p>Kiedy element <code>&#x3C;Clock /></code> przekazywany jest do funkcji <code>root.render()</code>, React wywołuje konstruktor komponentu <code>Clock</code>. Jako że <code>Clock</code> będzie wyświetlać aktualny czas, musi on zainicjalizować <code>this.state</code> obiektem zawierającym aktualną datę. Później ten stan będzie aktualizowany.</p>
-          </li>
-          <li>
-            <p>Następnie React wywołuje metodę <code>render()</code> komponentu <code>Clock</code>. W ten sposób uzyskuje informację, co powinno zostać wyświetlone na stronie. Gdy otrzyma odpowiedź, odpowiednio aktualizuje drzewo DOM.</p>
-          </li>
-          <li>
-            <p>Po wyrenderowaniu komponentu <code>Clock</code> do drzewa DOM, React wywołuje metodę cyklu życia o nazwie <code>componentDidMount()</code>. W jej ciele komponent <code>Clock</code> prosi przeglądarkę o zainicjalizowanie nowego timera, który będzie wywoływać metodę <code>tick()</code> co sekundę.</p>
-          </li>
-          <li>
-            <p>Co sekundę przeglądarka wywołuje metodę <code>tick()</code>. W jej ciele komponent <code>Clock</code> żąda aktualizacji UI poprzez wywołanie metody <code>setState()</code>, przekazując jako argument obiekt z aktualnym czasem. Dzięki wywołaniu <code>setState()</code> React wie, że zmienił się stan i że może ponownie wywołać metodę <code>render()</code>, by dowiedzieć się, co powinno zostać wyświetlone na ekranie. Tym razem wartość zmiennej <code>this.state.date</code> w ciele metody <code>render()</code> będzie inna, odpowiadająca nowemu czasowi - co React odzwierciedli w drzewie DOM.</p>
-          </li>
-          <li>
-            <p>Jeśli kiedykolwiek komponent <code>Clock</code> zostanie usunięty z drzewa DOM, React wywoła na nim metodę cyklu życia o nazwie <code>componentWillUnmount()</code>, zatrzymując tym samym timer.</p>
-          </li>
-        </ol>
-      </section>
-      <section id="using-state-correctly" class="level2">
-        <h2>Poprawne używanie stanu</h2>
-        <p>Są trzy rzeczy, które musisz wiedzieć o <code>setState()</code>.</p>
-        <section id="do-not-modify-state-directly" class="level3">
-          <h3>Nie modyfikuj stanu bezpośrednio</h3>
-          <p>Na przykład, poniższy kod nie spowoduje ponownego wyrenderowania komponentu:</p>
-          <pre class="language-js"><code class="language-js"><span class="token comment">// Źle</span>
-<span class="token keyword">this</span><span class="token punctuation">.</span><span class="token property-access">state</span><span class="token punctuation">.</span><span class="token property-access">comment</span> <span class="token operator">=</span> <span class="token string">'Witam'</span><span class="token punctuation">;</span></code></pre>
-          <p>Zamiast tego używaj <code>setState()</code>:</p>
-          <pre class="language-js"><code class="language-js"><span class="token comment">// Dobrze</span>
-<span class="token keyword">this</span><span class="token punctuation">.</span><span class="token method function property-access">setState</span><span class="token punctuation">(</span><span class="token punctuation">{</span><span class="token literal-property property">comment</span><span class="token operator">:</span> <span class="token string">'Witam'</span><span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">;</span></code></pre>
-          <p>Jedynym miejscem, w którym wolno Ci użyć <code>this.state</code> jest konstruktor klasy.</p>
-        </section>
-        <section id="state-updates-may-be-asynchronous" class="level3">
-          <h3>Aktualizacje stanu mogą dziać się asynchroniczne</h3>
-          <p>React może zgrupować kilka wywołań metody <code>setState()</code> w jedną paczkę w celu zwiększenia wydajności aplikacji.</p>
-          <p>Z racji tego, że zmienne <code>this.props</code> i <code>this.state</code> mogą być aktualizowane asynchronicznie, nie powinno się polegać na ich wartościach przy obliczaniu nowego stanu.</p>
-          <p>Na przykład, poniższy kod może nadpisać <code>counter</code> błędną wartością:</p>
-          <pre class="language-js"><code class="language-js"><span class="token comment">// Źle</span>
+root.render(&#x3C;Clock />);</code></pre><p><a href="https://codepen.io/gaearon/pen/amqdNA?editors=0010"><strong>Przetestuj kod na CodePen</strong></a><p>Teraz timer powinien już tykać co sekundę.<p>Podsumujmy, co dzieje się w powyższym kodzie i w jakiej kolejności wywoływane są metody:<ol><li><p>Kiedy element <code>&#x3C;Clock /></code> przekazywany jest do funkcji <code>root.render()</code>, React wywołuje konstruktor komponentu <code>Clock</code>. Jako że <code>Clock</code> będzie wyświetlać aktualny czas, musi on zainicjalizować <code>this.state</code> obiektem zawierającym aktualną datę. Później ten stan będzie aktualizowany.<li><p>Następnie React wywołuje metodę <code>render()</code> komponentu <code>Clock</code>. W ten sposób uzyskuje informację, co powinno zostać wyświetlone na stronie. Gdy otrzyma odpowiedź, odpowiednio aktualizuje drzewo DOM.<li><p>Po wyrenderowaniu komponentu <code>Clock</code> do drzewa DOM, React wywołuje metodę cyklu życia o nazwie <code>componentDidMount()</code>. W jej ciele komponent <code>Clock</code> prosi przeglądarkę o zainicjalizowanie nowego timera, który będzie wywoływać metodę <code>tick()</code> co sekundę.<li><p>Co sekundę przeglądarka wywołuje metodę <code>tick()</code>. W jej ciele komponent <code>Clock</code> żąda aktualizacji UI poprzez wywołanie metody <code>setState()</code>, przekazując jako argument obiekt z aktualnym czasem. Dzięki wywołaniu <code>setState()</code> React wie, że zmienił się stan i że może ponownie wywołać metodę <code>render()</code>, by dowiedzieć się, co powinno zostać wyświetlone na ekranie. Tym razem wartość zmiennej <code>this.state.date</code> w ciele metody <code>render()</code> będzie inna, odpowiadająca nowemu czasowi - co React odzwierciedli w drzewie DOM.<li><p>Jeśli kiedykolwiek komponent <code>Clock</code> zostanie usunięty z drzewa DOM, React wywoła na nim metodę cyklu życia o nazwie <code>componentWillUnmount()</code>, zatrzymując tym samym timer.</ol></section><section id="using-state-correctly"class="level2"><h2>Poprawne używanie stanu</h2><p>Są trzy rzeczy, które musisz wiedzieć o <code>setState()</code>.<section id="do-not-modify-state-directly"class="level3"><h3>Nie modyfikuj stanu bezpośrednio</h3><p>Na przykład, poniższy kod nie spowoduje ponownego wyrenderowania komponentu:<pre class="language-js"><code class="language-js"><span class="token comment">// Źle</span>
+<span class="token keyword">this</span><span class="token punctuation">.</span><span class="token property-access">state</span><span class="token punctuation">.</span><span class="token property-access">comment</span> <span class="token operator">=</span> <span class="token string">'Witam'</span><span class="token punctuation">;</span></code></pre><p>Zamiast tego używaj <code>setState()</code>:<pre class="language-js"><code class="language-js"><span class="token comment">// Dobrze</span>
+<span class="token keyword">this</span><span class="token punctuation">.</span><span class="token method function property-access">setState</span><span class="token punctuation">(</span><span class="token punctuation">{</span><span class="token literal-property property">comment</span><span class="token operator">:</span> <span class="token string">'Witam'</span><span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">;</span></code></pre><p>Jedynym miejscem, w którym wolno Ci użyć <code>this.state</code> jest konstruktor klasy.</section><section id="state-updates-may-be-asynchronous"class="level3"><h3>Aktualizacje stanu mogą dziać się asynchroniczne</h3><p>React może zgrupować kilka wywołań metody <code>setState()</code> w jedną paczkę w celu zwiększenia wydajności aplikacji.<p>Z racji tego, że zmienne <code>this.props</code> i <code>this.state</code> mogą być aktualizowane asynchronicznie, nie powinno się polegać na ich wartościach przy obliczaniu nowego stanu.<p>Na przykład, poniższy kod może nadpisać <code>counter</code> błędną wartością:<pre class="language-js"><code class="language-js"><span class="token comment">// Źle</span>
 <span class="token keyword">this</span><span class="token punctuation">.</span><span class="token method function property-access">setState</span><span class="token punctuation">(</span><span class="token punctuation">{</span>
   <span class="token literal-property property">counter</span><span class="token operator">:</span> <span class="token keyword">this</span><span class="token punctuation">.</span><span class="token property-access">state</span><span class="token punctuation">.</span><span class="token property-access">counter</span> <span class="token operator">+</span> <span class="token keyword">this</span><span class="token punctuation">.</span><span class="token property-access">props</span><span class="token punctuation">.</span><span class="token property-access">increment</span><span class="token punctuation">,</span>
-<span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">;</span></code></pre>
-          <p>Aby temu zaradzić, wystarczy użyć alternatywnej wersji metody <code>setState()</code>, która jako argument przyjmuje funkcję zamiast obiektu. Funkcja ta otrzyma dwa argumenty: aktualny stan oraz aktualne atrybuty komponentu.</p>
-          <pre class="language-js"><code class="language-js"><span class="token comment">// Dobrze</span>
+<span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">;</span></code></pre><p>Aby temu zaradzić, wystarczy użyć alternatywnej wersji metody <code>setState()</code>, która jako argument przyjmuje funkcję zamiast obiektu. Funkcja ta otrzyma dwa argumenty: aktualny stan oraz aktualne atrybuty komponentu.<pre class="language-js"><code class="language-js"><span class="token comment">// Dobrze</span>
 <span class="token keyword">this</span><span class="token punctuation">.</span><span class="token method function property-access">setState</span><span class="token punctuation">(</span><span class="token punctuation">(</span><span class="token parameter">state<span class="token punctuation">,</span> props</span><span class="token punctuation">)</span> <span class="token arrow operator">=></span> <span class="token punctuation">(</span><span class="token punctuation">{</span>
   <span class="token literal-property property">counter</span><span class="token operator">:</span> state<span class="token punctuation">.</span><span class="token property-access">counter</span> <span class="token operator">+</span> props<span class="token punctuation">.</span><span class="token property-access">increment</span>
-<span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span></code></pre>
-          <p>W powyższym kodzie użyliśmy <a href="https://developer.mozilla.org/pl/docs/Web/JavaScript/Reference/Functions/Funkcje_strzalkowe">funkcji strzałkowej</a>, lecz równie dobrze moglibyśmy użyć zwykłej funkcji:</p>
-          <pre class="language-js"><code class="language-js"><span class="token comment">// Dobrze</span>
+<span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span></code></pre><p>W powyższym kodzie użyliśmy <a href="https://developer.mozilla.org/pl/docs/Web/JavaScript/Reference/Functions/Funkcje_strzalkowe">funkcji strzałkowej</a>, lecz równie dobrze moglibyśmy użyć zwykłej funkcji:<pre class="language-js"><code class="language-js"><span class="token comment">// Dobrze</span>
 <span class="token keyword">this</span><span class="token punctuation">.</span><span class="token method function property-access">setState</span><span class="token punctuation">(</span><span class="token keyword">function</span><span class="token punctuation">(</span><span class="token parameter">state<span class="token punctuation">,</span> props</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
   <span class="token keyword control-flow">return</span> <span class="token punctuation">{</span>
     <span class="token literal-property property">counter</span><span class="token operator">:</span> state<span class="token punctuation">.</span><span class="token property-access">counter</span> <span class="token operator">+</span> props<span class="token punctuation">.</span><span class="token property-access">increment</span>
   <span class="token punctuation">}</span><span class="token punctuation">;</span>
-<span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">;</span></code></pre>
-        </section>
-        <section id="state-updates-are-merged" class="level3">
-          <h3>Aktualizowany stan jest scalany</h3>
-          <p>Gdy wywołujesz <code>setState()</code>, React scala (ang. <em>merge</em>) przekazany obiekt z aktualnym stanem komponentu.</p>
-          <p>Na przykład, gdyby komponent przechowywał w stanie kilka niezależnych zmiennych:</p>
-          <pre class="language-js{4,5}"><code class="language-js{4,5}">  constructor(props) {
+<span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">;</span></code></pre></section><section id="state-updates-are-merged"class="level3"><h3>Aktualizowany stan jest scalany</h3><p>Gdy wywołujesz <code>setState()</code>, React scala (ang. <em>merge</em>) przekazany obiekt z aktualnym stanem komponentu.<p>Na przykład, gdyby komponent przechowywał w stanie kilka niezależnych zmiennych:<pre class="language-js{4,5}"><code class="language-js{4,5}">  constructor(props) {
     super(props);
     this.state = {
       posts: [],
       comments: []
     };
-  }</code></pre>
-          <p>można byłoby je zaktualizować niezależnie za pomocą osobnych wywołań metody <code>setState()</code>:</p>
-          <pre class="language-js{4,10}"><code class="language-js{4,10}">  componentDidMount() {
+  }</code></pre><p>można byłoby je zaktualizować niezależnie za pomocą osobnych wywołań metody <code>setState()</code>:<pre class="language-js{4,10}"><code class="language-js{4,10}">  componentDidMount() {
     fetchPosts().then(response => {
       this.setState({
         posts: response.posts
@@ -310,25 +171,9 @@ root.render(&#x3C;Clock />);</code></pre>
         comments: response.comments
       });
     });
-  }</code></pre>
-          <p>Scalanie jest płytkie (ang. <em>shallow</em>), tzn. <code>this.setState({comments})</code> nie zmieni <code>this.state.posts</code>, lecz całkowicie nadpisze wartość <code>this.state.comments</code>.</p>
-        </section>
-      </section>
-      <section id="the-data-flows-down" class="level2">
-        <h2>Dane płyną z góry na dół</h2>
-        <p>Ani komponenty-rodzice, ani ich dzieci nie wiedzą, czy jakiś komponent posiada stan, czy też nie. Nie powinny się również przejmować tym, czy jest on funkcyjny, czy klasowy.</p>
-        <p>Właśnie z tego powodu stan jest nazywany lokalnym lub enkapsulowanym. Nie mają do niego dostępu żadne komponenty poza tym, który go posiada i modyfikuje.</p>
-        <p>Komponent może zdecydować się na przekazanie swojego stanu w dół struktury poprzez atrybuty jego komponentów potomnych:</p>
-        <pre class="language-js"><code class="language-js"><span class="token operator">&#x3C;</span><span class="token maybe-class-name">FormattedDate</span> date<span class="token operator">=</span><span class="token punctuation">{</span><span class="token keyword">this</span><span class="token punctuation">.</span><span class="token property-access">state</span><span class="token punctuation">.</span><span class="token property-access">date</span><span class="token punctuation">}</span> <span class="token operator">/</span><span class="token operator">></span></code></pre>
-        <p>Komponent <code>FormattedDate</code> otrzyma <code>date</code> jako atrybut i nie będzie w stanie rozróżnić, czy pochodzi on ze stanu lub jednego z atrybutów komponentu <code>Clock</code>, czy też został przekazany bezpośrednio przez wartość:</p>
-        <pre class="language-js"><code class="language-js"><span class="token keyword">function</span> <span class="token function"><span class="token maybe-class-name">FormattedDate</span></span><span class="token punctuation">(</span><span class="token parameter">props</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  }</code></pre><p>Scalanie jest płytkie (ang. <em>shallow</em>), tzn. <code>this.setState({comments})</code> nie zmieni <code>this.state.posts</code>, lecz całkowicie nadpisze wartość <code>this.state.comments</code>.</section></section><section id="the-data-flows-down"class="level2"><h2>Dane płyną z góry na dół</h2><p>Ani komponenty-rodzice, ani ich dzieci nie wiedzą, czy jakiś komponent posiada stan, czy też nie. Nie powinny się również przejmować tym, czy jest on funkcyjny, czy klasowy.<p>Właśnie z tego powodu stan jest nazywany lokalnym lub enkapsulowanym. Nie mają do niego dostępu żadne komponenty poza tym, który go posiada i modyfikuje.<p>Komponent może zdecydować się na przekazanie swojego stanu w dół struktury poprzez atrybuty jego komponentów potomnych:<pre class="language-js"><code class="language-js"><span class="token operator">&#x3C;</span><span class="token maybe-class-name">FormattedDate</span> date<span class="token operator">=</span><span class="token punctuation">{</span><span class="token keyword">this</span><span class="token punctuation">.</span><span class="token property-access">state</span><span class="token punctuation">.</span><span class="token property-access">date</span><span class="token punctuation">}</span> <span class="token operator">/</span><span class="token operator">></span></code></pre><p>Komponent <code>FormattedDate</code> otrzyma <code>date</code> jako atrybut i nie będzie w stanie rozróżnić, czy pochodzi on ze stanu lub jednego z atrybutów komponentu <code>Clock</code>, czy też został przekazany bezpośrednio przez wartość:<pre class="language-js"><code class="language-js"><span class="token keyword">function</span> <span class="token function"><span class="token maybe-class-name">FormattedDate</span></span><span class="token punctuation">(</span><span class="token parameter">props</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
   <span class="token keyword control-flow">return</span> <span class="token operator">&#x3C;</span>h2<span class="token operator">></span><span class="token maybe-class-name">Aktualny</span> czas<span class="token operator">:</span> <span class="token punctuation">{</span>props<span class="token punctuation">.</span><span class="token property-access">date</span><span class="token punctuation">.</span><span class="token method function property-access">toLocaleTimeString</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">}</span><span class="token punctuation">.</span><span class="token operator">&#x3C;</span><span class="token operator">/</span>h2<span class="token operator">></span><span class="token punctuation">;</span>
-<span class="token punctuation">}</span></code></pre>
-        <p><a href="https://codepen.io/gaearon/pen/zKRqNB?editors=0010"><strong>Przetestuj kod na CodePen</strong></a></p>
-        <p>Taki przepływ danych nazywany jest powszechnie jednokierunkowym (ang. <em>unidirectional</em>) lub "z góry na dół" (ang. <em>top-down</em>). Stan jest zawsze własnością konkretnego komponentu i wszelkie dane lub części UI, powstałe w oparciu o niego, mogą wpłynąć jedynie na komponenty znajdujące się "poniżej" w drzewie.</p>
-        <p>Wyobraź sobie, że drzewo komponentów to wodospad atrybutów, a stan każdego z komponentów to dodatkowe źródło wody, które go zasila, jednocześnie spadając w dół wraz z resztą wody.</p>
-        <p>Aby pokazać, że wszystkie komponenty są odizolowane od reszty, stwórzmy komponent <code>App</code>, który renderuje trzy elementy <code>&#x3C;Clock></code>:</p>
-        <pre class="language-js{4-6}"><code class="language-js{4-6}">function App() {
+<span class="token punctuation">}</span></code></pre><p><a href="https://codepen.io/gaearon/pen/zKRqNB?editors=0010"><strong>Przetestuj kod na CodePen</strong></a><p>Taki przepływ danych nazywany jest powszechnie jednokierunkowym (ang. <em>unidirectional</em>) lub "z góry na dół" (ang. <em>top-down</em>). Stan jest zawsze własnością konkretnego komponentu i wszelkie dane lub części UI, powstałe w oparciu o niego, mogą wpłynąć jedynie na komponenty znajdujące się "poniżej" w drzewie.<p>Wyobraź sobie, że drzewo komponentów to wodospad atrybutów, a stan każdego z komponentów to dodatkowe źródło wody, które go zasila, jednocześnie spadając w dół wraz z resztą wody.<p>Aby pokazać, że wszystkie komponenty są odizolowane od reszty, stwórzmy komponent <code>App</code>, który renderuje trzy elementy <code>&#x3C;Clock></code>:<pre class="language-js{4-6}"><code class="language-js{4-6}">function App() {
   return (
     &#x3C;div>
       &#x3C;Clock />
@@ -336,14 +181,4 @@ root.render(&#x3C;Clock />);</code></pre>
       &#x3C;Clock />
     &#x3C;/div>
   );
-}</code></pre>
-        <p><a href="https://codepen.io/gaearon/pen/vXdGmd?editors=0010"><strong>Przetestuj kod na CodePen</strong></a></p>
-        <p>Każdy <code>Clock</code> tworzy swój własny timer i aktualizuje go niezależnie od pozostałych.</p>
-        <p>
-          W aplikacjach reactowych to, czy komponent ma stan, czy nie, jest tylko jego szczegółem implementacyjnym, który z czasem może ulec zmianie. Możesz dowolnie używać bezstanowych komponentów (ang. <em>stateless components</em>) wewnątrz tych ze stanem (ang. <em>stateful components</em>), i vice versa.
-          <span style="float: footnote;"><a href="./index.html#toc">Go to TOC</a></span>
-        </p>
-      </section>
-    </section>
-  </body>
-</html>
+}</code></pre><p><a href="https://codepen.io/gaearon/pen/vXdGmd?editors=0010"><strong>Przetestuj kod na CodePen</strong></a><p>Każdy <code>Clock</code> tworzy swój własny timer i aktualizuje go niezależnie od pozostałych.<p>W aplikacjach reactowych to, czy komponent ma stan, czy nie, jest tylko jego szczegółem implementacyjnym, który z czasem może ulec zmianie. Możesz dowolnie używać bezstanowych komponentów (ang. <em>stateless components</em>) wewnątrz tych ze stanem (ang. <em>stateful components</em>), i vice versa. <span style="float:footnote"><a href="./index.html#toc">Go to TOC</a></span></section></section>

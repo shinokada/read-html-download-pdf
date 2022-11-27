@@ -1,69 +1,26 @@
-<!doctype html>
-<html lang="en">
-  <head>
-    <meta charset="utf-8">
-    <title>Middleware directory</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <meta name="navigation.title" content="middleware">
-    <meta name="description" content="The middleware directory contains your application middleware. Middleware lets you define custom functions that can be run before rendering either a page or a group of pages (layout).">
-    <meta name="category" content="directory-structure">
-    <meta name="csb_link_anonymous" content="https://codesandbox.io/embed/github/nuxt-academy/guides-examples/tree/master/04_directory_structure/09_middleware_anonymous?fontsize=14&#x26;hidenavigation=1&#x26;theme=dark">
-    <meta name="csb_link_named" content="https://codesandbox.io/embed/github/nuxt-academy/guides-examples/tree/master/04_directory_structure/09_middleware_named?fontsize=14&#x26;hidenavigation=1&#x26;theme=dark">
-    <meta name="csb_link_router" content="https://codesandbox.io/embed/github/nuxt-academy/guides-examples/tree/master/04_directory_structure/09_middleware_router?fontsize=14&#x26;hidenavigation=1&#x26;theme=dark">
-    <link rel="stylesheet" href="https://raw.githubusercontent.com/shinokada/prism-coy-theme/main/theme_common.css">
-  </head>
-  <body>
-    <section id="middleware-directory" class="level1">
-      <h1>Middleware directory</h1>
-      <p>The <code>middleware</code> directory contains your application middleware. Middleware lets you define custom functions that can be run before rendering either a page or a group of pages (layout).</p>
-      <hr>
-      <p>Shared middleware should be placed in the  <code>middleware/</code>  directory. The filename will be the name of the middleware (<code>middleware/auth.js</code> will be the <code>auth</code> middleware). You can also define page-specific middleware by using a function directly, see <a href="/examples/middlewares/anonymous">anonymous middleware</a>.</p>
-      <p>A middleware receives <a href="./internals-glossary/context">the context</a> as the first argument.</p>
-      <pre class="language-js{}[middleware/user-agent.js]"><code class="language-js{}[middleware/user-agent.js]">export default function (context) {
+<!doctypehtml><html lang="en"><meta charset="utf-8"><title>Middleware directory</title><meta name="viewport"content="width=device-width,initial-scale=1"><meta name="navigation.title"content="middleware"><meta name="description"content="The middleware directory contains your application middleware. Middleware lets you define custom functions that can be run before rendering either a page or a group of pages (layout)."><meta name="category"content="directory-structure"><meta name="csb_link_anonymous"content="https://codesandbox.io/embed/github/nuxt-academy/guides-examples/tree/master/04_directory_structure/09_middleware_anonymous?fontsize=14&#x26;hidenavigation=1&#x26;theme=dark"><meta name="csb_link_named"content="https://codesandbox.io/embed/github/nuxt-academy/guides-examples/tree/master/04_directory_structure/09_middleware_named?fontsize=14&#x26;hidenavigation=1&#x26;theme=dark"><meta name="csb_link_router"content="https://codesandbox.io/embed/github/nuxt-academy/guides-examples/tree/master/04_directory_structure/09_middleware_router?fontsize=14&#x26;hidenavigation=1&#x26;theme=dark"><link rel="stylesheet"href="https://raw.githubusercontent.com/shinokada/prism-coy-theme/main/theme_common.css"><section id="middleware-directory"class="level1"><h1>Middleware directory</h1><p>The <code>middleware</code> directory contains your application middleware. Middleware lets you define custom functions that can be run before rendering either a page or a group of pages (layout).<hr><p>Shared middleware should be placed in the  <code>middleware/</code>  directory. The filename will be the name of the middleware (<code>middleware/auth.js</code> will be the <code>auth</code> middleware). You can also define page-specific middleware by using a function directly, see <a href="/examples/middlewares/anonymous">anonymous middleware</a>.<p>A middleware receives <a href="./internals-glossary/context">the context</a> as the first argument.<pre class="language-js{}[middleware/user-agent.js]"><code class="language-js{}[middleware/user-agent.js]">export default function (context) {
   // Add the userAgent property to the context
   context.userAgent = process.server
     ? context.req.headers['user-agent']
     : navigator.userAgent
-}</code></pre>
-      <p>In universal mode, middlewares will be called once on server-side (on the first request to the Nuxt app, e.g. when directly accessing the app or refreshing the page) and on the client-side when navigating to further routes. With <code>ssr: false</code>, middlewares will be called on the client-side in both situations.</p>
-      <p>The middleware will be executed in series in this order:</p>
-      <ol>
-        <li><code>nuxt.config.js</code> (in the order within the file)</li>
-        <li>Matched layouts</li>
-        <li>Matched pages</li>
-      </ol>
-      <section id="router-middleware" class="level2">
-        <h2>Router Middleware</h2>
-        <p>A middleware can be asynchronous. To do this return a  <code>Promise</code> or use async/await.</p>
-        <pre class="language-js{}[middleware/stats.js]"><code class="language-js{}[middleware/stats.js]">import http from 'http'
+}</code></pre><p>In universal mode, middlewares will be called once on server-side (on the first request to the Nuxt app, e.g. when directly accessing the app or refreshing the page) and on the client-side when navigating to further routes. With <code>ssr: false</code>, middlewares will be called on the client-side in both situations.<p>The middleware will be executed in series in this order:<ol><li><code>nuxt.config.js</code> (in the order within the file)<li>Matched layouts<li>Matched pages</ol><section id="router-middleware"class="level2"><h2>Router Middleware</h2><p>A middleware can be asynchronous. To do this return a  <code>Promise</code> or use async/await.<pre class="language-js{}[middleware/stats.js]"><code class="language-js{}[middleware/stats.js]">import http from 'http'
 
 export default function ({ route }) {
   return http.post('http://my-stats-api.com', {
     url: route.fullPath
   })
-}</code></pre>
-        <p>Then, in your <code>nuxt.config.js</code>, use the <code>router.middleware</code> key.</p>
-        <pre class="language-js{}[nuxt.config.js]"><code class="language-js{}[nuxt.config.js]">export default {
+}</code></pre><p>Then, in your <code>nuxt.config.js</code>, use the <code>router.middleware</code> key.<pre class="language-js{}[nuxt.config.js]"><code class="language-js{}[nuxt.config.js]">export default {
   router: {
     middleware: 'stats'
   }
-}</code></pre>
-        <p>Now the <code>stats</code> middleware will be called for every route change.</p>
-        <p>You can add your middleware (even multiple) to a specific layout or page as well.</p>
-        <pre class="language-js{}[pages/index.vue"><code class="language-js{}[pages/index.vue">export default {
+}</code></pre><p>Now the <code>stats</code> middleware will be called for every route change.<p>You can add your middleware (even multiple) to a specific layout or page as well.<pre class="language-js{}[pages/index.vue"><code class="language-js{}[pages/index.vue">export default {
   middleware: ['auth', 'stats']
-}</code></pre>
-      </section>
-      <section id="named-middleware" class="level2">
-        <h2>Named middleware</h2>
-        <p>You can create named middleware by creating a file inside the  <code>middleware/</code> directory, the file name will be the middleware name.</p>
-        <pre class="language-js{}[middleware/authenticated.js]"><code class="language-js{}[middleware/authenticated.js]">export default function ({ store, redirect }) {
+}</code></pre></section><section id="named-middleware"class="level2"><h2>Named middleware</h2><p>You can create named middleware by creating a file inside the  <code>middleware/</code> directory, the file name will be the middleware name.<pre class="language-js{}[middleware/authenticated.js]"><code class="language-js{}[middleware/authenticated.js]">export default function ({ store, redirect }) {
   // If the user is not authenticated
   if (!store.state.authenticated) {
     return redirect('/login')
   }
-}</code></pre>
-        <pre class="language-html{}[pages/secret.vue]"><code class="language-html{}[pages/secret.vue]">&#x3C;template>
+}</code></pre><pre class="language-html{}[pages/secret.vue]"><code class="language-html{}[pages/secret.vue]">&#x3C;template>
   &#x3C;h1>Secret page&#x3C;/h1>
 &#x3C;/template>
 
@@ -71,12 +28,7 @@ export default function ({ route }) {
   export default {
     middleware: 'authenticated'
   }
-&#x3C;/script></code></pre>
-      </section>
-      <section id="anonymous-middleware" class="level2">
-        <h2>Anonymous middleware</h2>
-        <p>If you need to use a middleware only for a specific page, you can directly use a function for it (or an array of functions):</p>
-        <pre class="language-html{}[pages/secret.vue]"><code class="language-html{}[pages/secret.vue]">&#x3C;template>
+&#x3C;/script></code></pre></section><section id="anonymous-middleware"class="level2"><h2>Anonymous middleware</h2><p>If you need to use a middleware only for a specific page, you can directly use a function for it (or an array of functions):<pre class="language-html{}[pages/secret.vue]"><code class="language-html{}[pages/secret.vue]">&#x3C;template>
   &#x3C;h1>Secret page&#x3C;/h1>
 &#x3C;/template>
 
@@ -89,9 +41,4 @@ export default function ({ route }) {
       }
     }
   }
-&#x3C;/script></code></pre>
-        <p><span style="float: footnote;"><a href="../index.html#toc">Go to TOC</a></span></p>
-      </section>
-    </section>
-  </body>
-</html>
+&#x3C;/script></code></pre><p><span style="float:footnote"><a href="../index.html#toc">Go to TOC</a></span></section></section>

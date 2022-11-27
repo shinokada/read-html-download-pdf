@@ -1,47 +1,18 @@
-<!doctype html>
-<html lang="ja">
-  <head>
-    <meta charset="utf-8">
-    <title>Form actions</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <link rel="stylesheet" href="https://raw.githubusercontent.com/shinokada/prism-coy-theme/main/theme_common.css">
-  </head>
-  <body>
-    <section id="form-actions" class="level1">
-      <h1>Form actions</h1>
-      <p><code>+page.server.js</code> ファイルは <em>actions</em> をエクスポートできます。これによって、<code>&#x3C;form></code> 要素を使用することでサーバーにデータを <code>POST</code> することができます。</p>
-      <p><code>&#x3C;form></code> を使用する場合、クライアントサイドの JavaScript はオプションですが、JavaScript によって form のインタラクションを簡単にプログレッシブに強化(<em>progressively enhance</em>)することができ、最高のユーザーエクスペリエンスを提供することができます。</p>
-      <section id="default-actions" class="level2">
-        <h2>Default actions</h2>
-        <p>最もシンプルなケースでは、ページは <code>default</code> の action を宣言します:</p>
-        <pre class="language-js"><code class="language-js"><span class="token comment">/// file: src/routes/login/+page.server.js</span>
+<!doctypehtml><html lang="ja"><meta charset="utf-8"><title>Form actions</title><meta name="viewport"content="width=device-width,initial-scale=1"><link rel="stylesheet"href="https://raw.githubusercontent.com/shinokada/prism-coy-theme/main/theme_common.css"><section id="form-actions"class="level1"><h1>Form actions</h1><p><code>+page.server.js</code> ファイルは <em>actions</em> をエクスポートできます。これによって、<code>&#x3C;form></code> 要素を使用することでサーバーにデータを <code>POST</code> することができます。<p><code>&#x3C;form></code> を使用する場合、クライアントサイドの JavaScript はオプションですが、JavaScript によって form のインタラクションを簡単にプログレッシブに強化(<em>progressively enhance</em>)することができ、最高のユーザーエクスペリエンスを提供することができます。<section id="default-actions"class="level2"><h2>Default actions</h2><p>最もシンプルなケースでは、ページは <code>default</code> の action を宣言します:<pre class="language-js"><code class="language-js"><span class="token comment">/// file: src/routes/login/+page.server.js</span>
 <span class="token doc-comment comment">/** <span class="token keyword">@type</span> <span class="token class-name"><span class="token punctuation">{</span><span class="token keyword module">import</span><span class="token punctuation">(</span><span class="token string">'./$types'</span><span class="token punctuation">)</span><span class="token punctuation">.</span>Actions<span class="token punctuation">}</span></span> */</span>
 <span class="token keyword module">export</span> <span class="token keyword">const</span> actions <span class="token operator">=</span> <span class="token punctuation">{</span>
 	<span class="token function-variable function">default</span><span class="token operator">:</span> <span class="token keyword">async</span> <span class="token punctuation">(</span><span class="token parameter">event</span><span class="token punctuation">)</span> <span class="token arrow operator">=></span> <span class="token punctuation">{</span>
 		<span class="token comment">// TODO log the user in</span>
 	<span class="token punctuation">}</span>
-<span class="token punctuation">}</span><span class="token punctuation">;</span></code></pre>
-        <p><code>/login</code> ページからこの action を呼び出すには、<code>&#x3C;form></code> を追加します。JavaScript は必要ありません:</p>
-        <pre class="language-svelte"><code class="language-svelte">/// file: src/routes/login/+page.svelte
+<span class="token punctuation">}</span><span class="token punctuation">;</span></code></pre><p><code>/login</code> ページからこの action を呼び出すには、<code>&#x3C;form></code> を追加します。JavaScript は必要ありません:<pre class="language-svelte"><code class="language-svelte">/// file: src/routes/login/+page.svelte
 &#x3C;form method="POST">
 	&#x3C;input name="email" type="email">
 	&#x3C;input name="password" type="password">
 	&#x3C;button>Log in&#x3C;/button>
-&#x3C;/form></code></pre>
-        <p>もし誰かがボタンをクリックしたら、ブラウザは form のデータを <code>POST</code> リクエストでサーバーに送信し、デフォルトの action が実行されます。</p>
-        <blockquote>
-          <p>Action は常に <code>POST</code> リクエストを使用します。<code>GET</code> リクエストには決して副作用があってはならないからです。</p>
-        </blockquote>
-        <p>また、<code>action</code> 属性を追加し、リクエスト先のページを指し示すことで、他のページから action を呼び出すこともできます (例えば、最上位のレイアウト(root layout)にある nav にログイン用の widget がある場合):</p>
-        <pre class="language-html"><code class="language-html">/// file: src/routes/+layout.svelte
+&#x3C;/form></code></pre><p>もし誰かがボタンをクリックしたら、ブラウザは form のデータを <code>POST</code> リクエストでサーバーに送信し、デフォルトの action が実行されます。<blockquote><p>Action は常に <code>POST</code> リクエストを使用します。<code>GET</code> リクエストには決して副作用があってはならないからです。</blockquote><p>また、<code>action</code> 属性を追加し、リクエスト先のページを指し示すことで、他のページから action を呼び出すこともできます (例えば、最上位のレイアウト(root layout)にある nav にログイン用の widget がある場合):<pre class="language-html"><code class="language-html">/// file: src/routes/+layout.svelte
 <span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;</span>form</span> <span class="token attr-name">method</span><span class="token attr-value"><span class="token punctuation attr-equals">=</span><span class="token punctuation">"</span>POST<span class="token punctuation">"</span></span> <span class="token attr-name">action</span><span class="token attr-value"><span class="token punctuation attr-equals">=</span><span class="token punctuation">"</span>/login<span class="token punctuation">"</span></span><span class="token punctuation">></span></span>
 	<span class="token comment">&#x3C;!-- content --></span>
-<span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;/</span>form</span><span class="token punctuation">></span></span></code></pre>
-      </section>
-      <section id="named-actions" class="level2">
-        <h2>Named actions</h2>
-        <p>単一の <code>default</code> の action の代わりに、名前付きの action (named action) を必要なだけ持つことができます:</p>
-        <pre class="language-diff"><code class="language-diff">/// file: src/routes/login/+page.server.js
+<span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;/</span>form</span><span class="token punctuation">></span></span></code></pre></section><section id="named-actions"class="level2"><h2>Named actions</h2><p>単一の <code>default</code> の action の代わりに、名前付きの action (named action) を必要なだけ持つことができます:<pre class="language-diff"><code class="language-diff">/// file: src/routes/login/+page.server.js
 
 /** @type {import('./$types').Actions} */
 export const actions = {
@@ -52,29 +23,16 @@ export const actions = {
 <span class="token inserted-sign inserted"><span class="token prefix inserted">+</span><span class="token line">	register: async (event) => {
 </span><span class="token prefix inserted">+</span><span class="token line">		// TODO register the user
 </span><span class="token prefix inserted">+</span><span class="token line">	}
-</span></span>};</code></pre>
-        <p>名前付きの action (named action) を呼び出すには、クエリパラメータに <code>/</code> を接頭辞に付与したその action の名前を追加します:</p>
-        <pre class="language-svelte"><code class="language-svelte">/// file: src/routes/login/+page.svelte
-&#x3C;form method="POST" action="?/register"></code></pre>
-        <pre class="language-svelte"><code class="language-svelte">/// file: src/routes/+layout.svelte
-&#x3C;form method="POST" action="/login?/register"></code></pre>
-        <p><code>action</code> 属性と同じように、button の <code>formaction</code> 属性を使用することができ、こうすると親の <code>&#x3C;form></code> とは別の action に同じ form のデータを <code>POST</code> することができます:</p>
-        <pre class="language-diff"><code class="language-diff">/// file: src/routes/login/+page.svelte
+</span></span>};</code></pre><p>名前付きの action (named action) を呼び出すには、クエリパラメータに <code>/</code> を接頭辞に付与したその action の名前を追加します:<pre class="language-svelte"><code class="language-svelte">/// file: src/routes/login/+page.svelte
+&#x3C;form method="POST" action="?/register"></code></pre><pre class="language-svelte"><code class="language-svelte">/// file: src/routes/+layout.svelte
+&#x3C;form method="POST" action="/login?/register"></code></pre><p><code>action</code> 属性と同じように、button の <code>formaction</code> 属性を使用することができ、こうすると親の <code>&#x3C;form></code> とは別の action に同じ form のデータを <code>POST</code> することができます:<pre class="language-diff"><code class="language-diff">/// file: src/routes/login/+page.svelte
 <span class="token deleted-sign deleted"><span class="token prefix deleted">-</span><span class="token line">&#x3C;form method="POST">
 </span></span><span class="token inserted-sign inserted"><span class="token prefix inserted">+</span><span class="token line">&#x3C;form method="POST" action="?/login">
 </span></span>	&#x3C;input name="email" type="email">
 	&#x3C;input name="password" type="password">
 	&#x3C;button>Log in&#x3C;/button>
 <span class="token inserted-sign inserted"><span class="token prefix inserted">+</span><span class="token line">	&#x3C;button formaction="?/register">Register&#x3C;/button>
-</span></span><span class="token deleted-arrow deleted"><span class="token prefix deleted">&#x3C;</span><span class="token line">/form></span></span></code></pre>
-        <blockquote>
-          <p>名前付き action (named action) の隣にデフォルトの action を置くことはできません。なぜなら リダイレクト無しで名前付き action (named action) に POST をすると、クエリパラメータが URL に保持され、それ以降デフォルトの POST をしようとしても以前 POST した名前付き action (named action) を通ってしまうからです。</p>
-        </blockquote>
-      </section>
-      <section id="action-の解剖学" class="level2">
-        <h2>action の解剖学</h2>
-        <p>action はそれぞれ <code>RequestEvent</code> オブジェクトを受け取って、<code>request.formData()</code> でデータを読み込むことができます。リクエスト (例えば、cookie をセットしてユーザーをログインさせるなど) を処理したあと、action は次の更新まで、対応するページでは <code>form</code> プロパティで、アプリ全体では <code>$page.form</code> で利用可能なデータで応答することができます。</p>
-        <pre class="language-js"><code class="language-js"><span class="token comment">// @errors: 2339 2304</span>
+</span></span><span class="token deleted-arrow deleted"><span class="token prefix deleted">&#x3C;</span><span class="token line">/form></span></span></code></pre><blockquote><p>名前付き action (named action) の隣にデフォルトの action を置くことはできません。なぜなら リダイレクト無しで名前付き action (named action) に POST をすると、クエリパラメータが URL に保持され、それ以降デフォルトの POST をしようとしても以前 POST した名前付き action (named action) を通ってしまうからです。</blockquote></section><section id="action-の解剖学"class="level2"><h2>action の解剖学</h2><p>action はそれぞれ <code>RequestEvent</code> オブジェクトを受け取って、<code>request.formData()</code> でデータを読み込むことができます。リクエスト (例えば、cookie をセットしてユーザーをログインさせるなど) を処理したあと、action は次の更新まで、対応するページでは <code>form</code> プロパティで、アプリ全体では <code>$page.form</code> で利用可能なデータで応答することができます。<pre class="language-js"><code class="language-js"><span class="token comment">// @errors: 2339 2304</span>
 <span class="token comment">/// file: src/routes/login/+page.server.js</span>
 <span class="token doc-comment comment">/** <span class="token keyword">@type</span> <span class="token class-name"><span class="token punctuation">{</span><span class="token keyword module">import</span><span class="token punctuation">(</span><span class="token string">'./$types'</span><span class="token punctuation">)</span><span class="token punctuation">.</span>PageServerLoad<span class="token punctuation">}</span></span> */</span>
 <span class="token keyword module">export</span> <span class="token keyword">async</span> <span class="token keyword">function</span> <span class="token function">load</span><span class="token punctuation">(</span><span class="token parameter"><span class="token punctuation">{</span> cookies <span class="token punctuation">}</span></span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
@@ -97,8 +55,7 @@ export const actions = {
 	<span class="token function-variable function">register</span><span class="token operator">:</span> <span class="token keyword">async</span> <span class="token punctuation">(</span><span class="token parameter">event</span><span class="token punctuation">)</span> <span class="token arrow operator">=></span> <span class="token punctuation">{</span>
 		<span class="token comment">// TODO register the user</span>
 	<span class="token punctuation">}</span>
-<span class="token punctuation">}</span><span class="token punctuation">;</span></code></pre>
-        <pre class="language-svelte"><code class="language-svelte">/// file: src/routes/login/+page.svelte
+<span class="token punctuation">}</span><span class="token punctuation">;</span></code></pre><pre class="language-svelte"><code class="language-svelte">/// file: src/routes/login/+page.svelte
 &#x3C;script>
 	/** @type {import('./$types').PageData} */
 	export let data;
@@ -111,11 +68,7 @@ export const actions = {
 	&#x3C;!-- このメッセージは一時的なものです; form 送信に対するレスポンスとしてページがレンダリングされたため、存在しています。
 	       ユーザーがリロードすると消えます。 -->
 	&#x3C;p>Successfully logged in! Welcome back, {data.user.name}&#x3C;/p>
-{/if}</code></pre>
-        <section id="validation-errors" class="level3">
-          <h3>Validation errors</h3>
-          <p>無効なデータが原因でリクエストが処理できなかった場合、再試行できるようにするために、直前に送信した form の値とともに validation error をユーザーに返すことができます。<code>invalid</code> 関数は、HTTP ステータスコード (通常、validation error の場合は 400 か 422) をデータとともに返します。ステータスコードは <code>$page.status</code> から使用することができ、data は <code>form</code> から使用することができます:</p>
-          <pre class="language-diff"><code class="language-diff">// @errors: 2339 2304
+{/if}</code></pre><section id="validation-errors"class="level3"><h3>Validation errors</h3><p>無効なデータが原因でリクエストが処理できなかった場合、再試行できるようにするために、直前に送信した form の値とともに validation error をユーザーに返すことができます。<code>invalid</code> 関数は、HTTP ステータスコード (通常、validation error の場合は 400 か 422) をデータとともに返します。ステータスコードは <code>$page.status</code> から使用することができ、data は <code>form</code> から使用することができます:<pre class="language-diff"><code class="language-diff">// @errors: 2339 2304
 /// file: src/routes/login/+page.server.js
 <span class="token inserted-sign inserted"><span class="token prefix inserted">+</span><span class="token line">import { invalid } from '@sveltejs/kit';
 </span></span>
@@ -143,11 +96,7 @@ export const actions = {
 	register: async (event) => {
 		// TODO register the user
 	}
-};</code></pre>
-          <blockquote>
-            <p>念のため、password は返さず、email のみをページに返していることにご注意ください。</p>
-          </blockquote>
-          <pre class="language-diff"><code class="language-diff">/// file: src/routes/login/+page.svelte
+};</code></pre><blockquote><p>念のため、password は返さず、email のみをページに返していることにご注意ください。</blockquote><pre class="language-diff"><code class="language-diff">/// file: src/routes/login/+page.svelte
 <span class="token deleted-arrow deleted"><span class="token prefix deleted">&#x3C;</span><span class="token line">form method="POST" action="?/login">
 </span></span><span class="token deleted-sign deleted"><span class="token prefix deleted">-</span><span class="token line">	&#x3C;input name="email" type="email">
 </span></span><span class="token inserted-sign inserted"><span class="token prefix inserted">+</span><span class="token line">	{#if form?.missing}&#x3C;p class="error">The email field is required&#x3C;/p>{/if}
@@ -157,13 +106,7 @@ export const actions = {
 	&#x3C;input name="password" type="password">
 	&#x3C;button>Log in&#x3C;/button>
 	&#x3C;button formaction="?/register">Register&#x3C;/button>
-<span class="token deleted-arrow deleted"><span class="token prefix deleted">&#x3C;</span><span class="token line">/form></span></span></code></pre>
-          <p>戻り値は JSON としてシリアライズ可能でなければなりません。その上で、構造は完全にあなた次第です。例えば、もしページに複数の form がある場合、返された <code>form</code> データがどの <code>&#x3C;form></code> を参照しているかを <code>id</code> プロパティなどで区別することができます。</p>
-        </section>
-        <section id="redirects" class="level3">
-          <h3>Redirects</h3>
-          <p>redirect (と error) は <a href="../20-core-concepts/20-load.html#redirects"><code>load</code></a> のそれと同じように機能します:</p>
-          <pre class="language-diff"><code class="language-diff">// @errors: 2339 2304
+<span class="token deleted-arrow deleted"><span class="token prefix deleted">&#x3C;</span><span class="token line">/form></span></span></code></pre><p>戻り値は JSON としてシリアライズ可能でなければなりません。その上で、構造は完全にあなた次第です。例えば、もしページに複数の form がある場合、返された <code>form</code> データがどの <code>&#x3C;form></code> を参照しているかを <code>id</code> プロパティなどで区別することができます。</section><section id="redirects"class="level3"><h3>Redirects</h3><p>redirect (と error) は <a href="../20-core-concepts/20-load.html#redirects"><code>load</code></a> のそれと同じように機能します:<pre class="language-diff"><code class="language-diff">// @errors: 2339 2304
 /// file: src/routes/login/+page.server.js
 <span class="token inserted-sign inserted"><span class="token prefix inserted">+</span><span class="token line">import { invalid, redirect } from '@sveltejs/kit';
 </span></span>
@@ -194,14 +137,7 @@ export const actions = {
 	register: async (event) => {
 		// TODO register the user
 	}
-};</code></pre>
-        </section>
-      </section>
-      <section id="loading-data" class="level2">
-        <h2>Loading data</h2>
-        <p>action の実行後、そのページは (リダイレクトや予期せぬエラーが発生しない限り) 再レンダリングされ、action の戻り値が <code>form</code> プロパティとしてそのページで使用できるようになります。つまり、ページの <code>load</code> 関数は、action が完了したあとに実行されるということです。</p>
-        <p><code>handle</code> は action が呼び出される前に実行され、<code>load</code> 関数より前に再実行されることはないことに注意してください。つまり、例えば <code>handle</code> を使用して cookie を元に <code>event.locals</code> に値を入れる場合、action で cookie を設定したり削除したりするときは <code>event.locals</code> を更新しなければなりません:</p>
-        <pre class="language-js"><code class="language-js"><span class="token comment">/// file: src/hooks.server.js</span>
+};</code></pre></section></section><section id="loading-data"class="level2"><h2>Loading data</h2><p>action の実行後、そのページは (リダイレクトや予期せぬエラーが発生しない限り) 再レンダリングされ、action の戻り値が <code>form</code> プロパティとしてそのページで使用できるようになります。つまり、ページの <code>load</code> 関数は、action が完了したあとに実行されるということです。<p><code>handle</code> は action が呼び出される前に実行され、<code>load</code> 関数より前に再実行されることはないことに注意してください。つまり、例えば <code>handle</code> を使用して cookie を元に <code>event.locals</code> に値を入れる場合、action で cookie を設定したり削除したりするときは <code>event.locals</code> を更新しなければなりません:<pre class="language-js"><code class="language-js"><span class="token comment">/// file: src/hooks.server.js</span>
 <span class="token comment">// @filename: ambient.d.ts</span>
 declare namespace <span class="token maybe-class-name">App</span> <span class="token punctuation">{</span>
 	<span class="token keyword">interface</span> <span class="token class-name">Locals</span> <span class="token punctuation">{</span>
@@ -226,8 +162,7 @@ declare global <span class="token punctuation">{</span>
 <span class="token keyword module">export</span> <span class="token keyword">async</span> <span class="token keyword">function</span> <span class="token function">handle</span><span class="token punctuation">(</span><span class="token parameter"><span class="token punctuation">{</span> event<span class="token punctuation">,</span> resolve <span class="token punctuation">}</span></span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
 	event<span class="token punctuation">.</span><span class="token property-access">locals</span><span class="token punctuation">.</span><span class="token property-access">user</span> <span class="token operator">=</span> <span class="token keyword control-flow">await</span> <span class="token function">getUser</span><span class="token punctuation">(</span>event<span class="token punctuation">.</span><span class="token property-access">cookies</span><span class="token punctuation">.</span><span class="token method function property-access">get</span><span class="token punctuation">(</span><span class="token string">'sessionid'</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
 	<span class="token keyword control-flow">return</span> <span class="token function">resolve</span><span class="token punctuation">(</span>event<span class="token punctuation">)</span><span class="token punctuation">;</span>
-<span class="token punctuation">}</span></code></pre>
-        <pre class="language-js"><code class="language-js"><span class="token comment">/// file: src/routes/account/+page.server.js</span>
+<span class="token punctuation">}</span></code></pre><pre class="language-js"><code class="language-js"><span class="token comment">/// file: src/routes/account/+page.server.js</span>
 <span class="token comment">// @filename: ambient.d.ts</span>
 declare namespace <span class="token maybe-class-name">App</span> <span class="token punctuation">{</span>
 	<span class="token keyword">interface</span> <span class="token class-name">Locals</span> <span class="token punctuation">{</span>
@@ -252,15 +187,7 @@ declare namespace <span class="token maybe-class-name">App</span> <span class="t
 		event<span class="token punctuation">.</span><span class="token property-access">cookies</span><span class="token punctuation">.</span><span class="token method function property-access">delete</span><span class="token punctuation">(</span><span class="token string">'sessionid'</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
 		event<span class="token punctuation">.</span><span class="token property-access">locals</span><span class="token punctuation">.</span><span class="token property-access">user</span> <span class="token operator">=</span> <span class="token keyword null nil">null</span><span class="token punctuation">;</span>
 	<span class="token punctuation">}</span>
-<span class="token punctuation">}</span><span class="token punctuation">;</span></code></pre>
-      </section>
-      <section id="progressive-enhancement" class="level2">
-        <h2>Progressive enhancement</h2>
-        <p>前のセクションでは <a href="https://kryogenix.org/code/browser/everyonehasjs.html">クライアントサイドの JavaScriptなしで動作する</a> <code>/login</code> action を構築しました — <code>fetch</code> は見当たりません。これは素晴らしいことですが、JavaScript が利用可能な場合は、より良いユーザーエクスペリンスを提供するために form のインタラクションをプログレッシブに強化 (progressively enhance) することができます。</p>
-        <section id="useenhance" class="level3">
-          <h3>use:enhance</h3>
-          <p>form をプログレッシブに強化する最も簡単な方法は、<code>use:enhance</code> action を追加することです:</p>
-          <pre class="language-diff"><code class="language-diff">/// file: src/routes/login/+page.svelte
+<span class="token punctuation">}</span><span class="token punctuation">;</span></code></pre></section><section id="progressive-enhancement"class="level2"><h2>Progressive enhancement</h2><p>前のセクションでは <a href="https://kryogenix.org/code/browser/everyonehasjs.html">クライアントサイドの JavaScriptなしで動作する</a> <code>/login</code> action を構築しました — <code>fetch</code> は見当たりません。これは素晴らしいことですが、JavaScript が利用可能な場合は、より良いユーザーエクスペリンスを提供するために form のインタラクションをプログレッシブに強化 (progressively enhance) することができます。<section id="useenhance"class="level3"><h3>use:enhance</h3><p>form をプログレッシブに強化する最も簡単な方法は、<code>use:enhance</code> action を追加することです:<pre class="language-diff"><code class="language-diff">/// file: src/routes/login/+page.svelte
 <span class="token deleted-arrow deleted"><span class="token prefix deleted">&#x3C;</span><span class="token line">script>
 </span></span><span class="token inserted-sign inserted"><span class="token prefix inserted">+</span><span class="token line">	import { enhance } from '$app/forms';
 </span></span>
@@ -268,19 +195,7 @@ declare namespace <span class="token maybe-class-name">App</span> <span class="t
 	export let form;
 <span class="token deleted-arrow deleted"><span class="token prefix deleted">&#x3C;</span><span class="token line">/script>
 </span></span>
-<span class="token inserted-sign inserted"><span class="token prefix inserted">+</span><span class="token line">&#x3C;form method="POST" use:enhance></span></span></code></pre>
-          <blockquote>
-            <p>ええ、<code>enhance</code> action と <code>&#x3C;form action></code> をどちらも 'action' と呼んでいて、少し紛らわしいですよね。このドキュメントは action でいっぱいです。申し訳ありません。</p>
-          </blockquote>
-          <p>引数が無い場合、<code>use:enhance</code> は、ブラウザネイティブの動作を、フルページリロードを除いてエミュレートします。それは:</p>
-          <ul>
-            <li>action が送信元のページと同じ場所にある場合に限り、成功レスポンスまたは不正なレスポンスに応じて、<code>form</code> プロパティと <code>$page.form</code> と <code>$page.status</code> を更新します。例えば、<code>&#x3C;form action="/somewhere/else" ..></code> というようなフォームの場合、<code>form</code> と <code>$page</code> は更新されません。これは、ネイティブのフォーム送信では action があるページにリダイレクトされるからです。</li>
-            <li>成功レスポンスの場合は、<code>&#x3C;form></code> 要素をリセットして <code>invalidateAll</code> で全てのデータを無効化・最新化(invalidate)します。</li>
-            <li>リダイレクトレスポンスの場合は <code>goto</code> を呼び出します</li>
-            <li>エラーが発生した場合はもっとも近くにある <code>+error</code> 境界をレンダリングします</li>
-          </ul>
-          <p>この挙動をカスタマイズするために、form が送信される直前に実行される関数を提供することができます。そして (オプションで) <code>ActionResult</code> を引数に取るコールバックを返すことができます。もしコールバックを返す場合、上述のデフォルトの動作はトリガーされません。元に戻すには、<code>update</code> を呼び出してください。</p>
-          <pre class="language-svelte"><code class="language-svelte">&#x3C;form
+<span class="token inserted-sign inserted"><span class="token prefix inserted">+</span><span class="token line">&#x3C;form method="POST" use:enhance></span></span></code></pre><blockquote><p>ええ、<code>enhance</code> action と <code>&#x3C;form action></code> をどちらも 'action' と呼んでいて、少し紛らわしいですよね。このドキュメントは action でいっぱいです。申し訳ありません。</blockquote><p>引数が無い場合、<code>use:enhance</code> は、ブラウザネイティブの動作を、フルページリロードを除いてエミュレートします。それは:<ul><li>action が送信元のページと同じ場所にある場合に限り、成功レスポンスまたは不正なレスポンスに応じて、<code>form</code> プロパティと <code>$page.form</code> と <code>$page.status</code> を更新します。例えば、<code>&#x3C;form action="/somewhere/else" ..></code> というようなフォームの場合、<code>form</code> と <code>$page</code> は更新されません。これは、ネイティブのフォーム送信では action があるページにリダイレクトされるからです。<li>成功レスポンスの場合は、<code>&#x3C;form></code> 要素をリセットして <code>invalidateAll</code> で全てのデータを無効化・最新化(invalidate)します。<li>リダイレクトレスポンスの場合は <code>goto</code> を呼び出します<li>エラーが発生した場合はもっとも近くにある <code>+error</code> 境界をレンダリングします</ul><p>この挙動をカスタマイズするために、form が送信される直前に実行される関数を提供することができます。そして (オプションで) <code>ActionResult</code> を引数に取るコールバックを返すことができます。もしコールバックを返す場合、上述のデフォルトの動作はトリガーされません。元に戻すには、<code>update</code> を呼び出してください。<pre class="language-svelte"><code class="language-svelte">&#x3C;form
 	method="POST"
 	use:enhance={({ form, data, action, cancel }) => {
 		// `form` は `&#x3C;form>` 要素です
@@ -293,13 +208,7 @@ declare namespace <span class="token maybe-class-name">App</span> <span class="t
 			// `update` は、このコールバックが設定されていない場合に起動されるロジックを起動する関数です
 		};
 	}}
-></code></pre>
-          <p>これらの関数を、ロード中の UI (loading UI) を表示したり隠したりすることなどに使用できます。</p>
-        </section>
-        <section id="applyaction" class="level3">
-          <h3>applyAction</h3>
-          <p>独自のコールバックを提供する場合は、最も近くにある <code>+error</code> 境界を表示するなど、デフォルトの <code>use:enhance</code> の一部を再現する必要があるでしょう。ほとんどの場合、コールバックに渡された <code>update</code> を呼び出すだけで十分です。もっとカスタマイズが必要な場合は、<code>applyAction</code> を使用してそれを行うことができます:</p>
-          <pre class="language-diff"><code class="language-diff"><span class="token deleted-arrow deleted"><span class="token prefix deleted">&#x3C;</span><span class="token line">script>
+></code></pre><p>これらの関数を、ロード中の UI (loading UI) を表示したり隠したりすることなどに使用できます。</section><section id="applyaction"class="level3"><h3>applyAction</h3><p>独自のコールバックを提供する場合は、最も近くにある <code>+error</code> 境界を表示するなど、デフォルトの <code>use:enhance</code> の一部を再現する必要があるでしょう。ほとんどの場合、コールバックに渡された <code>update</code> を呼び出すだけで十分です。もっとカスタマイズが必要な場合は、<code>applyAction</code> を使用してそれを行うことができます:<pre class="language-diff"><code class="language-diff"><span class="token deleted-arrow deleted"><span class="token prefix deleted">&#x3C;</span><span class="token line">script>
 </span></span><span class="token inserted-sign inserted"><span class="token prefix inserted">+</span><span class="token line">	import { enhance, applyAction } from '$app/forms';
 </span></span>
 	/** @type {import('./$types').ActionData} */
@@ -321,18 +230,7 @@ declare namespace <span class="token maybe-class-name">App</span> <span class="t
 </span><span class="token prefix inserted">+</span><span class="token line">			}
 </span></span>		};
 	}}
-<span class="token inserted-arrow inserted"><span class="token prefix inserted">></span></span></code></pre>
-          <p><code>applyAction(result)</code> の挙動は <code>result.type</code> に依存しています:</p>
-          <ul>
-            <li><code>success</code>, <code>invalid</code> — <code>$page.status</code> を <code>result.status</code> に設定し、<code>form</code> と <code>$page.form</code> を <code>result.data</code> で更新します (<code>enhance</code> の <code>update</code> とは対照的に、送信元がどこかは関係ありません)</li>
-            <li><code>redirect</code> — <code>goto(result.location)</code> を呼び出します</li>
-            <li><code>error</code> — もっとも近くにある <code>+error</code> 境界を <code>result.error</code> でレンダリングします</li>
-          </ul>
-        </section>
-        <section id="custom-event-listener" class="level3">
-          <h3>Custom event listener</h3>
-          <p><code>use:enhance</code> ではなく、<code>&#x3C;form></code> の通常のイベントリスナーを使うことで、ご自身でプログレッシブ・エンハンスメント(progressive enhancement)を実装することもできます:</p>
-          <pre class="language-svelte"><code class="language-svelte">/// file: src/routes/login/+page.svelte
+<span class="token inserted-arrow inserted"><span class="token prefix inserted">></span></span></code></pre><p><code>applyAction(result)</code> の挙動は <code>result.type</code> に依存しています:<ul><li><code>success</code>, <code>invalid</code> — <code>$page.status</code> を <code>result.status</code> に設定し、<code>form</code> と <code>$page.form</code> を <code>result.data</code> で更新します (<code>enhance</code> の <code>update</code> とは対照的に、送信元がどこかは関係ありません)<li><code>redirect</code> — <code>goto(result.location)</code> を呼び出します<li><code>error</code> — もっとも近くにある <code>+error</code> 境界を <code>result.error</code> でレンダリングします</ul></section><section id="custom-event-listener"class="level3"><h3>Custom event listener</h3><p><code>use:enhance</code> ではなく、<code>&#x3C;form></code> の通常のイベントリスナーを使うことで、ご自身でプログレッシブ・エンハンスメント(progressive enhancement)を実装することもできます:<pre class="language-svelte"><code class="language-svelte">/// file: src/routes/login/+page.svelte
 &#x3C;script>
 	import { invalidateAll, goto } from '$app/navigation';
 	import { applyAction, deserialize } from '$app/forms';
@@ -365,25 +263,10 @@ declare namespace <span class="token maybe-class-name">App</span> <span class="t
 
 &#x3C;form method="POST" on:submit|preventDefault={handleSubmit}>
 	&#x3C;!-- content -->
-&#x3C;/form></code></pre>
-          <p>処理を進める前に、<code>$app/forms</code> の <code>deserialize</code> でレスポンスをデシリアライズする必要があることにご注意ください。<code>JSON.parse()</code> では不十分です。なぜなら、例えば <code>load</code> 関数のような form action は、<code>Date</code> や <code>BigInt</code> オブジェクトも戻り値としてサポートしているからです。</p>
-          <p>もし <code>+page.server.js</code> と <code>+server.js</code> のどちらも存在する場合、デフォルトでは、<code>fetch</code> リクエストは <code>+server.js</code> のほうにルーティングされます。<code>+page.server.js</code> の action に <code>POST</code> をするには、カスタムの <code>x-sveltekit-action</code> ヘッダーを使用します:</p>
-          <pre class="language-diff"><code class="language-diff">const response = await fetch(this.action, {
+&#x3C;/form></code></pre><p>処理を進める前に、<code>$app/forms</code> の <code>deserialize</code> でレスポンスをデシリアライズする必要があることにご注意ください。<code>JSON.parse()</code> では不十分です。なぜなら、例えば <code>load</code> 関数のような form action は、<code>Date</code> や <code>BigInt</code> オブジェクトも戻り値としてサポートしているからです。<p>もし <code>+page.server.js</code> と <code>+server.js</code> のどちらも存在する場合、デフォルトでは、<code>fetch</code> リクエストは <code>+server.js</code> のほうにルーティングされます。<code>+page.server.js</code> の action に <code>POST</code> をするには、カスタムの <code>x-sveltekit-action</code> ヘッダーを使用します:<pre class="language-diff"><code class="language-diff">const response = await fetch(this.action, {
 	method: 'POST',
 	body: data,
 <span class="token inserted-sign inserted"><span class="token prefix inserted">+</span><span class="token line">	headers: {
 </span><span class="token prefix inserted">+</span><span class="token line">		'x-sveltekit-action': 'true'
 </span><span class="token prefix inserted">+</span><span class="token line">	}
-</span></span>});</code></pre>
-        </section>
-      </section>
-      <section id="alternatives" class="level2">
-        <h2>Alternatives</h2>
-        <p>
-          サーバーにデータを送信する方法として、プログレッシブな強化(progressively enhance)を行うことができるため Form actions は望ましい方法ですが、<a href="../20-core-concepts/10-routing.html#server"><code>+server.js</code></a> ファイルを使用して (例えば) JSON API を公開することもできます。
-          <span style="float: footnote;"><a href="../../index.html#toc">Go to TOC</a></span>
-        </p>
-      </section>
-    </section>
-  </body>
-</html>
+</span></span>});</code></pre></section></section><section id="alternatives"class="level2"><h2>Alternatives</h2><p>サーバーにデータを送信する方法として、プログレッシブな強化(progressively enhance)を行うことができるため Form actions は望ましい方法ですが、<a href="../20-core-concepts/10-routing.html#server"><code>+server.js</code></a> ファイルを使用して (例えば) JSON API を公開することもできます。 <span style="float:footnote"><a href="../../index.html#toc">Go to TOC</a></span></section></section>

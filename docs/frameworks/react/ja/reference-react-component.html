@@ -1,270 +1,22 @@
-<!doctype html>
-<html lang="ja">
-  <head>
-    <meta charset="utf-8">
-    <title>React.Component</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <link rel="stylesheet" href="https://raw.githubusercontent.com/shinokada/prism-coy-theme/main/theme_common.css">
-  </head>
-  <body>
-    <section id="reactcomponent" class="level1">
-      <h1>React.Component</h1>
-      <p>このページには React コンポーネントクラス定義の詳細な API リファレンスがあります。また、あなたが <a href="./components-and-props.html">コンポーネントや props</a> などの基本的な React の概念、および <a href="./state-and-lifecycle.html">state やライフサイクル</a>に精通していることを前提としています。そうでない場合は、まずそれらを読んでください。</p>
-      <section id="overview" class="level2">
-        <h2>概要</h2>
-        <p>React では、コンポーネントをクラスまたは関数として定義できます。クラスとして定義されたコンポーネントは現在このページで詳細に説明されているより多くの機能を提供します。React コンポーネントクラスを定義するには、<code>React.Component</code> を継承する必要があります。</p>
-        <pre class="language-js"><code class="language-js"><span class="token keyword">class</span> <span class="token class-name">Welcome</span> <span class="token keyword">extends</span> <span class="token class-name">React<span class="token punctuation">.</span>Component</span> <span class="token punctuation">{</span>
+<!doctypehtml><html lang="ja"><meta charset="utf-8"><title>React.Component</title><meta name="viewport"content="width=device-width,initial-scale=1"><link rel="stylesheet"href="https://raw.githubusercontent.com/shinokada/prism-coy-theme/main/theme_common.css"><section id="reactcomponent"class="level1"><h1>React.Component</h1><p>このページには React コンポーネントクラス定義の詳細な API リファレンスがあります。また、あなたが <a href="./components-and-props.html">コンポーネントや props</a> などの基本的な React の概念、および <a href="./state-and-lifecycle.html">state やライフサイクル</a>に精通していることを前提としています。そうでない場合は、まずそれらを読んでください。<section id="overview"class="level2"><h2>概要</h2><p>React では、コンポーネントをクラスまたは関数として定義できます。クラスとして定義されたコンポーネントは現在このページで詳細に説明されているより多くの機能を提供します。React コンポーネントクラスを定義するには、<code>React.Component</code> を継承する必要があります。<pre class="language-js"><code class="language-js"><span class="token keyword">class</span> <span class="token class-name">Welcome</span> <span class="token keyword">extends</span> <span class="token class-name">React<span class="token punctuation">.</span>Component</span> <span class="token punctuation">{</span>
   <span class="token function">render</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
     <span class="token keyword control-flow">return</span> <span class="token operator">&#x3C;</span>h1<span class="token operator">></span><span class="token maybe-class-name">Hello</span><span class="token punctuation">,</span> <span class="token punctuation">{</span><span class="token keyword">this</span><span class="token punctuation">.</span><span class="token property-access">props</span><span class="token punctuation">.</span><span class="token property-access">name</span><span class="token punctuation">}</span><span class="token operator">&#x3C;</span><span class="token operator">/</span>h1<span class="token operator">></span><span class="token punctuation">;</span>
   <span class="token punctuation">}</span>
-<span class="token punctuation">}</span></code></pre>
-        <p><code>React.Component</code> サブクラスで<em>必ず</em>定義しなければならない唯一のメソッドは <a href="#render"><code>render()</code></a> です。このページで説明されている他のすべてのメソッドは任意です。</p>
-        <p><strong>独自の基底コンポーネントクラスを作成しないことを強くおすすめします。</strong>React コンポーネントでは、<a href="./composition-vs-inheritance.html">コードの再利用は主に継承ではなく合成によって行われます</a>。</p>
-        <blockquote>
-          <p>補足:</p>
-          <p>React は ES6 クラスの構文を使うことを強制していません。回避したい場合は、代わりに <code>create-react-class</code> モジュールまたは、同様の独自の抽象化を使用できます。詳しくは、<a href="./react-without-es6.html">Using React without ES6</a> をご覧ください。</p>
-        </blockquote>
-        <section id="the-component-lifecycle" class="level3">
-          <h3>コンポーネントライフサイクル</h3>
-          <p>各コンポーネントには、処理の過程の特定の時点でコードを実行するためにオーバーライドできるいくつかの「ライフサイクルメソッド」があります。<strong>この<a href="https://projects.wojtekmaj.pl/react-lifecycle-methods-diagram/">ライフサイクル図</a>をチートシートとして使用できます。</strong>以下のリストでは、よく使われるライフサイクルメソッドは<strong>太字</strong>で表示されています。それらの残りは比較的まれなユースケースのために存在します。</p>
-          <section id="mounting" class="level4">
-            <h4>マウント</h4>
-            <p>コンポーネントのインスタンスが作成されて DOM に挿入されるときに、これらのメソッドが次の順序で呼び出されます。</p>
-            <ul>
-              <li><a href="#constructor"><strong><code>constructor()</code></strong></a></li>
-              <li><a href="#static-getderivedstatefromprops"><code>static getDerivedStateFromProps()</code></a></li>
-              <li><a href="#render"><strong><code>render()</code></strong></a></li>
-              <li><a href="#componentdidmount"><strong><code>componentDidMount()</code></strong></a></li>
-            </ul>
-            <blockquote>
-              <p>補足:</p>
-              <p>このメソッドはレガシーだと考えられているため、新しいコードでは<a href="/blog/2018/03/27/update-on-async-rendering.html">避ける</a>べきです。</p>
-              <ul>
-                <li><a href="#unsafe_componentwillmount"><code>UNSAFE_componentWillMount()</code></a></li>
-              </ul>
-            </blockquote>
-          </section>
-          <section id="updating" class="level4">
-            <h4>更新</h4>
-            <p>更新は props や state の変更によって発生する可能性があります。コンポーネントが再レンダーされるときに、これらのメソッドは次の順序で呼び出されます。</p>
-            <ul>
-              <li><a href="#static-getderivedstatefromprops"><code>static getDerivedStateFromProps()</code></a></li>
-              <li><a href="#shouldcomponentupdate"><code>shouldComponentUpdate()</code></a></li>
-              <li><a href="#render"><strong><code>render()</code></strong></a></li>
-              <li><a href="#getsnapshotbeforeupdate"><code>getSnapshotBeforeUpdate()</code></a></li>
-              <li><a href="#componentdidupdate"><strong><code>componentDidUpdate()</code></strong></a></li>
-            </ul>
-            <blockquote>
-              <p>補足:</p>
-              <p>これらのメソッドはレガシーと見なされ、新しいコードでは避けるべきです。</p>
-              <ul>
-                <li><a href="#unsafe_componentwillupdate"><code>UNSAFE_componentWillUpdate()</code></a></li>
-                <li><a href="#unsafe_componentwillreceiveprops"><code>UNSAFE_componentWillReceiveProps()</code></a></li>
-              </ul>
-            </blockquote>
-          </section>
-          <section id="unmounting" class="level4">
-            <h4>アンマウント</h4>
-            <p>このメソッドは、コンポーネントが DOM から削除されるときに呼び出されます。</p>
-            <ul>
-              <li><a href="#componentwillunmount"><strong><code>componentWillUnmount()</code></strong></a></li>
-            </ul>
-          </section>
-          <section id="error-handling" class="level4">
-            <h4>エラーハンドリング</h4>
-            <p>これらのメソッドは任意の子コンポーネントのレンダー中、ライフサイクルメソッド内、またはコンストラクタ内でエラーが発生したときに呼び出されます。</p>
-            <ul>
-              <li><a href="#static-getderivedstatefromerror"><code>static getDerivedStateFromError()</code></a></li>
-              <li><a href="#componentdidcatch"><code>componentDidCatch()</code></a></li>
-            </ul>
-          </section>
-        </section>
-        <section id="other-apis" class="level3">
-          <h3>他の API</h3>
-          <p>各コンポーネントはその他にもいくつかの API を提供します。</p>
-          <ul>
-            <li><a href="#setstate"><code>setState()</code></a></li>
-            <li><a href="#forceupdate"><code>forceUpdate()</code></a></li>
-          </ul>
-        </section>
-        <section id="class-properties" class="level3">
-          <h3>クラスプロパティ</h3>
-          <ul>
-            <li><a href="#defaultprops"><code>defaultProps</code></a></li>
-            <li><a href="#displayname"><code>displayName</code></a></li>
-          </ul>
-        </section>
-        <section id="instance-properties" class="level3">
-          <h3>インスタンスプロパティ</h3>
-          <ul>
-            <li><a href="#props"><code>props</code></a></li>
-            <li><a href="#state"><code>state</code></a></li>
-          </ul>
-          <hr>
-        </section>
-      </section>
-      <section id="reference" class="level2">
-        <h2>リファレンス</h2>
-        <section id="commonly-used-lifecycle-methods" class="level3">
-          <h3>よく使われるライフサイクルメソッド</h3>
-          <p>このセクションのメソッドは、React コンポーネントを作成する際に遭遇する大部分のユースケースを網羅しています。視覚的なリファレンスとして、この<a href="https://projects.wojtekmaj.pl/react-lifecycle-methods-diagram/">ライフサイクル図</a>もチェックしてみてください。</p>
-        </section>
-        <section id="render-render" class="level3">
-          <h3><code>render()</code> {#render}</h3>
-          <pre class="language-javascript"><code class="language-javascript"><span class="token function">render</span><span class="token punctuation">(</span><span class="token punctuation">)</span></code></pre>
-          <p><code>render()</code> メソッドは、クラスコンポーネントで必ず定義しなければならない唯一のメソッドです。</p>
-          <p>呼び出されると、<code>this.props</code> と <code>this.state</code> を調べて、次のいずれかの型を返します。</p>
-          <ul>
-            <li><strong>React 要素</strong> 通常は <a href="./introducing-jsx.html">JSX</a> 経由で作成されます。例えば、<code>&#x3C;div /></code> や <code>&#x3C;MyComponent /></code> はそれぞれ React に DOM ノードやユーザが定義した他のコンポーネントをレンダーするように指示する React 要素です</li>
-            <li><strong>配列とフラグメント</strong> 複数の要素を <code>render()</code> から返します。詳しくは <a href="./fragments.html">フラグメント</a> を参照してください</li>
-            <li><strong>ポータル</strong> 子を異なる DOM サブツリーにレンダーします。詳しくは <a href="./portals.html">ポータル</a> を参照してください</li>
-            <li><strong>文字列と数値</strong> これは DOM のテキストノードとしてレンダーされます</li>
-            <li><strong>真偽値または <code>null</code></strong> 何もレンダーしません。(ほとんどの場合、<code>return test &#x26;&#x26; &#x3C;Child /></code> パターンをサポートするために存在しています。ここで、<code>test</code> は真偽値です）</li>
-          </ul>
-          <p><code>render()</code> 関数は「純粋」でなければなりません。つまり、コンポーネントの state を変更せず、呼び出されるたびに同じ結果を返し、ブラウザと直接対話しないということです。</p>
-          <p>ブラウザと対話する必要がある場合は、代わりに <code>componentDidMount()</code> や他のライフサイクルメソッドで行います。<code>render()</code> を純粋にしておくことで、コンポーネントについて考えやすくなります。</p>
-          <blockquote>
-            <p>補足</p>
-            <p><a href="#shouldcomponentupdate"><code>shouldComponentUpdate()</code></a> が false を返した場合、<code>render()</code> は呼び出されません。</p>
-          </blockquote>
-          <hr>
-        </section>
-        <section id="constructor-constructor" class="level3">
-          <h3><code>constructor()</code> {#constructor}</h3>
-          <pre class="language-javascript"><code class="language-javascript"><span class="token function">constructor</span><span class="token punctuation">(</span>props<span class="token punctuation">)</span></code></pre>
-          <p><strong>state の初期化もメソッドのバインドもしないのであれば、React コンポーネントのコンストラクタを実装する必要はありません。</strong></p>
-          <p>React コンポーネントのコンストラクタは、マウントされる前に呼び出されます。<code>React.Component</code> サブクラスのコンストラクタを実装するときは、他の文の前に <code>super(props)</code> を呼び出す必要があります。そうでなければ、<code>this.props</code> はコンストラクタ内で未定義になり、バグの原因となる可能性があります。</p>
-          <p>通常、React では、コンストラクタは 2 つの目的にのみ使用されます。</p>
-          <ul>
-            <li><code>this.state</code> にオブジェクトを代入して <a href="./state-and-lifecycle.html">ローカル state</a> を初期化すること</li>
-            <li><a href="./handling-events.html">イベントハンドラ</a> をインスタンスにバインドすること</li>
-          </ul>
-          <p><code>constructor()</code> の中で <strong><code>setState()</code> を呼び出さないでください</strong>。代わりに、コンポーネントがローカル state を使用する必要がある場合は、コンストラクタで直接 <strong><code>this.state</code> に初期状態を割り当てます</strong>。</p>
-          <pre class="language-js"><code class="language-js"><span class="token function">constructor</span><span class="token punctuation">(</span><span class="token parameter">props</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+<span class="token punctuation">}</span></code></pre><p><code>React.Component</code> サブクラスで<em>必ず</em>定義しなければならない唯一のメソッドは <a href="#render"><code>render()</code></a> です。このページで説明されている他のすべてのメソッドは任意です。<p><strong>独自の基底コンポーネントクラスを作成しないことを強くおすすめします。</strong>React コンポーネントでは、<a href="./composition-vs-inheritance.html">コードの再利用は主に継承ではなく合成によって行われます</a>。<blockquote><p>補足:<p>React は ES6 クラスの構文を使うことを強制していません。回避したい場合は、代わりに <code>create-react-class</code> モジュールまたは、同様の独自の抽象化を使用できます。詳しくは、<a href="./react-without-es6.html">Using React without ES6</a> をご覧ください。</blockquote><section id="the-component-lifecycle"class="level3"><h3>コンポーネントライフサイクル</h3><p>各コンポーネントには、処理の過程の特定の時点でコードを実行するためにオーバーライドできるいくつかの「ライフサイクルメソッド」があります。<strong>この<a href="https://projects.wojtekmaj.pl/react-lifecycle-methods-diagram/">ライフサイクル図</a>をチートシートとして使用できます。</strong>以下のリストでは、よく使われるライフサイクルメソッドは<strong>太字</strong>で表示されています。それらの残りは比較的まれなユースケースのために存在します。<section id="mounting"class="level4"><h4>マウント</h4><p>コンポーネントのインスタンスが作成されて DOM に挿入されるときに、これらのメソッドが次の順序で呼び出されます。<ul><li><a href="#constructor"><strong><code>constructor()</code></strong></a><li><a href="#static-getderivedstatefromprops"><code>static getDerivedStateFromProps()</code></a><li><a href="#render"><strong><code>render()</code></strong></a><li><a href="#componentdidmount"><strong><code>componentDidMount()</code></strong></a></ul><blockquote><p>補足:<p>このメソッドはレガシーだと考えられているため、新しいコードでは<a href="/blog/2018/03/27/update-on-async-rendering.html">避ける</a>べきです。<ul><li><a href="#unsafe_componentwillmount"><code>UNSAFE_componentWillMount()</code></a></ul></blockquote></section><section id="updating"class="level4"><h4>更新</h4><p>更新は props や state の変更によって発生する可能性があります。コンポーネントが再レンダーされるときに、これらのメソッドは次の順序で呼び出されます。<ul><li><a href="#static-getderivedstatefromprops"><code>static getDerivedStateFromProps()</code></a><li><a href="#shouldcomponentupdate"><code>shouldComponentUpdate()</code></a><li><a href="#render"><strong><code>render()</code></strong></a><li><a href="#getsnapshotbeforeupdate"><code>getSnapshotBeforeUpdate()</code></a><li><a href="#componentdidupdate"><strong><code>componentDidUpdate()</code></strong></a></ul><blockquote><p>補足:<p>これらのメソッドはレガシーと見なされ、新しいコードでは避けるべきです。<ul><li><a href="#unsafe_componentwillupdate"><code>UNSAFE_componentWillUpdate()</code></a><li><a href="#unsafe_componentwillreceiveprops"><code>UNSAFE_componentWillReceiveProps()</code></a></ul></blockquote></section><section id="unmounting"class="level4"><h4>アンマウント</h4><p>このメソッドは、コンポーネントが DOM から削除されるときに呼び出されます。<ul><li><a href="#componentwillunmount"><strong><code>componentWillUnmount()</code></strong></a></ul></section><section id="error-handling"class="level4"><h4>エラーハンドリング</h4><p>これらのメソッドは任意の子コンポーネントのレンダー中、ライフサイクルメソッド内、またはコンストラクタ内でエラーが発生したときに呼び出されます。<ul><li><a href="#static-getderivedstatefromerror"><code>static getDerivedStateFromError()</code></a><li><a href="#componentdidcatch"><code>componentDidCatch()</code></a></ul></section></section><section id="other-apis"class="level3"><h3>他の API</h3><p>各コンポーネントはその他にもいくつかの API を提供します。<ul><li><a href="#setstate"><code>setState()</code></a><li><a href="#forceupdate"><code>forceUpdate()</code></a></ul></section><section id="class-properties"class="level3"><h3>クラスプロパティ</h3><ul><li><a href="#defaultprops"><code>defaultProps</code></a><li><a href="#displayname"><code>displayName</code></a></ul></section><section id="instance-properties"class="level3"><h3>インスタンスプロパティ</h3><ul><li><a href="#props"><code>props</code></a><li><a href="#state"><code>state</code></a></ul><hr></section></section><section id="reference"class="level2"><h2>リファレンス</h2><section id="commonly-used-lifecycle-methods"class="level3"><h3>よく使われるライフサイクルメソッド</h3><p>このセクションのメソッドは、React コンポーネントを作成する際に遭遇する大部分のユースケースを網羅しています。視覚的なリファレンスとして、この<a href="https://projects.wojtekmaj.pl/react-lifecycle-methods-diagram/">ライフサイクル図</a>もチェックしてみてください。</section><section id="render-render"class="level3"><h3><code>render()</code> {#render}</h3><pre class="language-javascript"><code class="language-javascript"><span class="token function">render</span><span class="token punctuation">(</span><span class="token punctuation">)</span></code></pre><p><code>render()</code> メソッドは、クラスコンポーネントで必ず定義しなければならない唯一のメソッドです。<p>呼び出されると、<code>this.props</code> と <code>this.state</code> を調べて、次のいずれかの型を返します。<ul><li><strong>React 要素</strong> 通常は <a href="./introducing-jsx.html">JSX</a> 経由で作成されます。例えば、<code>&#x3C;div /></code> や <code>&#x3C;MyComponent /></code> はそれぞれ React に DOM ノードやユーザが定義した他のコンポーネントをレンダーするように指示する React 要素です<li><strong>配列とフラグメント</strong> 複数の要素を <code>render()</code> から返します。詳しくは <a href="./fragments.html">フラグメント</a> を参照してください<li><strong>ポータル</strong> 子を異なる DOM サブツリーにレンダーします。詳しくは <a href="./portals.html">ポータル</a> を参照してください<li><strong>文字列と数値</strong> これは DOM のテキストノードとしてレンダーされます<li><strong>真偽値または <code>null</code></strong> 何もレンダーしません。(ほとんどの場合、<code>return test &#x26;&#x26; &#x3C;Child /></code> パターンをサポートするために存在しています。ここで、<code>test</code> は真偽値です）</ul><p><code>render()</code> 関数は「純粋」でなければなりません。つまり、コンポーネントの state を変更せず、呼び出されるたびに同じ結果を返し、ブラウザと直接対話しないということです。<p>ブラウザと対話する必要がある場合は、代わりに <code>componentDidMount()</code> や他のライフサイクルメソッドで行います。<code>render()</code> を純粋にしておくことで、コンポーネントについて考えやすくなります。<blockquote><p>補足<p><a href="#shouldcomponentupdate"><code>shouldComponentUpdate()</code></a> が false を返した場合、<code>render()</code> は呼び出されません。</blockquote><hr></section><section id="constructor-constructor"class="level3"><h3><code>constructor()</code> {#constructor}</h3><pre class="language-javascript"><code class="language-javascript"><span class="token function">constructor</span><span class="token punctuation">(</span>props<span class="token punctuation">)</span></code></pre><p><strong>state の初期化もメソッドのバインドもしないのであれば、React コンポーネントのコンストラクタを実装する必要はありません。</strong><p>React コンポーネントのコンストラクタは、マウントされる前に呼び出されます。<code>React.Component</code> サブクラスのコンストラクタを実装するときは、他の文の前に <code>super(props)</code> を呼び出す必要があります。そうでなければ、<code>this.props</code> はコンストラクタ内で未定義になり、バグの原因となる可能性があります。<p>通常、React では、コンストラクタは 2 つの目的にのみ使用されます。<ul><li><code>this.state</code> にオブジェクトを代入して <a href="./state-and-lifecycle.html">ローカル state</a> を初期化すること<li><a href="./handling-events.html">イベントハンドラ</a> をインスタンスにバインドすること</ul><p><code>constructor()</code> の中で <strong><code>setState()</code> を呼び出さないでください</strong>。代わりに、コンポーネントがローカル state を使用する必要がある場合は、コンストラクタで直接 <strong><code>this.state</code> に初期状態を割り当てます</strong>。<pre class="language-js"><code class="language-js"><span class="token function">constructor</span><span class="token punctuation">(</span><span class="token parameter">props</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
   <span class="token keyword">super</span><span class="token punctuation">(</span>props<span class="token punctuation">)</span><span class="token punctuation">;</span>
   <span class="token comment">// ここで this.setState() を呼び出さないでください</span>
   <span class="token keyword">this</span><span class="token punctuation">.</span><span class="token property-access">state</span> <span class="token operator">=</span> <span class="token punctuation">{</span> <span class="token literal-property property">counter</span><span class="token operator">:</span> <span class="token number">0</span> <span class="token punctuation">}</span><span class="token punctuation">;</span>
   <span class="token keyword">this</span><span class="token punctuation">.</span><span class="token property-access">handleClick</span> <span class="token operator">=</span> <span class="token keyword">this</span><span class="token punctuation">.</span><span class="token method function property-access">handleClick</span><span class="token punctuation">.</span><span class="token method function property-access">bind</span><span class="token punctuation">(</span><span class="token keyword">this</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
-<span class="token punctuation">}</span></code></pre>
-          <p>コンストラクタは、<code>this.state</code> を直接代入する唯一の場所です。他のすべてのメソッドでは、代わりに <code>this.setState()</code> を使う必要があります。</p>
-          <p>コンストラクタに副作用や購読を導入しないでください。そのような場合は、代わりに <code>componentDidMount()</code> を使用してください。</p>
-          <blockquote>
-            <p>補足</p>
-            <p><strong>props を state にコピーしないでください。これはよくある間違いです。</strong></p>
-            <pre class="language-js"><code class="language-js"><span class="token function">constructor</span><span class="token punctuation">(</span><span class="token parameter">props</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+<span class="token punctuation">}</span></code></pre><p>コンストラクタは、<code>this.state</code> を直接代入する唯一の場所です。他のすべてのメソッドでは、代わりに <code>this.setState()</code> を使う必要があります。<p>コンストラクタに副作用や購読を導入しないでください。そのような場合は、代わりに <code>componentDidMount()</code> を使用してください。<blockquote><p>補足<p><strong>props を state にコピーしないでください。これはよくある間違いです。</strong><pre class="language-js"><code class="language-js"><span class="token function">constructor</span><span class="token punctuation">(</span><span class="token parameter">props</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
  <span class="token keyword">super</span><span class="token punctuation">(</span>props<span class="token punctuation">)</span><span class="token punctuation">;</span>
  <span class="token comment">// してはいけません</span>
  <span class="token keyword">this</span><span class="token punctuation">.</span><span class="token property-access">state</span> <span class="token operator">=</span> <span class="token punctuation">{</span> <span class="token literal-property property">color</span><span class="token operator">:</span> props<span class="token punctuation">.</span><span class="token property-access">color</span> <span class="token punctuation">}</span><span class="token punctuation">;</span>
-<span class="token punctuation">}</span></code></pre>
-            <p>この問題はそれが不要(代わりに <code>this.props.color</code> を直接使用することができるため)であり、バグの作成につながる(<code>color</code> プロパティの更新は state に反映されないため)ことです。</p>
-            <p><strong>意図的にプロパティの更新を無視したい場合にのみ、このパターンを使用してください。</strong>その場合は、プロパティの名前を <code>initialColor</code> または <code>defaultColor</code> に変更してください。その後、必要に応じて<a href="/blog/2018/06/07/you-probably-dont-need-derived-state.html#recommendation-fully-uncontrolled-component-with-a-key">キーを変更する</a>ことで、コンポーネントにその内部の state を「リセット」させることができます。</p>
-            <p>もしあなたが props に依存する何らかの state が必要だと思うなら、どうすればいいのか学ぶために私達の<a href="/blog/2018/06/07/you-probably-dont-need-derived-state.html">派生 state を避けることについてのブログ記事</a>を読んでください。</p>
-          </blockquote>
-          <hr>
-        </section>
-        <section id="componentdidmount-componentdidmount" class="level3">
-          <h3><code>componentDidMount()</code> {#componentdidmount}</h3>
-          <pre class="language-javascript"><code class="language-javascript"><span class="token function">componentDidMount</span><span class="token punctuation">(</span><span class="token punctuation">)</span></code></pre>
-          <p><code>componentDidMount()</code> は、コンポーネントがマウントされた（ツリーに挿入された）直後に呼び出されます。DOM ノードを必要とする初期化はここで行われるべきです。リモートエンドポイントからデータをロードする必要がある場合、これはネットワークリクエストを送信するのに適した場所です。</p>
-          <p>このメソッドは、購読を設定するのに適した場所です。設定した場合は、<code>componentWillUnmount()</code> で購読を解除することを忘れないでください。</p>
-          <p><code>componentDidMount()</code> の中で、あなたは<strong>すぐに <code>setState()</code> を呼び出すことができます</strong>。それは余分なレンダーを引き起こしますが、ブラウザが画面を更新する前に起こります。これにより、この場合 <code>render()</code> が 2 回呼び出されても、ユーザには中間状態が表示されません。このパターンはパフォーマンス上の問題を引き起こすことが多いので、慎重に使用してください。ほとんどの場合、代わりに <code>constructor()</code> で初期状態を state に代入できるはずです。ただし、モーダルやツールチップのような場合に、サイズや位置に応じて何かをレンダーする前に DOM ノードを測定することが必要になる場合があります。</p>
-          <hr>
-        </section>
-        <section id="componentdidupdate-componentdidupdate" class="level3">
-          <h3><code>componentDidUpdate()</code> {#componentdidupdate}</h3>
-          <pre class="language-javascript"><code class="language-javascript"><span class="token function">componentDidUpdate</span><span class="token punctuation">(</span>prevProps<span class="token punctuation">,</span> prevState<span class="token punctuation">,</span> snapshot<span class="token punctuation">)</span></code></pre>
-          <p>更新が行われた直後に <code>componentDidUpdate()</code> が呼び出されます。このメソッドは最初のレンダーでは呼び出されません。</p>
-          <p>コンポーネントが更新されたときに DOM を操作する機会にこれを使用してください。現在の props と前の props を比較している限り、これはネットワークリクエストを行うのにも適した場所です（たとえば、props が変更されていない場合、ネットワークリクエストは必要ないかもしれません）。</p>
-          <pre class="language-js"><code class="language-js"><span class="token function">componentDidUpdate</span><span class="token punctuation">(</span><span class="token parameter">prevProps</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+<span class="token punctuation">}</span></code></pre><p>この問題はそれが不要(代わりに <code>this.props.color</code> を直接使用することができるため)であり、バグの作成につながる(<code>color</code> プロパティの更新は state に反映されないため)ことです。<p><strong>意図的にプロパティの更新を無視したい場合にのみ、このパターンを使用してください。</strong>その場合は、プロパティの名前を <code>initialColor</code> または <code>defaultColor</code> に変更してください。その後、必要に応じて<a href="/blog/2018/06/07/you-probably-dont-need-derived-state.html#recommendation-fully-uncontrolled-component-with-a-key">キーを変更する</a>ことで、コンポーネントにその内部の state を「リセット」させることができます。<p>もしあなたが props に依存する何らかの state が必要だと思うなら、どうすればいいのか学ぶために私達の<a href="/blog/2018/06/07/you-probably-dont-need-derived-state.html">派生 state を避けることについてのブログ記事</a>を読んでください。</blockquote><hr></section><section id="componentdidmount-componentdidmount"class="level3"><h3><code>componentDidMount()</code> {#componentdidmount}</h3><pre class="language-javascript"><code class="language-javascript"><span class="token function">componentDidMount</span><span class="token punctuation">(</span><span class="token punctuation">)</span></code></pre><p><code>componentDidMount()</code> は、コンポーネントがマウントされた（ツリーに挿入された）直後に呼び出されます。DOM ノードを必要とする初期化はここで行われるべきです。リモートエンドポイントからデータをロードする必要がある場合、これはネットワークリクエストを送信するのに適した場所です。<p>このメソッドは、購読を設定するのに適した場所です。設定した場合は、<code>componentWillUnmount()</code> で購読を解除することを忘れないでください。<p><code>componentDidMount()</code> の中で、あなたは<strong>すぐに <code>setState()</code> を呼び出すことができます</strong>。それは余分なレンダーを引き起こしますが、ブラウザが画面を更新する前に起こります。これにより、この場合 <code>render()</code> が 2 回呼び出されても、ユーザには中間状態が表示されません。このパターンはパフォーマンス上の問題を引き起こすことが多いので、慎重に使用してください。ほとんどの場合、代わりに <code>constructor()</code> で初期状態を state に代入できるはずです。ただし、モーダルやツールチップのような場合に、サイズや位置に応じて何かをレンダーする前に DOM ノードを測定することが必要になる場合があります。<hr></section><section id="componentdidupdate-componentdidupdate"class="level3"><h3><code>componentDidUpdate()</code> {#componentdidupdate}</h3><pre class="language-javascript"><code class="language-javascript"><span class="token function">componentDidUpdate</span><span class="token punctuation">(</span>prevProps<span class="token punctuation">,</span> prevState<span class="token punctuation">,</span> snapshot<span class="token punctuation">)</span></code></pre><p>更新が行われた直後に <code>componentDidUpdate()</code> が呼び出されます。このメソッドは最初のレンダーでは呼び出されません。<p>コンポーネントが更新されたときに DOM を操作する機会にこれを使用してください。現在の props と前の props を比較している限り、これはネットワークリクエストを行うのにも適した場所です（たとえば、props が変更されていない場合、ネットワークリクエストは必要ないかもしれません）。<pre class="language-js"><code class="language-js"><span class="token function">componentDidUpdate</span><span class="token punctuation">(</span><span class="token parameter">prevProps</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
   <span class="token comment">// 典型的な使い方(props を比較することを忘れないでください)</span>
   <span class="token keyword control-flow">if</span> <span class="token punctuation">(</span><span class="token keyword">this</span><span class="token punctuation">.</span><span class="token property-access">props</span><span class="token punctuation">.</span><span class="token property-access">userID</span> <span class="token operator">!==</span> prevProps<span class="token punctuation">.</span><span class="token property-access">userID</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
     <span class="token keyword">this</span><span class="token punctuation">.</span><span class="token method function property-access">fetchData</span><span class="token punctuation">(</span><span class="token keyword">this</span><span class="token punctuation">.</span><span class="token property-access">props</span><span class="token punctuation">.</span><span class="token property-access">userID</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
   <span class="token punctuation">}</span>
-<span class="token punctuation">}</span></code></pre>
-          <p><code>componentDidUpdate()</code> の中で、あなたは<strong>すぐに <code>setState()</code> を呼び出すことができます</strong>が、それは上記の例のような<strong>条件でラップされなければならない</strong>ことに注意してください。そうしなければ、無限ループを引き起こすでしょう。また、余分な再レンダーが発生し、ユーザには見えないものの、コンポーネントのパフォーマンスに影響を与える可能性があります。親から来る props を何らかの state に「反映」しようとしている場合は、代わりに props を直接使用することを検討してください。<a href="/blog/2018/06/07/you-probably-dont-need-derived-state.html">props を state にコピーするとバグが発生する理由</a>をよく読んでください。</p>
-          <p>コンポーネントが <code>getSnapshotBeforeUpdate()</code> ライフサイクルを実装している場合（これはまれです）、それが返す値は 3 番目の「スナップショット」パラメータとして <code>componentDidUpdate()</code> に渡されます。それ以外の場合、このパラメータは未定義になります。</p>
-          <blockquote>
-            <p>補足</p>
-            <p><a href="#shouldcomponentupdate"><code>shouldComponentUpdate()</code></a> が false を返した場合、<code>componentDidUpdate()</code> は呼び出されません。</p>
-          </blockquote>
-          <hr>
-        </section>
-        <section id="componentwillunmount-componentwillunmount" class="level3">
-          <h3><code>componentWillUnmount()</code> {#componentwillunmount}</h3>
-          <pre class="language-javascript"><code class="language-javascript"><span class="token function">componentWillUnmount</span><span class="token punctuation">(</span><span class="token punctuation">)</span></code></pre>
-          <p><code>componentWillUnmount()</code> は、コンポーネントがアンマウントされて破棄される直前に呼び出されます。タイマーの無効化、ネットワークリクエストのキャンセル、<code>componentDidMount()</code> で作成された購読の解除など、このメソッドで必要なクリーンアップを実行します。</p>
-          <p>コンポーネントは再レンダーされないため、<code>componentWillUnmount()</code> で <strong><code>setState()</code> を呼び出さないでください</strong>。コンポーネントインスタンスがアンマウントされると、再度マウントされることはありません。</p>
-          <hr>
-        </section>
-        <section id="rarely-used-lifecycle-methods" class="level3">
-          <h3>まれに使われるライフサイクルメソッド</h3>
-          <p>このセクションのメソッドは、一般的でないユースケースに対応しています。これらは時々便利に使えますが、あなたのコンポーネントのほとんどはおそらくそれらのどれも必要としないでしょう。<strong>この<a href="https://projects.wojtekmaj.pl/react-lifecycle-methods-diagram/">ライフサイクル図</a>の上部にある「あまり一般的ではないライフサイクルを表示する」チェックボックスをクリックすると、以下のほとんどの方法が表示されます。</strong></p>
-        </section>
-        <section id="shouldcomponentupdate-shouldcomponentupdate" class="level3">
-          <h3><code>shouldComponentUpdate()</code> {#shouldcomponentupdate}</h3>
-          <pre class="language-javascript"><code class="language-javascript"><span class="token function">shouldComponentUpdate</span><span class="token punctuation">(</span>nextProps<span class="token punctuation">,</span> nextState<span class="token punctuation">)</span></code></pre>
-          <p>コンポーネントの出力が現在の state の変化や props の影響を受けていないかどうかを React に知らせるには <code>shouldComponentUpdate()</code> を使用します。デフォルトの振る舞いはすべての状態変化を再レンダーすることです、そして大部分の場合、あなたはデフォルトの振る舞いに頼るべきです。</p>
-          <p>新しい props または state が受け取られると、レンダーする前に <code>shouldComponentUpdate()</code> が呼び出されます。デフォルトは <code>true</code> です。このメソッドは最初のレンダーや <code>forceUpdate()</code> の使用時には呼び出されません。</p>
-          <p>このメソッドは<a href="./optimizing-performance.html">パフォーマンスの最適化</a>としてのみ存在します。バグを引き起こす可能性があるので、レンダーを「抑止する」ためにそれを使用しないでください。<code>shouldComponentUpdate()</code> を書く代わりに、<strong>組み込みの <a href="./react-api.html#reactpurecomponent">PureComponent</a></strong> を使用することを検討してください。<code>PureComponent</code> は props と state を浅く比較し、必要なアップデートをスキップする可能性を減らします。</p>
-          <p>あなたが手でそれを書きたいと確信しているなら、あなたは <code>nextProps</code> と <code>this.props</code> または <code>nextState</code> と <code>this.state</code> を比較して、更新をスキップできることを React に伝えるために <code>false</code> を返すことができます。<code>false</code> を返しても、<em>子コンポーネントの</em> state が変化したときに子コンポーネントが再レンダーされるのを防ぐことはできません。</p>
-          <p>等価性を深く調べることや <code>shouldComponentUpdate()</code> で <code>JSON.stringify()</code> を使用することはおすすめしません。これは非常に非効率的であり、パフォーマンスに悪影響を及ぼします。</p>
-          <p>現在、<code>shouldComponentUpdate()</code> が <code>false</code> を返す場合、<a href="#unsafe_componentwillupdate"><code>UNSAFE_componentWillUpdate()</code></a>、<a href="#render"><code>render()</code></a>、および <a href="#componentdidupdate"><code>componentDidUpdate()</code></a> は呼び出されません。将来的には、React は <code>shouldComponentUpdate()</code> を厳密な命令ではなくヒントとして扱うようになり、<code>false</code> を返してもコンポーネントが再レンダーされる可能性があります。</p>
-          <hr>
-        </section>
-        <section id="static-getderivedstatefromprops-static-getderivedstatefromprops" class="level3">
-          <h3><code>static getDerivedStateFromProps()</code> {#static-getderivedstatefromprops}</h3>
-          <pre class="language-js"><code class="language-js"><span class="token keyword">static</span> <span class="token function">getDerivedStateFromProps</span><span class="token punctuation">(</span>props<span class="token punctuation">,</span> state<span class="token punctuation">)</span></code></pre>
-          <p><code>getDerivedStateFromProps</code> は、初期マウント時とその後の更新時の両方で、<code>render()</code> メソッドを呼び出す直前に呼び出されます。state を更新するためにオブジェクトを返すか、何も更新しない場合は <code>null</code> を返すべきです。</p>
-          <p>このメソッドは、state が時間の経過とともに変化する props に依存するような<a href="/blog/2018/06/07/you-probably-dont-need-derived-state.html#when-to-use-derived-state">まれな使用例</a>のために存在します。たとえば、以前と以降の子を比較してどちらの子をアニメーションするかを決定する <code>&#x3C;Transition></code> コンポーネントを実装するときに便利です。</p>
-          <p>
-            state を派生させると冗長なコードにつながり、コンポーネントを考えるのが難しくなります。
-            <a href="/blog/2018/06/07/you-probably-dont-need-derived-state.html">より簡単な方法があるのでまずそちらに慣れるようにしてください。</a>
-          </p>
-          <ul>
-            <li>
-              <p>props の変更に応じて<strong>副作用を実行する</strong>必要がある場合は（データのフェッチやアニメーションなど）、代わりに <a href="#componentdidupdate"><code>componentDidUpdate</code></a> ライフサイクルを使用してください</p>
-            </li>
-            <li>
-              <p><strong>プロパティが変更されたときにのみデータを再計算したい</strong>場合は、<a href="/blog/2018/06/07/you-probably-dont-need-derived-state.html#what-about-memoization">代わりにメモ化ヘルパーを使用してください</a></p>
-            </li>
-            <li>
-              <p><strong>プロパティが変更されたときに何かの state を「リセット」したい</strong>場合は、代わりにコンポーネントを<a href="/blog/2018/06/07/you-probably-dont-need-derived-state.html#recommendation-fully-controlled-component">完全に制御する</a>か、または <a href="/blog/2018/06/07/you-probably-dont-need-derived-state.html#recommendation-fully-uncontrolled-component-with-a-key"><code>key</code> を使って全く制御しない</a>かを検討してください</p>
-            </li>
-          </ul>
-          <p>このメソッドはコンポーネントインスタンスにアクセスできません。必要に応じて、コンポーネントの props と state の純粋な関数を抽出し、クラス定義外に記述することで、<code>getDerivedStateFromProps()</code> と他のクラスメソッドの間でコードを再利用できます。</p>
-          <p>このメソッドは、原因に関係なく、<em>すべての</em>レンダーで起動されることに注意してください。これは <code>UNSAFE_componentWillReceiveProps</code> とは対照的です。<code>UNSAFE_componentWillReceiveProps</code> は、ローカルの <code>setState()</code> に依らず、親が再レンダーを行ったときにのみ発生します。</p>
-          <hr>
-        </section>
-        <section id="getsnapshotbeforeupdate-getsnapshotbeforeupdate" class="level3">
-          <h3><code>getSnapshotBeforeUpdate()</code> {#getsnapshotbeforeupdate}</h3>
-          <pre class="language-javascript"><code class="language-javascript"><span class="token function">getSnapshotBeforeUpdate</span><span class="token punctuation">(</span>prevProps<span class="token punctuation">,</span> prevState<span class="token punctuation">)</span></code></pre>
-          <p><code>getSnapshotBeforeUpdate()</code> は、最後にレンダーされた出力が DOM などにコミットされる直前に呼び出されます。これはコンポーネントが変更される可能性があるときに、変更される前に DOM から何らかの情報（たとえば、スクロール位置）を取得しておくことを可能にします。このライフサイクルメソッドによって返された値はすべて、<code>componentDidUpdate()</code> へのパラメータとして渡されます。</p>
-          <p>このユースケースは一般的ではありませんが、スクロール位置を特別な方法で処理する必要があるチャットのスレッドのような UI で発生する可能性があります。</p>
-          <p>スナップショット値（または <code>null</code>）が返されるべきです。</p>
-          <p>例：</p>
-          <p><code>embed:react-component-reference/get-snapshot-before-update.js</code></p>
-          <p>この例では、<code>getSnapshotBeforeUpdate</code> の中で <code>scrollHeight</code> プロパティを読み取ることが重要です。これは、（<code>render</code> のような）「描画」フェーズライフサイクルと（<code>getSnapshotBeforeUpdate</code> および <code>componentDidUpdate</code> のような）「コミット」フェーズライフサイクルの間に遅延が生じるためです。</p>
-          <hr>
-        </section>
-        <section id="error-boundaries" class="level3">
-          <h3>error boundary</h3>
-          <p><a href="./error-boundaries.html">error boundary</a> は、子コンポーネントツリーのどこかで JavaScript エラーを捕捉し、それらのエラーを記録し、クラッシュしたコンポーネントツリーの代わりにフォールバック UI を表示する React コンポーネントです。error boundary は、その下のツリー全体のレンダー中、ライフサイクルメソッド内、およびコンストラクタ内で発生したエラーを捕捉します。</p>
-          <p>クラスコンポーネントは、ライフサイクルメソッド <code>static getDerivedStateFromError()</code> または <code>componentDidCatch()</code> のいずれか（または両方）を定義すると、error boundary になります。これらのライフサイクルから state を更新すると、下のツリーで発生した未処理の JavaScript エラーを捕捉してフォールバック UI を表示できます。</p>
-          <p>error boundary は予期しない例外からの回復のためだけに使用してください。<strong>それらを制御フローに使用しないでください</strong>。</p>
-          <p>詳細については、<a href="/blog/2017/07/26/error-handling-in-react-16.html"><em>React 16 のエラーハンドリング</em></a>を参照してください。</p>
-          <blockquote>
-            <p>補足</p>
-            <p>error boundary は、ツリー内でその<strong>下</strong>にあるコンポーネント内のエラーのみを捕捉します。error boundary はそれ自体の中でエラーを捉えることはできません。</p>
-          </blockquote>
-        </section>
-        <section id="static-getderivedstatefromerror-static-getderivedstatefromerror" class="level3">
-          <h3><code>static getDerivedStateFromError()</code> {#static-getderivedstatefromerror}</h3>
-          <pre class="language-javascript"><code class="language-javascript"><span class="token keyword">static</span> <span class="token function">getDerivedStateFromError</span><span class="token punctuation">(</span>error<span class="token punctuation">)</span></code></pre>
-          <p>
-            このライフサイクルは、子孫コンポーネントによってエラーがスローされた後に呼び出されます。
-            パラメータとしてスローされたエラーを受け取り、state を更新するための値を返すべきです。
-          </p>
-          <pre class="language-js{7-10,13-16}"><code class="language-js{7-10,13-16}">class ErrorBoundary extends React.Component {
+<span class="token punctuation">}</span></code></pre><p><code>componentDidUpdate()</code> の中で、あなたは<strong>すぐに <code>setState()</code> を呼び出すことができます</strong>が、それは上記の例のような<strong>条件でラップされなければならない</strong>ことに注意してください。そうしなければ、無限ループを引き起こすでしょう。また、余分な再レンダーが発生し、ユーザには見えないものの、コンポーネントのパフォーマンスに影響を与える可能性があります。親から来る props を何らかの state に「反映」しようとしている場合は、代わりに props を直接使用することを検討してください。<a href="/blog/2018/06/07/you-probably-dont-need-derived-state.html">props を state にコピーするとバグが発生する理由</a>をよく読んでください。<p>コンポーネントが <code>getSnapshotBeforeUpdate()</code> ライフサイクルを実装している場合（これはまれです）、それが返す値は 3 番目の「スナップショット」パラメータとして <code>componentDidUpdate()</code> に渡されます。それ以外の場合、このパラメータは未定義になります。<blockquote><p>補足<p><a href="#shouldcomponentupdate"><code>shouldComponentUpdate()</code></a> が false を返した場合、<code>componentDidUpdate()</code> は呼び出されません。</blockquote><hr></section><section id="componentwillunmount-componentwillunmount"class="level3"><h3><code>componentWillUnmount()</code> {#componentwillunmount}</h3><pre class="language-javascript"><code class="language-javascript"><span class="token function">componentWillUnmount</span><span class="token punctuation">(</span><span class="token punctuation">)</span></code></pre><p><code>componentWillUnmount()</code> は、コンポーネントがアンマウントされて破棄される直前に呼び出されます。タイマーの無効化、ネットワークリクエストのキャンセル、<code>componentDidMount()</code> で作成された購読の解除など、このメソッドで必要なクリーンアップを実行します。<p>コンポーネントは再レンダーされないため、<code>componentWillUnmount()</code> で <strong><code>setState()</code> を呼び出さないでください</strong>。コンポーネントインスタンスがアンマウントされると、再度マウントされることはありません。<hr></section><section id="rarely-used-lifecycle-methods"class="level3"><h3>まれに使われるライフサイクルメソッド</h3><p>このセクションのメソッドは、一般的でないユースケースに対応しています。これらは時々便利に使えますが、あなたのコンポーネントのほとんどはおそらくそれらのどれも必要としないでしょう。<strong>この<a href="https://projects.wojtekmaj.pl/react-lifecycle-methods-diagram/">ライフサイクル図</a>の上部にある「あまり一般的ではないライフサイクルを表示する」チェックボックスをクリックすると、以下のほとんどの方法が表示されます。</strong></section><section id="shouldcomponentupdate-shouldcomponentupdate"class="level3"><h3><code>shouldComponentUpdate()</code> {#shouldcomponentupdate}</h3><pre class="language-javascript"><code class="language-javascript"><span class="token function">shouldComponentUpdate</span><span class="token punctuation">(</span>nextProps<span class="token punctuation">,</span> nextState<span class="token punctuation">)</span></code></pre><p>コンポーネントの出力が現在の state の変化や props の影響を受けていないかどうかを React に知らせるには <code>shouldComponentUpdate()</code> を使用します。デフォルトの振る舞いはすべての状態変化を再レンダーすることです、そして大部分の場合、あなたはデフォルトの振る舞いに頼るべきです。<p>新しい props または state が受け取られると、レンダーする前に <code>shouldComponentUpdate()</code> が呼び出されます。デフォルトは <code>true</code> です。このメソッドは最初のレンダーや <code>forceUpdate()</code> の使用時には呼び出されません。<p>このメソッドは<a href="./optimizing-performance.html">パフォーマンスの最適化</a>としてのみ存在します。バグを引き起こす可能性があるので、レンダーを「抑止する」ためにそれを使用しないでください。<code>shouldComponentUpdate()</code> を書く代わりに、<strong>組み込みの <a href="./react-api.html#reactpurecomponent">PureComponent</a></strong> を使用することを検討してください。<code>PureComponent</code> は props と state を浅く比較し、必要なアップデートをスキップする可能性を減らします。<p>あなたが手でそれを書きたいと確信しているなら、あなたは <code>nextProps</code> と <code>this.props</code> または <code>nextState</code> と <code>this.state</code> を比較して、更新をスキップできることを React に伝えるために <code>false</code> を返すことができます。<code>false</code> を返しても、<em>子コンポーネントの</em> state が変化したときに子コンポーネントが再レンダーされるのを防ぐことはできません。<p>等価性を深く調べることや <code>shouldComponentUpdate()</code> で <code>JSON.stringify()</code> を使用することはおすすめしません。これは非常に非効率的であり、パフォーマンスに悪影響を及ぼします。<p>現在、<code>shouldComponentUpdate()</code> が <code>false</code> を返す場合、<a href="#unsafe_componentwillupdate"><code>UNSAFE_componentWillUpdate()</code></a>、<a href="#render"><code>render()</code></a>、および <a href="#componentdidupdate"><code>componentDidUpdate()</code></a> は呼び出されません。将来的には、React は <code>shouldComponentUpdate()</code> を厳密な命令ではなくヒントとして扱うようになり、<code>false</code> を返してもコンポーネントが再レンダーされる可能性があります。<hr></section><section id="static-getderivedstatefromprops-static-getderivedstatefromprops"class="level3"><h3><code>static getDerivedStateFromProps()</code> {#static-getderivedstatefromprops}</h3><pre class="language-js"><code class="language-js"><span class="token keyword">static</span> <span class="token function">getDerivedStateFromProps</span><span class="token punctuation">(</span>props<span class="token punctuation">,</span> state<span class="token punctuation">)</span></code></pre><p><code>getDerivedStateFromProps</code> は、初期マウント時とその後の更新時の両方で、<code>render()</code> メソッドを呼び出す直前に呼び出されます。state を更新するためにオブジェクトを返すか、何も更新しない場合は <code>null</code> を返すべきです。<p>このメソッドは、state が時間の経過とともに変化する props に依存するような<a href="/blog/2018/06/07/you-probably-dont-need-derived-state.html#when-to-use-derived-state">まれな使用例</a>のために存在します。たとえば、以前と以降の子を比較してどちらの子をアニメーションするかを決定する <code>&#x3C;Transition></code> コンポーネントを実装するときに便利です。<p>state を派生させると冗長なコードにつながり、コンポーネントを考えるのが難しくなります。 <a href="/blog/2018/06/07/you-probably-dont-need-derived-state.html">より簡単な方法があるのでまずそちらに慣れるようにしてください。</a><ul><li><p>props の変更に応じて<strong>副作用を実行する</strong>必要がある場合は（データのフェッチやアニメーションなど）、代わりに <a href="#componentdidupdate"><code>componentDidUpdate</code></a> ライフサイクルを使用してください<li><p><strong>プロパティが変更されたときにのみデータを再計算したい</strong>場合は、<a href="/blog/2018/06/07/you-probably-dont-need-derived-state.html#what-about-memoization">代わりにメモ化ヘルパーを使用してください</a><li><p><strong>プロパティが変更されたときに何かの state を「リセット」したい</strong>場合は、代わりにコンポーネントを<a href="/blog/2018/06/07/you-probably-dont-need-derived-state.html#recommendation-fully-controlled-component">完全に制御する</a>か、または <a href="/blog/2018/06/07/you-probably-dont-need-derived-state.html#recommendation-fully-uncontrolled-component-with-a-key"><code>key</code> を使って全く制御しない</a>かを検討してください</ul><p>このメソッドはコンポーネントインスタンスにアクセスできません。必要に応じて、コンポーネントの props と state の純粋な関数を抽出し、クラス定義外に記述することで、<code>getDerivedStateFromProps()</code> と他のクラスメソッドの間でコードを再利用できます。<p>このメソッドは、原因に関係なく、<em>すべての</em>レンダーで起動されることに注意してください。これは <code>UNSAFE_componentWillReceiveProps</code> とは対照的です。<code>UNSAFE_componentWillReceiveProps</code> は、ローカルの <code>setState()</code> に依らず、親が再レンダーを行ったときにのみ発生します。<hr></section><section id="getsnapshotbeforeupdate-getsnapshotbeforeupdate"class="level3"><h3><code>getSnapshotBeforeUpdate()</code> {#getsnapshotbeforeupdate}</h3><pre class="language-javascript"><code class="language-javascript"><span class="token function">getSnapshotBeforeUpdate</span><span class="token punctuation">(</span>prevProps<span class="token punctuation">,</span> prevState<span class="token punctuation">)</span></code></pre><p><code>getSnapshotBeforeUpdate()</code> は、最後にレンダーされた出力が DOM などにコミットされる直前に呼び出されます。これはコンポーネントが変更される可能性があるときに、変更される前に DOM から何らかの情報（たとえば、スクロール位置）を取得しておくことを可能にします。このライフサイクルメソッドによって返された値はすべて、<code>componentDidUpdate()</code> へのパラメータとして渡されます。<p>このユースケースは一般的ではありませんが、スクロール位置を特別な方法で処理する必要があるチャットのスレッドのような UI で発生する可能性があります。<p>スナップショット値（または <code>null</code>）が返されるべきです。<p>例：<p><code>embed:react-component-reference/get-snapshot-before-update.js</code><p>この例では、<code>getSnapshotBeforeUpdate</code> の中で <code>scrollHeight</code> プロパティを読み取ることが重要です。これは、（<code>render</code> のような）「描画」フェーズライフサイクルと（<code>getSnapshotBeforeUpdate</code> および <code>componentDidUpdate</code> のような）「コミット」フェーズライフサイクルの間に遅延が生じるためです。<hr></section><section id="error-boundaries"class="level3"><h3>error boundary</h3><p><a href="./error-boundaries.html">error boundary</a> は、子コンポーネントツリーのどこかで JavaScript エラーを捕捉し、それらのエラーを記録し、クラッシュしたコンポーネントツリーの代わりにフォールバック UI を表示する React コンポーネントです。error boundary は、その下のツリー全体のレンダー中、ライフサイクルメソッド内、およびコンストラクタ内で発生したエラーを捕捉します。<p>クラスコンポーネントは、ライフサイクルメソッド <code>static getDerivedStateFromError()</code> または <code>componentDidCatch()</code> のいずれか（または両方）を定義すると、error boundary になります。これらのライフサイクルから state を更新すると、下のツリーで発生した未処理の JavaScript エラーを捕捉してフォールバック UI を表示できます。<p>error boundary は予期しない例外からの回復のためだけに使用してください。<strong>それらを制御フローに使用しないでください</strong>。<p>詳細については、<a href="/blog/2017/07/26/error-handling-in-react-16.html"><em>React 16 のエラーハンドリング</em></a>を参照してください。<blockquote><p>補足<p>error boundary は、ツリー内でその<strong>下</strong>にあるコンポーネント内のエラーのみを捕捉します。error boundary はそれ自体の中でエラーを捉えることはできません。</blockquote></section><section id="static-getderivedstatefromerror-static-getderivedstatefromerror"class="level3"><h3><code>static getDerivedStateFromError()</code> {#static-getderivedstatefromerror}</h3><pre class="language-javascript"><code class="language-javascript"><span class="token keyword">static</span> <span class="token function">getDerivedStateFromError</span><span class="token punctuation">(</span>error<span class="token punctuation">)</span></code></pre><p>このライフサイクルは、子孫コンポーネントによってエラーがスローされた後に呼び出されます。 パラメータとしてスローされたエラーを受け取り、state を更新するための値を返すべきです。<pre class="language-js{7-10,13-16}"><code class="language-js{7-10,13-16}">class ErrorBoundary extends React.Component {
   constructor(props) {
     super(props);
     this.state = { hasError: false };
@@ -283,29 +35,7 @@
 
     return this.props.children;
   }
-}</code></pre>
-          <blockquote>
-            <p>補足</p>
-            <p><code>getDerivedStateFromError()</code> は「描画」フェーズ中に呼び出されるので、副作用は許可されていません。そのような場合は、代わりに <code>componentDidCatch()</code> を使用してください。</p>
-          </blockquote>
-          <hr>
-        </section>
-        <section id="componentdidcatch-componentdidcatch" class="level3">
-          <h3><code>componentDidCatch()</code> {#componentdidcatch}</h3>
-          <pre class="language-javascript"><code class="language-javascript"><span class="token function">componentDidCatch</span><span class="token punctuation">(</span>error<span class="token punctuation">,</span> info<span class="token punctuation">)</span></code></pre>
-          <p>
-            このライフサイクルは、子孫コンポーネントによってエラーがスローされた後に呼び出されます。
-            以下の 2 つのパラメータを受け取ります。
-          </p>
-          <ol>
-            <li><code>error</code> - スローされたエラー</li>
-            <li><code>info</code> - <a href="./error-boundaries.html#component-stack-traces">どのコンポーネントがエラーをスローしたかについての情報</a>を含む <code>componentStack</code> キーを持つオブジェクト</li>
-          </ol>
-          <p>
-            <code>componentDidCatch()</code> は「コミット」フェーズ中に呼び出されるため、副作用は許可されています。
-            ロギング時のエラーなどのために使用されるべきです。
-          </p>
-          <pre class="language-js{12-19}"><code class="language-js{12-19}">class ErrorBoundary extends React.Component {
+}</code></pre><blockquote><p>補足<p><code>getDerivedStateFromError()</code> は「描画」フェーズ中に呼び出されるので、副作用は許可されていません。そのような場合は、代わりに <code>componentDidCatch()</code> を使用してください。</blockquote><hr></section><section id="componentdidcatch-componentdidcatch"class="level3"><h3><code>componentDidCatch()</code> {#componentdidcatch}</h3><pre class="language-javascript"><code class="language-javascript"><span class="token function">componentDidCatch</span><span class="token punctuation">(</span>error<span class="token punctuation">,</span> info<span class="token punctuation">)</span></code></pre><p>このライフサイクルは、子孫コンポーネントによってエラーがスローされた後に呼び出されます。 以下の 2 つのパラメータを受け取ります。<ol><li><code>error</code> - スローされたエラー<li><code>info</code> - <a href="./error-boundaries.html#component-stack-traces">どのコンポーネントがエラーをスローしたかについての情報</a>を含む <code>componentStack</code> キーを持つオブジェクト</ol><p><code>componentDidCatch()</code> は「コミット」フェーズ中に呼び出されるため、副作用は許可されています。 ロギング時のエラーなどのために使用されるべきです。<pre class="language-js{12-19}"><code class="language-js{12-19}">class ErrorBoundary extends React.Component {
   constructor(props) {
     super(props);
     this.state = { hasError: false };
@@ -333,171 +63,23 @@
 
     return this.props.children;
   }
-}</code></pre>
-          <p>React の本番用ビルドと開発用ビルドでは、<code>componentDidCatch()</code> がエラーを処理する方法がわずかに異なります。</p>
-          <p>開発用ビルドでは、エラーは <code>window</code> までバブリングするため、<code>componentDidCatch()</code> が捕捉したエラーを <code>window.onerror</code> や <code>window.addEventListener('error', callback)</code> でもインターセプトすることができます。</p>
-          <p>一方で本番用ビルドではエラーはバブリングしないため、祖先要素のエラーハンドラは <code>componentDidCatch()</code> で明示的に捕捉されていないエラーのみを受け取ります。</p>
-          <blockquote>
-            <p>補足</p>
-            <p>
-              エラーが発生した場合は、<code>setState</code> を呼び出す <code>componentDidCatch()</code> を使用してフォールバック UI をレンダーできますが、これは将来のリリースでは推奨されなくなります。
-              代わりにフォールバックの描画を扱うために、<code>static getDerivedStateFromError()</code> を使用してください。
-            </p>
-          </blockquote>
-          <hr>
-        </section>
-        <section id="legacy-lifecycle-methods" class="level3">
-          <h3>レガシーなライフサイクルメソッド</h3>
-          <p>以下のライフサイクルメソッドは「レガシー」としてマークされています。動作はしますが、新しいコードで使用することはおすすめしません。この<a href="/blog/2018/03/27/update-on-async-rendering.html">ブログ記事</a>では、レガシーなライフサイクルメソッドからの移行についてさらに学ぶことができます。</p>
-        </section>
-        <section id="unsafe_componentwillmount-unsafe_componentwillmount" class="level3">
-          <h3><code>UNSAFE_componentWillMount()</code> {#unsafe_componentwillmount}</h3>
-          <pre class="language-javascript"><code class="language-javascript"><span class="token function"><span class="token maybe-class-name">UNSAFE_componentWillMount</span></span><span class="token punctuation">(</span><span class="token punctuation">)</span></code></pre>
-          <blockquote>
-            <p>補足</p>
-            <p>このライフサイクルは、以前は <code>componentWillMount</code> という名前でした。その名前はバージョン 17 まで機能し続けます。コンポーネントを自動的に更新するには、<a href="https://github.com/reactjs/react-codemod#rename-unsafe-lifecycles"><code>rename-unsafe-lifecycles</code> codemod</a> を使用してください。</p>
-          </blockquote>
-          <p>マウントが行われる直前に <code>UNSAFE_componentWillMount()</code> が呼び出されます。これは <code>render()</code> の前に呼び出されるので、このメソッドで <code>setState()</code> を同期的に呼び出しても余分なレンダーは行われません。一般に、state を初期化するためには代わりに <code>constructor()</code> を使うことをおすすめします。</p>
-          <p>このメソッドでは、副作用や購読を導入しないでください。そのような場合は、代わりに <code>componentDidMount()</code> を使用してください。</p>
-          <p>これは、サーバレンダリングで呼び出される唯一のライフサイクルメソッドです。</p>
-          <hr>
-        </section>
-        <section id="unsafe_componentwillreceiveprops-unsafe_componentwillreceiveprops" class="level3">
-          <h3><code>UNSAFE_componentWillReceiveProps()</code> {#unsafe_componentwillreceiveprops}</h3>
-          <pre class="language-javascript"><code class="language-javascript"><span class="token function"><span class="token maybe-class-name">UNSAFE_componentWillReceiveProps</span></span><span class="token punctuation">(</span>nextProps<span class="token punctuation">)</span></code></pre>
-          <blockquote>
-            <p>補足</p>
-            <p>このライフサイクルは、以前は <code>componentWillReceiveProps</code> という名前でした。その名前はバージョン 17 まで機能し続けます。コンポーネントを自動的に更新するには、<a href="https://github.com/reactjs/react-codemod#rename-unsafe-lifecycles"><code>rename-unsafe-lifecycles</code> codemod</a> を使用してください。</p>
-          </blockquote>
-          <blockquote>
-            <p>補足:</p>
-            <p>このライフサイクルメソッドを使用すると、しばしばバグや矛盾が発生します。</p>
-            <ul>
-              <li>props の変更に応じて<strong>副作用を実行する</strong>必要がある場合は（データの取得やアニメーションなど）、代わりに <a href="#componentdidupdate"><code>componentDidUpdate</code></a> ライフサイクルを使用してください</li>
-              <li><code>componentWillReceiveProps</code> を <strong>props が変更されたときにのみデータを再計算する</strong>ために使う代わりに、<a href="/blog/2018/06/07/you-probably-dont-need-derived-state.html#what-about-memoization">メモ化ヘルパーを使用してください</a></li>
-              <li><code>componentWillReceiveProps</code> を <strong>props が変更されたときに何かの state を「リセット」する</strong>ために使う代わりに、コンポーネントを<a href="/blog/2018/06/07/you-probably-dont-need-derived-state.html#recommendation-fully-controlled-component">完全に制御する</a>か、または <a href="/blog/2018/06/07/you-probably-dont-need-derived-state.html#recommendation-fully-uncontrolled-component-with-a-key"><code>key</code> を使って全く制御しない</a>かを検討してください</li>
-            </ul>
-            <p>その他の使用例については、<a href="/blog/2018/06/07/you-probably-dont-need-derived-state.html">派生 state に関するこのブログ投稿の推奨事項に従ってください</a>。</p>
-          </blockquote>
-          <p><code>UNSAFE_componentWillReceiveProps()</code> は、マウントされたコンポーネントが新しい props を受け取る前に呼び出されます。prop の変更に応じて state を更新する必要がある場合（たとえばリセットする必要がある場合）は、<code>this.props</code> と <code>nextProps</code> を比較し、このメソッドで <code>this.setState()</code> を使用して状態遷移を実行できます。</p>
-          <p>親コンポーネントによってコンポーネントが再レンダーされる場合、props が変更されていなくてもこのメソッドが呼び出されることに注意してください。変更だけを処理したい場合は、必ず現在の値と次の値を比較してください。</p>
-          <p><a href="#mounting">マウント</a>時に、React は最初の props で <code>UNSAFE_componentWillReceiveProps()</code> を呼び出しません。一部のコンポーネントの props が更新される可能性がある場合にのみ、このメソッドを呼び出します。<code>this.setState()</code> を呼び出しても、通常 <code>UNSAFE_componentWillReceiveProps()</code> は呼び出されません。</p>
-          <hr>
-        </section>
-        <section id="unsafe_componentwillupdate-unsafe_componentwillupdate" class="level3">
-          <h3><code>UNSAFE_componentWillUpdate()</code> {#unsafe_componentwillupdate}</h3>
-          <pre class="language-javascript"><code class="language-javascript"><span class="token function"><span class="token maybe-class-name">UNSAFE_componentWillUpdate</span></span><span class="token punctuation">(</span>nextProps<span class="token punctuation">,</span> nextState<span class="token punctuation">)</span></code></pre>
-          <blockquote>
-            <p>補足</p>
-            <p>このライフサイクルは、以前は <code>componentWillUpdate</code> と呼ばれていました。その名前はバージョン 17 まで機能し続けます。コンポーネントを自動的に更新するには、<a href="https://github.com/reactjs/react-codemod#rename-unsafe-lifecycles"><code>rename-unsafe-lifecycles</code> codemod</a> を使用してください。</p>
-          </blockquote>
-          <p><code>UNSAFE_componentWillUpdate()</code> は、新しい props または state を受け取ったときにレンダーの直前に呼び出されます。更新が発生する前の準備する機会としてこれを使用してください。このメソッドは最初のレンダーでは呼び出されません。</p>
-          <p>ここで <code>this.setState()</code> を呼び出すことはできません。また、<code>UNSAFE_componentWillUpdate()</code> が返る前に React コンポーネントへの更新を引き起こすような何か他のこと（たとえば、Redux アクションのディスパッチ）をするべきでもありません。</p>
-          <p>通常、このメソッドは <code>componentDidUpdate()</code> に置き換えることができます。このメソッドで DOM から読んでいる場合（スクロール位置を保存するなど）は、そのロジックを <code>getSnapshotBeforeUpdate()</code> に移動できます。</p>
-          <blockquote>
-            <p>補足</p>
-            <p><a href="#shouldcomponentupdate"><code>shouldComponentUpdate()</code></a> が false を返した場合、<code>UNSAFE_componentWillUpdate()</code> は呼び出されません。</p>
-          </blockquote>
-          <hr>
-        </section>
-      </section>
-      <section id="other-apis-1" class="level2">
-        <h2>他の API</h2>
-        <p>上記のライフサイクルメソッド（React が呼び出すもの）とは異なり、以下のメソッドは<em>あなたが</em>コンポーネントから呼び出すことができるメソッドです。</p>
-        <p>それは <code>setState()</code> と <code>forceUpdate()</code> の 2 つだけです。</p>
-        <section id="setstate-setstate" class="level3">
-          <h3><code>setState()</code> {#setstate}</h3>
-          <pre class="language-javascript"><code class="language-javascript"><span class="token function">setState</span><span class="token punctuation">(</span>updater<span class="token punctuation">[</span><span class="token punctuation">,</span> callback<span class="token punctuation">]</span><span class="token punctuation">)</span></code></pre>
-          <p><code>setState()</code> はコンポーネントの state への変更をエンキューし、このコンポーネントとその子を更新された state で再レンダーする必要があることを React に伝えます。これは、イベントハンドラとサーバの応答に応じてユーザインターフェイスを更新するために使用する主な方法です。</p>
-          <p><code>setState()</code> は、コンポーネントを更新するための即時のコマンドではなく、<strong>要求</strong>として考えてください。パフォーマンスをよくするために、React はそれを遅らせて、単一パスで複数のコンポーネントを更新することがあります。DOM の更新が同期的に適用される必要がある稀なケースにおいては、更新を <a href="./react-dom.html#flushsync"><code>flushSync</code></a> でラップすることができますが、これを使うとパフォーマンスが低下する可能性があります。</p>
-          <p><code>setState()</code> は常にコンポーネントを直ちに更新するわけではありません。それはバッチ式に更新するか後で更新を延期するかもしれません。これは <code>setState()</code> を呼び出した直後に <code>this.state</code> を読み取ることが潜在的な危険になります。代わりに、<code>componentDidUpdate</code> または <code>setState</code> コールバック（<code>setState(updater, callback)</code>）を使用してください。どちらも更新が適用された後に起動することが保証されています。前の state に基づいて state を設定する必要がある場合は、下記の <code>updater</code> 引数についてお読みください。</p>
-          <p><code>shouldComponentUpdate()</code> が <code>false</code> を返さない限り、<code>setState()</code> は常に再レンダーされます。ミュータブルなオブジェクトが使用されていて、条件付きでレンダーを行うためのロジックを <code>shouldComponentUpdate()</code> に実装できない場合、新しい state が前の state と異なるときにのみ <code>setState()</code> を呼び出すと、不要な再レンダーを回避できます。</p>
-          <p>最初の引数の <code>updater</code> 関数は次のようなシグネチャです。</p>
-          <pre class="language-javascript"><code class="language-javascript"><span class="token punctuation">(</span><span class="token parameter">state<span class="token punctuation">,</span> props</span><span class="token punctuation">)</span> <span class="token arrow operator">=></span> stateChange</code></pre>
-          <p><code>state</code> は、変更が適用されているときのコンポーネントの state への参照です。直接変更するべきではありません。代わりに、<code>state</code> と <code>props</code> からの入力に基づいて新しいオブジェクトを構築することによって変更を表現する必要があります。たとえば、<code>props.step</code> によって <code>state</code> の値を増加したいとします。</p>
-          <pre class="language-javascript"><code class="language-javascript"><span class="token keyword">this</span><span class="token punctuation">.</span><span class="token method function property-access">setState</span><span class="token punctuation">(</span><span class="token punctuation">(</span><span class="token parameter">state<span class="token punctuation">,</span> props</span><span class="token punctuation">)</span> <span class="token arrow operator">=></span> <span class="token punctuation">{</span>
+}</code></pre><p>React の本番用ビルドと開発用ビルドでは、<code>componentDidCatch()</code> がエラーを処理する方法がわずかに異なります。<p>開発用ビルドでは、エラーは <code>window</code> までバブリングするため、<code>componentDidCatch()</code> が捕捉したエラーを <code>window.onerror</code> や <code>window.addEventListener('error', callback)</code> でもインターセプトすることができます。<p>一方で本番用ビルドではエラーはバブリングしないため、祖先要素のエラーハンドラは <code>componentDidCatch()</code> で明示的に捕捉されていないエラーのみを受け取ります。<blockquote><p>補足<p>エラーが発生した場合は、<code>setState</code> を呼び出す <code>componentDidCatch()</code> を使用してフォールバック UI をレンダーできますが、これは将来のリリースでは推奨されなくなります。 代わりにフォールバックの描画を扱うために、<code>static getDerivedStateFromError()</code> を使用してください。</blockquote><hr></section><section id="legacy-lifecycle-methods"class="level3"><h3>レガシーなライフサイクルメソッド</h3><p>以下のライフサイクルメソッドは「レガシー」としてマークされています。動作はしますが、新しいコードで使用することはおすすめしません。この<a href="/blog/2018/03/27/update-on-async-rendering.html">ブログ記事</a>では、レガシーなライフサイクルメソッドからの移行についてさらに学ぶことができます。</section><section id="unsafe_componentwillmount-unsafe_componentwillmount"class="level3"><h3><code>UNSAFE_componentWillMount()</code> {#unsafe_componentwillmount}</h3><pre class="language-javascript"><code class="language-javascript"><span class="token function"><span class="token maybe-class-name">UNSAFE_componentWillMount</span></span><span class="token punctuation">(</span><span class="token punctuation">)</span></code></pre><blockquote><p>補足<p>このライフサイクルは、以前は <code>componentWillMount</code> という名前でした。その名前はバージョン 17 まで機能し続けます。コンポーネントを自動的に更新するには、<a href="https://github.com/reactjs/react-codemod#rename-unsafe-lifecycles"><code>rename-unsafe-lifecycles</code> codemod</a> を使用してください。</blockquote><p>マウントが行われる直前に <code>UNSAFE_componentWillMount()</code> が呼び出されます。これは <code>render()</code> の前に呼び出されるので、このメソッドで <code>setState()</code> を同期的に呼び出しても余分なレンダーは行われません。一般に、state を初期化するためには代わりに <code>constructor()</code> を使うことをおすすめします。<p>このメソッドでは、副作用や購読を導入しないでください。そのような場合は、代わりに <code>componentDidMount()</code> を使用してください。<p>これは、サーバレンダリングで呼び出される唯一のライフサイクルメソッドです。<hr></section><section id="unsafe_componentwillreceiveprops-unsafe_componentwillreceiveprops"class="level3"><h3><code>UNSAFE_componentWillReceiveProps()</code> {#unsafe_componentwillreceiveprops}</h3><pre class="language-javascript"><code class="language-javascript"><span class="token function"><span class="token maybe-class-name">UNSAFE_componentWillReceiveProps</span></span><span class="token punctuation">(</span>nextProps<span class="token punctuation">)</span></code></pre><blockquote><p>補足<p>このライフサイクルは、以前は <code>componentWillReceiveProps</code> という名前でした。その名前はバージョン 17 まで機能し続けます。コンポーネントを自動的に更新するには、<a href="https://github.com/reactjs/react-codemod#rename-unsafe-lifecycles"><code>rename-unsafe-lifecycles</code> codemod</a> を使用してください。</blockquote><blockquote><p>補足:<p>このライフサイクルメソッドを使用すると、しばしばバグや矛盾が発生します。<ul><li>props の変更に応じて<strong>副作用を実行する</strong>必要がある場合は（データの取得やアニメーションなど）、代わりに <a href="#componentdidupdate"><code>componentDidUpdate</code></a> ライフサイクルを使用してください<li><code>componentWillReceiveProps</code> を <strong>props が変更されたときにのみデータを再計算する</strong>ために使う代わりに、<a href="/blog/2018/06/07/you-probably-dont-need-derived-state.html#what-about-memoization">メモ化ヘルパーを使用してください</a><li><code>componentWillReceiveProps</code> を <strong>props が変更されたときに何かの state を「リセット」する</strong>ために使う代わりに、コンポーネントを<a href="/blog/2018/06/07/you-probably-dont-need-derived-state.html#recommendation-fully-controlled-component">完全に制御する</a>か、または <a href="/blog/2018/06/07/you-probably-dont-need-derived-state.html#recommendation-fully-uncontrolled-component-with-a-key"><code>key</code> を使って全く制御しない</a>かを検討してください</ul><p>その他の使用例については、<a href="/blog/2018/06/07/you-probably-dont-need-derived-state.html">派生 state に関するこのブログ投稿の推奨事項に従ってください</a>。</blockquote><p><code>UNSAFE_componentWillReceiveProps()</code> は、マウントされたコンポーネントが新しい props を受け取る前に呼び出されます。prop の変更に応じて state を更新する必要がある場合（たとえばリセットする必要がある場合）は、<code>this.props</code> と <code>nextProps</code> を比較し、このメソッドで <code>this.setState()</code> を使用して状態遷移を実行できます。<p>親コンポーネントによってコンポーネントが再レンダーされる場合、props が変更されていなくてもこのメソッドが呼び出されることに注意してください。変更だけを処理したい場合は、必ず現在の値と次の値を比較してください。<p><a href="#mounting">マウント</a>時に、React は最初の props で <code>UNSAFE_componentWillReceiveProps()</code> を呼び出しません。一部のコンポーネントの props が更新される可能性がある場合にのみ、このメソッドを呼び出します。<code>this.setState()</code> を呼び出しても、通常 <code>UNSAFE_componentWillReceiveProps()</code> は呼び出されません。<hr></section><section id="unsafe_componentwillupdate-unsafe_componentwillupdate"class="level3"><h3><code>UNSAFE_componentWillUpdate()</code> {#unsafe_componentwillupdate}</h3><pre class="language-javascript"><code class="language-javascript"><span class="token function"><span class="token maybe-class-name">UNSAFE_componentWillUpdate</span></span><span class="token punctuation">(</span>nextProps<span class="token punctuation">,</span> nextState<span class="token punctuation">)</span></code></pre><blockquote><p>補足<p>このライフサイクルは、以前は <code>componentWillUpdate</code> と呼ばれていました。その名前はバージョン 17 まで機能し続けます。コンポーネントを自動的に更新するには、<a href="https://github.com/reactjs/react-codemod#rename-unsafe-lifecycles"><code>rename-unsafe-lifecycles</code> codemod</a> を使用してください。</blockquote><p><code>UNSAFE_componentWillUpdate()</code> は、新しい props または state を受け取ったときにレンダーの直前に呼び出されます。更新が発生する前の準備する機会としてこれを使用してください。このメソッドは最初のレンダーでは呼び出されません。<p>ここで <code>this.setState()</code> を呼び出すことはできません。また、<code>UNSAFE_componentWillUpdate()</code> が返る前に React コンポーネントへの更新を引き起こすような何か他のこと（たとえば、Redux アクションのディスパッチ）をするべきでもありません。<p>通常、このメソッドは <code>componentDidUpdate()</code> に置き換えることができます。このメソッドで DOM から読んでいる場合（スクロール位置を保存するなど）は、そのロジックを <code>getSnapshotBeforeUpdate()</code> に移動できます。<blockquote><p>補足<p><a href="#shouldcomponentupdate"><code>shouldComponentUpdate()</code></a> が false を返した場合、<code>UNSAFE_componentWillUpdate()</code> は呼び出されません。</blockquote><hr></section></section><section id="other-apis-1"class="level2"><h2>他の API</h2><p>上記のライフサイクルメソッド（React が呼び出すもの）とは異なり、以下のメソッドは<em>あなたが</em>コンポーネントから呼び出すことができるメソッドです。<p>それは <code>setState()</code> と <code>forceUpdate()</code> の 2 つだけです。<section id="setstate-setstate"class="level3"><h3><code>setState()</code> {#setstate}</h3><pre class="language-javascript"><code class="language-javascript"><span class="token function">setState</span><span class="token punctuation">(</span>updater<span class="token punctuation">[</span><span class="token punctuation">,</span> callback<span class="token punctuation">]</span><span class="token punctuation">)</span></code></pre><p><code>setState()</code> はコンポーネントの state への変更をエンキューし、このコンポーネントとその子を更新された state で再レンダーする必要があることを React に伝えます。これは、イベントハンドラとサーバの応答に応じてユーザインターフェイスを更新するために使用する主な方法です。<p><code>setState()</code> は、コンポーネントを更新するための即時のコマンドではなく、<strong>要求</strong>として考えてください。パフォーマンスをよくするために、React はそれを遅らせて、単一パスで複数のコンポーネントを更新することがあります。DOM の更新が同期的に適用される必要がある稀なケースにおいては、更新を <a href="./react-dom.html#flushsync"><code>flushSync</code></a> でラップすることができますが、これを使うとパフォーマンスが低下する可能性があります。<p><code>setState()</code> は常にコンポーネントを直ちに更新するわけではありません。それはバッチ式に更新するか後で更新を延期するかもしれません。これは <code>setState()</code> を呼び出した直後に <code>this.state</code> を読み取ることが潜在的な危険になります。代わりに、<code>componentDidUpdate</code> または <code>setState</code> コールバック（<code>setState(updater, callback)</code>）を使用してください。どちらも更新が適用された後に起動することが保証されています。前の state に基づいて state を設定する必要がある場合は、下記の <code>updater</code> 引数についてお読みください。<p><code>shouldComponentUpdate()</code> が <code>false</code> を返さない限り、<code>setState()</code> は常に再レンダーされます。ミュータブルなオブジェクトが使用されていて、条件付きでレンダーを行うためのロジックを <code>shouldComponentUpdate()</code> に実装できない場合、新しい state が前の state と異なるときにのみ <code>setState()</code> を呼び出すと、不要な再レンダーを回避できます。<p>最初の引数の <code>updater</code> 関数は次のようなシグネチャです。<pre class="language-javascript"><code class="language-javascript"><span class="token punctuation">(</span><span class="token parameter">state<span class="token punctuation">,</span> props</span><span class="token punctuation">)</span> <span class="token arrow operator">=></span> stateChange</code></pre><p><code>state</code> は、変更が適用されているときのコンポーネントの state への参照です。直接変更するべきではありません。代わりに、<code>state</code> と <code>props</code> からの入力に基づいて新しいオブジェクトを構築することによって変更を表現する必要があります。たとえば、<code>props.step</code> によって <code>state</code> の値を増加したいとします。<pre class="language-javascript"><code class="language-javascript"><span class="token keyword">this</span><span class="token punctuation">.</span><span class="token method function property-access">setState</span><span class="token punctuation">(</span><span class="token punctuation">(</span><span class="token parameter">state<span class="token punctuation">,</span> props</span><span class="token punctuation">)</span> <span class="token arrow operator">=></span> <span class="token punctuation">{</span>
   <span class="token keyword control-flow">return</span> <span class="token punctuation">{</span><span class="token literal-property property">counter</span><span class="token operator">:</span> state<span class="token punctuation">.</span><span class="token property-access">counter</span> <span class="token operator">+</span> props<span class="token punctuation">.</span><span class="token property-access">step</span><span class="token punctuation">}</span><span class="token punctuation">;</span>
-<span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">;</span></code></pre>
-          <p>updater 関数が受け取る <code>state</code> と <code>props</code> の両方が最新のものであることが保証されています。アップデータの出力は <code>state</code> と浅くマージされています。</p>
-          <p><code>setState()</code> の 2 番目のパラメータは、<code>setState</code> が完了してコンポーネントが再レンダーされると実行される省略可能なコールバック関数です。通常、そのようなロジックには代わりに <code>componentDidUpdate()</code> を使用することをおすすめします。</p>
-          <p>関数の代わりに、オブジェクトを <code>setState()</code> の最初の引数として渡すこともできます。</p>
-          <pre class="language-javascript"><code class="language-javascript"><span class="token function">setState</span><span class="token punctuation">(</span>stateChange<span class="token punctuation">[</span><span class="token punctuation">,</span> callback<span class="token punctuation">]</span><span class="token punctuation">)</span></code></pre>
-          <p>これは、たとえば、ショッピングカートの商品数を調整するために、<code>stateChange</code> の新しい state への浅いマージを実行します。</p>
-          <pre class="language-javascript"><code class="language-javascript"><span class="token keyword">this</span><span class="token punctuation">.</span><span class="token method function property-access">setState</span><span class="token punctuation">(</span><span class="token punctuation">{</span><span class="token literal-property property">quantity</span><span class="token operator">:</span> <span class="token number">2</span><span class="token punctuation">}</span><span class="token punctuation">)</span></code></pre>
-          <p>この形式の <code>setState()</code> も非同期であり、同じサイクル中の複数の呼び出しをまとめてバッチ処理することができます。たとえば、同じサイクルで品目数量を複数回増やそうとすると、次のようになります。</p>
-          <pre class="language-javascript"><code class="language-javascript"><span class="token known-class-name class-name">Object</span><span class="token punctuation">.</span><span class="token method function property-access">assign</span><span class="token punctuation">(</span>
+<span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">;</span></code></pre><p>updater 関数が受け取る <code>state</code> と <code>props</code> の両方が最新のものであることが保証されています。アップデータの出力は <code>state</code> と浅くマージされています。<p><code>setState()</code> の 2 番目のパラメータは、<code>setState</code> が完了してコンポーネントが再レンダーされると実行される省略可能なコールバック関数です。通常、そのようなロジックには代わりに <code>componentDidUpdate()</code> を使用することをおすすめします。<p>関数の代わりに、オブジェクトを <code>setState()</code> の最初の引数として渡すこともできます。<pre class="language-javascript"><code class="language-javascript"><span class="token function">setState</span><span class="token punctuation">(</span>stateChange<span class="token punctuation">[</span><span class="token punctuation">,</span> callback<span class="token punctuation">]</span><span class="token punctuation">)</span></code></pre><p>これは、たとえば、ショッピングカートの商品数を調整するために、<code>stateChange</code> の新しい state への浅いマージを実行します。<pre class="language-javascript"><code class="language-javascript"><span class="token keyword">this</span><span class="token punctuation">.</span><span class="token method function property-access">setState</span><span class="token punctuation">(</span><span class="token punctuation">{</span><span class="token literal-property property">quantity</span><span class="token operator">:</span> <span class="token number">2</span><span class="token punctuation">}</span><span class="token punctuation">)</span></code></pre><p>この形式の <code>setState()</code> も非同期であり、同じサイクル中の複数の呼び出しをまとめてバッチ処理することができます。たとえば、同じサイクルで品目数量を複数回増やそうとすると、次のようになります。<pre class="language-javascript"><code class="language-javascript"><span class="token known-class-name class-name">Object</span><span class="token punctuation">.</span><span class="token method function property-access">assign</span><span class="token punctuation">(</span>
   previousState<span class="token punctuation">,</span>
   <span class="token punctuation">{</span><span class="token literal-property property">quantity</span><span class="token operator">:</span> state<span class="token punctuation">.</span><span class="token property-access">quantity</span> <span class="token operator">+</span> <span class="token number">1</span><span class="token punctuation">}</span><span class="token punctuation">,</span>
   <span class="token punctuation">{</span><span class="token literal-property property">quantity</span><span class="token operator">:</span> state<span class="token punctuation">.</span><span class="token property-access">quantity</span> <span class="token operator">+</span> <span class="token number">1</span><span class="token punctuation">}</span><span class="token punctuation">,</span>
   <span class="token spread operator">...</span>
-<span class="token punctuation">)</span></code></pre>
-          <p>後続の呼び出しは、同じサイクル内の前の呼び出しの値を上書きするため、数量は 1 回だけ増分されます。次の state が現在の state に依存する場合は、代わりに updater 関数の形式を使用することをおすすめします。</p>
-          <pre class="language-js"><code class="language-js"><span class="token keyword">this</span><span class="token punctuation">.</span><span class="token method function property-access">setState</span><span class="token punctuation">(</span><span class="token punctuation">(</span><span class="token parameter">state</span><span class="token punctuation">)</span> <span class="token arrow operator">=></span> <span class="token punctuation">{</span>
+<span class="token punctuation">)</span></code></pre><p>後続の呼び出しは、同じサイクル内の前の呼び出しの値を上書きするため、数量は 1 回だけ増分されます。次の state が現在の state に依存する場合は、代わりに updater 関数の形式を使用することをおすすめします。<pre class="language-js"><code class="language-js"><span class="token keyword">this</span><span class="token punctuation">.</span><span class="token method function property-access">setState</span><span class="token punctuation">(</span><span class="token punctuation">(</span><span class="token parameter">state</span><span class="token punctuation">)</span> <span class="token arrow operator">=></span> <span class="token punctuation">{</span>
   <span class="token keyword control-flow">return</span> <span class="token punctuation">{</span><span class="token literal-property property">quantity</span><span class="token operator">:</span> state<span class="token punctuation">.</span><span class="token property-access">quantity</span> <span class="token operator">+</span> <span class="token number">1</span><span class="token punctuation">}</span><span class="token punctuation">;</span>
-<span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">;</span></code></pre>
-          <p>詳しくは以下を参照してください。</p>
-          <ul>
-            <li><a href="./state-and-lifecycle.html">state と ライフサイクル</a></li>
-            <li><a href="https://stackoverflow.com/a/48610973/458193">詳細: <code>setState()</code> はいつ、なぜバッチ処理されるのですか？</a></li>
-            <li><a href="https://github.com/facebook/react/issues/11527#issuecomment-360199710">詳細: <code>this.state</code> が直ちに更新されないのはなぜですか？</a></li>
-          </ul>
-          <hr>
-        </section>
-        <section id="forceupdate-forceupdate" class="level3">
-          <h3><code>forceUpdate()</code> {#forceupdate}</h3>
-          <pre class="language-javascript"><code class="language-javascript">component<span class="token punctuation">.</span><span class="token method function property-access">forceUpdate</span><span class="token punctuation">(</span>callback<span class="token punctuation">)</span></code></pre>
-          <p>デフォルトでは、コンポーネントの state や props が変わると、コンポーネントは再レンダーされます。<code>render()</code> メソッドが他のデータに依存している場合は、<code>forceUpdate()</code> を呼び出してコンポーネントの再レンダーが必要であることを React に伝えることができます。</p>
-          <p><code>forceUpdate()</code> を呼び出すと、<code>shouldComponentUpdate()</code> をスキップして、コンポーネントに対して <code>render()</code> が呼び出されます。これにより、それぞれの子の <code>shouldComponentUpdate()</code> メソッドを含む、子コンポーネントの通常のライフサイクルメソッドがトリガーされます。マークアップが変更された場合にのみ React は DOM を更新します。</p>
-          <p>通常は全ての <code>forceUpdate()</code> の使用を避け、<code>render()</code> の <code>this.props</code> と <code>this.state</code> からのみ読み取るようにしてください。</p>
-          <hr>
-        </section>
-      </section>
-      <section id="class-properties-1" class="level2">
-        <h2>クラスプロパティ</h2>
-        <section id="defaultprops-defaultprops" class="level3">
-          <h3><code>defaultProps</code> {#defaultprops}</h3>
-          <p><code>defaultProps</code> は、コンポーネントクラス自体のプロパティとして定義して、そのクラスのデフォルトの props を設定できます。これは <code>undefined</code> であるプロパティに使用されますが、<code>null</code> であるプロパティには使用されません。例えば：</p>
-          <pre class="language-js"><code class="language-js"><span class="token keyword">class</span> <span class="token class-name">CustomButton</span> <span class="token keyword">extends</span> <span class="token class-name">React<span class="token punctuation">.</span>Component</span> <span class="token punctuation">{</span>
+<span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">;</span></code></pre><p>詳しくは以下を参照してください。<ul><li><a href="./state-and-lifecycle.html">state と ライフサイクル</a><li><a href="https://stackoverflow.com/a/48610973/458193">詳細: <code>setState()</code> はいつ、なぜバッチ処理されるのですか？</a><li><a href="https://github.com/facebook/react/issues/11527#issuecomment-360199710">詳細: <code>this.state</code> が直ちに更新されないのはなぜですか？</a></ul><hr></section><section id="forceupdate-forceupdate"class="level3"><h3><code>forceUpdate()</code> {#forceupdate}</h3><pre class="language-javascript"><code class="language-javascript">component<span class="token punctuation">.</span><span class="token method function property-access">forceUpdate</span><span class="token punctuation">(</span>callback<span class="token punctuation">)</span></code></pre><p>デフォルトでは、コンポーネントの state や props が変わると、コンポーネントは再レンダーされます。<code>render()</code> メソッドが他のデータに依存している場合は、<code>forceUpdate()</code> を呼び出してコンポーネントの再レンダーが必要であることを React に伝えることができます。<p><code>forceUpdate()</code> を呼び出すと、<code>shouldComponentUpdate()</code> をスキップして、コンポーネントに対して <code>render()</code> が呼び出されます。これにより、それぞれの子の <code>shouldComponentUpdate()</code> メソッドを含む、子コンポーネントの通常のライフサイクルメソッドがトリガーされます。マークアップが変更された場合にのみ React は DOM を更新します。<p>通常は全ての <code>forceUpdate()</code> の使用を避け、<code>render()</code> の <code>this.props</code> と <code>this.state</code> からのみ読み取るようにしてください。<hr></section></section><section id="class-properties-1"class="level2"><h2>クラスプロパティ</h2><section id="defaultprops-defaultprops"class="level3"><h3><code>defaultProps</code> {#defaultprops}</h3><p><code>defaultProps</code> は、コンポーネントクラス自体のプロパティとして定義して、そのクラスのデフォルトの props を設定できます。これは <code>undefined</code> であるプロパティに使用されますが、<code>null</code> であるプロパティには使用されません。例えば：<pre class="language-js"><code class="language-js"><span class="token keyword">class</span> <span class="token class-name">CustomButton</span> <span class="token keyword">extends</span> <span class="token class-name">React<span class="token punctuation">.</span>Component</span> <span class="token punctuation">{</span>
   <span class="token comment">// ...</span>
 <span class="token punctuation">}</span>
 
 <span class="token maybe-class-name">CustomButton</span><span class="token punctuation">.</span><span class="token property-access">defaultProps</span> <span class="token operator">=</span> <span class="token punctuation">{</span>
   <span class="token literal-property property">color</span><span class="token operator">:</span> <span class="token string">'blue'</span>
-<span class="token punctuation">}</span><span class="token punctuation">;</span></code></pre>
-          <p><code>props.color</code> が提供されていない場合は、デフォルトで <code>'blue'</code> に設定されます。</p>
-          <pre class="language-js"><code class="language-js">  <span class="token function">render</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+<span class="token punctuation">}</span><span class="token punctuation">;</span></code></pre><p><code>props.color</code> が提供されていない場合は、デフォルトで <code>'blue'</code> に設定されます。<pre class="language-js"><code class="language-js">  <span class="token function">render</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
     <span class="token keyword control-flow">return</span> <span class="token operator">&#x3C;</span><span class="token maybe-class-name">CustomButton</span> <span class="token operator">/</span><span class="token operator">></span> <span class="token punctuation">;</span> <span class="token comment">// props.color は blue にセットされます</span>
-  <span class="token punctuation">}</span></code></pre>
-          <p><code>props.color</code> が <code>null</code> に設定されている場合、それは <code>null</code> のままになります。</p>
-          <pre class="language-js"><code class="language-js">  <span class="token function">render</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  <span class="token punctuation">}</span></code></pre><p><code>props.color</code> が <code>null</code> に設定されている場合、それは <code>null</code> のままになります。<pre class="language-js"><code class="language-js">  <span class="token function">render</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
     <span class="token keyword control-flow">return</span> <span class="token operator">&#x3C;</span><span class="token maybe-class-name">CustomButton</span> color<span class="token operator">=</span><span class="token punctuation">{</span><span class="token keyword null nil">null</span><span class="token punctuation">}</span> <span class="token operator">/</span><span class="token operator">></span> <span class="token punctuation">;</span> <span class="token comment">// props.color は null のままになります</span>
-  <span class="token punctuation">}</span></code></pre>
-          <hr>
-        </section>
-        <section id="displayname-displayname" class="level3">
-          <h3><code>displayName</code> {#displayname}</h3>
-          <p><code>displayName</code> 文字列はデバッグメッセージに使用されます。通常、コンポーネントを定義する関数またはクラスの名前から推測されるため、明示的に設定する必要はありません。デバッグ目的で別の名前を表示する場合や、高階コンポーネントを作成する場合には、明示的に設定したくなるかもしれません。詳細については、<a href="./higher-order-components.html#convention-wrap-the-display-name-for-easy-debugging">簡単なデバッグのために表示名をラップする</a>を参照してください。</p>
-          <hr>
-        </section>
-      </section>
-      <section id="instance-properties-1" class="level2">
-        <h2>インスタンスプロパティ</h2>
-        <section id="props-props" class="level3">
-          <h3><code>props</code> {#props}</h3>
-          <p><code>this.props</code> には、このコンポーネントの呼び出し元によって定義された props が含まれています。props の紹介は <a href="./components-and-props.html">コンポーネントと props</a> を見てください。</p>
-          <p>特に、<code>this.props.children</code> は特別なプロパティで、通常はタグ自体にではなく JSX 式の子タグによって定義されます。</p>
-        </section>
-        <section id="state-state" class="level3">
-          <h3><code>state</code> {#state}</h3>
-          <p>state には、そのコンポーネント固有のデータが含まれており、これは時間の経過とともに変化する可能性があります。state はユーザ定義のものであり、プレーンな JavaScript オブジェクトでなければなりません。</p>
-          <p>レンダーやデータフローに値が使用されていない場合（たとえば、タイマー ID）は、値を state にする必要はありません。そのような値は、コンポーネントインスタンスのフィールドとして定義できます。</p>
-          <p>state の詳細については、<a href="./state-and-lifecycle.html">state とライフサイクル</a>を参照してください。</p>
-          <p>
-            後で <code>setState()</code> を呼び出すと、行った変更が置き換えられる可能性があるため、<code>this.state</code> を直接変更しないでください。<code>this.state</code> がイミュータブルであるかのように扱ってください。
-            <span style="float: footnote;"><a href="./index.html#toc">Go to TOC</a></span>
-          </p>
-        </section>
-      </section>
-    </section>
-  </body>
-</html>
+  <span class="token punctuation">}</span></code></pre><hr></section><section id="displayname-displayname"class="level3"><h3><code>displayName</code> {#displayname}</h3><p><code>displayName</code> 文字列はデバッグメッセージに使用されます。通常、コンポーネントを定義する関数またはクラスの名前から推測されるため、明示的に設定する必要はありません。デバッグ目的で別の名前を表示する場合や、高階コンポーネントを作成する場合には、明示的に設定したくなるかもしれません。詳細については、<a href="./higher-order-components.html#convention-wrap-the-display-name-for-easy-debugging">簡単なデバッグのために表示名をラップする</a>を参照してください。<hr></section></section><section id="instance-properties-1"class="level2"><h2>インスタンスプロパティ</h2><section id="props-props"class="level3"><h3><code>props</code> {#props}</h3><p><code>this.props</code> には、このコンポーネントの呼び出し元によって定義された props が含まれています。props の紹介は <a href="./components-and-props.html">コンポーネントと props</a> を見てください。<p>特に、<code>this.props.children</code> は特別なプロパティで、通常はタグ自体にではなく JSX 式の子タグによって定義されます。</section><section id="state-state"class="level3"><h3><code>state</code> {#state}</h3><p>state には、そのコンポーネント固有のデータが含まれており、これは時間の経過とともに変化する可能性があります。state はユーザ定義のものであり、プレーンな JavaScript オブジェクトでなければなりません。<p>レンダーやデータフローに値が使用されていない場合（たとえば、タイマー ID）は、値を state にする必要はありません。そのような値は、コンポーネントインスタンスのフィールドとして定義できます。<p>state の詳細については、<a href="./state-and-lifecycle.html">state とライフサイクル</a>を参照してください。<p>後で <code>setState()</code> を呼び出すと、行った変更が置き換えられる可能性があるため、<code>this.state</code> を直接変更しないでください。<code>this.state</code> がイミュータブルであるかのように扱ってください。 <span style="float:footnote"><a href="./index.html#toc">Go to TOC</a></span></section></section></section>

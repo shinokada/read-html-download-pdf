@@ -1,29 +1,4 @@
-<!doctype html>
-<html lang="en">
-  <head>
-    <meta charset="utf-8">
-    <title>Symlinked node_modules structure</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <link rel="stylesheet" href="https://raw.githubusercontent.com/shinokada/prism-coy-theme/main/theme_common.css">
-  </head>
-  <body>
-    <section id="symlinked-node_modules-structure" class="level1">
-      <h1>Symlinked <code>node_modules</code> structure</h1>info
-      <p>
-        This article only describes how pnpm's <code>node_modules</code> are structured when
-        there are no packages with peer dependencies. For the more complex scenario of
-        dependencies with peers, see <a href="how-peers-are-resolved.html">how peers are resolved</a>
-      </p>
-      <p>
-        pnpm's <code>node_modules</code> layout uses symbolic links to create a nested structure of
-        dependencies.
-      </p>
-      <p>
-        Every file of every package inside <code>node_modules</code> is a hard link to the
-        content-addressable store. Let's say you install <code>foo@1.0.0</code> that depends on
-        <code>bar@1.0.0</code>. pnpm will hard link both packages to <code>node_modules</code> like this:
-      </p>
-      <pre class="language-text"><code class="language-text">node_modules
+<!doctypehtml><html lang="en"><meta charset="utf-8"><title>Symlinked node_modules structure</title><meta name="viewport"content="width=device-width,initial-scale=1"><link rel="stylesheet"href="https://raw.githubusercontent.com/shinokada/prism-coy-theme/main/theme_common.css"><section id="symlinked-node_modules-structure"class="level1"><h1>Symlinked <code>node_modules</code> structure</h1>info<p>This article only describes how pnpm's <code>node_modules</code> are structured when there are no packages with peer dependencies. For the more complex scenario of dependencies with peers, see <a href="how-peers-are-resolved.html">how peers are resolved</a><p>pnpm's <code>node_modules</code> layout uses symbolic links to create a nested structure of dependencies.<p>Every file of every package inside <code>node_modules</code> is a hard link to the content-addressable store. Let's say you install <code>foo@1.0.0</code> that depends on <code>bar@1.0.0</code>. pnpm will hard link both packages to <code>node_modules</code> like this:<pre class="language-text"><code class="language-text">node_modules
 └── .pnpm
     ├── bar@1.0.0
     │   └── node_modules
@@ -34,33 +9,7 @@
         └── node_modules
             └── foo -> &#x3C;store>/foo
                 ├── index.js
-                └── package.json</code></pre>
-      <p>
-        These are the only real files in <code>node_modules</code>. Once all the packages are
-        hard linked to <code>node_modules</code>, symbolic links are created to build the nested
-        dependency graph structure.
-      </p>
-      <p>
-        As you might have noticed, both packages are hard linked into a subfolder inside
-        a <code>node_modules</code> folder (<code>foo@1.0.0/node_modules/foo</code>). This is needed to:
-      </p>
-      <ol>
-        <li>
-          <strong>allow packages to import themselves.</strong> <code>foo</code> should be able to
-          <code>require('foo/package.json')</code> or <code>import * as package from foo/package.json</code>.
-        </li>
-        <li>
-          <strong>avoid circular symlinks.</strong> Dependencies of packages are placed in the same
-          folder in which the dependent packages are. For Node.js it doesn't make a
-          difference whether dependencies are inside the package's <code>node_modules</code> or in
-          any other <code>node_modules</code> in the parent directories.
-        </li>
-      </ol>
-      <p>
-        The next stage of installation is symlinking dependencies. <code>bar</code> is going to be
-        symlinked to the <code>foo@1.0.0/node_modules</code> folder:
-      </p>
-      <pre class="language-text"><code class="language-text">node_modules
+                └── package.json</code></pre><p>These are the only real files in <code>node_modules</code>. Once all the packages are hard linked to <code>node_modules</code>, symbolic links are created to build the nested dependency graph structure.<p>As you might have noticed, both packages are hard linked into a subfolder inside a <code>node_modules</code> folder (<code>foo@1.0.0/node_modules/foo</code>). This is needed to:<ol><li><strong>allow packages to import themselves.</strong> <code>foo</code> should be able to <code>require('foo/package.json')</code> or <code>import * as package from foo/package.json</code>.<li><strong>avoid circular symlinks.</strong> Dependencies of packages are placed in the same folder in which the dependent packages are. For Node.js it doesn't make a difference whether dependencies are inside the package's <code>node_modules</code> or in any other <code>node_modules</code> in the parent directories.</ol><p>The next stage of installation is symlinking dependencies. <code>bar</code> is going to be symlinked to the <code>foo@1.0.0/node_modules</code> folder:<pre class="language-text"><code class="language-text">node_modules
 └── .pnpm
     ├── bar@1.0.0
     │   └── node_modules
@@ -68,12 +17,7 @@
     └── foo@1.0.0
         └── node_modules
             ├── foo -> &#x3C;store>/foo
-            └── bar -> ../../bar@1.0.0/node_modules/bar</code></pre>
-      <p>
-        Next, direct dependencies are handled. <code>foo</code> is going to be symlinked into the
-        root <code>node_modules</code> folder because <code>foo</code> is a dependency of the project:
-      </p>
-      <pre class="language-text"><code class="language-text">node_modules
+            └── bar -> ../../bar@1.0.0/node_modules/bar</code></pre><p>Next, direct dependencies are handled. <code>foo</code> is going to be symlinked into the root <code>node_modules</code> folder because <code>foo</code> is a dependency of the project:<pre class="language-text"><code class="language-text">node_modules
 ├── foo -> ./.pnpm/foo@1.0.0/node_modules/foo
 └── .pnpm
     ├── bar@1.0.0
@@ -82,16 +26,7 @@
     └── foo@1.0.0
         └── node_modules
             ├── foo -> &#x3C;store>/foo
-            └── bar -> ../../bar@1.0.0/node_modules/bar</code></pre>
-      <p>
-        This is a very simple example. However, the layout will maintain this structure
-        regardless of the number of dependencies and the depth of the dependency graph.
-      </p>
-      <p>
-        Let's add <code>qar@2.0.0</code> as a dependency of <code>bar</code> and <code>foo</code>. This is how the new
-        structure will look:
-      </p>
-      <pre class="language-text"><code class="language-text">node_modules
+            └── bar -> ../../bar@1.0.0/node_modules/bar</code></pre><p>This is a very simple example. However, the layout will maintain this structure regardless of the number of dependencies and the depth of the dependency graph.<p>Let's add <code>qar@2.0.0</code> as a dependency of <code>bar</code> and <code>foo</code>. This is how the new structure will look:<pre class="language-text"><code class="language-text">node_modules
 ├── foo -> ./.pnpm/foo@1.0.0/node_modules/foo
 └── .pnpm
     ├── bar@1.0.0
@@ -105,29 +40,4 @@
     │       └── qar -> ../../qar@2.0.0/node_modules/qar
     └── qar@2.0.0
         └── node_modules
-            └── qar -> &#x3C;store>/qar</code></pre>
-      <p>
-        As you may see, even though the graph is deeper now (<code>foo > bar > qar</code>), the
-        directory depth in the file system is still the same.
-      </p>
-      <p>
-        This layout might look weird at first glance, but it is completely compatible
-        with Node's module resolution algorithm! When resolving modules, Node ignores
-        symlinks, so when <code>bar</code> is required from <code>foo@1.0.0/node_modules/foo/index.js</code>,
-        Node does not use <code>bar</code> at <code>foo@1.0.0/node_modules/bar</code>, but instead, <code>bar</code> is
-        resolved to its real location (<code>bar@1.0.0/node_modules/bar</code>). As a consequence,
-        <code>bar</code> can also resolve its dependencies which are in <code>bar@1.0.0/node_modules</code>.
-      </p>
-      <p>
-        A great bonus of this layout is that only packages that are really in the
-        dependencies are accessible. With a flattened <code>node_modules</code> structure, all
-        hoisted packages are accessible. To read more about why this is an advantage,
-        see [pnpm's strictness helps to avoid silly bugs][bugs]
-      </p>
-      <p>
-        <a href="https://www.kochan.io/nodejs/pnpms-strictness-helps-to-avoid-silly-bugs.html">bugs</a>
-        <span style="float: footnote;"><a href="./index.html#toc">Go to TOC</a></span>
-      </p>
-    </section>
-  </body>
-</html>
+            └── qar -> &#x3C;store>/qar</code></pre><p>As you may see, even though the graph is deeper now (<code>foo > bar > qar</code>), the directory depth in the file system is still the same.<p>This layout might look weird at first glance, but it is completely compatible with Node's module resolution algorithm! When resolving modules, Node ignores symlinks, so when <code>bar</code> is required from <code>foo@1.0.0/node_modules/foo/index.js</code>, Node does not use <code>bar</code> at <code>foo@1.0.0/node_modules/bar</code>, but instead, <code>bar</code> is resolved to its real location (<code>bar@1.0.0/node_modules/bar</code>). As a consequence, <code>bar</code> can also resolve its dependencies which are in <code>bar@1.0.0/node_modules</code>.<p>A great bonus of this layout is that only packages that are really in the dependencies are accessible. With a flattened <code>node_modules</code> structure, all hoisted packages are accessible. To read more about why this is an advantage, see [pnpm's strictness helps to avoid silly bugs][bugs]<p><a href="https://www.kochan.io/nodejs/pnpms-strictness-helps-to-avoid-silly-bugs.html">bugs</a> <span style="float:footnote"><a href="./index.html#toc">Go to TOC</a></span></section>

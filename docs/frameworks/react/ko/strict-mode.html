@@ -1,65 +1,4 @@
-<!doctype html>
-<html lang="ko">
-  <head>
-    <meta charset="utf-8">
-    <title>Strict 모드</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <link rel="stylesheet" href="https://raw.githubusercontent.com/shinokada/prism-coy-theme/main/theme_common.css">
-  </head>
-  <body>
-    <section id="strict-모드" class="level1">
-      <h1>Strict 모드</h1>
-      <p><code>StrictMode</code>는 애플리케이션 내의 잠재적인 문제를 알아내기 위한 도구입니다. <code>Fragment</code>와 같이 UI를 렌더링하지 않으며, 자손들에 대한 부가적인 검사와 경고를 활성화합니다.</p>
-      <blockquote>
-        <p>주의</p>
-        <p>Strict 모드는 개발 모드에서만 활성화되기 때문에, 프로덕션 빌드에는 영향을 끼치지 않습니다.</p>
-      </blockquote>
-      <p>
-        애플리케이션 내 어디서든지 아래와 같이 strict 모드를 활성화할 수 있습니다.
-        <code>embed:strict-mode/enabling-strict-mode.js</code>
-      </p>
-      <p>위의 예시에서, <code>Header</code>와 <code>Footer</code> 컴포넌트는 Strict 모드 검사가 이루어지지 않습니다. 하지만, <code>ComponentOne</code>과 <code>ComponentTwo</code>는 각각의 자손까지 검사가 이루어집니다.</p>
-      <p><code>StrictMode</code>는 아래와 같은 부분에서 도움이 됩니다.</p>
-      <ul>
-        <li><a href="#identifying-unsafe-lifecycles">안전하지 않은 생명주기를 사용하는 컴포넌트 발견</a></li>
-        <li><a href="#warning-about-legacy-string-ref-api-usage">레거시 문자열 ref 사용에 대한 경고</a></li>
-        <li><a href="#warning-about-deprecated-finddomnode-usage">권장되지 않는 findDOMNode 사용에 대한 경고</a></li>
-        <li><a href="#detecting-unexpected-side-effects">예상치 못한 부작용 검사</a></li>
-        <li><a href="#detecting-legacy-context-api">레거시 context API 검사</a></li>
-        <li><a href="#ensuring-reusable-state">Ensuring reusable state</a></li>
-      </ul>
-      <p>React의 향후 릴리즈에서 더 많은 기능이 더해질 예정입니다.</p>
-      <section id="identifying-unsafe-lifecycles" class="level3">
-        <h3>안전하지 않은 생명주기를 사용하는 컴포넌트 발견</h3>
-        <p><a href="/blog/2018/03/27/update-on-async-rendering.html">블로그 글</a>에서 설명하였듯, 비동기 React 애플리케이션에서 특정 생명주기 메서드들은 안전하지 않습니다. 하지만 애플리케이션이 서드 파티 라이브러리를 사용한다면, 해당 생명주기 메서드가 사용되지 않는다고 장담하기 어렵습니다. Strict 모드는 이러한 경우에 도움이 됩니다!</p>
-        <p>Strict 모드가 활성화되면, React는 안전하지 않은 생명주기 메서드를 사용하는 모든 클래스 컴포넌트 목록을 정리해 다음과 같이 컴포넌트에 대한 정보가 담긴 경고 로그를 출력합니다.</p>
-        <p>
-          <img src="../images/blog/strict-mode-unsafe-lifecycles-warning.png">
-        </p>
-        <p>Strict 모드에 의해 발견된 문제들을 해결한다면, 향후 릴리즈되는 React에서 concurrent 렌더링의 이점을 얻을 수 있을 것입니다.</p>
-      </section>
-      <section id="warning-about-legacy-string-ref-api-usage" class="level3">
-        <h3>레거시 문자열 ref 사용에 대한 경고</h3>
-        <p>이전의 React에서 레거시 문자열 ref API와 콜백 API라는, ref를 관리하는 두 가지 방법을 제공하였습니다. 문자열 ref가 사용하기 더 편리했지만 <a href="https://github.com/facebook/react/issues/1373">몇몇 단점들</a>이 있었습니다. 그래서 공식적으로는 <a href="./refs-and-the-dom.html#legacy-api-string-refs">콜백 형태를 사용</a>하는 것을 권장하였습니다.</p>
-        <p>
-          React 16.3에서는 여러 단점 없이 문자열 ref의 편리함을 제공하는 세 번째 방법을 추가하였습니다.
-          <code>embed:16-3-release-blog-post/create-ref-example.js</code>
-        </p>
-        <p>이제는 객체 ref가 문자열 ref를 교체하는 용도로 널리 더해졌기 때문에, Strict 모드는 문자열 ref의 사용에 대해 경고합니다.</p>
-        <blockquote>
-          <p><strong>주의</strong></p>
-          <p>콜백 ref는 새로운 <code>createRef</code> API와 별개로 지속해서 지원될 예정입니다.</p>
-          <p>컴포넌트의 콜백 ref를 교체할 필요는 없습니다. 콜백 ref는 조금 더 유연하기 때문에, 고급 기능으로서 계속 지원할 예정입니다.</p>
-        </blockquote>
-        <p><a href="./refs-and-the-dom.html"><code>createRef</code> API에 대해서 알아보기</a></p>
-      </section>
-      <section id="warning-about-deprecated-finddomnode-usage" class="level3">
-        <h3>권장되지 않는 findDOMNode 사용에 대한 경고</h3>
-        <p>이전의 React에서 주어진 클래스 인스턴스를 바탕으로 트리를 탐색해 DOM 노드를 찾을 수 있는 <code>findDOMNode</code>를 지원하였습니다. <a href="./refs-and-the-dom.html#creating-refs">DOM 노드에 바로 ref를 지정</a>할 수 있기 때문에 보통은 필요하지 않습니다.</p>
-        <p><code>findDOMNode</code>는 클래스 컴포넌트에서도 사용할 수 있었지만, 부모가 특정 자식이 렌더링되는 것을 요구하는 상황이 허용되어, 추상화 레벨이 무너지게 되었습니다. 이로 인해 부모가 자식의 DOM 노드에까지 닿을 가능성이 있어 컴포넌트의 세세한 구현을 변경할 수 없게 되어 리팩토링이 어려워지는 상황을 만들고 말았습니다. <code>findDOMNode</code>는 항상 첫 번째 자식을 반환하지만, Fragment와 함께 사용할 경우 컴포넌트에서 여러 DOM 노드를 렌더링하게 됩니다. <code>findDOMNode</code>는 일회성, 읽기 전용 API입니다. 물어보았을 때만 값을 반환합니다. 자식 컴포넌트가 다른 노드를 렌더링할 경우, 변경 사항에 대응할 방법이 없습니다. 그러므로, <code>findDOMNode</code>는 항상 변하지 않는, 단일 DOM 노드를 반환하는 컴포넌트에서만 정상적으로 작동해왔습니다.</p>
-        <p><a href="./forwarding-refs.html#forwarding-refs-to-dom-components">ref를 넘겨주는 방식</a>을 사용해 커스텀 컴포넌트에 ref를 넘겨 DOM까지 닿게 하는 것으로, 이를 분명하게 만들 수 있습니다.</p>
-        <p>DOM 노드를 감싸는 래퍼를 만들어 ref를 바로 붙이는 것 역시 가능합니다.</p>
-        <pre class="language-javascript{4,7}"><code class="language-javascript{4,7}">class MyComponent extends React.Component {
+<!doctypehtml><html lang="ko"><meta charset="utf-8"><title>Strict 모드</title><meta name="viewport"content="width=device-width,initial-scale=1"><link rel="stylesheet"href="https://raw.githubusercontent.com/shinokada/prism-coy-theme/main/theme_common.css"><section id="strict-모드"class="level1"><h1>Strict 모드</h1><p><code>StrictMode</code>는 애플리케이션 내의 잠재적인 문제를 알아내기 위한 도구입니다. <code>Fragment</code>와 같이 UI를 렌더링하지 않으며, 자손들에 대한 부가적인 검사와 경고를 활성화합니다.<blockquote><p>주의<p>Strict 모드는 개발 모드에서만 활성화되기 때문에, 프로덕션 빌드에는 영향을 끼치지 않습니다.</blockquote><p>애플리케이션 내 어디서든지 아래와 같이 strict 모드를 활성화할 수 있습니다. <code>embed:strict-mode/enabling-strict-mode.js</code><p>위의 예시에서, <code>Header</code>와 <code>Footer</code> 컴포넌트는 Strict 모드 검사가 이루어지지 않습니다. 하지만, <code>ComponentOne</code>과 <code>ComponentTwo</code>는 각각의 자손까지 검사가 이루어집니다.<p><code>StrictMode</code>는 아래와 같은 부분에서 도움이 됩니다.<ul><li><a href="#identifying-unsafe-lifecycles">안전하지 않은 생명주기를 사용하는 컴포넌트 발견</a><li><a href="#warning-about-legacy-string-ref-api-usage">레거시 문자열 ref 사용에 대한 경고</a><li><a href="#warning-about-deprecated-finddomnode-usage">권장되지 않는 findDOMNode 사용에 대한 경고</a><li><a href="#detecting-unexpected-side-effects">예상치 못한 부작용 검사</a><li><a href="#detecting-legacy-context-api">레거시 context API 검사</a><li><a href="#ensuring-reusable-state">Ensuring reusable state</a></ul><p>React의 향후 릴리즈에서 더 많은 기능이 더해질 예정입니다.<section id="identifying-unsafe-lifecycles"class="level3"><h3>안전하지 않은 생명주기를 사용하는 컴포넌트 발견</h3><p><a href="/blog/2018/03/27/update-on-async-rendering.html">블로그 글</a>에서 설명하였듯, 비동기 React 애플리케이션에서 특정 생명주기 메서드들은 안전하지 않습니다. 하지만 애플리케이션이 서드 파티 라이브러리를 사용한다면, 해당 생명주기 메서드가 사용되지 않는다고 장담하기 어렵습니다. Strict 모드는 이러한 경우에 도움이 됩니다!<p>Strict 모드가 활성화되면, React는 안전하지 않은 생명주기 메서드를 사용하는 모든 클래스 컴포넌트 목록을 정리해 다음과 같이 컴포넌트에 대한 정보가 담긴 경고 로그를 출력합니다.<p><img src="../images/blog/strict-mode-unsafe-lifecycles-warning.png"><p>Strict 모드에 의해 발견된 문제들을 해결한다면, 향후 릴리즈되는 React에서 concurrent 렌더링의 이점을 얻을 수 있을 것입니다.</section><section id="warning-about-legacy-string-ref-api-usage"class="level3"><h3>레거시 문자열 ref 사용에 대한 경고</h3><p>이전의 React에서 레거시 문자열 ref API와 콜백 API라는, ref를 관리하는 두 가지 방법을 제공하였습니다. 문자열 ref가 사용하기 더 편리했지만 <a href="https://github.com/facebook/react/issues/1373">몇몇 단점들</a>이 있었습니다. 그래서 공식적으로는 <a href="./refs-and-the-dom.html#legacy-api-string-refs">콜백 형태를 사용</a>하는 것을 권장하였습니다.<p>React 16.3에서는 여러 단점 없이 문자열 ref의 편리함을 제공하는 세 번째 방법을 추가하였습니다. <code>embed:16-3-release-blog-post/create-ref-example.js</code><p>이제는 객체 ref가 문자열 ref를 교체하는 용도로 널리 더해졌기 때문에, Strict 모드는 문자열 ref의 사용에 대해 경고합니다.<blockquote><p><strong>주의</strong><p>콜백 ref는 새로운 <code>createRef</code> API와 별개로 지속해서 지원될 예정입니다.<p>컴포넌트의 콜백 ref를 교체할 필요는 없습니다. 콜백 ref는 조금 더 유연하기 때문에, 고급 기능으로서 계속 지원할 예정입니다.</blockquote><p><a href="./refs-and-the-dom.html"><code>createRef</code> API에 대해서 알아보기</a></section><section id="warning-about-deprecated-finddomnode-usage"class="level3"><h3>권장되지 않는 findDOMNode 사용에 대한 경고</h3><p>이전의 React에서 주어진 클래스 인스턴스를 바탕으로 트리를 탐색해 DOM 노드를 찾을 수 있는 <code>findDOMNode</code>를 지원하였습니다. <a href="./refs-and-the-dom.html#creating-refs">DOM 노드에 바로 ref를 지정</a>할 수 있기 때문에 보통은 필요하지 않습니다.<p><code>findDOMNode</code>는 클래스 컴포넌트에서도 사용할 수 있었지만, 부모가 특정 자식이 렌더링되는 것을 요구하는 상황이 허용되어, 추상화 레벨이 무너지게 되었습니다. 이로 인해 부모가 자식의 DOM 노드에까지 닿을 가능성이 있어 컴포넌트의 세세한 구현을 변경할 수 없게 되어 리팩토링이 어려워지는 상황을 만들고 말았습니다. <code>findDOMNode</code>는 항상 첫 번째 자식을 반환하지만, Fragment와 함께 사용할 경우 컴포넌트에서 여러 DOM 노드를 렌더링하게 됩니다. <code>findDOMNode</code>는 일회성, 읽기 전용 API입니다. 물어보았을 때만 값을 반환합니다. 자식 컴포넌트가 다른 노드를 렌더링할 경우, 변경 사항에 대응할 방법이 없습니다. 그러므로, <code>findDOMNode</code>는 항상 변하지 않는, 단일 DOM 노드를 반환하는 컴포넌트에서만 정상적으로 작동해왔습니다.<p><a href="./forwarding-refs.html#forwarding-refs-to-dom-components">ref를 넘겨주는 방식</a>을 사용해 커스텀 컴포넌트에 ref를 넘겨 DOM까지 닿게 하는 것으로, 이를 분명하게 만들 수 있습니다.<p>DOM 노드를 감싸는 래퍼를 만들어 ref를 바로 붙이는 것 역시 가능합니다.<pre class="language-javascript{4,7}"><code class="language-javascript{4,7}">class MyComponent extends React.Component {
   constructor(props) {
     super(props);
     this.wrapper = React.createRef();
@@ -67,75 +6,9 @@
   render() {
     return &#x3C;div ref={this.wrapper}>{this.props.children}&#x3C;/div>;
   }
-}</code></pre>
-        <blockquote>
-          <p>주의</p>
-          <p>노드가 레이아웃 바깥의 요소가 되는 것을 막고자 한다면, CSS에서 <a href="https://developer.mozilla.org/en-US/docs/Web/CSS/display#display_contents"><code>display: contents</code></a> 속성을 사용할 수 있습니다.</p>
-        </blockquote>
-      </section>
-      <section id="detecting-unexpected-side-effects" class="level3">
-        <h3>예상치 못한 부작용 검사</h3>
-        <p>개념적으로 React는 두 단계로 동작합니다.</p>
-        <ul>
-          <li><strong>렌더링</strong> 단계는 특정 환경(예를 들어, DOM과 같이)에 어떤 변화가 필요한 지 결정하는 단계입니다. 이 과정에서 React는 <code>render</code>를 호출하여 이전 렌더와 결과값을 비교합니다.</li>
-          <li><strong>커밋</strong> 단계는 React가 변경 사항을 반영하는 단계입니다(React DOM의 경우 React가 DOM 노드를 추가, 변경 및 제거하는 단계를 말합니다). 이 단계에서 React는 <code>componentDidMount</code> 나 <code>componentDidUpdate</code> 와 같은 생명주기 메서드를 호출합니다.</li>
-        </ul>
-        <p>커밋 단계는 일반적으로 매우 빠르지만, 렌더링 단계는 느릴 수 있습니다. 이로 인해, 곧 추가될 concurrent 모드(아직 기본적으로는 비활성화됨)는 렌더링 작업을 더 작은 단위로 나누고, 작업을 중지했다 재개하는 방식으로 브라우저가 멈추는 것을 피합니다. 즉, React는 커밋하기 전에 렌더링 단계의 생명주기 메서드를 여러 번 호출하거나 아예 커밋을 하지 않을 수도(에러 혹은 우선순위에 따른 작업 중단) 있습니다.</p>
-        <p>렌더링 단계 생명주기 메서드는 클래스 컴포넌트의 메서드를 포함해 다음과 같습니다.</p>
-        <ul>
-          <li><code>constructor</code></li>
-          <li><code>componentWillMount</code> (or <code>UNSAFE_componentWillMount</code>)</li>
-          <li><code>componentWillReceiveProps</code> (or <code>UNSAFE_componentWillReceiveProps</code>)</li>
-          <li><code>componentWillUpdate</code> (or <code>UNSAFE_componentWillUpdate</code>)</li>
-          <li><code>getDerivedStateFromProps</code></li>
-          <li><code>shouldComponentUpdate</code></li>
-          <li><code>render</code></li>
-          <li><code>setState</code> 업데이트 함수 (첫 번째 인자)</li>
-        </ul>
-        <p>위의 메서드들은 여러 번 호출될 수 있기 때문에, 부작용을 포함하지 않는 것이 중요합니다. 이 규칙을 무시할 경우, 메모리 누수 혹은 잘못된 애플리케이션 상태 등 다양한 문제를 일으킬 가능성이 있습니다. 불행히도, 보통 이러한 문제들은 <a href="https://ko.wikipedia.org/wiki/%EA%B2%B0%EC%A0%95%EB%A1%A0%EC%A0%81_%EC%95%8C%EA%B3%A0%EB%A6%AC%EC%A6%98">예측한 대로 동작하지 않기 때문</a>에 발견하는 것이 어려울 수 있습니다.</p>
-        <p>Strict 모드가 자동으로 부작용을 찾아주는 것은 불가능합니다. 하지만, 조금 더 예측할 수 있게끔 만들어서 문제가 되는 부분을 발견할 수 있게 도와줍니다. 이는 아래의 함수를 의도적으로 이중으로 호출하여 찾을 수 있습니다.</p>
-        <ul>
-          <li>클래스 컴포넌트의 <code>constructor</code>, <code>render</code> 그리고 <code>shouldComponentUpdate</code> 메서드</li>
-          <li>클래스 컴포넌트의 <code>getDerivedStateFromProps</code> static 메서드</li>
-          <li>함수 컴포넌트 바디</li>
-          <li>State updater 함수 (<code>setState</code>의 첫 번째 인자)</li>
-          <li><code>useState</code>, <code>useMemo</code> 그리고 <code>useReducer</code>에 전달되는 함수</li>
-        </ul>
-        <blockquote>
-          <p>주의</p>
-          <p>개발 모드에서만 적용됩니다. 생명주기 메서드들은 프로덕션 모드에서 이중으로 호출되지 않습니다.</p>
-        </blockquote>
-        <p>
-          예를 들어, 아래의 코드를 생각해봅시다.
-          <code>embed:strict-mode/side-effects-in-constructor.js</code>
-        </p>
-        <p>얼핏 보면 이 코드에는 문제가 없어 보입니다. 하지만, <code>SharedApplicationState.recordEvent</code>의 <a href="https://ko.wikipedia.org/wiki/%EB%A9%B1%EB%93%B1%EB%B2%95%EC%B9%99">연산 결과가 계속 달라진다면</a>, 이 컴포넌트를 여러 번 인스턴스 화했을 때 애플리케이션의 상태를 잘못된 방향으로 이끌 수 있습니다. 이와 같은 이해하기 어려운 버그들은 개발 중에 나타나지 않을 수도 있고, 일관성이 없어 발견하지 못할 수도 있습니다.</p>
-        <p>컴포넌트의 constructor와 같은 메서드를 의도적으로 두 번 호출하면 strict mode가 이와 같은 패턴을 쉽게 찾을 수 있도록 합니다.</p>
-        <blockquote>
-          <p>주의</p>
-          <p>In React 17, React automatically modifies the console methods like <code>console.log()</code> to silence the logs in the second call to lifecycle functions. However, it may cause undesired behavior in certain cases where <a href="https://github.com/facebook/react/issues/20090#issuecomment-715927125">a workaround can be used</a>.</p>
-          <p>Starting from React 18, React does not suppress any logs. However, if you have React DevTools installed, the logs from the second call will appear slightly dimmed. React DevTools also offers a setting (off by default) to suppress them completely.</p>
-        </blockquote>
-      </section>
-      <section id="detecting-legacy-context-api" class="level3">
-        <h3>레거시 context API 검사</h3>
-        <p>레거시 context API는 오류가 발생하기 쉬워 이후 릴리즈에서 삭제될 예정입니다. 모든 16.x 버전에서 여전히 돌아가지만, Strict 모드에서는 아래와 같은 경고 메시지를 노출합니다.</p>
-        <p>
-          <img src="../images/blog/warn-legacy-context-in-strict-mode.png">
-        </p>
-        <p><a href="./context.html">새로운 context API 문서</a>를 참조하여 새로운 버전으로 마이그레이션하시길 바랍니다.</p>
-      </section>
-      <section id="ensuring-reusable-state" class="level3">
-        <h3>Ensuring reusable state</h3>
-        <p>In the future, we’d like to add a feature that allows React to add and remove sections of the UI while preserving state. For example, when a user tabs away from a screen and back, React should be able to immediately show the previous screen. To do this, React support remounting trees using the same component state used before unmounting.</p>
-        <p>This feature will give React better performance out-of-the-box, but requires components to be resilient to effects being mounted and destroyed multiple times. Most effects will work without any changes, but some effects do not properly clean up subscriptions in the destroy callback, or implicitly assume they are only mounted or destroyed once.</p>
-        <p>To help surface these issues, React 18 introduces a new development-only check to Strict Mode. This new check will automatically unmount and remount every component, whenever a component mounts for the first time, restoring the previous state on the second mount.</p>
-        <p>To demonstrate the development behavior you'll see in Strict Mode with this feature, consider what happens when React mounts a new component. Without this change, when a component mounts, React creates the effects:</p>
-        <pre class="language-text"><code class="language-text">* React mounts the component.
+}</code></pre><blockquote><p>주의<p>노드가 레이아웃 바깥의 요소가 되는 것을 막고자 한다면, CSS에서 <a href="https://developer.mozilla.org/en-US/docs/Web/CSS/display#display_contents"><code>display: contents</code></a> 속성을 사용할 수 있습니다.</blockquote></section><section id="detecting-unexpected-side-effects"class="level3"><h3>예상치 못한 부작용 검사</h3><p>개념적으로 React는 두 단계로 동작합니다.<ul><li><strong>렌더링</strong> 단계는 특정 환경(예를 들어, DOM과 같이)에 어떤 변화가 필요한 지 결정하는 단계입니다. 이 과정에서 React는 <code>render</code>를 호출하여 이전 렌더와 결과값을 비교합니다.<li><strong>커밋</strong> 단계는 React가 변경 사항을 반영하는 단계입니다(React DOM의 경우 React가 DOM 노드를 추가, 변경 및 제거하는 단계를 말합니다). 이 단계에서 React는 <code>componentDidMount</code> 나 <code>componentDidUpdate</code> 와 같은 생명주기 메서드를 호출합니다.</ul><p>커밋 단계는 일반적으로 매우 빠르지만, 렌더링 단계는 느릴 수 있습니다. 이로 인해, 곧 추가될 concurrent 모드(아직 기본적으로는 비활성화됨)는 렌더링 작업을 더 작은 단위로 나누고, 작업을 중지했다 재개하는 방식으로 브라우저가 멈추는 것을 피합니다. 즉, React는 커밋하기 전에 렌더링 단계의 생명주기 메서드를 여러 번 호출하거나 아예 커밋을 하지 않을 수도(에러 혹은 우선순위에 따른 작업 중단) 있습니다.<p>렌더링 단계 생명주기 메서드는 클래스 컴포넌트의 메서드를 포함해 다음과 같습니다.<ul><li><code>constructor</code><li><code>componentWillMount</code> (or <code>UNSAFE_componentWillMount</code>)<li><code>componentWillReceiveProps</code> (or <code>UNSAFE_componentWillReceiveProps</code>)<li><code>componentWillUpdate</code> (or <code>UNSAFE_componentWillUpdate</code>)<li><code>getDerivedStateFromProps</code><li><code>shouldComponentUpdate</code><li><code>render</code><li><code>setState</code> 업데이트 함수 (첫 번째 인자)</ul><p>위의 메서드들은 여러 번 호출될 수 있기 때문에, 부작용을 포함하지 않는 것이 중요합니다. 이 규칙을 무시할 경우, 메모리 누수 혹은 잘못된 애플리케이션 상태 등 다양한 문제를 일으킬 가능성이 있습니다. 불행히도, 보통 이러한 문제들은 <a href="https://ko.wikipedia.org/wiki/%EA%B2%B0%EC%A0%95%EB%A1%A0%EC%A0%81_%EC%95%8C%EA%B3%A0%EB%A6%AC%EC%A6%98">예측한 대로 동작하지 않기 때문</a>에 발견하는 것이 어려울 수 있습니다.<p>Strict 모드가 자동으로 부작용을 찾아주는 것은 불가능합니다. 하지만, 조금 더 예측할 수 있게끔 만들어서 문제가 되는 부분을 발견할 수 있게 도와줍니다. 이는 아래의 함수를 의도적으로 이중으로 호출하여 찾을 수 있습니다.<ul><li>클래스 컴포넌트의 <code>constructor</code>, <code>render</code> 그리고 <code>shouldComponentUpdate</code> 메서드<li>클래스 컴포넌트의 <code>getDerivedStateFromProps</code> static 메서드<li>함수 컴포넌트 바디<li>State updater 함수 (<code>setState</code>의 첫 번째 인자)<li><code>useState</code>, <code>useMemo</code> 그리고 <code>useReducer</code>에 전달되는 함수</ul><blockquote><p>주의<p>개발 모드에서만 적용됩니다. 생명주기 메서드들은 프로덕션 모드에서 이중으로 호출되지 않습니다.</blockquote><p>예를 들어, 아래의 코드를 생각해봅시다. <code>embed:strict-mode/side-effects-in-constructor.js</code><p>얼핏 보면 이 코드에는 문제가 없어 보입니다. 하지만, <code>SharedApplicationState.recordEvent</code>의 <a href="https://ko.wikipedia.org/wiki/%EB%A9%B1%EB%93%B1%EB%B2%95%EC%B9%99">연산 결과가 계속 달라진다면</a>, 이 컴포넌트를 여러 번 인스턴스 화했을 때 애플리케이션의 상태를 잘못된 방향으로 이끌 수 있습니다. 이와 같은 이해하기 어려운 버그들은 개발 중에 나타나지 않을 수도 있고, 일관성이 없어 발견하지 못할 수도 있습니다.<p>컴포넌트의 constructor와 같은 메서드를 의도적으로 두 번 호출하면 strict mode가 이와 같은 패턴을 쉽게 찾을 수 있도록 합니다.<blockquote><p>주의<p>In React 17, React automatically modifies the console methods like <code>console.log()</code> to silence the logs in the second call to lifecycle functions. However, it may cause undesired behavior in certain cases where <a href="https://github.com/facebook/react/issues/20090#issuecomment-715927125">a workaround can be used</a>.<p>Starting from React 18, React does not suppress any logs. However, if you have React DevTools installed, the logs from the second call will appear slightly dimmed. React DevTools also offers a setting (off by default) to suppress them completely.</blockquote></section><section id="detecting-legacy-context-api"class="level3"><h3>레거시 context API 검사</h3><p>레거시 context API는 오류가 발생하기 쉬워 이후 릴리즈에서 삭제될 예정입니다. 모든 16.x 버전에서 여전히 돌아가지만, Strict 모드에서는 아래와 같은 경고 메시지를 노출합니다.<p><img src="../images/blog/warn-legacy-context-in-strict-mode.png"><p><a href="./context.html">새로운 context API 문서</a>를 참조하여 새로운 버전으로 마이그레이션하시길 바랍니다.</section><section id="ensuring-reusable-state"class="level3"><h3>Ensuring reusable state</h3><p>In the future, we’d like to add a feature that allows React to add and remove sections of the UI while preserving state. For example, when a user tabs away from a screen and back, React should be able to immediately show the previous screen. To do this, React support remounting trees using the same component state used before unmounting.<p>This feature will give React better performance out-of-the-box, but requires components to be resilient to effects being mounted and destroyed multiple times. Most effects will work without any changes, but some effects do not properly clean up subscriptions in the destroy callback, or implicitly assume they are only mounted or destroyed once.<p>To help surface these issues, React 18 introduces a new development-only check to Strict Mode. This new check will automatically unmount and remount every component, whenever a component mounts for the first time, restoring the previous state on the second mount.<p>To demonstrate the development behavior you'll see in Strict Mode with this feature, consider what happens when React mounts a new component. Without this change, when a component mounts, React creates the effects:<pre class="language-text"><code class="language-text">* React mounts the component.
   * Layout effects are created.
-  * Effects are created.</code></pre>
-        <p>With Strict Mode starting in React 18, whenever a component mounts in development, React will simulate immediately unmounting and remounting the component:</p>
-        <pre class="language-text"><code class="language-text">* React mounts the component.
+  * Effects are created.</code></pre><p>With Strict Mode starting in React 18, whenever a component mounts in development, React will simulate immediately unmounting and remounting the component:<pre class="language-text"><code class="language-text">* React mounts the component.
     * Layout effects are created.
     * Effect effects are created.
 * React simulates effects being destroyed on a mounted component.
@@ -143,32 +16,6 @@
     * Effects are destroyed.
 * React simulates effects being re-created on a mounted component.
     * Layout effects are created
-    * Effect setup code runs</code></pre>
-        <p>On the second mount, React will restore the state from the first mount. This feature simulates user behavior such as a user tabbing away from a screen and back, ensuring that code will properly handle state restoration.</p>
-        <p>When the component unmounts, effects are destroyed as normal:</p>
-        <pre class="language-text"><code class="language-text">* React unmounts the component.
+    * Effect setup code runs</code></pre><p>On the second mount, React will restore the state from the first mount. This feature simulates user behavior such as a user tabbing away from a screen and back, ensuring that code will properly handle state restoration.<p>When the component unmounts, effects are destroyed as normal:<pre class="language-text"><code class="language-text">* React unmounts the component.
   * Layout effects are destroyed.
-  * Effect effects are destroyed.</code></pre>
-        <p>Unmounting and remounting includes:</p>
-        <ul>
-          <li><code>componentDidMount</code></li>
-          <li><code>componentWillUnmount</code></li>
-          <li><code>useEffect</code></li>
-          <li><code>useLayoutEffect</code></li>
-          <li><code>useInsertionEffect</code></li>
-        </ul>
-        <blockquote>
-          <p>Note:</p>
-          <p>This only applies to development mode, <em>production behavior is unchanged</em>.</p>
-        </blockquote>
-        <p>For help supporting common issues, see:</p>
-        <ul>
-          <li>
-            <a href="https://github.com/reactwg/react-18/discussions/18">How to support Reusable State in Effects</a>
-            <span style="float: footnote;"><a href="./index.html#toc">Go to TOC</a></span>
-          </li>
-        </ul>
-      </section>
-    </section>
-  </body>
-</html>
+  * Effect effects are destroyed.</code></pre><p>Unmounting and remounting includes:<ul><li><code>componentDidMount</code><li><code>componentWillUnmount</code><li><code>useEffect</code><li><code>useLayoutEffect</code><li><code>useInsertionEffect</code></ul><blockquote><p>Note:<p>This only applies to development mode, <em>production behavior is unchanged</em>.</blockquote><p>For help supporting common issues, see:<ul><li><a href="https://github.com/reactwg/react-18/discussions/18">How to support Reusable State in Effects</a> <span style="float:footnote"><a href="./index.html#toc">Go to TOC</a></span></ul></section></section>

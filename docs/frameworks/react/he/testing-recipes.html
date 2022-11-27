@@ -1,37 +1,4 @@
-<!doctype html>
-<html lang="he">
-  <head>
-    <meta charset="utf-8">
-    <title>Testing Recipes</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <link rel="stylesheet" href="https://raw.githubusercontent.com/shinokada/prism-coy-theme/main/theme_common.css">
-  </head>
-  <body>
-    <section id="testing-recipes" class="level1">
-      <h1>Testing Recipes</h1>
-      <p>Common testing patterns for React components.</p>
-      <blockquote>
-        <p>Note:</p>
-        <p>This page assumes you're using <a href="https://jestjs.io/">Jest</a> as a test runner. If you use a different test runner, you may need to adjust the API, but the overall shape of the solution will likely be the same. Read more details on setting up a testing environment on the <a href="./testing-environments.html">Testing Environments</a> page.</p>
-      </blockquote>
-      <p>On this page, we will primarily use function components. However, these testing strategies don't depend on implementation details, and work just as well for class components too.</p>
-      <ul>
-        <li><a href="#setup--teardown">Setup/Teardown</a></li>
-        <li><a href="#act"><code>act()</code></a></li>
-        <li><a href="#rendering">Rendering</a></li>
-        <li><a href="#data-fetching">Data Fetching</a></li>
-        <li><a href="#mocking-modules">Mocking Modules</a></li>
-        <li><a href="#events">Events</a></li>
-        <li><a href="#timers">Timers</a></li>
-        <li><a href="#snapshot-testing">Snapshot Testing</a></li>
-        <li><a href="#multiple-renderers">Multiple Renderers</a></li>
-        <li><a href="#something-missing">Something Missing?</a></li>
-      </ul>
-      <section id="setup--teardown" class="level3">
-        <h3>Setup/Teardown</h3>
-        <p>For each test, we usually want to render our React tree to a DOM element that's attached to <code>document</code>. This is important so that it can receive DOM events. When the test ends, we want to "clean up" and unmount the tree from the <code>document</code>.</p>
-        <p>A common way to do it is to use a pair of <code>beforeEach</code> and <code>afterEach</code> blocks so that they'll always run and isolate the effects of a test to itself:</p>
-        <pre class="language-jsx"><code class="language-jsx"><span class="token keyword module">import</span> <span class="token imports"><span class="token punctuation">{</span> unmountComponentAtNode <span class="token punctuation">}</span></span> <span class="token keyword module">from</span> <span class="token string">"react-dom"</span><span class="token punctuation">;</span>
+<!doctypehtml><html lang="he"><meta charset="utf-8"><title>Testing Recipes</title><meta name="viewport"content="width=device-width,initial-scale=1"><link rel="stylesheet"href="https://raw.githubusercontent.com/shinokada/prism-coy-theme/main/theme_common.css"><section id="testing-recipes"class="level1"><h1>Testing Recipes</h1><p>Common testing patterns for React components.<blockquote><p>Note:<p>This page assumes you're using <a href="https://jestjs.io/">Jest</a> as a test runner. If you use a different test runner, you may need to adjust the API, but the overall shape of the solution will likely be the same. Read more details on setting up a testing environment on the <a href="./testing-environments.html">Testing Environments</a> page.</blockquote><p>On this page, we will primarily use function components. However, these testing strategies don't depend on implementation details, and work just as well for class components too.<ul><li><a href="#setup--teardown">Setup/Teardown</a><li><a href="#act"><code>act()</code></a><li><a href="#rendering">Rendering</a><li><a href="#data-fetching">Data Fetching</a><li><a href="#mocking-modules">Mocking Modules</a><li><a href="#events">Events</a><li><a href="#timers">Timers</a><li><a href="#snapshot-testing">Snapshot Testing</a><li><a href="#multiple-renderers">Multiple Renderers</a><li><a href="#something-missing">Something Missing?</a></ul><section id="setup--teardown"class="level3"><h3>Setup/Teardown</h3><p>For each test, we usually want to render our React tree to a DOM element that's attached to <code>document</code>. This is important so that it can receive DOM events. When the test ends, we want to "clean up" and unmount the tree from the <code>document</code>.<p>A common way to do it is to use a pair of <code>beforeEach</code> and <code>afterEach</code> blocks so that they'll always run and isolate the effects of a test to itself:<pre class="language-jsx"><code class="language-jsx"><span class="token keyword module">import</span> <span class="token imports"><span class="token punctuation">{</span> unmountComponentAtNode <span class="token punctuation">}</span></span> <span class="token keyword module">from</span> <span class="token string">"react-dom"</span><span class="token punctuation">;</span>
 
 <span class="token keyword">let</span> container <span class="token operator">=</span> <span class="token keyword null nil">null</span><span class="token punctuation">;</span>
 <span class="token function">beforeEach</span><span class="token punctuation">(</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token arrow operator">=></span> <span class="token punctuation">{</span>
@@ -45,27 +12,10 @@
   <span class="token function">unmountComponentAtNode</span><span class="token punctuation">(</span>container<span class="token punctuation">)</span><span class="token punctuation">;</span>
   container<span class="token punctuation">.</span><span class="token method function property-access">remove</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
   container <span class="token operator">=</span> <span class="token keyword null nil">null</span><span class="token punctuation">;</span>
-<span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">;</span></code></pre>
-        <p>You may use a different pattern, but keep in mind that we want to execute the cleanup <em>even if a test fails</em>. Otherwise, tests can become "leaky", and one test can change the behavior of another test. That makes them difficult to debug.</p>
-      </section>
-      <section id="act-act" class="level3">
-        <h3><code>act()</code> {#act}</h3>
-        <p>When writing UI tests, tasks like rendering, user events, or data fetching can be considered as "units" of interaction with a user interface. <code>react-dom/test-utils</code> provides a helper called <a href="./test-utils.html#act"><code>act()</code></a> that makes sure all updates related to these "units" have been processed and applied to the DOM before you make any assertions:</p>
-        <pre class="language-js"><code class="language-js"><span class="token function">act</span><span class="token punctuation">(</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token arrow operator">=></span> <span class="token punctuation">{</span>
+<span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">;</span></code></pre><p>You may use a different pattern, but keep in mind that we want to execute the cleanup <em>even if a test fails</em>. Otherwise, tests can become "leaky", and one test can change the behavior of another test. That makes them difficult to debug.</section><section id="act-act"class="level3"><h3><code>act()</code> {#act}</h3><p>When writing UI tests, tasks like rendering, user events, or data fetching can be considered as "units" of interaction with a user interface. <code>react-dom/test-utils</code> provides a helper called <a href="./test-utils.html#act"><code>act()</code></a> that makes sure all updates related to these "units" have been processed and applied to the DOM before you make any assertions:<pre class="language-js"><code class="language-js"><span class="token function">act</span><span class="token punctuation">(</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token arrow operator">=></span> <span class="token punctuation">{</span>
   <span class="token comment">// render components</span>
 <span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
-<span class="token comment">// make assertions</span></code></pre>
-        <p>This helps make your tests run closer to what real users would experience when using your application. The rest of these examples use <code>act()</code> to make these guarantees.</p>
-        <p>You might find using <code>act()</code> directly a bit too verbose. To avoid some of the boilerplate, you could use a library like <a href="https://testing-library.com/react">React Testing Library</a>, whose helpers are wrapped with <code>act()</code>.</p>
-        <blockquote>
-          <p>Note:</p>
-          <p>The name <code>act</code> comes from the <a href="http://wiki.c2.com/?ArrangeActAssert">Arrange-Act-Assert</a> pattern.</p>
-        </blockquote>
-      </section>
-      <section id="rendering" class="level3">
-        <h3>Rendering</h3>
-        <p>Commonly, you might want to test whether a component renders correctly for given props. Consider a simple component that renders a message based on a prop:</p>
-        <pre class="language-jsx"><code class="language-jsx"><span class="token comment">// hello.js</span>
+<span class="token comment">// make assertions</span></code></pre><p>This helps make your tests run closer to what real users would experience when using your application. The rest of these examples use <code>act()</code> to make these guarantees.<p>You might find using <code>act()</code> directly a bit too verbose. To avoid some of the boilerplate, you could use a library like <a href="https://testing-library.com/react">React Testing Library</a>, whose helpers are wrapped with <code>act()</code>.<blockquote><p>Note:<p>The name <code>act</code> comes from the <a href="http://wiki.c2.com/?ArrangeActAssert">Arrange-Act-Assert</a> pattern.</blockquote></section><section id="rendering"class="level3"><h3>Rendering</h3><p>Commonly, you might want to test whether a component renders correctly for given props. Consider a simple component that renders a message based on a prop:<pre class="language-jsx"><code class="language-jsx"><span class="token comment">// hello.js</span>
 
 <span class="token keyword module">import</span> <span class="token imports"><span class="token maybe-class-name">React</span></span> <span class="token keyword module">from</span> <span class="token string">"react"</span><span class="token punctuation">;</span>
 
@@ -75,9 +25,7 @@
   <span class="token punctuation">}</span> <span class="token keyword control-flow">else</span> <span class="token punctuation">{</span>
     <span class="token keyword control-flow">return</span> <span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;</span>span</span><span class="token punctuation">></span></span><span class="token plain-text">Hey, stranger</span><span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;/</span>span</span><span class="token punctuation">></span></span><span class="token punctuation">;</span>
   <span class="token punctuation">}</span>
-<span class="token punctuation">}</span></code></pre>
-        <p>We can write a test for this component:</p>
-        <pre class="language-jsx{24-27}"><code class="language-jsx{24-27}">// hello.test.js
+<span class="token punctuation">}</span></code></pre><p>We can write a test for this component:<pre class="language-jsx{24-27}"><code class="language-jsx{24-27}">// hello.test.js
 
 import React from "react";
 import { render, unmountComponentAtNode } from "react-dom";
@@ -114,12 +62,7 @@ it("renders with or without a name", () => {
     render(&#x3C;Hello name="Margaret" />, container);
   });
   expect(container.textContent).toBe("Hello, Margaret!");
-});</code></pre>
-      </section>
-      <section id="data-fetching" class="level3">
-        <h3>Data Fetching</h3>
-        <p>Instead of calling real APIs in all your tests, you can mock requests with dummy data. Mocking data fetching with "fake" data prevents flaky tests due to an unavailable backend, and makes them run faster. Note: you may still want to run a subset of tests using an <a href="./testing-environments.html#end-to-end-tests-aka-e2e-tests">"end-to-end"</a> framework that tells whether the whole app is working together.</p>
-        <pre class="language-jsx"><code class="language-jsx"><span class="token comment">// user.js</span>
+});</code></pre></section><section id="data-fetching"class="level3"><h3>Data Fetching</h3><p>Instead of calling real APIs in all your tests, you can mock requests with dummy data. Mocking data fetching with "fake" data prevents flaky tests due to an unavailable backend, and makes them run faster. Note: you may still want to run a subset of tests using an <a href="./testing-environments.html#end-to-end-tests-aka-e2e-tests">"end-to-end"</a> framework that tells whether the whole app is working together.<pre class="language-jsx"><code class="language-jsx"><span class="token comment">// user.js</span>
 
 <span class="token keyword module">import</span> <span class="token imports"><span class="token maybe-class-name">React</span><span class="token punctuation">,</span> <span class="token punctuation">{</span> useState<span class="token punctuation">,</span> useEffect <span class="token punctuation">}</span></span> <span class="token keyword module">from</span> <span class="token string">"react"</span><span class="token punctuation">;</span>
 
@@ -147,9 +90,7 @@ it("renders with or without a name", () => {
       lives in </span><span class="token punctuation">{</span>user<span class="token punctuation">.</span><span class="token property-access">address</span><span class="token punctuation">}</span><span class="token plain-text">
     </span><span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;/</span>details</span><span class="token punctuation">></span></span>
   <span class="token punctuation">)</span><span class="token punctuation">;</span>
-<span class="token punctuation">}</span></code></pre>
-        <p>We can write tests for it:</p>
-        <pre class="language-jsx{23-33,44-45}"><code class="language-jsx{23-33,44-45}">// user.test.js
+<span class="token punctuation">}</span></code></pre><p>We can write tests for it:<pre class="language-jsx{23-33,44-45}"><code class="language-jsx{23-33,44-45}">// user.test.js
 
 import React from "react";
 import { render, unmountComponentAtNode } from "react-dom";
@@ -194,13 +135,7 @@ it("renders user data", async () => {
 
   // remove the mock to ensure tests are completely isolated
   global.fetch.mockRestore();
-});</code></pre>
-      </section>
-      <section id="mocking-modules" class="level3">
-        <h3>Mocking Modules</h3>
-        <p>Some modules might not work well inside a testing environment, or may not be as essential to the test itself. Mocking out these modules with dummy replacements can make it easier to write tests for your own code.</p>
-        <p>Consider a <code>Contact</code> component that embeds a third-party <code>GoogleMap</code> component:</p>
-        <pre class="language-jsx"><code class="language-jsx"><span class="token comment">// map.js</span>
+});</code></pre></section><section id="mocking-modules"class="level3"><h3>Mocking Modules</h3><p>Some modules might not work well inside a testing environment, or may not be as essential to the test itself. Mocking out these modules with dummy replacements can make it easier to write tests for your own code.<p>Consider a <code>Contact</code> component that embeds a third-party <code>GoogleMap</code> component:<pre class="language-jsx"><code class="language-jsx"><span class="token comment">// map.js</span>
 
 <span class="token keyword module">import</span> <span class="token imports"><span class="token maybe-class-name">React</span></span> <span class="token keyword module">from</span> <span class="token string">"react"</span><span class="token punctuation">;</span>
 
@@ -233,9 +168,7 @@ it("renders user data", async () => {
       </span><span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;</span><span class="token class-name">Map</span></span> <span class="token attr-name">center</span><span class="token script language-javascript"><span class="token script-punctuation punctuation">=</span><span class="token punctuation">{</span>props<span class="token punctuation">.</span><span class="token property-access">center</span><span class="token punctuation">}</span></span> <span class="token punctuation">/></span></span><span class="token plain-text">
     </span><span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;/</span>div</span><span class="token punctuation">></span></span>
   <span class="token punctuation">)</span><span class="token punctuation">;</span>
-<span class="token punctuation">}</span></code></pre>
-        <p>If we don't want to load this component in our tests, we can mock out the dependency itself to a dummy component, and run our tests:</p>
-        <pre class="language-jsx{10-18}"><code class="language-jsx{10-18}">// contact.test.js
+<span class="token punctuation">}</span></code></pre><p>If we don't want to load this component in our tests, we can mock out the dependency itself to a dummy component, and run our tests:<pre class="language-jsx{10-18}"><code class="language-jsx{10-18}">// contact.test.js
 
 import React from "react";
 import { render, unmountComponentAtNode } from "react-dom";
@@ -293,12 +226,7 @@ it("should render contact information", () => {
   expect(container.querySelector('[data-testid="map"]').textContent).toEqual(
     "0:0"
   );
-});</code></pre>
-      </section>
-      <section id="events" class="level3">
-        <h3>Events</h3>
-        <p>We recommend dispatching real DOM events on DOM elements, and then asserting on the result. Consider a <code>Toggle</code> component:</p>
-        <pre class="language-jsx"><code class="language-jsx"><span class="token comment">// toggle.js</span>
+});</code></pre></section><section id="events"class="level3"><h3>Events</h3><p>We recommend dispatching real DOM events on DOM elements, and then asserting on the result. Consider a <code>Toggle</code> component:<pre class="language-jsx"><code class="language-jsx"><span class="token comment">// toggle.js</span>
 
 <span class="token keyword module">import</span> <span class="token imports"><span class="token maybe-class-name">React</span><span class="token punctuation">,</span> <span class="token punctuation">{</span> useState <span class="token punctuation">}</span></span> <span class="token keyword module">from</span> <span class="token string">"react"</span><span class="token punctuation">;</span>
 
@@ -315,9 +243,7 @@ it("should render contact information", () => {
       </span><span class="token punctuation">{</span>state <span class="token operator">===</span> <span class="token boolean">true</span> <span class="token operator">?</span> <span class="token string">"Turn off"</span> <span class="token operator">:</span> <span class="token string">"Turn on"</span><span class="token punctuation">}</span><span class="token plain-text">
     </span><span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;/</span>button</span><span class="token punctuation">></span></span>
   <span class="token punctuation">)</span><span class="token punctuation">;</span>
-<span class="token punctuation">}</span></code></pre>
-        <p>We could write tests for it:</p>
-        <pre class="language-jsx{13-14,35,43}"><code class="language-jsx{13-14,35,43}">// toggle.test.js
+<span class="token punctuation">}</span></code></pre><p>We could write tests for it:<pre class="language-jsx{13-14,35,43}"><code class="language-jsx{13-14,35,43}">// toggle.test.js
 
 import React from "react";
 import { render, unmountComponentAtNode } from "react-dom";
@@ -364,17 +290,7 @@ it("changes value when clicked", () => {
 
   expect(onChange).toHaveBeenCalledTimes(6);
   expect(button.innerHTML).toBe("Turn on");
-});</code></pre>
-        <p>Different DOM events and their properties are described in <a href="https://developer.mozilla.org/en-US/docs/Web/API/MouseEvent">MDN</a>. Note that you need to pass <code>{ bubbles: true }</code> in each event you create for it to reach the React listener because React automatically delegates events to the root.</p>
-        <blockquote>
-          <p>Note:</p>
-          <p>React Testing Library offers a <a href="https://testing-library.com/docs/dom-testing-library/api-events">more concise helper</a> for firing events.</p>
-        </blockquote>
-      </section>
-      <section id="timers" class="level3">
-        <h3>Timers</h3>
-        <p>Your code might use timer-based functions like <code>setTimeout</code> to schedule more work in the future. In this example, a multiple choice panel waits for a selection and advances, timing out if a selection isn't made in 5 seconds:</p>
-        <pre class="language-jsx"><code class="language-jsx"><span class="token comment">// card.js</span>
+});</code></pre><p>Different DOM events and their properties are described in <a href="https://developer.mozilla.org/en-US/docs/Web/API/MouseEvent">MDN</a>. Note that you need to pass <code>{ bubbles: true }</code> in each event you create for it to reach the React listener because React automatically delegates events to the root.<blockquote><p>Note:<p>React Testing Library offers a <a href="https://testing-library.com/docs/dom-testing-library/api-events">more concise helper</a> for firing events.</blockquote></section><section id="timers"class="level3"><h3>Timers</h3><p>Your code might use timer-based functions like <code>setTimeout</code> to schedule more work in the future. In this example, a multiple choice panel waits for a selection and advances, timing out if a selection isn't made in 5 seconds:<pre class="language-jsx"><code class="language-jsx"><span class="token comment">// card.js</span>
 
 <span class="token keyword module">import</span> <span class="token imports"><span class="token maybe-class-name">React</span><span class="token punctuation">,</span> <span class="token punctuation">{</span> useEffect <span class="token punctuation">}</span></span> <span class="token keyword module">from</span> <span class="token string">"react"</span><span class="token punctuation">;</span>
 
@@ -397,9 +313,7 @@ it("changes value when clicked", () => {
       </span><span class="token punctuation">{</span>choice<span class="token punctuation">}</span><span class="token plain-text">
     </span><span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;/</span>button</span><span class="token punctuation">></span></span>
   <span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
-<span class="token punctuation">}</span></code></pre>
-        <p>We can write tests for this component by leveraging <a href="https://jestjs.io/docs/en/timer-mocks">Jest's timer mocks</a>, and testing the different states it can be in.</p>
-        <pre class="language-jsx{7,31,37,49,59}"><code class="language-jsx{7,31,37,49,59}">// card.test.js
+<span class="token punctuation">}</span></code></pre><p>We can write tests for this component by leveraging <a href="https://jestjs.io/docs/en/timer-mocks">Jest's timer mocks</a>, and testing the different states it can be in.<pre class="language-jsx{7,31,37,49,59}"><code class="language-jsx{7,31,37,49,59}">// card.test.js
 
 import React from "react";
 import { render, unmountComponentAtNode } from "react-dom";
@@ -477,14 +391,7 @@ it("should accept selections", () => {
   });
 
   expect(onSelect).toHaveBeenCalledWith(2);
-});</code></pre>
-        <p>You can use fake timers only in some tests. Above, we enabled them by calling <code>jest.useFakeTimers()</code>. The main advantage they provide is that your test doesn't actually have to wait five seconds to execute, and you also didn't need to make the component code more convoluted just for testing.</p>
-      </section>
-      <section id="snapshot-testing" class="level3">
-        <h3>Snapshot Testing</h3>
-        <p>Frameworks like Jest also let you save "snapshots" of data with <a href="https://jestjs.io/docs/en/snapshot-testing"><code>toMatchSnapshot</code> / <code>toMatchInlineSnapshot</code></a>. With these, we can "save" the rendered component output and ensure that a change to it has to be explicitly committed as a change to the snapshot.</p>
-        <p>In this example, we render a component and format the rendered HTML with the <a href="https://www.npmjs.com/package/pretty"><code>pretty</code></a> package, before saving it as an inline snapshot:</p>
-        <pre class="language-jsx{29-31}"><code class="language-jsx{29-31}">// hello.test.js, again
+});</code></pre><p>You can use fake timers only in some tests. Above, we enabled them by calling <code>jest.useFakeTimers()</code>. The main advantage they provide is that your test doesn't actually have to wait five seconds to execute, and you also didn't need to make the component code more convoluted just for testing.</section><section id="snapshot-testing"class="level3"><h3>Snapshot Testing</h3><p>Frameworks like Jest also let you save "snapshots" of data with <a href="https://jestjs.io/docs/en/snapshot-testing"><code>toMatchSnapshot</code> / <code>toMatchInlineSnapshot</code></a>. With these, we can "save" the rendered component output and ensure that a change to it has to be explicitly committed as a change to the snapshot.<p>In this example, we render a component and format the rendered HTML with the <a href="https://www.npmjs.com/package/pretty"><code>pretty</code></a> package, before saving it as an inline snapshot:<pre class="language-jsx{29-31}"><code class="language-jsx{29-31}">// hello.test.js, again
 
 import React from "react";
 import { render, unmountComponentAtNode } from "react-dom";
@@ -531,13 +438,7 @@ it("should render a greeting", () => {
   expect(
     pretty(container.innerHTML)
   ).toMatchInlineSnapshot(); /* ... gets filled automatically by jest ... */
-});</code></pre>
-        <p>It's typically better to make more specific assertions than to use snapshots. These kinds of tests include implementation details so they break easily, and teams can get desensitized to snapshot breakages. Selectively <a href="#mocking-modules">mocking some child components</a> can help reduce the size of snapshots and keep them readable for the code review.</p>
-      </section>
-      <section id="multiple-renderers" class="level3">
-        <h3>Multiple Renderers</h3>
-        <p>In rare cases, you may be running a test on a component that uses multiple renderers. For example, you may be running snapshot tests on a component with <code>react-test-renderer</code>, that internally uses <code>render</code> from <code>react-dom</code> inside a child component to render some content. In this scenario, you can wrap updates with <code>act()</code>s corresponding to their renderers.</p>
-        <pre class="language-jsx"><code class="language-jsx"><span class="token keyword module">import</span> <span class="token imports"><span class="token punctuation">{</span> act <span class="token keyword module">as</span> domAct <span class="token punctuation">}</span></span> <span class="token keyword module">from</span> <span class="token string">"react-dom/test-utils"</span><span class="token punctuation">;</span>
+});</code></pre><p>It's typically better to make more specific assertions than to use snapshots. These kinds of tests include implementation details so they break easily, and teams can get desensitized to snapshot breakages. Selectively <a href="#mocking-modules">mocking some child components</a> can help reduce the size of snapshots and keep them readable for the code review.</section><section id="multiple-renderers"class="level3"><h3>Multiple Renderers</h3><p>In rare cases, you may be running a test on a component that uses multiple renderers. For example, you may be running snapshot tests on a component with <code>react-test-renderer</code>, that internally uses <code>render</code> from <code>react-dom</code> inside a child component to render some content. In this scenario, you can wrap updates with <code>act()</code>s corresponding to their renderers.<pre class="language-jsx"><code class="language-jsx"><span class="token keyword module">import</span> <span class="token imports"><span class="token punctuation">{</span> act <span class="token keyword module">as</span> domAct <span class="token punctuation">}</span></span> <span class="token keyword module">from</span> <span class="token string">"react-dom/test-utils"</span><span class="token punctuation">;</span>
 <span class="token keyword module">import</span> <span class="token imports"><span class="token punctuation">{</span> act <span class="token keyword module">as</span> testAct<span class="token punctuation">,</span> create <span class="token punctuation">}</span></span> <span class="token keyword module">from</span> <span class="token string">"react-test-renderer"</span><span class="token punctuation">;</span>
 <span class="token comment">// ...</span>
 <span class="token keyword">let</span> root<span class="token punctuation">;</span>
@@ -546,15 +447,4 @@ it("should render a greeting", () => {
     root <span class="token operator">=</span> <span class="token function">create</span><span class="token punctuation">(</span><span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;</span><span class="token class-name">App</span></span> <span class="token punctuation">/></span></span><span class="token punctuation">)</span><span class="token punctuation">;</span>
   <span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
 <span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
-<span class="token function">expect</span><span class="token punctuation">(</span>root<span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token method function property-access">toMatchSnapshot</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span></code></pre>
-      </section>
-      <section id="something-missing" class="level3">
-        <h3>Something Missing?</h3>
-        <p>
-          If some common scenario is not covered, please let us know on the <a href="https://github.com/reactjs/reactjs.org/issues">issue tracker</a> for the documentation website.
-          <span style="float: footnote;"><a href="./index.html#toc">Go to TOC</a></span>
-        </p>
-      </section>
-    </section>
-  </body>
-</html>
+<span class="token function">expect</span><span class="token punctuation">(</span>root<span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token method function property-access">toMatchSnapshot</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span></code></pre></section><section id="something-missing"class="level3"><h3>Something Missing?</h3><p>If some common scenario is not covered, please let us know on the <a href="https://github.com/reactjs/reactjs.org/issues">issue tracker</a> for the documentation website. <span style="float:footnote"><a href="./index.html#toc">Go to TOC</a></span></section></section>

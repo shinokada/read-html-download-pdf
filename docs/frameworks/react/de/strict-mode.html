@@ -1,73 +1,4 @@
-<!doctype html>
-<html lang="de">
-  <head>
-    <meta charset="utf-8">
-    <title>Strict Mode</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <link rel="stylesheet" href="https://raw.githubusercontent.com/shinokada/prism-coy-theme/main/theme_common.css">
-  </head>
-  <body>
-    <section id="strict-mode" class="level1">
-      <h1>Strict Mode</h1>
-      <p><code>StrictMode</code> ist ein Werkzeug zum Aufzeigen potenzieller Probleme in einer Anwendung. <code>StrictMode</code> rendert wie <code>Fragment</code> keine sichtbare Benutzeroberfläche. Es aktiviert zusätzliche Prüfungen und Warnungen für seine Nachkommen.</p>
-      <blockquote>
-        <p>Hinweis:</p>
-        <p>Prüfungen des strikten Modus werden nur im Entwicklungsmodus ausgeführt. <em>Sie wirken sich nicht auf den Produktions-Build aus</em>.</p>
-      </blockquote>
-      <p>
-        Du kannst den strikten Modus für jeden Teil deiner Anwendung aktivieren. Zum Beispiel:
-        <code>embed:strict-mode/enabling-strict-mode.js</code>
-      </p>
-      <p>Im obigen Beispiel werden Prüfungen des strikten Modus <em>nicht</em> für die Komponenten <code>Header</code> und <code>Footer</code> ausgeführt. <code>ComponentOne</code> und <code>ComponentTwo</code> sowie alle ihre Nachkommen haben jedoch die Prüfungen.</p>
-      <p><code>StrictMode</code> currently helps with:</p>
-      <ul>
-        <li><a href="#identifying-unsafe-lifecycles">Identifying components with unsafe lifecycles</a></li>
-        <li><a href="#warning-about-legacy-string-ref-api-usage">Warning about legacy string ref API usage</a></li>
-        <li><a href="#warning-about-deprecated-finddomnode-usage">Warning about deprecated findDOMNode usage</a></li>
-        <li><a href="#detecting-unexpected-side-effects">Detecting unexpected side effects</a></li>
-        <li><a href="#detecting-legacy-context-api">Detecting legacy context API</a></li>
-        <li><a href="#ensuring-reusable-state">Ensuring reusable state</a></li>
-      </ul>
-      <p>StrictMode hilft derzeit bei:</p>
-      <ul>
-        <li><a href="#identifying-unsafe-lifecycles">Identifizierung von Komponenten mit unsicheren Lifecycles</a></li>
-        <li><a href="#warning-about-legacy-string-ref-api-usage">Warnung über die Verwendung der String-Ref-API</a></li>
-        <li><a href="#warning-about-deprecated-finddomnode-usage">Warnung über veraltete Verwendung von findDOMNode</a></li>
-        <li><a href="#detecting-unexpected-side-effects">Erkennen unerwarteter Nebenwirkungen</a></li>
-        <li><a href="#detecting-legacy-context-api">Ermitteln der alten Context-API</a></li>
-      </ul>
-      <p>Zusätzliche Funktionalität wird mit zukünftigen Versionen von React hinzugefügt.</p>
-      <section id="identifying-unsafe-lifecycles" class="level3">
-        <h3>Identifizierung unsicherer Lifecycles</h3>
-        <p>Wie <a href="/blog/2018/03/27/update-on-async-rendering.html">in diesem Blog-Beitrag</a> erläutert, sind bestimmte Legacy-Lifecycle-Methoden für die Verwendung in asynchronen React-Anwendungen nicht sicher. Wenn deine Anwendung jedoch Bibliotheken von Drittanbietern verwendet, kann es schwierig sein sicherzustellen, dass diese Lifecycles nicht verwendet werden. Glücklicherweise kann der strikte Modus dabei helfen!</p>
-        <p>Wenn der strikte Modus aktiviert ist, erstellt React eine Liste aller Klassenkomponenten mit den unsicheren Lifecycles und protokolliert eine Warnmeldung mit Informationen zu diesen Komponenten wie folgt:</p>
-        <p>
-          <img src="../images/blog/strict-mode-unsafe-lifecycles-warning.png">
-        </p>
-        <p>Wenn du die im strikten Modus erkannten Probleme <em>jetzt</em> behebst, kannst du asynchrones Rendern in zukünftigen Versionen von React einfacher nutzen.</p>
-      </section>
-      <section id="warning-about-legacy-string-ref-api-usage" class="level3">
-        <h3>Warnung über die Verwendung der veralteten String-Ref-API</h3>
-        <p>Bisher bot React zwei Möglichkeiten zum Verwalten von Refs: die String-Ref-API und die Callback-API. Obwohl die String-Ref-API die bequemere von beiden war, hatte sie <a href="https://github.com/facebook/react/issues/1373">mehrere Nachteile</a>, und so war unsere offizielle Empfehlung <a href="./refs-and-the-dom.html#legacy-api-string-refs">stattdessen die Callback-Variante zu verwenden</a>.</p>
-        <p>
-          In React 16.3 wurde eine dritte Option hinzugefügt, die den Komfort eines String-Ref ohne Nachteile bietet:
-          <code>embed:16-3-release-blog-post/create-ref-example.js</code>
-        </p>
-        <p>Da Objekt-Refs größtenteils als Ersatz für String-Refs hinzugefügt wurden, warnt der strikte Modus jetzt vor der Verwendung von String-Refs.</p>
-        <blockquote>
-          <p><strong>Hinweis:</strong></p>
-          <p>Callback-Refs werden weiterhin zusätzlich zur neuen <code>createRef</code> API unterstützt`</p>
-          <p>Du musst die Callback-Refs in deinen Komponenten nicht ersetzen. Sie sind etwas flexibler und bleiben daher als fortgeschrittenes Feature erhalten.</p>
-        </blockquote>
-        <p>[Weitere Informationen zur neuen <code>createRef</code>-API findest du hier].(/docs/refs-and-the-dom.html)</p>
-      </section>
-      <section id="warning-about-deprecated-finddomnode-usage" class="level3">
-        <h3>Warnung über die veraltete Verwendung von findDOMNode</h3>
-        <p>React hat in der Vergangenheit <code>findDOMNode</code> unterstützt um den Baum nach einem DOM-Knoten zu durchsuchen, der einer Klasseninstanz zugeordnet ist. Normalerweise benötigst du dies nicht, da du einen Verweis <a href="./refs-and-the-dom.html#creating-refs">direkt an einen DOM-Knoten anhängen</a> kannst.</p>
-        <p><code>findDOMNode</code> kann auch für Klassenkomponenten verwendet werden, was jedoch ein Bruch in den Abstraktionsebenen war, da es einem übergeordnet Element erlaubte das Rendern bestimmter untergeordneter Elemente zu fordern. Es entsteht ein Refactoring-Risiko, bei dem du die Implementierungsdetails einer Komponente nicht ändern kannst, da ein übergeordnetes Element möglicherweise in den DOM-Knoten greift. <code>findDOMNode</code> gibt nur das erste untergeordnete Element zurück. Bei Verwendung von Fragments kann eine Komponente jedoch mehrere DOM-Knoten rendern. findDOMNode ist eine einmalige Lese-API. Es gab dir nur eine Antwort, als du danach gefragt hast. Wenn eine untergeordnete Komponente einen anderen Knoten darstellt, kann diese Änderung nicht verarbeitet werden. Daher funktioniert <code>findDOMNode</code> nur, wenn Komponenten immer einen einzelnen DOM-Knoten zurückgeben, der sich nie ändert.</p>
-        <p>Du kannst dies stattdessen explizit machen, indem du einen Verweis an deine benutzerdefinierte Komponente übergibst und diesen mithilfe der <a href="./forwarding-refs.html#forwarding-refs-to-dom-components">Ref-Weiterleitung</a> an das DOM weiterleitest.</p>
-        <p>Du kannst auch einen Wrapper-DOM-Knoten in deine Komponente einfügen und ein Ref direkt daran anhängen.</p>
-        <pre class="language-javascript{4,7}"><code class="language-javascript{4,7}">class MyComponent extends React.Component {
+<!doctypehtml><html lang="de"><meta charset="utf-8"><title>Strict Mode</title><meta name="viewport"content="width=device-width,initial-scale=1"><link rel="stylesheet"href="https://raw.githubusercontent.com/shinokada/prism-coy-theme/main/theme_common.css"><section id="strict-mode"class="level1"><h1>Strict Mode</h1><p><code>StrictMode</code> ist ein Werkzeug zum Aufzeigen potenzieller Probleme in einer Anwendung. <code>StrictMode</code> rendert wie <code>Fragment</code> keine sichtbare Benutzeroberfläche. Es aktiviert zusätzliche Prüfungen und Warnungen für seine Nachkommen.<blockquote><p>Hinweis:<p>Prüfungen des strikten Modus werden nur im Entwicklungsmodus ausgeführt. <em>Sie wirken sich nicht auf den Produktions-Build aus</em>.</blockquote><p>Du kannst den strikten Modus für jeden Teil deiner Anwendung aktivieren. Zum Beispiel: <code>embed:strict-mode/enabling-strict-mode.js</code><p>Im obigen Beispiel werden Prüfungen des strikten Modus <em>nicht</em> für die Komponenten <code>Header</code> und <code>Footer</code> ausgeführt. <code>ComponentOne</code> und <code>ComponentTwo</code> sowie alle ihre Nachkommen haben jedoch die Prüfungen.<p><code>StrictMode</code> currently helps with:<ul><li><a href="#identifying-unsafe-lifecycles">Identifying components with unsafe lifecycles</a><li><a href="#warning-about-legacy-string-ref-api-usage">Warning about legacy string ref API usage</a><li><a href="#warning-about-deprecated-finddomnode-usage">Warning about deprecated findDOMNode usage</a><li><a href="#detecting-unexpected-side-effects">Detecting unexpected side effects</a><li><a href="#detecting-legacy-context-api">Detecting legacy context API</a><li><a href="#ensuring-reusable-state">Ensuring reusable state</a></ul><p>StrictMode hilft derzeit bei:<ul><li><a href="#identifying-unsafe-lifecycles">Identifizierung von Komponenten mit unsicheren Lifecycles</a><li><a href="#warning-about-legacy-string-ref-api-usage">Warnung über die Verwendung der String-Ref-API</a><li><a href="#warning-about-deprecated-finddomnode-usage">Warnung über veraltete Verwendung von findDOMNode</a><li><a href="#detecting-unexpected-side-effects">Erkennen unerwarteter Nebenwirkungen</a><li><a href="#detecting-legacy-context-api">Ermitteln der alten Context-API</a></ul><p>Zusätzliche Funktionalität wird mit zukünftigen Versionen von React hinzugefügt.<section id="identifying-unsafe-lifecycles"class="level3"><h3>Identifizierung unsicherer Lifecycles</h3><p>Wie <a href="/blog/2018/03/27/update-on-async-rendering.html">in diesem Blog-Beitrag</a> erläutert, sind bestimmte Legacy-Lifecycle-Methoden für die Verwendung in asynchronen React-Anwendungen nicht sicher. Wenn deine Anwendung jedoch Bibliotheken von Drittanbietern verwendet, kann es schwierig sein sicherzustellen, dass diese Lifecycles nicht verwendet werden. Glücklicherweise kann der strikte Modus dabei helfen!<p>Wenn der strikte Modus aktiviert ist, erstellt React eine Liste aller Klassenkomponenten mit den unsicheren Lifecycles und protokolliert eine Warnmeldung mit Informationen zu diesen Komponenten wie folgt:<p><img src="../images/blog/strict-mode-unsafe-lifecycles-warning.png"><p>Wenn du die im strikten Modus erkannten Probleme <em>jetzt</em> behebst, kannst du asynchrones Rendern in zukünftigen Versionen von React einfacher nutzen.</section><section id="warning-about-legacy-string-ref-api-usage"class="level3"><h3>Warnung über die Verwendung der veralteten String-Ref-API</h3><p>Bisher bot React zwei Möglichkeiten zum Verwalten von Refs: die String-Ref-API und die Callback-API. Obwohl die String-Ref-API die bequemere von beiden war, hatte sie <a href="https://github.com/facebook/react/issues/1373">mehrere Nachteile</a>, und so war unsere offizielle Empfehlung <a href="./refs-and-the-dom.html#legacy-api-string-refs">stattdessen die Callback-Variante zu verwenden</a>.<p>In React 16.3 wurde eine dritte Option hinzugefügt, die den Komfort eines String-Ref ohne Nachteile bietet: <code>embed:16-3-release-blog-post/create-ref-example.js</code><p>Da Objekt-Refs größtenteils als Ersatz für String-Refs hinzugefügt wurden, warnt der strikte Modus jetzt vor der Verwendung von String-Refs.<blockquote><p><strong>Hinweis:</strong><p>Callback-Refs werden weiterhin zusätzlich zur neuen <code>createRef</code> API unterstützt`<p>Du musst die Callback-Refs in deinen Komponenten nicht ersetzen. Sie sind etwas flexibler und bleiben daher als fortgeschrittenes Feature erhalten.</blockquote><p>[Weitere Informationen zur neuen <code>createRef</code>-API findest du hier].(/docs/refs-and-the-dom.html)</section><section id="warning-about-deprecated-finddomnode-usage"class="level3"><h3>Warnung über die veraltete Verwendung von findDOMNode</h3><p>React hat in der Vergangenheit <code>findDOMNode</code> unterstützt um den Baum nach einem DOM-Knoten zu durchsuchen, der einer Klasseninstanz zugeordnet ist. Normalerweise benötigst du dies nicht, da du einen Verweis <a href="./refs-and-the-dom.html#creating-refs">direkt an einen DOM-Knoten anhängen</a> kannst.<p><code>findDOMNode</code> kann auch für Klassenkomponenten verwendet werden, was jedoch ein Bruch in den Abstraktionsebenen war, da es einem übergeordnet Element erlaubte das Rendern bestimmter untergeordneter Elemente zu fordern. Es entsteht ein Refactoring-Risiko, bei dem du die Implementierungsdetails einer Komponente nicht ändern kannst, da ein übergeordnetes Element möglicherweise in den DOM-Knoten greift. <code>findDOMNode</code> gibt nur das erste untergeordnete Element zurück. Bei Verwendung von Fragments kann eine Komponente jedoch mehrere DOM-Knoten rendern. findDOMNode ist eine einmalige Lese-API. Es gab dir nur eine Antwort, als du danach gefragt hast. Wenn eine untergeordnete Komponente einen anderen Knoten darstellt, kann diese Änderung nicht verarbeitet werden. Daher funktioniert <code>findDOMNode</code> nur, wenn Komponenten immer einen einzelnen DOM-Knoten zurückgeben, der sich nie ändert.<p>Du kannst dies stattdessen explizit machen, indem du einen Verweis an deine benutzerdefinierte Komponente übergibst und diesen mithilfe der <a href="./forwarding-refs.html#forwarding-refs-to-dom-components">Ref-Weiterleitung</a> an das DOM weiterleitest.<p>Du kannst auch einen Wrapper-DOM-Knoten in deine Komponente einfügen und ein Ref direkt daran anhängen.<pre class="language-javascript{4,7}"><code class="language-javascript{4,7}">class MyComponent extends React.Component {
   constructor(props) {
     super(props);
     this.wrapper = React.createRef();
@@ -75,75 +6,9 @@
   render() {
     return &#x3C;div ref={this.wrapper}>{this.props.children}&#x3C;/div>;
   }
-}</code></pre>
-        <blockquote>
-          <p>Hinweis:</p>
-          <p>In CSS kann das Attribut <a href="https://developer.mozilla.org/en-US/docs/Web/CSS/display#display_contents"><code>display: contents</code></a> verwendet werden, wenn der Knoten nicht Teil des Layouts sein soll.</p>
-        </blockquote>
-      </section>
-      <section id="detecting-unexpected-side-effects" class="level3">
-        <h3>Erkennen unerwarteter Nebenwirkungen</h3>
-        <p>Konzeptionell funktioniert React in zwei Phasen:</p>
-        <ul>
-          <li>Die <strong>Render-Phase</strong> bestimmt, welche Änderungen z.B. am DOM vorgenommen werden müssen. In dieser Phase ruft React <code>render</code> auf und vergleicht das Ergebnis mit dem vorherigen Rendering.</li>
-          <li>In der <strong>Commit-Phase</strong> wendet React alle Änderungen an. (Im Fall von React DOM fügt React DOM-Knoten ein, aktualisiert und entfernt sie.) React ruft in dieser Phase auch Lifecycles wie <code>componentDidMount</code> und <code>componentDidUpdate</code> auf.</li>
-        </ul>
-        <p>Die Commit-Phase ist normalerweise sehr schnell, das Rendern kann jedoch langsam sein. Aus diesem Grund wird die Rendering-Arbeit durch den bevorstehenden Async-Modus (der noch nicht standardmäßig aktiviert ist) in Teile zerlegt, wobei die Arbeit angehalten und fortgesetzt wird, um das Blockieren des Browsers zu vermeiden. Dies bedeutet, dass React Render-Phasen-Lifecycles möglicherweise mehr als einmal vor dem Commit aufruft oder sie ohne Commit aufruft (aufgrund eines Fehlers oder einer Unterbrechung mit höherer Priorität).</p>
-        <p>Renderphasen-Lifecycles umfassen die folgenden Klassenkomponenten-Methoden:</p>
-        <ul>
-          <li><code>constructor</code></li>
-          <li><code>componentWillMount</code> (or <code>UNSAFE_componentWillMount</code>)</li>
-          <li><code>componentWillReceiveProps</code> (or <code>UNSAFE_componentWillReceiveProps</code>)</li>
-          <li><code>componentWillUpdate</code> (or <code>UNSAFE_componentWillUpdate</code>)</li>
-          <li><code>getDerivedStateFromProps</code></li>
-          <li><code>shouldComponentUpdate</code></li>
-          <li><code>render</code></li>
-          <li><code>setState</code> Updater-Funktionen (das erste Argument)</li>
-        </ul>
-        <p>Da die oben genannten Methoden möglicherweise mehrmals aufgerufen werden, ist es wichtig, dass sie keine Nebenwirkungen enthalten. Das Ignorieren dieser Regel kann zu einer Vielzahl von Problemen führen, einschließlich Speicherverlusten und ungültigem Anwendungsstatus. Leider kann es schwierig sein, diese Probleme zu erkennen, da sie oft nicht deterministisch sind.</p>
-        <p>Der strikte Modus kann Nebenwirkungen nicht automatisch für dich erkennen, er kann dir jedoch helfen sie zu erkennen, indem er sie etwas deterministischer gestaltet. Dazu werden absichtlich die folgenden Methoden doppelt aufgerufen:</p>
-        <ul>
-          <li>Klassenkomponenten <code>constructor</code>, <code>render</code> und <code>shouldComponentUpdate</code> Methoden</li>
-          <li>Die statische <code>getDerivedStateFromProps</code> Methode</li>
-          <li>Der Körper einer funktionalen Komponente</li>
-          <li><code>setState</code> Updater-Funktionen (das erste Argument)</li>
-          <li>Funktionen die an <code>useState</code>, <code>useMemo</code> oder <code>useReducer</code> gegeben werden</li>
-        </ul>
-        <blockquote>
-          <p>Hinweis:</p>
-          <p>Dies gilt nur für den Entwicklungsmodus. Lifecycles werden im Produktionsmodus nicht doppelt aufgerufen.</p>
-        </blockquote>
-        <p>
-          Betrachte beispielsweise den folgenden Code:
-          <code>embed:strict-mode/side-effects-in-constructor.js</code>
-        </p>
-        <p>Auf den ersten Blick scheint dieser Code nicht problematisch zu sein. Wenn <code>SharedApplicationState.recordEvent</code> jedoch nicht <a href="https://de.wikipedia.org/wiki/Idempotenz#Informatik">idempotent</a> ist, kann das mehrmalige Instanziieren dieser Komponente zu einem ungültigen Anwendungsstatus führen. Diese Art von subtilen Fehlern kann während der Entwicklung gar nicht oder nur inkonsistent auftreten und daher übersehen werden.</p>
-        <p>Durch das absichtliche Doppelaufrufen von Methoden wie dem Komponentenkonstruktor erleichtert der strikte Modus das Erkennen solcher Muster.</p>
-        <blockquote>
-          <p>Hinweis:</p>
-          <p>In React 17 werden Konsolenmethoden wie <code>console.log()</code> automatisch modifiziert, um die Logs beim zweiten Aufruf von Lifecycle-Methoden zu unterdrücken. Es kann jedoch in bestimmten Fällen zu unerwünschtem Verhalten führen, in denen <a href="https://github.com/facebook/react/issues/20090#issuecomment-715927125">ein Workaround verwendet werden kann</a>.</p>
-          <p>Starting from React 18, React does not suppress any logs. However, if you have React DevTools installed, the logs from the second call will appear slightly dimmed. React DevTools also offers a setting (off by default) to suppress them completely.</p>
-        </blockquote>
-      </section>
-      <section id="detecting-legacy-context-api" class="level3">
-        <h3>Ermitteln der alten Context-API</h3>
-        <p>Die ältere Context-API ist fehleranfällig und wird in einer zukünftigen Hauptversion entfernt. Sie funktioniert weiterhin für alle 16.x-Versionen, zeigt jedoch diese Warnmeldung im strikten Modus an:</p>
-        <p>
-          <img src="../images/blog/warn-legacy-context-in-strict-mode.png">
-        </p>
-        <p>Lies die <a href="./context.html">Dokumentation zur neuen Context-API</a>, um dir die Migration auf die neue Version zu erleichtern.</p>
-      </section>
-      <section id="ensuring-reusable-state" class="level3">
-        <h3>Ensuring reusable state</h3>
-        <p>In the future, we’d like to add a feature that allows React to add and remove sections of the UI while preserving state. For example, when a user tabs away from a screen and back, React should be able to immediately show the previous screen. To do this, React will support remounting trees using the same component state used before unmounting.</p>
-        <p>This feature will give React better performance out-of-the-box, but requires components to be resilient to effects being mounted and destroyed multiple times. Most effects will work without any changes, but some effects do not properly clean up subscriptions in the destroy callback, or implicitly assume they are only mounted or destroyed once.</p>
-        <p>To help surface these issues, React 18 introduces a new development-only check to Strict Mode. This new check will automatically unmount and remount every component, whenever a component mounts for the first time, restoring the previous state on the second mount.</p>
-        <p>To demonstrate the development behavior you'll see in Strict Mode with this feature, consider what happens when React mounts a new component. Without this change, when a component mounts, React creates the effects:</p>
-        <pre class="language-text"><code class="language-text">* React mounts the component.
+}</code></pre><blockquote><p>Hinweis:<p>In CSS kann das Attribut <a href="https://developer.mozilla.org/en-US/docs/Web/CSS/display#display_contents"><code>display: contents</code></a> verwendet werden, wenn der Knoten nicht Teil des Layouts sein soll.</blockquote></section><section id="detecting-unexpected-side-effects"class="level3"><h3>Erkennen unerwarteter Nebenwirkungen</h3><p>Konzeptionell funktioniert React in zwei Phasen:<ul><li>Die <strong>Render-Phase</strong> bestimmt, welche Änderungen z.B. am DOM vorgenommen werden müssen. In dieser Phase ruft React <code>render</code> auf und vergleicht das Ergebnis mit dem vorherigen Rendering.<li>In der <strong>Commit-Phase</strong> wendet React alle Änderungen an. (Im Fall von React DOM fügt React DOM-Knoten ein, aktualisiert und entfernt sie.) React ruft in dieser Phase auch Lifecycles wie <code>componentDidMount</code> und <code>componentDidUpdate</code> auf.</ul><p>Die Commit-Phase ist normalerweise sehr schnell, das Rendern kann jedoch langsam sein. Aus diesem Grund wird die Rendering-Arbeit durch den bevorstehenden Async-Modus (der noch nicht standardmäßig aktiviert ist) in Teile zerlegt, wobei die Arbeit angehalten und fortgesetzt wird, um das Blockieren des Browsers zu vermeiden. Dies bedeutet, dass React Render-Phasen-Lifecycles möglicherweise mehr als einmal vor dem Commit aufruft oder sie ohne Commit aufruft (aufgrund eines Fehlers oder einer Unterbrechung mit höherer Priorität).<p>Renderphasen-Lifecycles umfassen die folgenden Klassenkomponenten-Methoden:<ul><li><code>constructor</code><li><code>componentWillMount</code> (or <code>UNSAFE_componentWillMount</code>)<li><code>componentWillReceiveProps</code> (or <code>UNSAFE_componentWillReceiveProps</code>)<li><code>componentWillUpdate</code> (or <code>UNSAFE_componentWillUpdate</code>)<li><code>getDerivedStateFromProps</code><li><code>shouldComponentUpdate</code><li><code>render</code><li><code>setState</code> Updater-Funktionen (das erste Argument)</ul><p>Da die oben genannten Methoden möglicherweise mehrmals aufgerufen werden, ist es wichtig, dass sie keine Nebenwirkungen enthalten. Das Ignorieren dieser Regel kann zu einer Vielzahl von Problemen führen, einschließlich Speicherverlusten und ungültigem Anwendungsstatus. Leider kann es schwierig sein, diese Probleme zu erkennen, da sie oft nicht deterministisch sind.<p>Der strikte Modus kann Nebenwirkungen nicht automatisch für dich erkennen, er kann dir jedoch helfen sie zu erkennen, indem er sie etwas deterministischer gestaltet. Dazu werden absichtlich die folgenden Methoden doppelt aufgerufen:<ul><li>Klassenkomponenten <code>constructor</code>, <code>render</code> und <code>shouldComponentUpdate</code> Methoden<li>Die statische <code>getDerivedStateFromProps</code> Methode<li>Der Körper einer funktionalen Komponente<li><code>setState</code> Updater-Funktionen (das erste Argument)<li>Funktionen die an <code>useState</code>, <code>useMemo</code> oder <code>useReducer</code> gegeben werden</ul><blockquote><p>Hinweis:<p>Dies gilt nur für den Entwicklungsmodus. Lifecycles werden im Produktionsmodus nicht doppelt aufgerufen.</blockquote><p>Betrachte beispielsweise den folgenden Code: <code>embed:strict-mode/side-effects-in-constructor.js</code><p>Auf den ersten Blick scheint dieser Code nicht problematisch zu sein. Wenn <code>SharedApplicationState.recordEvent</code> jedoch nicht <a href="https://de.wikipedia.org/wiki/Idempotenz#Informatik">idempotent</a> ist, kann das mehrmalige Instanziieren dieser Komponente zu einem ungültigen Anwendungsstatus führen. Diese Art von subtilen Fehlern kann während der Entwicklung gar nicht oder nur inkonsistent auftreten und daher übersehen werden.<p>Durch das absichtliche Doppelaufrufen von Methoden wie dem Komponentenkonstruktor erleichtert der strikte Modus das Erkennen solcher Muster.<blockquote><p>Hinweis:<p>In React 17 werden Konsolenmethoden wie <code>console.log()</code> automatisch modifiziert, um die Logs beim zweiten Aufruf von Lifecycle-Methoden zu unterdrücken. Es kann jedoch in bestimmten Fällen zu unerwünschtem Verhalten führen, in denen <a href="https://github.com/facebook/react/issues/20090#issuecomment-715927125">ein Workaround verwendet werden kann</a>.<p>Starting from React 18, React does not suppress any logs. However, if you have React DevTools installed, the logs from the second call will appear slightly dimmed. React DevTools also offers a setting (off by default) to suppress them completely.</blockquote></section><section id="detecting-legacy-context-api"class="level3"><h3>Ermitteln der alten Context-API</h3><p>Die ältere Context-API ist fehleranfällig und wird in einer zukünftigen Hauptversion entfernt. Sie funktioniert weiterhin für alle 16.x-Versionen, zeigt jedoch diese Warnmeldung im strikten Modus an:<p><img src="../images/blog/warn-legacy-context-in-strict-mode.png"><p>Lies die <a href="./context.html">Dokumentation zur neuen Context-API</a>, um dir die Migration auf die neue Version zu erleichtern.</section><section id="ensuring-reusable-state"class="level3"><h3>Ensuring reusable state</h3><p>In the future, we’d like to add a feature that allows React to add and remove sections of the UI while preserving state. For example, when a user tabs away from a screen and back, React should be able to immediately show the previous screen. To do this, React will support remounting trees using the same component state used before unmounting.<p>This feature will give React better performance out-of-the-box, but requires components to be resilient to effects being mounted and destroyed multiple times. Most effects will work without any changes, but some effects do not properly clean up subscriptions in the destroy callback, or implicitly assume they are only mounted or destroyed once.<p>To help surface these issues, React 18 introduces a new development-only check to Strict Mode. This new check will automatically unmount and remount every component, whenever a component mounts for the first time, restoring the previous state on the second mount.<p>To demonstrate the development behavior you'll see in Strict Mode with this feature, consider what happens when React mounts a new component. Without this change, when a component mounts, React creates the effects:<pre class="language-text"><code class="language-text">* React mounts the component.
   * Layout effects are created.
-  * Effects are created.</code></pre>
-        <p>With Strict Mode starting in React 18, whenever a component mounts in development, React will simulate immediately unmounting and remounting the component:</p>
-        <pre class="language-text"><code class="language-text">* React mounts the component.
+  * Effects are created.</code></pre><p>With Strict Mode starting in React 18, whenever a component mounts in development, React will simulate immediately unmounting and remounting the component:<pre class="language-text"><code class="language-text">* React mounts the component.
     * Layout effects are created.
     * Effect effects are created.
 * React simulates effects being destroyed on a mounted component.
@@ -151,32 +16,6 @@
     * Effects are destroyed.
 * React simulates effects being re-created on a mounted component.
     * Layout effects are created
-    * Effect setup code runs</code></pre>
-        <p>On the second mount, React will restore the state from the first mount. This feature simulates user behavior such as a user tabbing away from a screen and back, ensuring that code will properly handle state restoration.</p>
-        <p>When the component unmounts, effects are destroyed as normal:</p>
-        <pre class="language-text"><code class="language-text">* React unmounts the component.
+    * Effect setup code runs</code></pre><p>On the second mount, React will restore the state from the first mount. This feature simulates user behavior such as a user tabbing away from a screen and back, ensuring that code will properly handle state restoration.<p>When the component unmounts, effects are destroyed as normal:<pre class="language-text"><code class="language-text">* React unmounts the component.
   * Layout effects are destroyed.
-  * Effect effects are destroyed.</code></pre>
-        <p>Unmounting and remounting includes:</p>
-        <ul>
-          <li><code>componentDidMount</code></li>
-          <li><code>componentWillUnmount</code></li>
-          <li><code>useEffect</code></li>
-          <li><code>useLayoutEffect</code></li>
-          <li><code>useInsertionEffect</code></li>
-        </ul>
-        <blockquote>
-          <p>Note:</p>
-          <p>This only applies to development mode, <em>production behavior is unchanged</em>.</p>
-        </blockquote>
-        <p>For help supporting common issues, see:</p>
-        <ul>
-          <li>
-            <a href="https://github.com/reactwg/react-18/discussions/18">How to support Reusable State in Effects</a>
-            <span style="float: footnote;"><a href="./index.html#toc">Go to TOC</a></span>
-          </li>
-        </ul>
-      </section>
-    </section>
-  </body>
-</html>
+  * Effect effects are destroyed.</code></pre><p>Unmounting and remounting includes:<ul><li><code>componentDidMount</code><li><code>componentWillUnmount</code><li><code>useEffect</code><li><code>useLayoutEffect</code><li><code>useInsertionEffect</code></ul><blockquote><p>Note:<p>This only applies to development mode, <em>production behavior is unchanged</em>.</blockquote><p>For help supporting common issues, see:<ul><li><a href="https://github.com/reactwg/react-18/discussions/18">How to support Reusable State in Effects</a> <span style="float:footnote"><a href="./index.html#toc">Go to TOC</a></span></ul></section></section>

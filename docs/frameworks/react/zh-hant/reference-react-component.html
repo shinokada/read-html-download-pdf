@@ -1,267 +1,22 @@
-<!doctype html>
-<html lang="zh-hant">
-  <head>
-    <meta charset="utf-8">
-    <title>React.Component</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <link rel="stylesheet" href="https://raw.githubusercontent.com/shinokada/prism-coy-theme/main/theme_common.css">
-  </head>
-  <body>
-    <section id="reactcomponent" class="level1">
-      <h1>React.Component</h1>
-      <p>本章節包含了 React component class 的詳細 API 參考。我們假設你對 React 的基本概念已十分熟悉，例如 <a href="./components-and-props.html">Component 和 Prop</a> 以及 <a href="./state-and-lifecycle.html">State 和 生命週期</a>。如果你對這些概念還不清楚，請先閱讀相關文件。</p>
-      <section id="overview" class="level2">
-        <h2>概觀</h2>
-        <p>在 React 中，你可以將 component 定義成 class 或 function。目前，被定義為 class 的 component 提供了更多功能，我們將會在本章節中逐一介紹。要定義一個 React component class，你需要繼承（extend）<code>React.Component</code>：</p>
-        <pre class="language-js"><code class="language-js"><span class="token keyword">class</span> <span class="token class-name">Welcome</span> <span class="token keyword">extends</span> <span class="token class-name">React<span class="token punctuation">.</span>Component</span> <span class="token punctuation">{</span>
+<!doctypehtml><html lang="zh-hant"><meta charset="utf-8"><title>React.Component</title><meta name="viewport"content="width=device-width,initial-scale=1"><link rel="stylesheet"href="https://raw.githubusercontent.com/shinokada/prism-coy-theme/main/theme_common.css"><section id="reactcomponent"class="level1"><h1>React.Component</h1><p>本章節包含了 React component class 的詳細 API 參考。我們假設你對 React 的基本概念已十分熟悉，例如 <a href="./components-and-props.html">Component 和 Prop</a> 以及 <a href="./state-and-lifecycle.html">State 和 生命週期</a>。如果你對這些概念還不清楚，請先閱讀相關文件。<section id="overview"class="level2"><h2>概觀</h2><p>在 React 中，你可以將 component 定義成 class 或 function。目前，被定義為 class 的 component 提供了更多功能，我們將會在本章節中逐一介紹。要定義一個 React component class，你需要繼承（extend）<code>React.Component</code>：<pre class="language-js"><code class="language-js"><span class="token keyword">class</span> <span class="token class-name">Welcome</span> <span class="token keyword">extends</span> <span class="token class-name">React<span class="token punctuation">.</span>Component</span> <span class="token punctuation">{</span>
   <span class="token function">render</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
     <span class="token keyword control-flow">return</span> <span class="token operator">&#x3C;</span>h1<span class="token operator">></span><span class="token maybe-class-name">Hello</span><span class="token punctuation">,</span> <span class="token punctuation">{</span><span class="token keyword">this</span><span class="token punctuation">.</span><span class="token property-access">props</span><span class="token punctuation">.</span><span class="token property-access">name</span><span class="token punctuation">}</span><span class="token operator">&#x3C;</span><span class="token operator">/</span>h1<span class="token operator">></span><span class="token punctuation">;</span>
   <span class="token punctuation">}</span>
-<span class="token punctuation">}</span></code></pre>
-        <p>在 <code>React.Component</code> 的 subclass 中唯一一個你<em>必須</em>定義的方法是 <a href="#render"><code>render()</code></a>。本章節中所有其他的方法都並非絕對必要。</p>
-        <p><strong>我們強烈建議你不要建立自己的 base component class。</strong> 在 React component 中，<a href="./composition-vs-inheritance.html">程式的重複使用性主要是透過組合而非繼承來完成的</a>。</p>
-        <blockquote>
-          <p>注意：</p>
-          <p>React 並不會強迫你使用 ES6 class 語法。如果你想避免它的話，你可以使用 <code>create-react-class</code> 或一個類似的自訂抽象。想了解更多詳情，請參考<a href="./react-without-es6.html">如何在 React 中不使用 ES6</a>一文。</p>
-        </blockquote>
-        <section id="the-component-lifecycle" class="level3">
-          <h3>Component 生命週期</h3>
-          <p>每一個 component 都有數個 「生命週期方法」，你可以 <a href="https://en.wikipedia.org/wiki/Method_overriding">override</a> 這些方法，以便在開發過程中某些特定的時刻執行某些程式。<strong>你可以使用<a href="https://projects.wojtekmaj.pl/react-lifecycle-methods-diagram/">這個生命週期表</a>作為速查表。</strong> 以下，常用的生命週期方法將會以粗體表達。其餘的生命週期方法則相對較少。</p>
-          <section id="mounting" class="level4">
-            <h4>Mounting</h4>
-            <p>當一個 component 的 instance 被建立且加入 DOM 中時，其生命週期將會依照下列的順序呼叫這些方法：</p>
-            <ul>
-              <li><a href="#constructor"><strong><code>constructor()</code></strong></a></li>
-              <li><a href="#static-getderivedstatefromprops"><code>static getDerivedStateFromProps()</code></a></li>
-              <li><a href="#render"><strong><code>render()</code></strong></a></li>
-              <li><a href="#componentdidmount"><strong><code>componentDidMount()</code></strong></a></li>
-            </ul>
-            <blockquote>
-              <p>注意：</p>
-              <p>這個方法已經被認為已過時，你在寫新程式應<a href="/blog/2018/03/27/update-on-async-rendering.html">避免使用</a>：</p>
-              <ul>
-                <li><a href="#unsafe_componentwillmount"><code>UNSAFE_componentWillMount()</code></a></li>
-              </ul>
-            </blockquote>
-          </section>
-          <section id="updating" class="level4">
-            <h4>更新</h4>
-            <p>當 prop 或 state 有變化時，就會產生更新。當一個 component 被重新 render 時，其生命週期將會依照下列的順序呼叫這些方法：</p>
-            <ul>
-              <li><a href="#static-getderivedstatefromprops"><code>static getDerivedStateFromProps()</code></a></li>
-              <li><a href="#shouldcomponentupdate"><code>shouldComponentUpdate()</code></a></li>
-              <li><a href="#render"><strong><code>render()</code></strong></a></li>
-              <li><a href="#getsnapshotbeforeupdate"><code>getSnapshotBeforeUpdate()</code></a></li>
-              <li><a href="#componentdidupdate"><strong><code>componentDidUpdate()</code></strong></a></li>
-            </ul>
-            <blockquote>
-              <p>注意：</p>
-              <p>下列方法已過時，你在寫新程式應<a href="/blog/2018/03/27/update-on-async-rendering.html">避免使用</a>：</p>
-              <ul>
-                <li><a href="#unsafe_componentwillupdate"><code>UNSAFE_componentWillUpdate()</code></a></li>
-                <li><a href="#unsafe_componentwillreceiveprops"><code>UNSAFE_componentWillReceiveProps()</code></a></li>
-              </ul>
-            </blockquote>
-          </section>
-          <section id="unmounting" class="level4">
-            <h4>Unmounting</h4>
-            <p>當一個 component 被從 DOM 中移除時，這個方法將會被呼叫：</p>
-            <ul>
-              <li><a href="#componentwillunmount"><strong><code>componentWillUnmount()</code></strong></a></li>
-            </ul>
-          </section>
-          <section id="error-handling" class="level4">
-            <h4>錯誤處理</h4>
-            <p>當一個 component 在 render 的過程、生命週期、或在某個 child component 的 constructor 中發生錯誤時，這些方法會被呼叫：</p>
-            <ul>
-              <li><a href="#static-getderivedstatefromerror"><code>static getDerivedStateFromError()</code></a></li>
-              <li><a href="#componentdidcatch"><code>componentDidCatch()</code></a></li>
-            </ul>
-          </section>
-        </section>
-        <section id="other-apis" class="level3">
-          <h3>其他 APIs</h3>
-          <p>每個 component 也提供了其他 API：</p>
-          <ul>
-            <li><a href="#setstate"><code>setState()</code></a></li>
-            <li><a href="#forceupdate"><code>forceUpdate()</code></a></li>
-          </ul>
-        </section>
-        <section id="class-properties" class="level3">
-          <h3>Class 屬性</h3>
-          <ul>
-            <li><a href="#defaultprops"><code>defaultProps</code></a></li>
-            <li><a href="#displayname"><code>displayName</code></a></li>
-          </ul>
-        </section>
-        <section id="instance-properties" class="level3">
-          <h3>Instance 屬性</h3>
-          <ul>
-            <li><a href="#props"><code>props</code></a></li>
-            <li><a href="#state"><code>state</code></a></li>
-          </ul>
-          <hr>
-        </section>
-      </section>
-      <section id="reference" class="level2">
-        <h2>參考指南</h2>
-        <section id="commonly-used-lifecycle-methods" class="level3">
-          <h3>常用的生命周期方法</h3>
-          <p>此段落將會介紹你在建立 React component 時最可能會使用到的幾種方法。<strong>想更深入了解生命週期方法，請參考<a href="https://projects.wojtekmaj.pl/react-lifecycle-methods-diagram/">生命週期表</a>。</strong></p>
-        </section>
-        <section id="render-render" class="level3">
-          <h3><code>render()</code> {#render}</h3>
-          <pre class="language-javascript"><code class="language-javascript"><span class="token function">render</span><span class="token punctuation">(</span><span class="token punctuation">)</span></code></pre>
-          <p><code>render()</code> 是 class component 中唯一必要的方法。</p>
-          <p>當 render 被呼叫時，它將會檢視 <code>this.props</code> 和 <code>this.state</code> 中的變化，並回傳以下類別之一：</p>
-          <ul>
-            <li><strong>React element。</strong> 通常是透過 <a href="./introducing-jsx.html">JSX</a> 建立的。例如，<code>&#x3C;div /></code>和<code>&#x3C;MyComponent /></code>這兩個 React element 會告訴 React 要 render 一個 DOM node 和一個使用者定義的 component。</li>
-            <li><strong>Array 和 fragment。</strong> 它們會從 render 中回傳數個 element。細節請參考 <a href="./fragments.html">fragment</a>。</li>
-            <li><strong>Portal</strong>。它們讓你將 children render 到不同的 DOM subtree 中。細節請參考 <a href="./portals.html">portal</a>。</li>
-            <li><strong>String 和 number。</strong> 這些在 DOM 中將會被 render 為文字 node。</li>
-            <li><strong>Boolean 或 <code>null</code>。</strong> 什麼都不 render。（此類型主要是支援 <code>回傳 test &#x26;&#x26; &#x3C;Child /></code> 的模式，這裡的 <code>test</code> 是一個 boolean 值）。</li>
-          </ul>
-          <p><code>render()</code> function 應該是 pure 的，這表示：它並不會改變 component 的 state，它在每次呼叫時都會回傳同樣的結果，它並不會直接和瀏覽器有所互動。</p>
-          <p>如果你需要和瀏覽器互動，請在 <code>componentDidMount()</code> 或其他的生命週期方法內執行你的程式。將 <code>render()</code> 維持在 pure 的狀態有助於你對 component 的理解。</p>
-          <blockquote>
-            <p>注意：</p>
-            <p>若 <a href="#shouldcomponentupdate"><code>shouldComponentUpdate()</code></a> 回傳的值為 <code>false</code> 的話，<code>render()</code>將不會被呼叫。</p>
-          </blockquote>
-          <hr>
-        </section>
-        <section id="constructor-constructor" class="level3">
-          <h3><code>constructor()</code> {#constructor}</h3>
-          <pre class="language-javascript"><code class="language-javascript"><span class="token function">constructor</span><span class="token punctuation">(</span>props<span class="token punctuation">)</span></code></pre>
-          <p><strong>如果你沒有初始化 state 也不綁定方法的話，你的 React component 就不需要 constructor。</strong></p>
-          <p>一個 React component 的 constructor 會在其被 mount 之前被呼叫。當你為一個 <code>React.Component</code> subclass 建立 constructor 時，你應該在其他任何宣告之前呼叫 <code>super(props)</code>。否則，<code>this.props</code> 在 constructor 中的值會出現 undefined 的 bug。</p>
-          <p>通常在 React 中 constructor 只會有兩種用途：</p>
-          <ul>
-            <li>透過指定一個 <code>this.state</code> 物件來初始化<a href="./state-and-lifecycle.html">內部 state</a>。</li>
-            <li>為 <a href="./handling-events.html">event handler</a> 方法綁定 instance。</li>
-          </ul>
-          <p>請<strong>不要在 <code>constructor()</code> 中呼叫 <code>setState()</code></strong>。如果你的 component 需要使用內部 state，請在 constructor 中<strong>將其最初的 state 指定為 <code>this.state</code></strong>：</p>
-          <pre class="language-js"><code class="language-js"><span class="token function">constructor</span><span class="token punctuation">(</span><span class="token parameter">props</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+<span class="token punctuation">}</span></code></pre><p>在 <code>React.Component</code> 的 subclass 中唯一一個你<em>必須</em>定義的方法是 <a href="#render"><code>render()</code></a>。本章節中所有其他的方法都並非絕對必要。<p><strong>我們強烈建議你不要建立自己的 base component class。</strong> 在 React component 中，<a href="./composition-vs-inheritance.html">程式的重複使用性主要是透過組合而非繼承來完成的</a>。<blockquote><p>注意：<p>React 並不會強迫你使用 ES6 class 語法。如果你想避免它的話，你可以使用 <code>create-react-class</code> 或一個類似的自訂抽象。想了解更多詳情，請參考<a href="./react-without-es6.html">如何在 React 中不使用 ES6</a>一文。</blockquote><section id="the-component-lifecycle"class="level3"><h3>Component 生命週期</h3><p>每一個 component 都有數個 「生命週期方法」，你可以 <a href="https://en.wikipedia.org/wiki/Method_overriding">override</a> 這些方法，以便在開發過程中某些特定的時刻執行某些程式。<strong>你可以使用<a href="https://projects.wojtekmaj.pl/react-lifecycle-methods-diagram/">這個生命週期表</a>作為速查表。</strong> 以下，常用的生命週期方法將會以粗體表達。其餘的生命週期方法則相對較少。<section id="mounting"class="level4"><h4>Mounting</h4><p>當一個 component 的 instance 被建立且加入 DOM 中時，其生命週期將會依照下列的順序呼叫這些方法：<ul><li><a href="#constructor"><strong><code>constructor()</code></strong></a><li><a href="#static-getderivedstatefromprops"><code>static getDerivedStateFromProps()</code></a><li><a href="#render"><strong><code>render()</code></strong></a><li><a href="#componentdidmount"><strong><code>componentDidMount()</code></strong></a></ul><blockquote><p>注意：<p>這個方法已經被認為已過時，你在寫新程式應<a href="/blog/2018/03/27/update-on-async-rendering.html">避免使用</a>：<ul><li><a href="#unsafe_componentwillmount"><code>UNSAFE_componentWillMount()</code></a></ul></blockquote></section><section id="updating"class="level4"><h4>更新</h4><p>當 prop 或 state 有變化時，就會產生更新。當一個 component 被重新 render 時，其生命週期將會依照下列的順序呼叫這些方法：<ul><li><a href="#static-getderivedstatefromprops"><code>static getDerivedStateFromProps()</code></a><li><a href="#shouldcomponentupdate"><code>shouldComponentUpdate()</code></a><li><a href="#render"><strong><code>render()</code></strong></a><li><a href="#getsnapshotbeforeupdate"><code>getSnapshotBeforeUpdate()</code></a><li><a href="#componentdidupdate"><strong><code>componentDidUpdate()</code></strong></a></ul><blockquote><p>注意：<p>下列方法已過時，你在寫新程式應<a href="/blog/2018/03/27/update-on-async-rendering.html">避免使用</a>：<ul><li><a href="#unsafe_componentwillupdate"><code>UNSAFE_componentWillUpdate()</code></a><li><a href="#unsafe_componentwillreceiveprops"><code>UNSAFE_componentWillReceiveProps()</code></a></ul></blockquote></section><section id="unmounting"class="level4"><h4>Unmounting</h4><p>當一個 component 被從 DOM 中移除時，這個方法將會被呼叫：<ul><li><a href="#componentwillunmount"><strong><code>componentWillUnmount()</code></strong></a></ul></section><section id="error-handling"class="level4"><h4>錯誤處理</h4><p>當一個 component 在 render 的過程、生命週期、或在某個 child component 的 constructor 中發生錯誤時，這些方法會被呼叫：<ul><li><a href="#static-getderivedstatefromerror"><code>static getDerivedStateFromError()</code></a><li><a href="#componentdidcatch"><code>componentDidCatch()</code></a></ul></section></section><section id="other-apis"class="level3"><h3>其他 APIs</h3><p>每個 component 也提供了其他 API：<ul><li><a href="#setstate"><code>setState()</code></a><li><a href="#forceupdate"><code>forceUpdate()</code></a></ul></section><section id="class-properties"class="level3"><h3>Class 屬性</h3><ul><li><a href="#defaultprops"><code>defaultProps</code></a><li><a href="#displayname"><code>displayName</code></a></ul></section><section id="instance-properties"class="level3"><h3>Instance 屬性</h3><ul><li><a href="#props"><code>props</code></a><li><a href="#state"><code>state</code></a></ul><hr></section></section><section id="reference"class="level2"><h2>參考指南</h2><section id="commonly-used-lifecycle-methods"class="level3"><h3>常用的生命周期方法</h3><p>此段落將會介紹你在建立 React component 時最可能會使用到的幾種方法。<strong>想更深入了解生命週期方法，請參考<a href="https://projects.wojtekmaj.pl/react-lifecycle-methods-diagram/">生命週期表</a>。</strong></section><section id="render-render"class="level3"><h3><code>render()</code> {#render}</h3><pre class="language-javascript"><code class="language-javascript"><span class="token function">render</span><span class="token punctuation">(</span><span class="token punctuation">)</span></code></pre><p><code>render()</code> 是 class component 中唯一必要的方法。<p>當 render 被呼叫時，它將會檢視 <code>this.props</code> 和 <code>this.state</code> 中的變化，並回傳以下類別之一：<ul><li><strong>React element。</strong> 通常是透過 <a href="./introducing-jsx.html">JSX</a> 建立的。例如，<code>&#x3C;div /></code>和<code>&#x3C;MyComponent /></code>這兩個 React element 會告訴 React 要 render 一個 DOM node 和一個使用者定義的 component。<li><strong>Array 和 fragment。</strong> 它們會從 render 中回傳數個 element。細節請參考 <a href="./fragments.html">fragment</a>。<li><strong>Portal</strong>。它們讓你將 children render 到不同的 DOM subtree 中。細節請參考 <a href="./portals.html">portal</a>。<li><strong>String 和 number。</strong> 這些在 DOM 中將會被 render 為文字 node。<li><strong>Boolean 或 <code>null</code>。</strong> 什麼都不 render。（此類型主要是支援 <code>回傳 test &#x26;&#x26; &#x3C;Child /></code> 的模式，這裡的 <code>test</code> 是一個 boolean 值）。</ul><p><code>render()</code> function 應該是 pure 的，這表示：它並不會改變 component 的 state，它在每次呼叫時都會回傳同樣的結果，它並不會直接和瀏覽器有所互動。<p>如果你需要和瀏覽器互動，請在 <code>componentDidMount()</code> 或其他的生命週期方法內執行你的程式。將 <code>render()</code> 維持在 pure 的狀態有助於你對 component 的理解。<blockquote><p>注意：<p>若 <a href="#shouldcomponentupdate"><code>shouldComponentUpdate()</code></a> 回傳的值為 <code>false</code> 的話，<code>render()</code>將不會被呼叫。</blockquote><hr></section><section id="constructor-constructor"class="level3"><h3><code>constructor()</code> {#constructor}</h3><pre class="language-javascript"><code class="language-javascript"><span class="token function">constructor</span><span class="token punctuation">(</span>props<span class="token punctuation">)</span></code></pre><p><strong>如果你沒有初始化 state 也不綁定方法的話，你的 React component 就不需要 constructor。</strong><p>一個 React component 的 constructor 會在其被 mount 之前被呼叫。當你為一個 <code>React.Component</code> subclass 建立 constructor 時，你應該在其他任何宣告之前呼叫 <code>super(props)</code>。否則，<code>this.props</code> 在 constructor 中的值會出現 undefined 的 bug。<p>通常在 React 中 constructor 只會有兩種用途：<ul><li>透過指定一個 <code>this.state</code> 物件來初始化<a href="./state-and-lifecycle.html">內部 state</a>。<li>為 <a href="./handling-events.html">event handler</a> 方法綁定 instance。</ul><p>請<strong>不要在 <code>constructor()</code> 中呼叫 <code>setState()</code></strong>。如果你的 component 需要使用內部 state，請在 constructor 中<strong>將其最初的 state 指定為 <code>this.state</code></strong>：<pre class="language-js"><code class="language-js"><span class="token function">constructor</span><span class="token punctuation">(</span><span class="token parameter">props</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
   <span class="token keyword">super</span><span class="token punctuation">(</span>props<span class="token punctuation">)</span><span class="token punctuation">;</span>
   <span class="token comment">// 不要在這裡呼叫 this.setState()！</span>
   <span class="token keyword">this</span><span class="token punctuation">.</span><span class="token property-access">state</span> <span class="token operator">=</span> <span class="token punctuation">{</span> <span class="token literal-property property">counter</span><span class="token operator">:</span> <span class="token number">0</span> <span class="token punctuation">}</span><span class="token punctuation">;</span>
   <span class="token keyword">this</span><span class="token punctuation">.</span><span class="token property-access">handleClick</span> <span class="token operator">=</span> <span class="token keyword">this</span><span class="token punctuation">.</span><span class="token method function property-access">handleClick</span><span class="token punctuation">.</span><span class="token method function property-access">bind</span><span class="token punctuation">(</span><span class="token keyword">this</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
-<span class="token punctuation">}</span></code></pre>
-          <p>Constructor 是唯一一個你應該直接指定 <code>this.state</code> 的地方。在所有其他的方法中，你則需要使用 <code>this.setState()</code>。</p>
-          <p>請避免在 constructor 中產生任何 side effect 或 subscription。如果你需要它們的話，請使用 <code>componentDidMount()</code>。</p>
-          <blockquote>
-            <p>注意：</p>
-            <p><strong>請避免複製 prop 到 state 之中！這是一個很常見的錯誤：</strong></p>
-            <pre class="language-js"><code class="language-js"><span class="token function">constructor</span><span class="token punctuation">(</span><span class="token parameter">props</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+<span class="token punctuation">}</span></code></pre><p>Constructor 是唯一一個你應該直接指定 <code>this.state</code> 的地方。在所有其他的方法中，你則需要使用 <code>this.setState()</code>。<p>請避免在 constructor 中產生任何 side effect 或 subscription。如果你需要它們的話，請使用 <code>componentDidMount()</code>。<blockquote><p>注意：<p><strong>請避免複製 prop 到 state 之中！這是一個很常見的錯誤：</strong><pre class="language-js"><code class="language-js"><span class="token function">constructor</span><span class="token punctuation">(</span><span class="token parameter">props</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
  <span class="token keyword">super</span><span class="token punctuation">(</span>props<span class="token punctuation">)</span><span class="token punctuation">;</span>
  <span class="token comment">// 請不要這樣做！</span>
  <span class="token keyword">this</span><span class="token punctuation">.</span><span class="token property-access">state</span> <span class="token operator">=</span> <span class="token punctuation">{</span> <span class="token literal-property property">color</span><span class="token operator">:</span> props<span class="token punctuation">.</span><span class="token property-access">color</span> <span class="token punctuation">}</span><span class="token punctuation">;</span>
-<span class="token punctuation">}</span></code></pre>
-            <p>這樣做的問題是：一來這毫無必要（你可以直接用 <code>this.props.color</code>），二來這會產生 bug（任何改變對 <code>color</code> prop 所產生的更新都不會出現在 state 中）。</p>
-            <p><strong>請在只有在你刻意要忽略 prop 更新的情況下才使用這個模式。</strong> 在這種情況下，比較合理的做法是將 prop 重新命名為 <code>initialColor</code> 或 <code>defaultColor</code>。如此一來，你可以在必要的情況下透過<a href="/blog/2018/06/07/you-probably-dont-need-derived-state.html#recommendation-fully-uncontrolled-component-with-a-key">修改一個 component 的 <code>key</code></a> 來強迫它「重置」其初始的 state。</p>
-            <p>若想知道如何處理 state 依賴 prop 的情況，請參考我們 <a href="/blog/2018/06/07/you-probably-dont-need-derived-state.html">關於避免 derived state 的部落格文章</a>。</p>
-          </blockquote>
-          <hr>
-        </section>
-        <section id="componentdidmount-componentdidmount" class="level3">
-          <h3><code>componentDidMount()</code> {#componentdidmount}</h3>
-          <pre class="language-javascript"><code class="language-javascript"><span class="token function">componentDidMount</span><span class="token punctuation">(</span><span class="token punctuation">)</span></code></pre>
-          <p>在一個 component 被 mount（加入 DOM tree 中）後，<code>componentDidMount()</code> 會馬上被呼叫。需要 DOM node 的初始化應該寫在這個方法裡面。如果你需要從遠端終端點（remote endpoint）請求資料的話, 此處非常適合進行實例化網路請求（network request）。</p>
-          <p>這個方法適合設立任何 subscription。設立完 subscription 後，別忘了在 <code>componentWillUnmount()</code> 內取消 subscription。</p>
-          <p>你<strong>可以馬上在 <code>componentDidMount()</code> 內呼叫 <code>setState()</code>。</strong>這會觸發一次額外的 render，但這會在瀏覽器更新螢幕之前發生。在這個情況下，即使 <code>render()</code> 被呼叫兩次，這確保使用者不會看見這兩次 render 中過渡時期的 state。請謹慎使用這個模式，因為這經常會導致效能問題。在大多數情況下，你應該能夠在 <code>constructor()</code> 內指定初始 state 的值。不過，在某些情況下，像是在使用 modal 和 tooltip 的時候，你所 render 的 component 若是依賴某個 DOM node 的大小或位置時，這種模式有時候可能是有必要的。</p>
-          <hr>
-        </section>
-        <section id="componentdidupdate-componentdidupdate" class="level3">
-          <h3><code>componentDidUpdate()</code> {#componentdidupdate}</h3>
-          <pre class="language-javascript"><code class="language-javascript"><span class="token function">componentDidUpdate</span><span class="token punctuation">(</span>prevProps<span class="token punctuation">,</span> prevState<span class="token punctuation">,</span> snapshot<span class="token punctuation">)</span></code></pre>
-          <p><code>componentDidUpdate()</code> 會在更新後馬上被呼叫。這個方法並不會在初次 render 時被呼叫。</p>
-          <p>在 component 更新之後，可以在此處對 DOM 進行運作。此處也適合做網路請求，如果你有比較目前的 prop 和之前的 prop 的話（如果 prop 沒有改變的話，網路請求可能並非必要）。</p>
-          <pre class="language-js"><code class="language-js"><span class="token function">componentDidUpdate</span><span class="token punctuation">(</span><span class="token parameter">prevProps</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+<span class="token punctuation">}</span></code></pre><p>這樣做的問題是：一來這毫無必要（你可以直接用 <code>this.props.color</code>），二來這會產生 bug（任何改變對 <code>color</code> prop 所產生的更新都不會出現在 state 中）。<p><strong>請在只有在你刻意要忽略 prop 更新的情況下才使用這個模式。</strong> 在這種情況下，比較合理的做法是將 prop 重新命名為 <code>initialColor</code> 或 <code>defaultColor</code>。如此一來，你可以在必要的情況下透過<a href="/blog/2018/06/07/you-probably-dont-need-derived-state.html#recommendation-fully-uncontrolled-component-with-a-key">修改一個 component 的 <code>key</code></a> 來強迫它「重置」其初始的 state。<p>若想知道如何處理 state 依賴 prop 的情況，請參考我們 <a href="/blog/2018/06/07/you-probably-dont-need-derived-state.html">關於避免 derived state 的部落格文章</a>。</blockquote><hr></section><section id="componentdidmount-componentdidmount"class="level3"><h3><code>componentDidMount()</code> {#componentdidmount}</h3><pre class="language-javascript"><code class="language-javascript"><span class="token function">componentDidMount</span><span class="token punctuation">(</span><span class="token punctuation">)</span></code></pre><p>在一個 component 被 mount（加入 DOM tree 中）後，<code>componentDidMount()</code> 會馬上被呼叫。需要 DOM node 的初始化應該寫在這個方法裡面。如果你需要從遠端終端點（remote endpoint）請求資料的話, 此處非常適合進行實例化網路請求（network request）。<p>這個方法適合設立任何 subscription。設立完 subscription 後，別忘了在 <code>componentWillUnmount()</code> 內取消 subscription。<p>你<strong>可以馬上在 <code>componentDidMount()</code> 內呼叫 <code>setState()</code>。</strong>這會觸發一次額外的 render，但這會在瀏覽器更新螢幕之前發生。在這個情況下，即使 <code>render()</code> 被呼叫兩次，這確保使用者不會看見這兩次 render 中過渡時期的 state。請謹慎使用這個模式，因為這經常會導致效能問題。在大多數情況下，你應該能夠在 <code>constructor()</code> 內指定初始 state 的值。不過，在某些情況下，像是在使用 modal 和 tooltip 的時候，你所 render 的 component 若是依賴某個 DOM node 的大小或位置時，這種模式有時候可能是有必要的。<hr></section><section id="componentdidupdate-componentdidupdate"class="level3"><h3><code>componentDidUpdate()</code> {#componentdidupdate}</h3><pre class="language-javascript"><code class="language-javascript"><span class="token function">componentDidUpdate</span><span class="token punctuation">(</span>prevProps<span class="token punctuation">,</span> prevState<span class="token punctuation">,</span> snapshot<span class="token punctuation">)</span></code></pre><p><code>componentDidUpdate()</code> 會在更新後馬上被呼叫。這個方法並不會在初次 render 時被呼叫。<p>在 component 更新之後，可以在此處對 DOM 進行運作。此處也適合做網路請求，如果你有比較目前的 prop 和之前的 prop 的話（如果 prop 沒有改變的話，網路請求可能並非必要）。<pre class="language-js"><code class="language-js"><span class="token function">componentDidUpdate</span><span class="token punctuation">(</span><span class="token parameter">prevProps</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
   <span class="token comment">// 常見用法（別忘了比較 prop）：</span>
   <span class="token keyword control-flow">if</span> <span class="token punctuation">(</span><span class="token keyword">this</span><span class="token punctuation">.</span><span class="token property-access">props</span><span class="token punctuation">.</span><span class="token property-access">userID</span> <span class="token operator">!==</span> prevProps<span class="token punctuation">.</span><span class="token property-access">userID</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
     <span class="token keyword">this</span><span class="token punctuation">.</span><span class="token method function property-access">fetchData</span><span class="token punctuation">(</span><span class="token keyword">this</span><span class="token punctuation">.</span><span class="token property-access">props</span><span class="token punctuation">.</span><span class="token property-access">userID</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
   <span class="token punctuation">}</span>
-<span class="token punctuation">}</span></code></pre>
-          <p>你<strong>可以馬上在 <code>componentDidUpdate()</code> 內呼叫 <code>setState()</code></strong>，但注意這必須要被包圍在一個類似上述範例的條件語句內，否則你會進入一個無限迴圈。這也會導致額外的重新 render。雖然使用者看不見，但這可能會影響 component 的效能。如果你想試著將某些 state 複製到由上往下傳的 prop 的話，請考慮直接使用 prop。請參考<a href="/blog/2018/06/07/you-probably-dont-need-derived-state.html">為何複製 prop 到 state 中會產生 bug</a>。</p>
-          <p>如果你的 component 裡面有 <code>getSnapshotBeforeUpdate()</code> 這個很少見的生命週期方法，其回傳的值將會被當作第三個「snapshot」參數傳給 <code>componentDidUpdate()</code>。否則這個參數會是 undefined。</p>
-          <blockquote>
-            <p>注意：</p>
-            <p>如果 <a href="#shouldcomponentupdate"><code>shouldComponentUpdate()</code></a> 回傳的值為 false 的話，<code>componentDidUpdate()</code> 將不會被呼叫。</p>
-          </blockquote>
-          <hr>
-        </section>
-        <section id="componentwillunmount-componentwillunmount" class="level3">
-          <h3><code>componentWillUnmount()</code> {#componentwillunmount}</h3>
-          <pre class="language-javascript"><code class="language-javascript"><span class="token function">componentWillUnmount</span><span class="token punctuation">(</span><span class="token punctuation">)</span></code></pre>
-          <p><code>componentWillUnmount()</code> 會在ㄧ個 component 被 unmount 和 destroy 後馬上被呼叫。你可以在這個方法內進行任何清理，像是取消計時器和網路請求或是移除任何在 <code>componentDidMount()</code> 內建立的 subscription。</p>
-          <p>你<strong>不應該在 <code>componentWillUnmount()</code> 內呼叫 <code>setState()</code></strong>，因為這個 component 永遠不會再重新 render。當一個 component instance 被 unmount 後，它就永遠不會再被 mount。</p>
-          <hr>
-        </section>
-        <section id="rarely-used-lifecycle-methods" class="level3">
-          <h3>不常使用的生命週期方法</h3>
-          <p>這個章節內介紹的方法是在那些不常見的情況中使用的。它們有時很方便，但是你大多數的 component 大概不會需要使用它們。<strong>你可以在這個<a href="https://projects.wojtekmaj.pl/react-lifecycle-methods-diagram/">生命週期表</a>上方點選「顯示不常使用的生命週期方法」，並看到以下所介紹的方法。</strong></p>
-        </section>
-        <section id="shouldcomponentupdate-shouldcomponentupdate" class="level3">
-          <h3><code>shouldComponentUpdate()</code> {#shouldcomponentupdate}</h3>
-          <pre class="language-javascript"><code class="language-javascript"><span class="token function">shouldComponentUpdate</span><span class="token punctuation">(</span>nextProps<span class="token punctuation">,</span> nextState<span class="token punctuation">)</span></code></pre>
-          <p>你可以使用 <code>shouldComponentUpdate()</code> 來讓 React 知道一個 component 的 output 並不會被目前在 state 或 prop 內的改變所影響。React 的預設行為是每當 state 有所改變時就重新 render。在絕大多數的情況下，你應該依賴這個預設行為。</p>
-          <p><code>shouldComponentUpdate()</code> 會在新的 prop 或 state 被接收之後並在該 component 被 render 之前被呼叫。其預設值是 <code>true</code>。這個方法並不會 component 初次 render 時或使用 <code>forceUpdate()</code> 時被呼叫。</p>
-          <p>這個方法的存在著要是為了 <strong><a href="./optimizing-performance.html">效能最佳化</a></strong>。請不要依賴這個方法來「避免」 render，因為這很有可能會導致 bug。<strong>請考慮使用 React 內建的 <a href="./react-api.html#reactpurecomponent"><code>PureComponent</code></a></strong> 並避免手寫 <code>shouldComponentUpdate()</code>。<code>PureComponent</code> 會為 prop 和 state 做一個淺層比較（shallow comparison）並減低你錯過必要更新的機會。</p>
-          <p>如果你很確定你想要手寫這個方法的話，你可以將 <code>this.props</code> 和 <code>nextProps</code> 以及 <code>this.state</code> 和 <code>nextState</code> 做比較並回傳 <code>false</code> 以告知 React 這次的更新可以被略過。請注意，回傳 <code>false</code> 並不會避免 child component 在<em>它們的</em> state 改變時重新 render。</p>
-          <p>我們並不建議你做深度比較（deep equality check）或在 <code>shouldComponentUpdate()</code> 內使用 <code>JSON.stringify()</code>。它們效率不佳且會造成效能問題。</p>
-          <p>目前，如果 <code>shouldComponentUpdate()</code> 回傳 <code>false</code> 的話，<a href="#unsafe_componentwillupdate"><code>UNSAFE_componentWillUpdate()</code></a>、<a href="#render"><code>render()</code></a> 和 <a href="#componentdidupdate"><code>componentDidUpdate()</code></a> 都不會被呼叫。在未來，React 可能會把 <code>shouldComponentUpdate()</code> 當作一個提示而非一個嚴格指令，而回傳 <code>false</code> 可能還是會造成 component 重新 render。</p>
-          <hr>
-        </section>
-        <section id="static-getderivedstatefromprops-static-getderivedstatefromprops" class="level3">
-          <h3><code>static getDerivedStateFromProps()</code> {#static-getderivedstatefromprops}</h3>
-          <pre class="language-js"><code class="language-js"><span class="token keyword">static</span> <span class="token function">getDerivedStateFromProps</span><span class="token punctuation">(</span>props<span class="token punctuation">,</span> state<span class="token punctuation">)</span></code></pre>
-          <p><code>getDerivedStateFromProps</code> 會在一個 component 被 render 前被呼叫，不管是在首次 mount 時或後續的更新時。它應該回傳一個 object 以更新 state，或回傳 <code>null</code> 以表示不需要更新任何 state。</p>
-          <p>這個方法是為了某些<a href="/blog/2018/06/07/you-probably-dont-need-derived-state.html#when-to-use-derived-state">很少見的例子</a>而存在的，像是有時 state 會依賴 prop 在一段時間過後所產生的改變。例如，也許建立一個 <code>&#x3C;Transition></code> component 是很方便的，我們可以用它來比較其之前與之後的 children，並決定我們要 animate in and out 哪一個 child。</p>
-          <p>繼承 state 會導致冗長的程式碼並使你的 component 很難理解。<a href="/blog/2018/06/07/you-probably-dont-need-derived-state.html">請確認你知道這些較為簡單的替代方案</a>。</p>
-          <ul>
-            <li>
-              <p>如果你需要在某個 prop 改變時產生相對應的<strong>side effect</strong>（例如，資料提取或使用動畫），請使用 <a href="#componentdidupdate"><code>componentDidUpdate</code></a>。</p>
-            </li>
-            <li>
-              <p>如果你想要 <strong>在某個 prop 改變時重新計算某些資料</strong>，<a href="/blog/2018/06/07/you-probably-dont-need-derived-state.html#what-about-memoization">請使用 memoization helper</a>。</p>
-            </li>
-            <li>
-              <p>如果你想要 <strong>在某個 prop 改變時「重置」某個 state</strong>，請考慮建立一個<a href="/blog/2018/06/07/you-probably-dont-need-derived-state.html#recommendation-fully-controlled-component">完全被控制</a> 的 component 或<a href="/blog/2018/06/07/you-probably-dont-need-derived-state.html#recommendation-fully-uncontrolled-component-with-a-key">帶有 <code>key</code> 的完全不可被控制</a> component。</p>
-            </li>
-          </ul>
-          <p>這個方法無法觸及一個 component 的 instance。如果你想要這麼做的話，你可以把一個 component 的 prop 和 state 提取出來變成 pure function，並寫在該 class definition 之外，並透過這樣的方式在 <code>getDerivedStateFromProps()</code> 和其他 class 方法之間重複使用某些程式碼。</p>
-          <p>請注意這個方法在<em>每一次</em> render 時都會被觸發，不論原因為何。這和 <code>UNSAFE_componentWillReceiveProps</code> 有所不同，這個方法只有在 parent 導致重新 render 時被觸發，而非在本地的 <code>setState</code> 導致重新 render 時被觸發。</p>
-          <hr>
-        </section>
-        <section id="getsnapshotbeforeupdate-getsnapshotbeforeupdate" class="level3">
-          <h3><code>getSnapshotBeforeUpdate()</code> {#getsnapshotbeforeupdate}</h3>
-          <pre class="language-javascript"><code class="language-javascript"><span class="token function">getSnapshotBeforeUpdate</span><span class="token punctuation">(</span>prevProps<span class="token punctuation">,</span> prevState<span class="token punctuation">)</span></code></pre>
-          <p><code>getSnapshotBeforeUpdate()</code> 在提交最新 render 的 output 之前立即被調用。它讓你在 DOM 改變之前先從其中抓取一些資訊（例如滾動軸的位置）。這個生命週期方法回傳的任何值會被當作一個參數傳遞給 <code>componentDidUpdate()</code>。</p>
-          <p>這個方法並不常見，但它可能會在像是對話串這類需要以某種特殊方始處理滾動軸位置的 UI 中出現。</p>
-          <p>一個 snapshot 的值（或 <code>null</code>）應該被回傳。</p>
-          <p>例如：</p>
-          <p><code>embed:react-component-reference/get-snapshot-before-update.js</code></p>
-          <p>在上面這個例子中，讀取 <code>getSnapshotBeforeUpdate</code> 內的 <code>scrollHeight</code> property 是很重要的，因為「render」階段的生命週期方法（如 <code>render</code>）和「commit」階段的生命週期方法（像是 <code>getSnapshotBeforeUpdate</code> 和 <code>componentDidUpdate</code>）兩者之間可能會有一些延遲。</p>
-          <hr>
-        </section>
-        <section id="error-boundaries" class="level3">
-          <h3>錯誤邊界</h3>
-          <p><a href="./error-boundaries.html">錯誤邊界</a> 是用於截取 child component tree 中 JavaScript 錯誤、記錄錯誤、並顯示一個 fallback UI 而非故障的 component tree 的一群 React component。錯誤邊界會在 render 期間、生命週期方法、以及其下整個 tree 群組所有的 constructor 內截取錯誤。</p>
-          <p>一個 class component 會變成錯誤邊界，如果其定義了 <code>static getDerivedStateFromError()</code> 和 <code>componentDidCatch()</code> 兩種或其中之一的生命週期方法。 從這些生命週期方法中更新 state 讓你截取在其下的 tree 內未被處理的 JavaScript 錯誤，並顯示一個 fallback UI。</p>
-          <p>請只在從意料之外的異常中使用錯誤邊界。<strong>請不要用它來控制流程。</strong></p>
-          <p>想了解更多，請參考 <a href="/blog/2017/07/26/error-handling-in-react-16.html"><em>React 16 中的錯誤邊界</em></a>一文。</p>
-          <blockquote>
-            <p>注意：</p>
-            <p>錯誤邊界只會截取在 tree 中、自身<strong>以下</strong>的 component 中的錯誤。錯誤邊界無法截取自身內的錯誤。</p>
-          </blockquote>
-        </section>
-        <section id="static-getderivedstatefromerror-static-getderivedstatefromerror" class="level3">
-          <h3><code>static getDerivedStateFromError()</code> {#static-getderivedstatefromerror}</h3>
-          <pre class="language-javascript"><code class="language-javascript"><span class="token keyword">static</span> <span class="token function">getDerivedStateFromError</span><span class="token punctuation">(</span>error<span class="token punctuation">)</span></code></pre>
-          <p>
-            這個生命週期方法會在某個錯誤被一個 descendant component 拋出後被呼叫。
-            它會接收該錯誤為其參數並回傳一個值以更新 state。
-          </p>
-          <pre class="language-js{7-10,13-16}"><code class="language-js{7-10,13-16}">class ErrorBoundary extends React.Component {
+<span class="token punctuation">}</span></code></pre><p>你<strong>可以馬上在 <code>componentDidUpdate()</code> 內呼叫 <code>setState()</code></strong>，但注意這必須要被包圍在一個類似上述範例的條件語句內，否則你會進入一個無限迴圈。這也會導致額外的重新 render。雖然使用者看不見，但這可能會影響 component 的效能。如果你想試著將某些 state 複製到由上往下傳的 prop 的話，請考慮直接使用 prop。請參考<a href="/blog/2018/06/07/you-probably-dont-need-derived-state.html">為何複製 prop 到 state 中會產生 bug</a>。<p>如果你的 component 裡面有 <code>getSnapshotBeforeUpdate()</code> 這個很少見的生命週期方法，其回傳的值將會被當作第三個「snapshot」參數傳給 <code>componentDidUpdate()</code>。否則這個參數會是 undefined。<blockquote><p>注意：<p>如果 <a href="#shouldcomponentupdate"><code>shouldComponentUpdate()</code></a> 回傳的值為 false 的話，<code>componentDidUpdate()</code> 將不會被呼叫。</blockquote><hr></section><section id="componentwillunmount-componentwillunmount"class="level3"><h3><code>componentWillUnmount()</code> {#componentwillunmount}</h3><pre class="language-javascript"><code class="language-javascript"><span class="token function">componentWillUnmount</span><span class="token punctuation">(</span><span class="token punctuation">)</span></code></pre><p><code>componentWillUnmount()</code> 會在ㄧ個 component 被 unmount 和 destroy 後馬上被呼叫。你可以在這個方法內進行任何清理，像是取消計時器和網路請求或是移除任何在 <code>componentDidMount()</code> 內建立的 subscription。<p>你<strong>不應該在 <code>componentWillUnmount()</code> 內呼叫 <code>setState()</code></strong>，因為這個 component 永遠不會再重新 render。當一個 component instance 被 unmount 後，它就永遠不會再被 mount。<hr></section><section id="rarely-used-lifecycle-methods"class="level3"><h3>不常使用的生命週期方法</h3><p>這個章節內介紹的方法是在那些不常見的情況中使用的。它們有時很方便，但是你大多數的 component 大概不會需要使用它們。<strong>你可以在這個<a href="https://projects.wojtekmaj.pl/react-lifecycle-methods-diagram/">生命週期表</a>上方點選「顯示不常使用的生命週期方法」，並看到以下所介紹的方法。</strong></section><section id="shouldcomponentupdate-shouldcomponentupdate"class="level3"><h3><code>shouldComponentUpdate()</code> {#shouldcomponentupdate}</h3><pre class="language-javascript"><code class="language-javascript"><span class="token function">shouldComponentUpdate</span><span class="token punctuation">(</span>nextProps<span class="token punctuation">,</span> nextState<span class="token punctuation">)</span></code></pre><p>你可以使用 <code>shouldComponentUpdate()</code> 來讓 React 知道一個 component 的 output 並不會被目前在 state 或 prop 內的改變所影響。React 的預設行為是每當 state 有所改變時就重新 render。在絕大多數的情況下，你應該依賴這個預設行為。<p><code>shouldComponentUpdate()</code> 會在新的 prop 或 state 被接收之後並在該 component 被 render 之前被呼叫。其預設值是 <code>true</code>。這個方法並不會 component 初次 render 時或使用 <code>forceUpdate()</code> 時被呼叫。<p>這個方法的存在著要是為了 <strong><a href="./optimizing-performance.html">效能最佳化</a></strong>。請不要依賴這個方法來「避免」 render，因為這很有可能會導致 bug。<strong>請考慮使用 React 內建的 <a href="./react-api.html#reactpurecomponent"><code>PureComponent</code></a></strong> 並避免手寫 <code>shouldComponentUpdate()</code>。<code>PureComponent</code> 會為 prop 和 state 做一個淺層比較（shallow comparison）並減低你錯過必要更新的機會。<p>如果你很確定你想要手寫這個方法的話，你可以將 <code>this.props</code> 和 <code>nextProps</code> 以及 <code>this.state</code> 和 <code>nextState</code> 做比較並回傳 <code>false</code> 以告知 React 這次的更新可以被略過。請注意，回傳 <code>false</code> 並不會避免 child component 在<em>它們的</em> state 改變時重新 render。<p>我們並不建議你做深度比較（deep equality check）或在 <code>shouldComponentUpdate()</code> 內使用 <code>JSON.stringify()</code>。它們效率不佳且會造成效能問題。<p>目前，如果 <code>shouldComponentUpdate()</code> 回傳 <code>false</code> 的話，<a href="#unsafe_componentwillupdate"><code>UNSAFE_componentWillUpdate()</code></a>、<a href="#render"><code>render()</code></a> 和 <a href="#componentdidupdate"><code>componentDidUpdate()</code></a> 都不會被呼叫。在未來，React 可能會把 <code>shouldComponentUpdate()</code> 當作一個提示而非一個嚴格指令，而回傳 <code>false</code> 可能還是會造成 component 重新 render。<hr></section><section id="static-getderivedstatefromprops-static-getderivedstatefromprops"class="level3"><h3><code>static getDerivedStateFromProps()</code> {#static-getderivedstatefromprops}</h3><pre class="language-js"><code class="language-js"><span class="token keyword">static</span> <span class="token function">getDerivedStateFromProps</span><span class="token punctuation">(</span>props<span class="token punctuation">,</span> state<span class="token punctuation">)</span></code></pre><p><code>getDerivedStateFromProps</code> 會在一個 component 被 render 前被呼叫，不管是在首次 mount 時或後續的更新時。它應該回傳一個 object 以更新 state，或回傳 <code>null</code> 以表示不需要更新任何 state。<p>這個方法是為了某些<a href="/blog/2018/06/07/you-probably-dont-need-derived-state.html#when-to-use-derived-state">很少見的例子</a>而存在的，像是有時 state 會依賴 prop 在一段時間過後所產生的改變。例如，也許建立一個 <code>&#x3C;Transition></code> component 是很方便的，我們可以用它來比較其之前與之後的 children，並決定我們要 animate in and out 哪一個 child。<p>繼承 state 會導致冗長的程式碼並使你的 component 很難理解。<a href="/blog/2018/06/07/you-probably-dont-need-derived-state.html">請確認你知道這些較為簡單的替代方案</a>。<ul><li><p>如果你需要在某個 prop 改變時產生相對應的<strong>side effect</strong>（例如，資料提取或使用動畫），請使用 <a href="#componentdidupdate"><code>componentDidUpdate</code></a>。<li><p>如果你想要 <strong>在某個 prop 改變時重新計算某些資料</strong>，<a href="/blog/2018/06/07/you-probably-dont-need-derived-state.html#what-about-memoization">請使用 memoization helper</a>。<li><p>如果你想要 <strong>在某個 prop 改變時「重置」某個 state</strong>，請考慮建立一個<a href="/blog/2018/06/07/you-probably-dont-need-derived-state.html#recommendation-fully-controlled-component">完全被控制</a> 的 component 或<a href="/blog/2018/06/07/you-probably-dont-need-derived-state.html#recommendation-fully-uncontrolled-component-with-a-key">帶有 <code>key</code> 的完全不可被控制</a> component。</ul><p>這個方法無法觸及一個 component 的 instance。如果你想要這麼做的話，你可以把一個 component 的 prop 和 state 提取出來變成 pure function，並寫在該 class definition 之外，並透過這樣的方式在 <code>getDerivedStateFromProps()</code> 和其他 class 方法之間重複使用某些程式碼。<p>請注意這個方法在<em>每一次</em> render 時都會被觸發，不論原因為何。這和 <code>UNSAFE_componentWillReceiveProps</code> 有所不同，這個方法只有在 parent 導致重新 render 時被觸發，而非在本地的 <code>setState</code> 導致重新 render 時被觸發。<hr></section><section id="getsnapshotbeforeupdate-getsnapshotbeforeupdate"class="level3"><h3><code>getSnapshotBeforeUpdate()</code> {#getsnapshotbeforeupdate}</h3><pre class="language-javascript"><code class="language-javascript"><span class="token function">getSnapshotBeforeUpdate</span><span class="token punctuation">(</span>prevProps<span class="token punctuation">,</span> prevState<span class="token punctuation">)</span></code></pre><p><code>getSnapshotBeforeUpdate()</code> 在提交最新 render 的 output 之前立即被調用。它讓你在 DOM 改變之前先從其中抓取一些資訊（例如滾動軸的位置）。這個生命週期方法回傳的任何值會被當作一個參數傳遞給 <code>componentDidUpdate()</code>。<p>這個方法並不常見，但它可能會在像是對話串這類需要以某種特殊方始處理滾動軸位置的 UI 中出現。<p>一個 snapshot 的值（或 <code>null</code>）應該被回傳。<p>例如：<p><code>embed:react-component-reference/get-snapshot-before-update.js</code><p>在上面這個例子中，讀取 <code>getSnapshotBeforeUpdate</code> 內的 <code>scrollHeight</code> property 是很重要的，因為「render」階段的生命週期方法（如 <code>render</code>）和「commit」階段的生命週期方法（像是 <code>getSnapshotBeforeUpdate</code> 和 <code>componentDidUpdate</code>）兩者之間可能會有一些延遲。<hr></section><section id="error-boundaries"class="level3"><h3>錯誤邊界</h3><p><a href="./error-boundaries.html">錯誤邊界</a> 是用於截取 child component tree 中 JavaScript 錯誤、記錄錯誤、並顯示一個 fallback UI 而非故障的 component tree 的一群 React component。錯誤邊界會在 render 期間、生命週期方法、以及其下整個 tree 群組所有的 constructor 內截取錯誤。<p>一個 class component 會變成錯誤邊界，如果其定義了 <code>static getDerivedStateFromError()</code> 和 <code>componentDidCatch()</code> 兩種或其中之一的生命週期方法。 從這些生命週期方法中更新 state 讓你截取在其下的 tree 內未被處理的 JavaScript 錯誤，並顯示一個 fallback UI。<p>請只在從意料之外的異常中使用錯誤邊界。<strong>請不要用它來控制流程。</strong><p>想了解更多，請參考 <a href="/blog/2017/07/26/error-handling-in-react-16.html"><em>React 16 中的錯誤邊界</em></a>一文。<blockquote><p>注意：<p>錯誤邊界只會截取在 tree 中、自身<strong>以下</strong>的 component 中的錯誤。錯誤邊界無法截取自身內的錯誤。</blockquote></section><section id="static-getderivedstatefromerror-static-getderivedstatefromerror"class="level3"><h3><code>static getDerivedStateFromError()</code> {#static-getderivedstatefromerror}</h3><pre class="language-javascript"><code class="language-javascript"><span class="token keyword">static</span> <span class="token function">getDerivedStateFromError</span><span class="token punctuation">(</span>error<span class="token punctuation">)</span></code></pre><p>這個生命週期方法會在某個錯誤被一個 descendant component 拋出後被呼叫。 它會接收該錯誤為其參數並回傳一個值以更新 state。<pre class="language-js{7-10,13-16}"><code class="language-js{7-10,13-16}">class ErrorBoundary extends React.Component {
   constructor(props) {
     super(props);
     this.state = { hasError: false };
@@ -280,32 +35,7 @@
 
     return this.props.children;
   }
-}</code></pre>
-          <blockquote>
-            <p>注意：</p>
-            <p>
-              <code>getDerivedStateFromError()</code> 會在「render」期間被呼叫，所以 side effect 是不被允許的。
-              如果你想要使用 side effect 的話，請使用 <code>componentDidCatch()</code>。
-            </p>
-          </blockquote>
-          <hr>
-        </section>
-        <section id="componentdidcatch-componentdidcatch" class="level3">
-          <h3><code>componentDidCatch()</code> {#componentdidcatch}</h3>
-          <pre class="language-javascript"><code class="language-javascript"><span class="token function">componentDidCatch</span><span class="token punctuation">(</span>error<span class="token punctuation">,</span> info<span class="token punctuation">)</span></code></pre>
-          <p>
-            這個生命週期方法會在某個錯誤被一個 descendant component 拋出後被呼叫。
-            它接受兩個參數：
-          </p>
-          <ol>
-            <li><code>error</code> - 被拋出的錯誤。</li>
-            <li><code>info</code> - 一個有 <code>componentStack</code> key 的 object，這個 key 包含有<a href="./error-boundaries.html#component-stack-traces">那一個 component 拋出錯誤的資訊</a>。</li>
-          </ol>
-          <p>
-            <code>componentDidCatch()</code> 會在「commit」期間被呼叫，所以 side effect 是被允許的。
-            這個方法應該被用來做類似記錄錯誤這類的事情：
-          </p>
-          <pre class="language-js{12-19}"><code class="language-js{12-19}">class ErrorBoundary extends React.Component {
+}</code></pre><blockquote><p>注意：<p><code>getDerivedStateFromError()</code> 會在「render」期間被呼叫，所以 side effect 是不被允許的。 如果你想要使用 side effect 的話，請使用 <code>componentDidCatch()</code>。</blockquote><hr></section><section id="componentdidcatch-componentdidcatch"class="level3"><h3><code>componentDidCatch()</code> {#componentdidcatch}</h3><pre class="language-javascript"><code class="language-javascript"><span class="token function">componentDidCatch</span><span class="token punctuation">(</span>error<span class="token punctuation">,</span> info<span class="token punctuation">)</span></code></pre><p>這個生命週期方法會在某個錯誤被一個 descendant component 拋出後被呼叫。 它接受兩個參數：<ol><li><code>error</code> - 被拋出的錯誤。<li><code>info</code> - 一個有 <code>componentStack</code> key 的 object，這個 key 包含有<a href="./error-boundaries.html#component-stack-traces">那一個 component 拋出錯誤的資訊</a>。</ol><p><code>componentDidCatch()</code> 會在「commit」期間被呼叫，所以 side effect 是被允許的。 這個方法應該被用來做類似記錄錯誤這類的事情：<pre class="language-js{12-19}"><code class="language-js{12-19}">class ErrorBoundary extends React.Component {
   constructor(props) {
     super(props);
     this.state = { hasError: false };
@@ -333,173 +63,23 @@
 
     return this.props.children;
   }
-}</code></pre>
-          <p>React 在 production 和 development 在處理 <code>componentDidCatch()</code> 錯誤的方式不同。</p>
-          <p>在 development 時，錯誤將會冒泡到 <code>window</code>，意思是任何的 <code>window.onerror</code> 或 <code>window.addEventListener('error', callback)</code> 將攔截透過 <code>componentDidCatch</code> 所捕捉到的錯誤。</p>
-          <p>反之，在 production 時不會冒泡，意思是任何 ancestor 錯誤處理將只會接收未由 <code>componentDidCatch()</code> 明確捕捉的錯誤。</p>
-          <blockquote>
-            <p>注意：</p>
-          </blockquote>
-          <blockquote>
-            <p>
-              在有錯誤的情況下，你可以透過呼叫 <code>setState</code> 來 render 一個含有 <code>componentDidCatch()</code> 的 fallback UI，但這個方法會在未來的版本中會被棄用。
-              請使用 <code>static getDerivedStateFromError()</code> 來處理 fallback render。
-            </p>
-          </blockquote>
-          <hr>
-        </section>
-        <section id="legacy-lifecycle-methods" class="level3">
-          <h3>過時的生命週期方法</h3>
-          <p>以下介紹的幾個生命週期方法是「過時」的。它們仍然能運作，但我們並不建議你在新的程式碼內使用這些方法。你可以<a href="/blog/2018/03/27/update-on-async-rendering.html">在這篇文章中</a>了解如何從過時的方法 migrate 到我們建議的方法。</p>
-        </section>
-        <section id="unsafe_componentwillmount-unsafe_componentwillmount" class="level3">
-          <h3><code>UNSAFE_componentWillMount()</code> {#unsafe_componentwillmount}</h3>
-          <pre class="language-javascript"><code class="language-javascript"><span class="token function"><span class="token maybe-class-name">UNSAFE_componentWillMount</span></span><span class="token punctuation">(</span><span class="token punctuation">)</span></code></pre>
-          <blockquote>
-            <p>注意：</p>
-            <p>這個生命週期方法先前的命名是 <code>componentWillMount</code>。這個命名直到第 17 版仍然能繼續運作。請使用<a href="https://github.com/reactjs/react-codemod#rename-unsafe-lifecycles"><code>重新命名不安全的生命週期方法</code> codemod</a> 來自動更新你的 component。</p>
-          </blockquote>
-          <p><code>UNSAFE_componentWillMount()</code> 會在 mounting 發生前被呼叫。它會在 <code>render()</code> 前被呼叫，因此在這個方法內同步呼叫 <code>setState()</code> 並不會觸發額外的 render。不過，一般情況來說，我們建議你使用 <code>constructor()</code> 來初始化 state。</p>
-          <p>請避免在這個方法中帶入任何的 side effect 或 subscription。如果你需要那樣做的話，請使用 <code>componentDidMount()</code>。</p>
-          <p>這是唯一一個在伺服器端 render 時被呼叫的生命週期方法。</p>
-          <hr>
-        </section>
-        <section id="unsafe_componentwillreceiveprops-unsafe_componentwillreceiveprops" class="level3">
-          <h3><code>UNSAFE_componentWillReceiveProps()</code> {#unsafe_componentwillreceiveprops}</h3>
-          <pre class="language-javascript"><code class="language-javascript"><span class="token function"><span class="token maybe-class-name">UNSAFE_componentWillReceiveProps</span></span><span class="token punctuation">(</span>nextProps<span class="token punctuation">)</span></code></pre>
-          <blockquote>
-            <p>注意：</p>
-            <p>這個生命週期方法先前的命名是 <code>componentWillReceiveProps</code>。這個命名直到第 17 版仍然能繼續運作。請使用<a href="https://github.com/reactjs/react-codemod#rename-unsafe-lifecycles"><code>重新命名不安全的生命週期方法</code> codemod</a> 來自動更新你的 component。</p>
-          </blockquote>
-          <blockquote>
-            <p>注意：</p>
-            <p>這個生命週期方法常常會導致 bug 和程式碼的不一致。</p>
-            <ul>
-              <li>如果你需要在某個 prop 改變時 <strong>執行一個相對應的 side effect</strong>（例如資料提取或使用動畫），請使用<a href="#componentdidupdate"><code>componentDidUpdate</code></a> 這個生命週期方法。</li>
-              <li>如果你想要 <strong>只在某個 prop 改變時重新計算某些資料</strong>，<a href="/blog/2018/06/07/you-probably-dont-need-derived-state.html#what-about-memoization">請使用 memoization helper</a>。</li>
-              <li>如果你想要 <strong>在某個 prop 改變時「重置」某個 state</strong>，請考慮建立一個<a href="/blog/2018/06/07/you-probably-dont-need-derived-state.html#recommendation-fully-controlled-component">完全被控制</a> 的 component 或<a href="/blog/2018/06/07/you-probably-dont-need-derived-state.html#recommendation-fully-uncontrolled-component-with-a-key">帶有 <code>key</code> 的完全被控制</a> component。</li>
-            </ul>
-            <p>針對以上這些使用情境，請<a href="/blog/2018/06/07/you-probably-dont-need-derived-state.html">遵照這篇文章內推薦的方法來處理繼承的 state</a>。</p>
-          </blockquote>
-          <p><code>UNSAFE_componentWillReceiveProps()</code> 會在一個被 mount 的 component 接收新的 prop 前被呼叫。如果你需要在某個 prop 改變時更新 state 的話（例如，重置 state），你可以在這個生命週期方法裡面比較 <code>this.props</code> 和<code>nextProps</code>，並使用 <code>this.setState()</code> 進行 state 的轉移。</p>
-          <p>請注意如果一個 parent component 導致你的 component 重新 render 的話，即使 prop 沒有改變，這個方法仍然會被呼叫。如果你不想要有這些改變的話，請確認你有比較目前和之後的 prop 的值。</p>
-          <p>React 並不會在初次 <a href="#mounting">mounting</a> 時使用初始化的 props 來呼叫 <code>UNSAFE_componentWillReceiveProps()</code>。它只會在 component 某些 prop 可能會更新時呼叫這個方法。一般來說，呼叫 <code>this.setState()</code> 並不會觸發 <code>UNSAFE_componentWillReceiveProps()</code>。</p>
-          <hr>
-        </section>
-        <section id="unsafe_componentwillupdate-unsafe_componentwillupdate" class="level3">
-          <h3><code>UNSAFE_componentWillUpdate()</code> {#unsafe_componentwillupdate}</h3>
-          <pre class="language-javascript"><code class="language-javascript"><span class="token function"><span class="token maybe-class-name">UNSAFE_componentWillUpdate</span></span><span class="token punctuation">(</span>nextProps<span class="token punctuation">,</span> nextState<span class="token punctuation">)</span></code></pre>
-          <blockquote>
-            <p>注意：</p>
-            <p>這個生命週期方法先前的命名是 <code>componentWillUpdate</code>。這個命名直到第 17 版仍然能繼續運作。請使用<a href="https://github.com/reactjs/react-codemod#rename-unsafe-lifecycles"><code>重新命名不安全的生命週期方法</code> codemod</a> 來自動更新你的 component。</p>
-          </blockquote>
-          <p><code>UNSAFE_componentWillUpdate()</code> 會在 render 發生之前、當新的 prop 或 state 正在被接收時被呼叫。請將這個方法作為更新發生之前做準備的一個機會。這個方法並不會在初次 render 時被呼叫。</p>
-          <p>請注意你不能在這裡呼叫 <code>this.setState()</code>，你也不應該在這裡進行其他任何在 <code>UNSAFE_componentWillUpdate()</code> 回傳之前會觸發 React component 更新的行為（例如 dispatch 一個 Redux action）。</p>
-          <p>通常，這個方法可以被 <code>componentDidUpdate()</code> 取代。如果你在這個方法內從 DOM 中讀取資料（例如儲存滾動軸的位置），你可以將那部分的邏輯移到 <code>getSnapshotBeforeUpdate()</code> 裡面。</p>
-          <blockquote>
-            <p>注意：</p>
-            <p>如果 <a href="#shouldcomponentupdate"><code>shouldComponentUpdate()</code></a> 回傳 false 的話，<code>UNSAFE_componentWillUpdate()</code> 將不會被呼叫。</p>
-          </blockquote>
-          <hr>
-        </section>
-      </section>
-      <section id="other-apis-1" class="level2">
-        <h2>其他的 API</h2>
-        <p>和上述那些由 React 替你呼叫的生命週期方法不同，以下介紹的方法是<em>你</em>可以從你的 component 呼叫的。</p>
-        <p>只有兩個方法： <code>setState()</code> 和 <code>forceUpdate()</code>。</p>
-        <section id="setstate-setstate" class="level3">
-          <h3><code>setState()</code> {#setstate}</h3>
-          <pre class="language-javascript"><code class="language-javascript"><span class="token function">setState</span><span class="token punctuation">(</span>updater<span class="token punctuation">[</span><span class="token punctuation">,</span> callback<span class="token punctuation">]</span><span class="token punctuation">)</span></code></pre>
-          <p><code>setState()</code> 會將改變排進一個 queue 中，並告知 React 這個 component 以及它的 children 需要用更新後的 state 重新 render。這是你會在事件處理和伺服器回應用來更新使用者介面最主要的方法。</p>
-          <p>請把 <code>setState()</code> 想成一個<em>請求</em>而非一個馬上對 component 進行更新的指令。為了達到更好的效能，React 也許會延遲這個請求，然後一次更新數個 component。在極少數情況下，你需要強制同步 DOM 更新，你可以將其包裝在 <a href="./react-dom.html#flushsync"><code>flushSync</code></a> 中，但這可能會影響效能。</p>
-          <p><code>setState()</code> 並不會總是馬上更新 component。它有可能會將更新分批處理更新或延遲到稍後才更新。這使得在呼叫 <code>setState()</code> 後讀取 <code>this.state</code> 成為一個潛在的問題。因此請不要這麼做。相反的，請使用 <code>componentDidUpdate</code> 或一個 <code>setState</code> callback（<code>setState(updater, callback)</code>）。不論你使用哪一個，React 都保證它會在更新後被觸發。如果你需要基於先前的 state 來設定 state 的話，請閱讀以下關於 <code>updater</code> 的參數。</p>
-          <p>除非 <code>shouldComponentUpdate()</code> 回傳 <code>false</code>，<code>setState()</code> 一定會導致重新 render。如果你有使用 mutable object，或者你無法在 <code>shouldComponentUpdate()</code> 裡面建立條件式 render 的邏輯的話，只在新的 state 和先前的 state 不同時呼叫 <code>setState()</code> 將會避免不必要的重新 render。</p>
-          <p>這個方法的第一個參數是一個帶有如下的形式的 <code>updater</code> function：</p>
-          <pre class="language-javascript"><code class="language-javascript"><span class="token punctuation">(</span><span class="token parameter">state<span class="token punctuation">,</span> props</span><span class="token punctuation">)</span> <span class="token arrow operator">=></span> stateChange</code></pre>
-          <p><code>state</code> 是當某個改變正在被應用時對 component state 的一個參考。它不應該直接被 mutate。相反的，任何改變都應該用一個基於 <code>state</code> 和 <code>props</code> 的 input 所建立的新的 object 來表示。例如，假設我們想要使用 <code>props.step</code> 來增加 state 中的某個值的話：</p>
-          <pre class="language-javascript"><code class="language-javascript"><span class="token keyword">this</span><span class="token punctuation">.</span><span class="token method function property-access">setState</span><span class="token punctuation">(</span><span class="token punctuation">(</span><span class="token parameter">state<span class="token punctuation">,</span> props</span><span class="token punctuation">)</span> <span class="token arrow operator">=></span> <span class="token punctuation">{</span>
+}</code></pre><p>React 在 production 和 development 在處理 <code>componentDidCatch()</code> 錯誤的方式不同。<p>在 development 時，錯誤將會冒泡到 <code>window</code>，意思是任何的 <code>window.onerror</code> 或 <code>window.addEventListener('error', callback)</code> 將攔截透過 <code>componentDidCatch</code> 所捕捉到的錯誤。<p>反之，在 production 時不會冒泡，意思是任何 ancestor 錯誤處理將只會接收未由 <code>componentDidCatch()</code> 明確捕捉的錯誤。<blockquote><p>注意：</blockquote><blockquote><p>在有錯誤的情況下，你可以透過呼叫 <code>setState</code> 來 render 一個含有 <code>componentDidCatch()</code> 的 fallback UI，但這個方法會在未來的版本中會被棄用。 請使用 <code>static getDerivedStateFromError()</code> 來處理 fallback render。</blockquote><hr></section><section id="legacy-lifecycle-methods"class="level3"><h3>過時的生命週期方法</h3><p>以下介紹的幾個生命週期方法是「過時」的。它們仍然能運作，但我們並不建議你在新的程式碼內使用這些方法。你可以<a href="/blog/2018/03/27/update-on-async-rendering.html">在這篇文章中</a>了解如何從過時的方法 migrate 到我們建議的方法。</section><section id="unsafe_componentwillmount-unsafe_componentwillmount"class="level3"><h3><code>UNSAFE_componentWillMount()</code> {#unsafe_componentwillmount}</h3><pre class="language-javascript"><code class="language-javascript"><span class="token function"><span class="token maybe-class-name">UNSAFE_componentWillMount</span></span><span class="token punctuation">(</span><span class="token punctuation">)</span></code></pre><blockquote><p>注意：<p>這個生命週期方法先前的命名是 <code>componentWillMount</code>。這個命名直到第 17 版仍然能繼續運作。請使用<a href="https://github.com/reactjs/react-codemod#rename-unsafe-lifecycles"><code>重新命名不安全的生命週期方法</code> codemod</a> 來自動更新你的 component。</blockquote><p><code>UNSAFE_componentWillMount()</code> 會在 mounting 發生前被呼叫。它會在 <code>render()</code> 前被呼叫，因此在這個方法內同步呼叫 <code>setState()</code> 並不會觸發額外的 render。不過，一般情況來說，我們建議你使用 <code>constructor()</code> 來初始化 state。<p>請避免在這個方法中帶入任何的 side effect 或 subscription。如果你需要那樣做的話，請使用 <code>componentDidMount()</code>。<p>這是唯一一個在伺服器端 render 時被呼叫的生命週期方法。<hr></section><section id="unsafe_componentwillreceiveprops-unsafe_componentwillreceiveprops"class="level3"><h3><code>UNSAFE_componentWillReceiveProps()</code> {#unsafe_componentwillreceiveprops}</h3><pre class="language-javascript"><code class="language-javascript"><span class="token function"><span class="token maybe-class-name">UNSAFE_componentWillReceiveProps</span></span><span class="token punctuation">(</span>nextProps<span class="token punctuation">)</span></code></pre><blockquote><p>注意：<p>這個生命週期方法先前的命名是 <code>componentWillReceiveProps</code>。這個命名直到第 17 版仍然能繼續運作。請使用<a href="https://github.com/reactjs/react-codemod#rename-unsafe-lifecycles"><code>重新命名不安全的生命週期方法</code> codemod</a> 來自動更新你的 component。</blockquote><blockquote><p>注意：<p>這個生命週期方法常常會導致 bug 和程式碼的不一致。<ul><li>如果你需要在某個 prop 改變時 <strong>執行一個相對應的 side effect</strong>（例如資料提取或使用動畫），請使用<a href="#componentdidupdate"><code>componentDidUpdate</code></a> 這個生命週期方法。<li>如果你想要 <strong>只在某個 prop 改變時重新計算某些資料</strong>，<a href="/blog/2018/06/07/you-probably-dont-need-derived-state.html#what-about-memoization">請使用 memoization helper</a>。<li>如果你想要 <strong>在某個 prop 改變時「重置」某個 state</strong>，請考慮建立一個<a href="/blog/2018/06/07/you-probably-dont-need-derived-state.html#recommendation-fully-controlled-component">完全被控制</a> 的 component 或<a href="/blog/2018/06/07/you-probably-dont-need-derived-state.html#recommendation-fully-uncontrolled-component-with-a-key">帶有 <code>key</code> 的完全被控制</a> component。</ul><p>針對以上這些使用情境，請<a href="/blog/2018/06/07/you-probably-dont-need-derived-state.html">遵照這篇文章內推薦的方法來處理繼承的 state</a>。</blockquote><p><code>UNSAFE_componentWillReceiveProps()</code> 會在一個被 mount 的 component 接收新的 prop 前被呼叫。如果你需要在某個 prop 改變時更新 state 的話（例如，重置 state），你可以在這個生命週期方法裡面比較 <code>this.props</code> 和<code>nextProps</code>，並使用 <code>this.setState()</code> 進行 state 的轉移。<p>請注意如果一個 parent component 導致你的 component 重新 render 的話，即使 prop 沒有改變，這個方法仍然會被呼叫。如果你不想要有這些改變的話，請確認你有比較目前和之後的 prop 的值。<p>React 並不會在初次 <a href="#mounting">mounting</a> 時使用初始化的 props 來呼叫 <code>UNSAFE_componentWillReceiveProps()</code>。它只會在 component 某些 prop 可能會更新時呼叫這個方法。一般來說，呼叫 <code>this.setState()</code> 並不會觸發 <code>UNSAFE_componentWillReceiveProps()</code>。<hr></section><section id="unsafe_componentwillupdate-unsafe_componentwillupdate"class="level3"><h3><code>UNSAFE_componentWillUpdate()</code> {#unsafe_componentwillupdate}</h3><pre class="language-javascript"><code class="language-javascript"><span class="token function"><span class="token maybe-class-name">UNSAFE_componentWillUpdate</span></span><span class="token punctuation">(</span>nextProps<span class="token punctuation">,</span> nextState<span class="token punctuation">)</span></code></pre><blockquote><p>注意：<p>這個生命週期方法先前的命名是 <code>componentWillUpdate</code>。這個命名直到第 17 版仍然能繼續運作。請使用<a href="https://github.com/reactjs/react-codemod#rename-unsafe-lifecycles"><code>重新命名不安全的生命週期方法</code> codemod</a> 來自動更新你的 component。</blockquote><p><code>UNSAFE_componentWillUpdate()</code> 會在 render 發生之前、當新的 prop 或 state 正在被接收時被呼叫。請將這個方法作為更新發生之前做準備的一個機會。這個方法並不會在初次 render 時被呼叫。<p>請注意你不能在這裡呼叫 <code>this.setState()</code>，你也不應該在這裡進行其他任何在 <code>UNSAFE_componentWillUpdate()</code> 回傳之前會觸發 React component 更新的行為（例如 dispatch 一個 Redux action）。<p>通常，這個方法可以被 <code>componentDidUpdate()</code> 取代。如果你在這個方法內從 DOM 中讀取資料（例如儲存滾動軸的位置），你可以將那部分的邏輯移到 <code>getSnapshotBeforeUpdate()</code> 裡面。<blockquote><p>注意：<p>如果 <a href="#shouldcomponentupdate"><code>shouldComponentUpdate()</code></a> 回傳 false 的話，<code>UNSAFE_componentWillUpdate()</code> 將不會被呼叫。</blockquote><hr></section></section><section id="other-apis-1"class="level2"><h2>其他的 API</h2><p>和上述那些由 React 替你呼叫的生命週期方法不同，以下介紹的方法是<em>你</em>可以從你的 component 呼叫的。<p>只有兩個方法： <code>setState()</code> 和 <code>forceUpdate()</code>。<section id="setstate-setstate"class="level3"><h3><code>setState()</code> {#setstate}</h3><pre class="language-javascript"><code class="language-javascript"><span class="token function">setState</span><span class="token punctuation">(</span>updater<span class="token punctuation">[</span><span class="token punctuation">,</span> callback<span class="token punctuation">]</span><span class="token punctuation">)</span></code></pre><p><code>setState()</code> 會將改變排進一個 queue 中，並告知 React 這個 component 以及它的 children 需要用更新後的 state 重新 render。這是你會在事件處理和伺服器回應用來更新使用者介面最主要的方法。<p>請把 <code>setState()</code> 想成一個<em>請求</em>而非一個馬上對 component 進行更新的指令。為了達到更好的效能，React 也許會延遲這個請求，然後一次更新數個 component。在極少數情況下，你需要強制同步 DOM 更新，你可以將其包裝在 <a href="./react-dom.html#flushsync"><code>flushSync</code></a> 中，但這可能會影響效能。<p><code>setState()</code> 並不會總是馬上更新 component。它有可能會將更新分批處理更新或延遲到稍後才更新。這使得在呼叫 <code>setState()</code> 後讀取 <code>this.state</code> 成為一個潛在的問題。因此請不要這麼做。相反的，請使用 <code>componentDidUpdate</code> 或一個 <code>setState</code> callback（<code>setState(updater, callback)</code>）。不論你使用哪一個，React 都保證它會在更新後被觸發。如果你需要基於先前的 state 來設定 state 的話，請閱讀以下關於 <code>updater</code> 的參數。<p>除非 <code>shouldComponentUpdate()</code> 回傳 <code>false</code>，<code>setState()</code> 一定會導致重新 render。如果你有使用 mutable object，或者你無法在 <code>shouldComponentUpdate()</code> 裡面建立條件式 render 的邏輯的話，只在新的 state 和先前的 state 不同時呼叫 <code>setState()</code> 將會避免不必要的重新 render。<p>這個方法的第一個參數是一個帶有如下的形式的 <code>updater</code> function：<pre class="language-javascript"><code class="language-javascript"><span class="token punctuation">(</span><span class="token parameter">state<span class="token punctuation">,</span> props</span><span class="token punctuation">)</span> <span class="token arrow operator">=></span> stateChange</code></pre><p><code>state</code> 是當某個改變正在被應用時對 component state 的一個參考。它不應該直接被 mutate。相反的，任何改變都應該用一個基於 <code>state</code> 和 <code>props</code> 的 input 所建立的新的 object 來表示。例如，假設我們想要使用 <code>props.step</code> 來增加 state 中的某個值的話：<pre class="language-javascript"><code class="language-javascript"><span class="token keyword">this</span><span class="token punctuation">.</span><span class="token method function property-access">setState</span><span class="token punctuation">(</span><span class="token punctuation">(</span><span class="token parameter">state<span class="token punctuation">,</span> props</span><span class="token punctuation">)</span> <span class="token arrow operator">=></span> <span class="token punctuation">{</span>
   <span class="token keyword control-flow">return</span> <span class="token punctuation">{</span><span class="token literal-property property">counter</span><span class="token operator">:</span> state<span class="token punctuation">.</span><span class="token property-access">counter</span> <span class="token operator">+</span> props<span class="token punctuation">.</span><span class="token property-access">step</span><span class="token punctuation">}</span><span class="token punctuation">;</span>
-<span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">;</span></code></pre>
-          <p>被 updater function 所接受的 <code>state</code> 和 <code>props</code> 兩者都保證一定會被更新到最新的狀態。Updater 的 output 會被和 <code>state</code> 淺層合併。</p>
-          <p><code>setState()</code> 的第二個參數是一個非必要、選擇性的 callback function。它會在 <code>setState</code> 完成且 component 被重新 render 後被執行。一般來說如果你要使用這樣的邏輯的話，我們比較推薦你使用 <code>componentDidUpdate()</code>。</p>
-          <p>你可以選擇將一個 object（而非 function）作為第一個參數傳給 <code>setState()</code>：</p>
-          <pre class="language-javascript"><code class="language-javascript"><span class="token function">setState</span><span class="token punctuation">(</span>stateChange<span class="token punctuation">[</span><span class="token punctuation">,</span> callback<span class="token punctuation">]</span><span class="token punctuation">)</span></code></pre>
-          <p>這會將 <code>stateChange</code> 淺層合併至新的 state 中。舉個例子，假設你想調整購物車中物品的數量：</p>
-          <pre class="language-javascript"><code class="language-javascript"><span class="token keyword">this</span><span class="token punctuation">.</span><span class="token method function property-access">setState</span><span class="token punctuation">(</span><span class="token punctuation">{</span><span class="token literal-property property">quantity</span><span class="token operator">:</span> <span class="token number">2</span><span class="token punctuation">}</span><span class="token punctuation">)</span></code></pre>
-          <p>這種形式的 <code>setState()</code> 也是同步的，而同樣一個週期中的多次呼叫有可能會被結合成一批做處理。例如，假設你想在同一個週期中增加某個物品的數量超過一次的話，這樣做的結果會和以下程式碼相同：</p>
-          <pre class="language-javaScript"><code class="language-javaScript">Object.assign(
+<span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">;</span></code></pre><p>被 updater function 所接受的 <code>state</code> 和 <code>props</code> 兩者都保證一定會被更新到最新的狀態。Updater 的 output 會被和 <code>state</code> 淺層合併。<p><code>setState()</code> 的第二個參數是一個非必要、選擇性的 callback function。它會在 <code>setState</code> 完成且 component 被重新 render 後被執行。一般來說如果你要使用這樣的邏輯的話，我們比較推薦你使用 <code>componentDidUpdate()</code>。<p>你可以選擇將一個 object（而非 function）作為第一個參數傳給 <code>setState()</code>：<pre class="language-javascript"><code class="language-javascript"><span class="token function">setState</span><span class="token punctuation">(</span>stateChange<span class="token punctuation">[</span><span class="token punctuation">,</span> callback<span class="token punctuation">]</span><span class="token punctuation">)</span></code></pre><p>這會將 <code>stateChange</code> 淺層合併至新的 state 中。舉個例子，假設你想調整購物車中物品的數量：<pre class="language-javascript"><code class="language-javascript"><span class="token keyword">this</span><span class="token punctuation">.</span><span class="token method function property-access">setState</span><span class="token punctuation">(</span><span class="token punctuation">{</span><span class="token literal-property property">quantity</span><span class="token operator">:</span> <span class="token number">2</span><span class="token punctuation">}</span><span class="token punctuation">)</span></code></pre><p>這種形式的 <code>setState()</code> 也是同步的，而同樣一個週期中的多次呼叫有可能會被結合成一批做處理。例如，假設你想在同一個週期中增加某個物品的數量超過一次的話，這樣做的結果會和以下程式碼相同：<pre class="language-javaScript"><code class="language-javaScript">Object.assign(
   previousState,
   {quantity: state.quantity + 1},
   {quantity: state.quantity + 1},
   ...
-)</code></pre>
-          <p>在同一個週期中，後續的呼叫會覆蓋之前的呼叫所產生的值，所以物品的數量只會被增加一次。如果下個 state 是根據目前的 state 而決定的話，我們比較建議你用 updater function 來更新 state：</p>
-          <pre class="language-js"><code class="language-js"><span class="token keyword">this</span><span class="token punctuation">.</span><span class="token method function property-access">setState</span><span class="token punctuation">(</span><span class="token punctuation">(</span><span class="token parameter">state</span><span class="token punctuation">)</span> <span class="token arrow operator">=></span> <span class="token punctuation">{</span>
+)</code></pre><p>在同一個週期中，後續的呼叫會覆蓋之前的呼叫所產生的值，所以物品的數量只會被增加一次。如果下個 state 是根據目前的 state 而決定的話，我們比較建議你用 updater function 來更新 state：<pre class="language-js"><code class="language-js"><span class="token keyword">this</span><span class="token punctuation">.</span><span class="token method function property-access">setState</span><span class="token punctuation">(</span><span class="token punctuation">(</span><span class="token parameter">state</span><span class="token punctuation">)</span> <span class="token arrow operator">=></span> <span class="token punctuation">{</span>
   <span class="token keyword control-flow">return</span> <span class="token punctuation">{</span><span class="token literal-property property">quantity</span><span class="token operator">:</span> state<span class="token punctuation">.</span><span class="token property-access">quantity</span> <span class="token operator">+</span> <span class="token number">1</span><span class="token punctuation">}</span><span class="token punctuation">;</span>
-<span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">;</span></code></pre>
-          <p>想了解更多細節，請參考：</p>
-          <ul>
-            <li><a href="./state-and-lifecycle.html">State 和生命週期指南</a></li>
-            <li><a href="https://stackoverflow.com/a/48610973/458193">深入解析：為什麼 <code>setState()</code> 的呼叫會批次處理？什麼時候會如此？</a></li>
-            <li><a href="https://github.com/facebook/react/issues/11527#issuecomment-360199710">深入解析：為什麼 <code>this.state</code> 不會馬上被更新？</a></li>
-          </ul>
-          <hr>
-        </section>
-        <section id="forceupdate-forceupdate" class="level3">
-          <h3><code>forceUpdate()</code> {#forceupdate}</h3>
-          <pre class="language-javascript"><code class="language-javascript">component<span class="token punctuation">.</span><span class="token method function property-access">forceUpdate</span><span class="token punctuation">(</span>callback<span class="token punctuation">)</span></code></pre>
-          <p>當你的 component 的 state 或 prop 改變的時候，你的 component 的預設行為是會重新 render。如果你的 <code>render()</code> 方法還需要其他資料的話，你可以藉由呼叫 <code>forceUpdate()</code> 來告訴 React 這個 component 需要重新 render。</p>
-          <p>呼叫 <code>forceUpdate()</code> 會導致 <code>render()</code> 被呼叫於該 component 並跳過 <code>shouldComponentUpdate()</code>。這會觸發 children component 正常的生命週期方法，包含每個 child 的 <code>shouldComponentUpdate()</code> 方法。React 依然只會在 markup 改變時更新 DOM。</p>
-          <p>正常情況來說你應該避免使用 <code>forceUpdate()</code> 並只從 <code>render()</code> 中的 <code>this.props</code> 和 <code>this.state</code> 讀取。</p>
-          <hr>
-        </section>
-      </section>
-      <section id="class-properties-1" class="level2">
-        <h2>Class 屬性</h2>
-        <section id="defaultprops-defaultprops" class="level3">
-          <h3><code>defaultProps</code> {#defaultprops}</h3>
-          <p><code>defaultProps</code> 可以在一個 component class 自身被定義為一個屬性，它被用來設定該 class 的預設 props。它是為了 <code>undefined</code>（而非 <code>null</code>） 的 prop 使用的。例如：</p>
-          <pre class="language-js"><code class="language-js"><span class="token keyword">class</span> <span class="token class-name">CustomButton</span> <span class="token keyword">extends</span> <span class="token class-name">React<span class="token punctuation">.</span>Component</span> <span class="token punctuation">{</span>
+<span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">;</span></code></pre><p>想了解更多細節，請參考：<ul><li><a href="./state-and-lifecycle.html">State 和生命週期指南</a><li><a href="https://stackoverflow.com/a/48610973/458193">深入解析：為什麼 <code>setState()</code> 的呼叫會批次處理？什麼時候會如此？</a><li><a href="https://github.com/facebook/react/issues/11527#issuecomment-360199710">深入解析：為什麼 <code>this.state</code> 不會馬上被更新？</a></ul><hr></section><section id="forceupdate-forceupdate"class="level3"><h3><code>forceUpdate()</code> {#forceupdate}</h3><pre class="language-javascript"><code class="language-javascript">component<span class="token punctuation">.</span><span class="token method function property-access">forceUpdate</span><span class="token punctuation">(</span>callback<span class="token punctuation">)</span></code></pre><p>當你的 component 的 state 或 prop 改變的時候，你的 component 的預設行為是會重新 render。如果你的 <code>render()</code> 方法還需要其他資料的話，你可以藉由呼叫 <code>forceUpdate()</code> 來告訴 React 這個 component 需要重新 render。<p>呼叫 <code>forceUpdate()</code> 會導致 <code>render()</code> 被呼叫於該 component 並跳過 <code>shouldComponentUpdate()</code>。這會觸發 children component 正常的生命週期方法，包含每個 child 的 <code>shouldComponentUpdate()</code> 方法。React 依然只會在 markup 改變時更新 DOM。<p>正常情況來說你應該避免使用 <code>forceUpdate()</code> 並只從 <code>render()</code> 中的 <code>this.props</code> 和 <code>this.state</code> 讀取。<hr></section></section><section id="class-properties-1"class="level2"><h2>Class 屬性</h2><section id="defaultprops-defaultprops"class="level3"><h3><code>defaultProps</code> {#defaultprops}</h3><p><code>defaultProps</code> 可以在一個 component class 自身被定義為一個屬性，它被用來設定該 class 的預設 props。它是為了 <code>undefined</code>（而非 <code>null</code>） 的 prop 使用的。例如：<pre class="language-js"><code class="language-js"><span class="token keyword">class</span> <span class="token class-name">CustomButton</span> <span class="token keyword">extends</span> <span class="token class-name">React<span class="token punctuation">.</span>Component</span> <span class="token punctuation">{</span>
   <span class="token comment">// ...</span>
 <span class="token punctuation">}</span>
 
 <span class="token maybe-class-name">CustomButton</span><span class="token punctuation">.</span><span class="token property-access">defaultProps</span> <span class="token operator">=</span> <span class="token punctuation">{</span>
   <span class="token literal-property property">color</span><span class="token operator">:</span> <span class="token string">'blue'</span>
-<span class="token punctuation">}</span><span class="token punctuation">;</span></code></pre>
-          <p>如果 <code>props.color</code> 的值沒有被提供的話，它會被預設為 <code>'blue'</code>：</p>
-          <pre class="language-js"><code class="language-js">  <span class="token function">render</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+<span class="token punctuation">}</span><span class="token punctuation">;</span></code></pre><p>如果 <code>props.color</code> 的值沒有被提供的話，它會被預設為 <code>'blue'</code>：<pre class="language-js"><code class="language-js">  <span class="token function">render</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
     <span class="token keyword control-flow">return</span> <span class="token operator">&#x3C;</span><span class="token maybe-class-name">CustomButton</span> <span class="token operator">/</span><span class="token operator">></span> <span class="token punctuation">;</span> <span class="token comment">// props.color 被預設為 blue</span>
-  <span class="token punctuation">}</span></code></pre>
-          <p>如果 <code>props.color</code> 的值被設為 <code>null</code>，其值會繼續為 <code>null</code>：</p>
-          <pre class="language-js"><code class="language-js">  <span class="token function">render</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  <span class="token punctuation">}</span></code></pre><p>如果 <code>props.color</code> 的值被設為 <code>null</code>，其值會繼續為 <code>null</code>：<pre class="language-js"><code class="language-js">  <span class="token function">render</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
     <span class="token keyword control-flow">return</span> <span class="token operator">&#x3C;</span><span class="token maybe-class-name">CustomButton</span> color<span class="token operator">=</span><span class="token punctuation">{</span><span class="token keyword null nil">null</span><span class="token punctuation">}</span> <span class="token operator">/</span><span class="token operator">></span> <span class="token punctuation">;</span> <span class="token comment">// props.color 繼續為 null</span>
-  <span class="token punctuation">}</span></code></pre>
-          <hr>
-        </section>
-        <section id="displayname-displayname" class="level3">
-          <h3><code>displayName</code> {#displayname}</h3>
-          <p><code>displayName</code> string 是用來 debug 的。通常，你不需要明確的設定這個屬性，因為它可以根據定義該 component 的 function 或 class 的名稱推斷這個值為何。當你為了 debug 或建立一個 higher-order component 而需要展示一個不同的名字時，你可能會想要明確的設定這個值，請參考<a href="./higher-order-components.html#convention-wrap-the-display-name-for-easy-debugging">如何包覆 Display Name 並輕鬆 debug</a>。</p>
-          <hr>
-        </section>
-      </section>
-      <section id="instance-properties-1" class="level2">
-        <h2>Instance 屬性</h2>
-        <section id="props-props" class="level3">
-          <h3><code>props</code> {#props}</h3>
-          <p><code>this.props</code> 包含了該 component 的呼叫者所定義的 prop。想了解 prop 的基礎概念，請參考 <a href="./components-and-props.html">Components 和 Props</a>文件。</p>
-          <p>值得注意的是，<code>this.props.children</code> 是一個特別的 prop，通常在 JSX 表達式內的 child tag 內所定義，而不是其自身的 tag。</p>
-        </section>
-        <section id="state-state" class="level3">
-          <h3><code>state</code> {#state}</h3>
-          <p>State 包含了某個 component 內特定的、會隨時間改變的資料，這個 state 是由使用者定義的。它應是一個簡單的 JavaScript object。</p>
-          <p>如果某個值並沒有在 render 或資料流中被使用（例如計時器的 ID），你不需要將它放在 state 內。這類的值可以在 component 實例上被定義為 field。</p>
-          <p>想更了解 state 如何運作，請參考 <a href="./state-and-lifecycle.html">State 和生命週期</a>。</p>
-          <p>
-            請永遠不要直接 mutate <code>this.state</code>，因為後續的 <code>setState()</code> 會替換掉你的 mutation。請將 <code>this.state</code> 視為不可變的。
-            <span style="float: footnote;"><a href="./index.html#toc">Go to TOC</a></span>
-          </p>
-        </section>
-      </section>
-    </section>
-  </body>
-</html>
+  <span class="token punctuation">}</span></code></pre><hr></section><section id="displayname-displayname"class="level3"><h3><code>displayName</code> {#displayname}</h3><p><code>displayName</code> string 是用來 debug 的。通常，你不需要明確的設定這個屬性，因為它可以根據定義該 component 的 function 或 class 的名稱推斷這個值為何。當你為了 debug 或建立一個 higher-order component 而需要展示一個不同的名字時，你可能會想要明確的設定這個值，請參考<a href="./higher-order-components.html#convention-wrap-the-display-name-for-easy-debugging">如何包覆 Display Name 並輕鬆 debug</a>。<hr></section></section><section id="instance-properties-1"class="level2"><h2>Instance 屬性</h2><section id="props-props"class="level3"><h3><code>props</code> {#props}</h3><p><code>this.props</code> 包含了該 component 的呼叫者所定義的 prop。想了解 prop 的基礎概念，請參考 <a href="./components-and-props.html">Components 和 Props</a>文件。<p>值得注意的是，<code>this.props.children</code> 是一個特別的 prop，通常在 JSX 表達式內的 child tag 內所定義，而不是其自身的 tag。</section><section id="state-state"class="level3"><h3><code>state</code> {#state}</h3><p>State 包含了某個 component 內特定的、會隨時間改變的資料，這個 state 是由使用者定義的。它應是一個簡單的 JavaScript object。<p>如果某個值並沒有在 render 或資料流中被使用（例如計時器的 ID），你不需要將它放在 state 內。這類的值可以在 component 實例上被定義為 field。<p>想更了解 state 如何運作，請參考 <a href="./state-and-lifecycle.html">State 和生命週期</a>。<p>請永遠不要直接 mutate <code>this.state</code>，因為後續的 <code>setState()</code> 會替換掉你的 mutation。請將 <code>this.state</code> 視為不可變的。 <span style="float:footnote"><a href="./index.html#toc">Go to TOC</a></span></section></section></section>

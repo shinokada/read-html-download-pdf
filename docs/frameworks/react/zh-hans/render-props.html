@@ -1,26 +1,6 @@
-<!doctype html>
-<html lang="zh-hans">
-  <head>
-    <meta charset="utf-8">
-    <title>Render Props</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <link rel="stylesheet" href="https://raw.githubusercontent.com/shinokada/prism-coy-theme/main/theme_common.css">
-  </head>
-  <body>
-    <section id="render-props" class="level1">
-      <h1>Render Props</h1>
-      <p>术语 <a href="https://cdb.reacttraining.com/use-a-render-prop-50de598f11ce">"render prop"</a> 是指一种在 React 组件之间使用一个值为函数的 prop 共享代码的简单技术</p>
-      <p>具有 render prop 的组件接受一个返回 React 元素的函数，并在组件内部通过调用此函数来实现自己的渲染逻辑。</p>
-      <pre class="language-jsx"><code class="language-jsx"><span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;</span><span class="token class-name">DataProvider</span></span> <span class="token attr-name">render</span><span class="token script language-javascript"><span class="token script-punctuation punctuation">=</span><span class="token punctuation">{</span><span class="token parameter">data</span> <span class="token arrow operator">=></span> <span class="token punctuation">(</span>
+<!doctypehtml><html lang="zh-hans"><meta charset="utf-8"><title>Render Props</title><meta name="viewport"content="width=device-width,initial-scale=1"><link rel="stylesheet"href="https://raw.githubusercontent.com/shinokada/prism-coy-theme/main/theme_common.css"><section id="render-props"class="level1"><h1>Render Props</h1><p>术语 <a href="https://cdb.reacttraining.com/use-a-render-prop-50de598f11ce">"render prop"</a> 是指一种在 React 组件之间使用一个值为函数的 prop 共享代码的简单技术<p>具有 render prop 的组件接受一个返回 React 元素的函数，并在组件内部通过调用此函数来实现自己的渲染逻辑。<pre class="language-jsx"><code class="language-jsx"><span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;</span><span class="token class-name">DataProvider</span></span> <span class="token attr-name">render</span><span class="token script language-javascript"><span class="token script-punctuation punctuation">=</span><span class="token punctuation">{</span><span class="token parameter">data</span> <span class="token arrow operator">=></span> <span class="token punctuation">(</span>
   <span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;</span>h1</span><span class="token punctuation">></span></span><span class="token plain-text">Hello </span><span class="token punctuation">{</span>data<span class="token punctuation">.</span><span class="token property-access">target</span><span class="token punctuation">}</span><span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;/</span>h1</span><span class="token punctuation">></span></span>
-<span class="token punctuation">)</span><span class="token punctuation">}</span></span><span class="token punctuation">/></span></span></code></pre>
-      <p>使用 render prop 的库有 <a href="https://reacttraining.com/react-router/web/api/Route/render-func">React Router</a>、<a href="https://github.com/paypal/downshift">Downshift</a> 以及 <a href="https://github.com/jaredpalmer/formik">Formik</a>。</p>
-      <p>在这个文档中，我们将讨论为什么 render prop 是有用的，以及如何写一个自己的 render prop 组件。</p>
-      <section id="use-render-props-for-cross-cutting-concerns" class="level2">
-        <h2>使用 Render Props 来解决横切关注点（Cross-Cutting Concerns）</h2>
-        <p>组件是 React 代码复用的主要单元，但如何将一个组件封装的状态或行为共享给其他需要相同状态的组件并不总是显而易见。</p>
-        <p>例如，以下组件跟踪 Web 应用程序中的鼠标位置：</p>
-        <pre class="language-js"><code class="language-js"><span class="token keyword">class</span> <span class="token class-name">MouseTracker</span> <span class="token keyword">extends</span> <span class="token class-name">React<span class="token punctuation">.</span>Component</span> <span class="token punctuation">{</span>
+<span class="token punctuation">)</span><span class="token punctuation">}</span></span><span class="token punctuation">/></span></span></code></pre><p>使用 render prop 的库有 <a href="https://reacttraining.com/react-router/web/api/Route/render-func">React Router</a>、<a href="https://github.com/paypal/downshift">Downshift</a> 以及 <a href="https://github.com/jaredpalmer/formik">Formik</a>。<p>在这个文档中，我们将讨论为什么 render prop 是有用的，以及如何写一个自己的 render prop 组件。<section id="use-render-props-for-cross-cutting-concerns"class="level2"><h2>使用 Render Props 来解决横切关注点（Cross-Cutting Concerns）</h2><p>组件是 React 代码复用的主要单元，但如何将一个组件封装的状态或行为共享给其他需要相同状态的组件并不总是显而易见。<p>例如，以下组件跟踪 Web 应用程序中的鼠标位置：<pre class="language-js"><code class="language-js"><span class="token keyword">class</span> <span class="token class-name">MouseTracker</span> <span class="token keyword">extends</span> <span class="token class-name">React<span class="token punctuation">.</span>Component</span> <span class="token punctuation">{</span>
   <span class="token function">constructor</span><span class="token punctuation">(</span><span class="token parameter">props</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
     <span class="token keyword">super</span><span class="token punctuation">(</span>props<span class="token punctuation">)</span><span class="token punctuation">;</span>
     <span class="token keyword">this</span><span class="token punctuation">.</span><span class="token property-access">handleMouseMove</span> <span class="token operator">=</span> <span class="token keyword">this</span><span class="token punctuation">.</span><span class="token method function property-access">handleMouseMove</span><span class="token punctuation">.</span><span class="token method function property-access">bind</span><span class="token punctuation">(</span><span class="token keyword">this</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
@@ -42,11 +22,7 @@
       <span class="token operator">&#x3C;</span><span class="token operator">/</span>div<span class="token operator">></span>
     <span class="token punctuation">)</span><span class="token punctuation">;</span>
   <span class="token punctuation">}</span>
-<span class="token punctuation">}</span></code></pre>
-        <p>当光标在屏幕上移动时，组件在 <code>&#x3C;p></code> 中显示其（x，y）坐标。</p>
-        <p>现在的问题是：我们如何在另一个组件中复用这个行为？换个说法，若另一个组件需要知道鼠标位置，我们能否封装这一行为，以便轻松地与其他组件共享它？</p>
-        <p>由于组件是 React 中最基础的代码复用单元，现在尝试重构一部分代码使其能够在 <code>&#x3C;Mouse></code> 组件中封装我们需要共享的行为。</p>
-        <pre class="language-js"><code class="language-js"><span class="token comment">// &#x3C;Mouse> 组件封装了我们需要的行为...</span>
+<span class="token punctuation">}</span></code></pre><p>当光标在屏幕上移动时，组件在 <code>&#x3C;p></code> 中显示其（x，y）坐标。<p>现在的问题是：我们如何在另一个组件中复用这个行为？换个说法，若另一个组件需要知道鼠标位置，我们能否封装这一行为，以便轻松地与其他组件共享它？<p>由于组件是 React 中最基础的代码复用单元，现在尝试重构一部分代码使其能够在 <code>&#x3C;Mouse></code> 组件中封装我们需要共享的行为。<pre class="language-js"><code class="language-js"><span class="token comment">// &#x3C;Mouse> 组件封装了我们需要的行为...</span>
 <span class="token keyword">class</span> <span class="token class-name">Mouse</span> <span class="token keyword">extends</span> <span class="token class-name">React<span class="token punctuation">.</span>Component</span> <span class="token punctuation">{</span>
   <span class="token function">constructor</span><span class="token punctuation">(</span><span class="token parameter">props</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
     <span class="token keyword">super</span><span class="token punctuation">(</span>props<span class="token punctuation">)</span><span class="token punctuation">;</span>
@@ -81,11 +57,7 @@
       <span class="token operator">&#x3C;</span><span class="token operator">/</span><span class="token operator">></span>
     <span class="token punctuation">)</span><span class="token punctuation">;</span>
   <span class="token punctuation">}</span>
-<span class="token punctuation">}</span></code></pre>
-        <p>现在 <code>&#x3C;Mouse></code> 组件封装了所有关于监听 <code>mousemove</code> 事件和存储鼠标 (x, y) 位置的行为，但其仍不是真正的可复用。</p>
-        <p>举个例子，假设我们有一个 <code>&#x3C;Cat></code> 组件，它可以呈现一张在屏幕上追逐鼠标的猫的图片。我们或许会使用 <code>&#x3C;Cat mouse={{ x, y }}</code> prop 来告诉组件鼠标的坐标以让它知道图片应该在屏幕哪个位置。</p>
-        <p>首先, 你或许会像这样，尝试在 <code>&#x3C;Mouse></code> 内部的渲染方法渲染 <code>&#x3C;Cat></code> 组件：</p>
-        <pre class="language-js"><code class="language-js"><span class="token keyword">class</span> <span class="token class-name">Cat</span> <span class="token keyword">extends</span> <span class="token class-name">React<span class="token punctuation">.</span>Component</span> <span class="token punctuation">{</span>
+<span class="token punctuation">}</span></code></pre><p>现在 <code>&#x3C;Mouse></code> 组件封装了所有关于监听 <code>mousemove</code> 事件和存储鼠标 (x, y) 位置的行为，但其仍不是真正的可复用。<p>举个例子，假设我们有一个 <code>&#x3C;Cat></code> 组件，它可以呈现一张在屏幕上追逐鼠标的猫的图片。我们或许会使用 <code>&#x3C;Cat mouse={{ x, y }}</code> prop 来告诉组件鼠标的坐标以让它知道图片应该在屏幕哪个位置。<p>首先, 你或许会像这样，尝试在 <code>&#x3C;Mouse></code> 内部的渲染方法渲染 <code>&#x3C;Cat></code> 组件：<pre class="language-js"><code class="language-js"><span class="token keyword">class</span> <span class="token class-name">Cat</span> <span class="token keyword">extends</span> <span class="token class-name">React<span class="token punctuation">.</span>Component</span> <span class="token punctuation">{</span>
   <span class="token function">render</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
     <span class="token keyword">const</span> mouse <span class="token operator">=</span> <span class="token keyword">this</span><span class="token punctuation">.</span><span class="token property-access">props</span><span class="token punctuation">.</span><span class="token property-access">mouse</span><span class="token punctuation">;</span>
     <span class="token keyword control-flow">return</span> <span class="token punctuation">(</span>
@@ -132,10 +104,7 @@
       <span class="token operator">&#x3C;</span><span class="token operator">/</span>div<span class="token operator">></span>
     <span class="token punctuation">)</span><span class="token punctuation">;</span>
   <span class="token punctuation">}</span>
-<span class="token punctuation">}</span></code></pre>
-        <p>这种方法适用于我们的特定用例，但我们还没有达到以可复用的方式真正封装行为的目标。现在，每当我们想要鼠标位置用于不同的用例时，我们必须创建一个新的组件（本质上是另一个 <code>&#x3C;MouseWithCat></code> ），它专门为该用例呈现一些东西。</p>
-        <p>这也是 render prop 的来历：相比于直接将 <code>&#x3C;Cat></code> 写死在 <code>&#x3C;Mouse></code> 组件中，并且有效地更改渲染的结果，我们可以为 <code>&#x3C;Mouse></code> 提供一个函数 prop 来动态的确定要渲染什么 —— 一个 render prop。</p>
-        <pre class="language-js"><code class="language-js"><span class="token keyword">class</span> <span class="token class-name">Cat</span> <span class="token keyword">extends</span> <span class="token class-name">React<span class="token punctuation">.</span>Component</span> <span class="token punctuation">{</span>
+<span class="token punctuation">}</span></code></pre><p>这种方法适用于我们的特定用例，但我们还没有达到以可复用的方式真正封装行为的目标。现在，每当我们想要鼠标位置用于不同的用例时，我们必须创建一个新的组件（本质上是另一个 <code>&#x3C;MouseWithCat></code> ），它专门为该用例呈现一些东西。<p>这也是 render prop 的来历：相比于直接将 <code>&#x3C;Cat></code> 写死在 <code>&#x3C;Mouse></code> 组件中，并且有效地更改渲染的结果，我们可以为 <code>&#x3C;Mouse></code> 提供一个函数 prop 来动态的确定要渲染什么 —— 一个 render prop。<pre class="language-js"><code class="language-js"><span class="token keyword">class</span> <span class="token class-name">Cat</span> <span class="token keyword">extends</span> <span class="token class-name">React<span class="token punctuation">.</span>Component</span> <span class="token punctuation">{</span>
   <span class="token function">render</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
     <span class="token keyword">const</span> mouse <span class="token operator">=</span> <span class="token keyword">this</span><span class="token punctuation">.</span><span class="token property-access">props</span><span class="token punctuation">.</span><span class="token property-access">mouse</span><span class="token punctuation">;</span>
     <span class="token keyword control-flow">return</span> <span class="token punctuation">(</span>
@@ -183,12 +152,7 @@
       <span class="token operator">&#x3C;</span><span class="token operator">/</span>div<span class="token operator">></span>
     <span class="token punctuation">)</span><span class="token punctuation">;</span>
   <span class="token punctuation">}</span>
-<span class="token punctuation">}</span></code></pre>
-        <p>现在，我们提供了一个 <code>render</code> 方法 让 <code>&#x3C;Mouse></code> 能够动态决定什么需要渲染，而不是克隆 <code>&#x3C;Mouse></code> 组件然后硬编码来解决特定的用例。</p>
-        <p>更具体地说，<strong>render prop 是一个用于告知组件需要渲染什么内容的函数 prop。</strong></p>
-        <p>这项技术使我们共享行为非常容易。要获得这个行为，只要渲染一个带有 <code>render</code> prop 的 <code>&#x3C;Mouse></code> 组件就能够告诉它当前鼠标坐标 (x, y) 要渲染什么。</p>
-        <p>关于 render prop 一个有趣的事情是你可以使用带有 render prop 的常规组件来实现大多数<a href="./higher-order-components.html">高阶组件</a> (HOC)。 例如，如果你更喜欢使用 <code>withMouse</code> HOC而不是 <code>&#x3C;Mouse></code> 组件，你可以使用带有 render prop 的常规 <code>&#x3C;Mouse></code> 轻松创建一个：</p>
-        <pre class="language-js"><code class="language-js"><span class="token comment">// 如果你出于某种原因真的想要 HOC，那么你可以轻松实现</span>
+<span class="token punctuation">}</span></code></pre><p>现在，我们提供了一个 <code>render</code> 方法 让 <code>&#x3C;Mouse></code> 能够动态决定什么需要渲染，而不是克隆 <code>&#x3C;Mouse></code> 组件然后硬编码来解决特定的用例。<p>更具体地说，<strong>render prop 是一个用于告知组件需要渲染什么内容的函数 prop。</strong><p>这项技术使我们共享行为非常容易。要获得这个行为，只要渲染一个带有 <code>render</code> prop 的 <code>&#x3C;Mouse></code> 组件就能够告诉它当前鼠标坐标 (x, y) 要渲染什么。<p>关于 render prop 一个有趣的事情是你可以使用带有 render prop 的常规组件来实现大多数<a href="./higher-order-components.html">高阶组件</a> (HOC)。 例如，如果你更喜欢使用 <code>withMouse</code> HOC而不是 <code>&#x3C;Mouse></code> 组件，你可以使用带有 render prop 的常规 <code>&#x3C;Mouse></code> 轻松创建一个：<pre class="language-js"><code class="language-js"><span class="token comment">// 如果你出于某种原因真的想要 HOC，那么你可以轻松实现</span>
 <span class="token comment">// 使用具有 render prop 的普通组件创建一个！</span>
 <span class="token keyword">function</span> <span class="token function">withMouse</span><span class="token punctuation">(</span><span class="token parameter"><span class="token maybe-class-name">Component</span></span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
   <span class="token keyword control-flow">return</span> <span class="token keyword">class</span> <span class="token class-name">extends</span> <span class="token maybe-class-name">React</span><span class="token punctuation">.</span><span class="token property-access"><span class="token maybe-class-name">Component</span></span> <span class="token punctuation">{</span>
@@ -200,35 +164,15 @@
       <span class="token punctuation">)</span><span class="token punctuation">;</span>
     <span class="token punctuation">}</span>
   <span class="token punctuation">}</span>
-<span class="token punctuation">}</span></code></pre>
-        <p>因此，你可以将任一模式与 render prop 一起使用。</p>
-      </section>
-      <section id="使用-props-而非-render-using-props-other-than-render" class="level2">
-        <h2>使用 Props 而非 <code>render</code> {#using-props-other-than-render}</h2>
-        <p>重要的是要记住，render prop 是因为模式才被称为 <em>render</em> prop ，你不一定要用名为 <code>render</code> 的 prop 来使用这种模式。事实上， <a href="https://cdb.reacttraining.com/use-a-render-prop-50de598f11ce"><em>任何</em>被用于告知组件需要渲染什么内容的函数 prop 在技术上都可以被称为 “render prop”</a>。</p>
-        <p>尽管之前的例子使用了 <code>render</code>，我们也可以简单地使用 <code>children</code> prop！</p>
-        <pre class="language-js"><code class="language-js"><span class="token operator">&#x3C;</span><span class="token maybe-class-name">Mouse</span> children<span class="token operator">=</span><span class="token punctuation">{</span><span class="token parameter">mouse</span> <span class="token arrow operator">=></span> <span class="token punctuation">(</span>
+<span class="token punctuation">}</span></code></pre><p>因此，你可以将任一模式与 render prop 一起使用。</section><section id="使用-props-而非-render-using-props-other-than-render"class="level2"><h2>使用 Props 而非 <code>render</code> {#using-props-other-than-render}</h2><p>重要的是要记住，render prop 是因为模式才被称为 <em>render</em> prop ，你不一定要用名为 <code>render</code> 的 prop 来使用这种模式。事实上， <a href="https://cdb.reacttraining.com/use-a-render-prop-50de598f11ce"><em>任何</em>被用于告知组件需要渲染什么内容的函数 prop 在技术上都可以被称为 “render prop”</a>。<p>尽管之前的例子使用了 <code>render</code>，我们也可以简单地使用 <code>children</code> prop！<pre class="language-js"><code class="language-js"><span class="token operator">&#x3C;</span><span class="token maybe-class-name">Mouse</span> children<span class="token operator">=</span><span class="token punctuation">{</span><span class="token parameter">mouse</span> <span class="token arrow operator">=></span> <span class="token punctuation">(</span>
   <span class="token operator">&#x3C;</span>p<span class="token operator">></span>鼠标的位置是 <span class="token punctuation">{</span>mouse<span class="token punctuation">.</span><span class="token property-access">x</span><span class="token punctuation">}</span>，<span class="token punctuation">{</span>mouse<span class="token punctuation">.</span><span class="token property-access">y</span><span class="token punctuation">}</span><span class="token operator">&#x3C;</span><span class="token operator">/</span>p<span class="token operator">></span>
-<span class="token punctuation">)</span><span class="token punctuation">}</span><span class="token operator">/</span><span class="token operator">></span></code></pre>
-        <p>记住，<code>children</code> prop 并不真正需要添加到 JSX 元素的 “attributes” 列表中。相反，你可以直接放置到元素的<em>内部</em>！</p>
-        <pre class="language-js"><code class="language-js"><span class="token operator">&#x3C;</span><span class="token maybe-class-name">Mouse</span><span class="token operator">></span>
+<span class="token punctuation">)</span><span class="token punctuation">}</span><span class="token operator">/</span><span class="token operator">></span></code></pre><p>记住，<code>children</code> prop 并不真正需要添加到 JSX 元素的 “attributes” 列表中。相反，你可以直接放置到元素的<em>内部</em>！<pre class="language-js"><code class="language-js"><span class="token operator">&#x3C;</span><span class="token maybe-class-name">Mouse</span><span class="token operator">></span>
   <span class="token punctuation">{</span><span class="token parameter">mouse</span> <span class="token arrow operator">=></span> <span class="token punctuation">(</span>
     <span class="token operator">&#x3C;</span>p<span class="token operator">></span>鼠标的位置是 <span class="token punctuation">{</span>mouse<span class="token punctuation">.</span><span class="token property-access">x</span><span class="token punctuation">}</span>，<span class="token punctuation">{</span>mouse<span class="token punctuation">.</span><span class="token property-access">y</span><span class="token punctuation">}</span><span class="token operator">&#x3C;</span><span class="token operator">/</span>p<span class="token operator">></span>
   <span class="token punctuation">)</span><span class="token punctuation">}</span>
-<span class="token operator">&#x3C;</span><span class="token operator">/</span><span class="token maybe-class-name">Mouse</span><span class="token operator">></span></code></pre>
-        <p>你将在 <a href="https://github.com/chenglou/react-motion">react-motion</a> 的 API 中看到此技术。</p>
-        <p>由于这一技术的特殊性，当你在设计一个类似的 API 时，你或许会要直接地在你的 propTypes 里声明 children 的类型应为一个函数。</p>
-        <pre class="language-js"><code class="language-js"><span class="token maybe-class-name">Mouse</span><span class="token punctuation">.</span><span class="token property-access">propTypes</span> <span class="token operator">=</span> <span class="token punctuation">{</span>
+<span class="token operator">&#x3C;</span><span class="token operator">/</span><span class="token maybe-class-name">Mouse</span><span class="token operator">></span></code></pre><p>你将在 <a href="https://github.com/chenglou/react-motion">react-motion</a> 的 API 中看到此技术。<p>由于这一技术的特殊性，当你在设计一个类似的 API 时，你或许会要直接地在你的 propTypes 里声明 children 的类型应为一个函数。<pre class="language-js"><code class="language-js"><span class="token maybe-class-name">Mouse</span><span class="token punctuation">.</span><span class="token property-access">propTypes</span> <span class="token operator">=</span> <span class="token punctuation">{</span>
   <span class="token literal-property property">children</span><span class="token operator">:</span> <span class="token maybe-class-name">PropTypes</span><span class="token punctuation">.</span><span class="token property-access">func</span><span class="token punctuation">.</span><span class="token property-access">isRequired</span>
-<span class="token punctuation">}</span><span class="token punctuation">;</span></code></pre>
-      </section>
-      <section id="caveats" class="level2">
-        <h2>注意事项</h2>
-        <section id="be-careful-when-using-render-props-with-reactpurecomponent" class="level3">
-          <h3>将 Render Props 与 React.PureComponent 一起使用时要小心</h3>
-          <p>如果你在 render 方法里创建函数，那么使用 render prop 会抵消使用 <a href="./react-api.html#reactpurecomponent"><code>React.PureComponent</code></a> 带来的优势。因为浅比较 props 的时候总会得到 false，并且在这种情况下每一个 <code>render</code> 对于 render prop 将会生成一个新的值。</p>
-          <p>例如，继续我们之前使用的 <code>&#x3C;Mouse></code> 组件，如果 <code>Mouse</code> 继承自 <code>React.PureComponent</code> 而不是 <code>React.Component</code>，我们的例子看起来就像这样：</p>
-          <pre class="language-js"><code class="language-js"><span class="token keyword">class</span> <span class="token class-name">Mouse</span> <span class="token keyword">extends</span> <span class="token class-name">React<span class="token punctuation">.</span>PureComponent</span> <span class="token punctuation">{</span>
+<span class="token punctuation">}</span><span class="token punctuation">;</span></code></pre></section><section id="caveats"class="level2"><h2>注意事项</h2><section id="be-careful-when-using-render-props-with-reactpurecomponent"class="level3"><h3>将 Render Props 与 React.PureComponent 一起使用时要小心</h3><p>如果你在 render 方法里创建函数，那么使用 render prop 会抵消使用 <a href="./react-api.html#reactpurecomponent"><code>React.PureComponent</code></a> 带来的优势。因为浅比较 props 的时候总会得到 false，并且在这种情况下每一个 <code>render</code> 对于 render prop 将会生成一个新的值。<p>例如，继续我们之前使用的 <code>&#x3C;Mouse></code> 组件，如果 <code>Mouse</code> 继承自 <code>React.PureComponent</code> 而不是 <code>React.Component</code>，我们的例子看起来就像这样：<pre class="language-js"><code class="language-js"><span class="token keyword">class</span> <span class="token class-name">Mouse</span> <span class="token keyword">extends</span> <span class="token class-name">React<span class="token punctuation">.</span>PureComponent</span> <span class="token punctuation">{</span>
   <span class="token comment">// 与上面相同的代码......</span>
 <span class="token punctuation">}</span>
 
@@ -248,10 +192,7 @@
       <span class="token operator">&#x3C;</span><span class="token operator">/</span>div<span class="token operator">></span>
     <span class="token punctuation">)</span><span class="token punctuation">;</span>
   <span class="token punctuation">}</span>
-<span class="token punctuation">}</span></code></pre>
-          <p>在这样例子中，每次 <code>&#x3C;MouseTracker></code> 渲染，它会生成一个新的函数作为 <code>&#x3C;Mouse render></code> 的 prop，因而在同时也抵消了继承自 <code>React.PureComponent</code> 的 <code>&#x3C;Mouse></code> 组件的效果！</p>
-          <p>为了绕过这一问题，有时你可以定义一个 prop 作为实例方法，类似这样：</p>
-          <pre class="language-js"><code class="language-js"><span class="token keyword">class</span> <span class="token class-name">MouseTracker</span> <span class="token keyword">extends</span> <span class="token class-name">React<span class="token punctuation">.</span>Component</span> <span class="token punctuation">{</span>
+<span class="token punctuation">}</span></code></pre><p>在这样例子中，每次 <code>&#x3C;MouseTracker></code> 渲染，它会生成一个新的函数作为 <code>&#x3C;Mouse render></code> 的 prop，因而在同时也抵消了继承自 <code>React.PureComponent</code> 的 <code>&#x3C;Mouse></code> 组件的效果！<p>为了绕过这一问题，有时你可以定义一个 prop 作为实例方法，类似这样：<pre class="language-js"><code class="language-js"><span class="token keyword">class</span> <span class="token class-name">MouseTracker</span> <span class="token keyword">extends</span> <span class="token class-name">React<span class="token punctuation">.</span>Component</span> <span class="token punctuation">{</span>
   <span class="token comment">// 定义为实例方法，`this.renderTheCat`始终</span>
   <span class="token comment">// 当我们在渲染中使用它时，它指的是相同的函数</span>
   <span class="token function">renderTheCat</span><span class="token punctuation">(</span><span class="token parameter">mouse</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
@@ -266,13 +207,4 @@
       <span class="token operator">&#x3C;</span><span class="token operator">/</span>div<span class="token operator">></span>
     <span class="token punctuation">)</span><span class="token punctuation">;</span>
   <span class="token punctuation">}</span>
-<span class="token punctuation">}</span></code></pre>
-          <p>
-            如果你无法静态定义 prop（例如，因为你需要控制组件 props 和/或 state 的暴露程度），则 <code>&#x3C;Mouse></code> 应该继承自 <code>React.Component</code>。
-            <span style="float: footnote;"><a href="./index.html#toc">Go to TOC</a></span>
-          </p>
-        </section>
-      </section>
-    </section>
-  </body>
-</html>
+<span class="token punctuation">}</span></code></pre><p>如果你无法静态定义 prop（例如，因为你需要控制组件 props 和/或 state 的暴露程度），则 <code>&#x3C;Mouse></code> 应该继承自 <code>React.Component</code>。 <span style="float:footnote"><a href="./index.html#toc">Go to TOC</a></span></section></section></section>

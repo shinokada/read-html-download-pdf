@@ -1,20 +1,4 @@
-<!doctype html>
-<html lang="zh-hant">
-  <head>
-    <meta charset="utf-8">
-    <title>SyntheticEvent</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <link rel="stylesheet" href="https://raw.githubusercontent.com/shinokada/prism-coy-theme/main/theme_common.css">
-  </head>
-  <body>
-    <section id="syntheticevent" class="level1">
-      <h1>SyntheticEvent</h1>
-      <p>這份參考指南紀錄了 <code>SyntheticEvent</code> 這個形成 React 事件系統的 wrapper。想了解更多，請參考<a href="./handling-events.html">事件處理</a>。</p>
-      <section id="overview" class="level2">
-        <h2>概觀</h2>
-        <p>你的 event handler 將會是 <code>SyntheticEvent</code> 被傳遞的 instance，它是一個跨瀏覽器的、瀏覽器原生事件的 wrapper。它和瀏覽器原生事件有相同的介面，包含 <code>stopPropagation()</code> 和 <code>preventDefault()</code>，除了原生事件在所有的瀏覽器都以相同的方式運作這點以外。</p>
-        <p>如果你發現因為某些原因你需要使用瀏覽器的底層事件，你只需要使用 <code>nativeEvent</code> 這個 attribute 即可。Synthetic event 不同於瀏覽器的 native event 並不會直接 mapping，例如在 <code>onMouseLeave</code> <code>event.nativeEvent</code> 將會指向到 <code>mouseout</code> event。特定 mapping 不是公開 API 的一部分，並且可以隨時更改。每個 <code>SyntheticEvent</code> object 都有下列的 attribute：</p>
-        <pre class="language-javascript"><code class="language-javascript">boolean bubbles
+<!doctypehtml><html lang="zh-hant"><meta charset="utf-8"><title>SyntheticEvent</title><meta name="viewport"content="width=device-width,initial-scale=1"><link rel="stylesheet"href="https://raw.githubusercontent.com/shinokada/prism-coy-theme/main/theme_common.css"><section id="syntheticevent"class="level1"><h1>SyntheticEvent</h1><p>這份參考指南紀錄了 <code>SyntheticEvent</code> 這個形成 React 事件系統的 wrapper。想了解更多，請參考<a href="./handling-events.html">事件處理</a>。<section id="overview"class="level2"><h2>概觀</h2><p>你的 event handler 將會是 <code>SyntheticEvent</code> 被傳遞的 instance，它是一個跨瀏覽器的、瀏覽器原生事件的 wrapper。它和瀏覽器原生事件有相同的介面，包含 <code>stopPropagation()</code> 和 <code>preventDefault()</code>，除了原生事件在所有的瀏覽器都以相同的方式運作這點以外。<p>如果你發現因為某些原因你需要使用瀏覽器的底層事件，你只需要使用 <code>nativeEvent</code> 這個 attribute 即可。Synthetic event 不同於瀏覽器的 native event 並不會直接 mapping，例如在 <code>onMouseLeave</code> <code>event.nativeEvent</code> 將會指向到 <code>mouseout</code> event。特定 mapping 不是公開 API 的一部分，並且可以隨時更改。每個 <code>SyntheticEvent</code> object 都有下列的 attribute：<pre class="language-javascript"><code class="language-javascript">boolean bubbles
 boolean cancelable
 <span class="token maybe-class-name">DOMEventTarget</span> currentTarget
 boolean defaultPrevented
@@ -28,66 +12,8 @@ boolean <span class="token function">isPropagationStopped</span><span class="tok
 <span class="token keyword">void</span> <span class="token function">persist</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
 <span class="token maybe-class-name">DOMEventTarget</span> target
 number timeStamp
-string type</code></pre>
-        <blockquote>
-          <p>注意：</p>
-          <p>從 v17 開始，<code>e.persist()</code> 將不會再有任何作用，因為 <code>SyntheticEvent</code> 已不再被 <a href="./legacy-event-pooling.html">pool</a> 了。</p>
-        </blockquote>
-        <blockquote>
-          <p>注意：</p>
-          <p>截至 v0.14 為止，從 event handler 回傳 <code>false</code> 並不會停止事件冒泡（event propagation）。因此你可以視情況手寫觸發 <code>e.stopPropagation()</code> 或 <code>e.preventDefault()</code>。</p>
-        </blockquote>
-      </section>
-      <section id="supported-events" class="level2">
-        <h2>支援的事件</h2>
-        <p>React 將事件規格化，已讓它們在不同的瀏覽器中有ㄧ致的屬性。</p>
-        <p>以下的 event handler 會在冒泡階段時被一個事件觸發。如果你想註冊捕獲階段的 event handler，請在事件名稱的後面加上 <code>Capture</code>。例如，假設你想在捕獲階段捕捉 click 事件的話，你需要用 <code>onClickCapture</code> 而不是 <code>onClick</code>：</p>
-        <ul>
-          <li><a href="#clipboard-events">Clipboard Events</a></li>
-          <li><a href="#composition-events">Composition Events</a></li>
-          <li><a href="#keyboard-events">Keyboard Events</a></li>
-          <li><a href="#focus-events">Focus Events</a></li>
-          <li><a href="#form-events">Form Events</a></li>
-          <li><a href="#generic-events">Generic Events</a></li>
-          <li><a href="#mouse-events">Mouse Events</a></li>
-          <li><a href="#pointer-events">Pointer Events</a></li>
-          <li><a href="#selection-events">Selection Events</a></li>
-          <li><a href="#touch-events">Touch Events</a></li>
-          <li><a href="#ui-events">UI Events</a></li>
-          <li><a href="#wheel-events">Wheel Events</a></li>
-          <li><a href="#media-events">Media Events</a></li>
-          <li><a href="#image-events">Image Events</a></li>
-          <li><a href="#animation-events">Animation Events</a></li>
-          <li><a href="#transition-events">Transition Events</a></li>
-          <li><a href="#other-events">Other Events</a></li>
-        </ul>
-        <hr>
-      </section>
-      <section id="reference" class="level2">
-        <h2>參考</h2>
-        <section id="clipboard-events" class="level3">
-          <h3>剪貼板事件</h3>
-          <p>事件名稱：</p>
-          <pre class="language-text"><code class="language-text">onCopy onCut onPaste</code></pre>
-          <p>屬性：</p>
-          <pre class="language-javascript"><code class="language-javascript"><span class="token maybe-class-name">DOMDataTransfer</span> clipboardData</code></pre>
-          <hr>
-        </section>
-        <section id="composition-events" class="level3">
-          <h3>組合事件</h3>
-          <p>事件名稱：</p>
-          <pre class="language-text"><code class="language-text">onCompositionEnd onCompositionStart onCompositionUpdate</code></pre>
-          <p>屬性：</p>
-          <pre class="language-javascript"><code class="language-javascript">string data
-</code></pre>
-          <hr>
-        </section>
-        <section id="keyboard-events" class="level3">
-          <h3>鍵盤事件</h3>
-          <p>事件名稱：</p>
-          <pre class="language-text"><code class="language-text">onKeyDown onKeyPress onKeyUp</code></pre>
-          <p>屬性：</p>
-          <pre class="language-javascript"><code class="language-javascript">boolean altKey
+string type</code></pre><blockquote><p>注意：<p>從 v17 開始，<code>e.persist()</code> 將不會再有任何作用，因為 <code>SyntheticEvent</code> 已不再被 <a href="./legacy-event-pooling.html">pool</a> 了。</blockquote><blockquote><p>注意：<p>截至 v0.14 為止，從 event handler 回傳 <code>false</code> 並不會停止事件冒泡（event propagation）。因此你可以視情況手寫觸發 <code>e.stopPropagation()</code> 或 <code>e.preventDefault()</code>。</blockquote></section><section id="supported-events"class="level2"><h2>支援的事件</h2><p>React 將事件規格化，已讓它們在不同的瀏覽器中有ㄧ致的屬性。<p>以下的 event handler 會在冒泡階段時被一個事件觸發。如果你想註冊捕獲階段的 event handler，請在事件名稱的後面加上 <code>Capture</code>。例如，假設你想在捕獲階段捕捉 click 事件的話，你需要用 <code>onClickCapture</code> 而不是 <code>onClick</code>：<ul><li><a href="#clipboard-events">Clipboard Events</a><li><a href="#composition-events">Composition Events</a><li><a href="#keyboard-events">Keyboard Events</a><li><a href="#focus-events">Focus Events</a><li><a href="#form-events">Form Events</a><li><a href="#generic-events">Generic Events</a><li><a href="#mouse-events">Mouse Events</a><li><a href="#pointer-events">Pointer Events</a><li><a href="#selection-events">Selection Events</a><li><a href="#touch-events">Touch Events</a><li><a href="#ui-events">UI Events</a><li><a href="#wheel-events">Wheel Events</a><li><a href="#media-events">Media Events</a><li><a href="#image-events">Image Events</a><li><a href="#animation-events">Animation Events</a><li><a href="#transition-events">Transition Events</a><li><a href="#other-events">Other Events</a></ul><hr></section><section id="reference"class="level2"><h2>參考</h2><section id="clipboard-events"class="level3"><h3>剪貼板事件</h3><p>事件名稱：<pre class="language-text"><code class="language-text">onCopy onCut onPaste</code></pre><p>屬性：<pre class="language-javascript"><code class="language-javascript"><span class="token maybe-class-name">DOMDataTransfer</span> clipboardData</code></pre><hr></section><section id="composition-events"class="level3"><h3>組合事件</h3><p>事件名稱：<pre class="language-text"><code class="language-text">onCompositionEnd onCompositionStart onCompositionUpdate</code></pre><p>屬性：<pre class="language-javascript"><code class="language-javascript">string data
+</code></pre><hr></section><section id="keyboard-events"class="level3"><h3>鍵盤事件</h3><p>事件名稱：<pre class="language-text"><code class="language-text">onKeyDown onKeyPress onKeyUp</code></pre><p>屬性：<pre class="language-javascript"><code class="language-javascript">boolean altKey
 number charCode
 boolean ctrlKey
 boolean <span class="token function">getModifierState</span><span class="token punctuation">(</span>key<span class="token punctuation">)</span>
@@ -98,21 +24,7 @@ number <span class="token dom variable">location</span>
 boolean metaKey
 boolean repeat
 boolean shiftKey
-number which</code></pre>
-          <p><code>key</code> 屬性可以接受 <a href="https://www.w3.org/TR/uievents-key/#named-key-attribute-values">DOM Level 3 Events spec</a> 內記錄的任意值。</p>
-          <hr>
-        </section>
-        <section id="focus-events" class="level3">
-          <h3>焦點事件</h3>
-          <p>事件名稱：</p>
-          <pre class="language-text"><code class="language-text">onFocus onBlur</code></pre>
-          <p>這些焦點事件在 React DOM 中所有的 element 上都可以使用，不限於表單 element。</p>
-          <p>屬性：</p>
-          <pre class="language-js"><code class="language-js"><span class="token maybe-class-name">DOMEventTarget</span> relatedTarget</code></pre>
-          <section id="onfocus" class="level4">
-            <h4>onFocus</h4>
-            <p>當 element（或是 element 裡面的 element）受到 focus 時，<code>onFocus</code> 事件會被呼叫。例如，下方的 <code>onFocus</code> 事件會在當使用者點擊一個文字輸入時觸發。</p>
-            <pre class="language-javascript"><code class="language-javascript"><span class="token keyword">function</span> <span class="token function"><span class="token maybe-class-name">Example</span></span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+number which</code></pre><p><code>key</code> 屬性可以接受 <a href="https://www.w3.org/TR/uievents-key/#named-key-attribute-values">DOM Level 3 Events spec</a> 內記錄的任意值。<hr></section><section id="focus-events"class="level3"><h3>焦點事件</h3><p>事件名稱：<pre class="language-text"><code class="language-text">onFocus onBlur</code></pre><p>這些焦點事件在 React DOM 中所有的 element 上都可以使用，不限於表單 element。<p>屬性：<pre class="language-js"><code class="language-js"><span class="token maybe-class-name">DOMEventTarget</span> relatedTarget</code></pre><section id="onfocus"class="level4"><h4>onFocus</h4><p>當 element（或是 element 裡面的 element）受到 focus 時，<code>onFocus</code> 事件會被呼叫。例如，下方的 <code>onFocus</code> 事件會在當使用者點擊一個文字輸入時觸發。<pre class="language-javascript"><code class="language-javascript"><span class="token keyword">function</span> <span class="token function"><span class="token maybe-class-name">Example</span></span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
   <span class="token keyword control-flow">return</span> <span class="token punctuation">(</span>
     <span class="token operator">&#x3C;</span>input
       onFocus<span class="token operator">=</span><span class="token punctuation">{</span><span class="token punctuation">(</span><span class="token parameter">e</span><span class="token punctuation">)</span> <span class="token arrow operator">=></span> <span class="token punctuation">{</span>
@@ -121,12 +33,7 @@ number which</code></pre>
       placeholder<span class="token operator">=</span><span class="token string">"onFocus is triggered when you click this input."</span>
     <span class="token operator">/</span><span class="token operator">></span>
   <span class="token punctuation">)</span>
-<span class="token punctuation">}</span></code></pre>
-          </section>
-          <section id="onblur" class="level4">
-            <h4>onBlur</h4>
-            <p>The <code>onBlur</code> event handler is called when focus has left the element (or left some element inside of it). For example, it's called when the user clicks outside of a focused text input.</p>
-            <pre class="language-javascript"><code class="language-javascript"><span class="token keyword">function</span> <span class="token function"><span class="token maybe-class-name">Example</span></span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+<span class="token punctuation">}</span></code></pre></section><section id="onblur"class="level4"><h4>onBlur</h4><p>The <code>onBlur</code> event handler is called when focus has left the element (or left some element inside of it). For example, it's called when the user clicks outside of a focused text input.<pre class="language-javascript"><code class="language-javascript"><span class="token keyword">function</span> <span class="token function"><span class="token maybe-class-name">Example</span></span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
   <span class="token keyword control-flow">return</span> <span class="token punctuation">(</span>
     <span class="token operator">&#x3C;</span>input
       onBlur<span class="token operator">=</span><span class="token punctuation">{</span><span class="token punctuation">(</span><span class="token parameter">e</span><span class="token punctuation">)</span> <span class="token arrow operator">=></span> <span class="token punctuation">{</span>
@@ -135,12 +42,7 @@ number which</code></pre>
       placeholder<span class="token operator">=</span><span class="token string">"onBlur is triggered when you click this input and then you click outside of it."</span>
     <span class="token operator">/</span><span class="token operator">></span>
   <span class="token punctuation">)</span>
-<span class="token punctuation">}</span></code></pre>
-          </section>
-          <section id="detecting-focus-entering-and-leaving" class="level4">
-            <h4>Detecting Focus Entering and Leaving</h4>
-            <p>You can use the <code>currentTarget</code> and <code>relatedTarget</code> to differentiate if the focusing or blurring events originated from <em>outside</em> of the parent element. Here is a demo you can copy and paste that shows how to detect focusing a child, focusing the element itself, and focus entering or leaving the whole subtree.</p>
-            <pre class="language-javascript"><code class="language-javascript"><span class="token keyword">function</span> <span class="token function"><span class="token maybe-class-name">Example</span></span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+<span class="token punctuation">}</span></code></pre></section><section id="detecting-focus-entering-and-leaving"class="level4"><h4>Detecting Focus Entering and Leaving</h4><p>You can use the <code>currentTarget</code> and <code>relatedTarget</code> to differentiate if the focusing or blurring events originated from <em>outside</em> of the parent element. Here is a demo you can copy and paste that shows how to detect focusing a child, focusing the element itself, and focus entering or leaving the whole subtree.<pre class="language-javascript"><code class="language-javascript"><span class="token keyword">function</span> <span class="token function"><span class="token maybe-class-name">Example</span></span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
   <span class="token keyword control-flow">return</span> <span class="token punctuation">(</span>
     <span class="token operator">&#x3C;</span>div
       tabIndex<span class="token operator">=</span><span class="token punctuation">{</span><span class="token number">1</span><span class="token punctuation">}</span>
@@ -171,32 +73,9 @@ number which</code></pre>
       <span class="token operator">&#x3C;</span>input id<span class="token operator">=</span><span class="token string">"2"</span> <span class="token operator">/</span><span class="token operator">></span>
     <span class="token operator">&#x3C;</span><span class="token operator">/</span>div<span class="token operator">></span>
   <span class="token punctuation">)</span><span class="token punctuation">;</span>
-<span class="token punctuation">}</span></code></pre>
-            <hr>
-          </section>
-        </section>
-        <section id="form-events" class="level3">
-          <h3>表單事件</h3>
-          <p>事件名稱：</p>
-          <pre class="language-text"><code class="language-text">onChange onInput onInvalid onReset onSubmit</code></pre>
-          <p>想了解關於 onChange 事件的資訊，請參考<a href="./forms.html">表單</a>。</p>
-          <hr>
-        </section>
-        <section id="generic-events" class="level3">
-          <h3>Generic 事件</h3>
-          <p>事件名稱：</p>
-          <pre class="language-text"><code class="language-text">onError onLoad</code></pre>
-          <hr>
-        </section>
-        <section id="mouse-events" class="level3">
-          <h3>滑鼠事件</h3>
-          <p>事件名稱：</p>
-          <pre class="language-text"><code class="language-text">onClick onContextMenu onDoubleClick onDrag onDragEnd onDragEnter onDragExit
+<span class="token punctuation">}</span></code></pre><hr></section></section><section id="form-events"class="level3"><h3>表單事件</h3><p>事件名稱：<pre class="language-text"><code class="language-text">onChange onInput onInvalid onReset onSubmit</code></pre><p>想了解關於 onChange 事件的資訊，請參考<a href="./forms.html">表單</a>。<hr></section><section id="generic-events"class="level3"><h3>Generic 事件</h3><p>事件名稱：<pre class="language-text"><code class="language-text">onError onLoad</code></pre><hr></section><section id="mouse-events"class="level3"><h3>滑鼠事件</h3><p>事件名稱：<pre class="language-text"><code class="language-text">onClick onContextMenu onDoubleClick onDrag onDragEnd onDragEnter onDragExit
 onDragLeave onDragOver onDragStart onDrop onMouseDown onMouseEnter onMouseLeave
-onMouseMove onMouseOut onMouseOver onMouseUp</code></pre>
-          <p><code>onMouseEnter</code> 和 <code>onMouseLeave</code> 事件從離開的 element 向正在進入的 element 傳播，而不是正常的冒泡，也沒有捕獲階段。</p>
-          <p>屬性：</p>
-          <pre class="language-javascript"><code class="language-javascript">boolean altKey
+onMouseMove onMouseOut onMouseOver onMouseUp</code></pre><p><code>onMouseEnter</code> 和 <code>onMouseLeave</code> 事件從離開的 element 向正在進入的 element 傳播，而不是正常的冒泡，也沒有捕獲階段。<p>屬性：<pre class="language-javascript"><code class="language-javascript">boolean altKey
 number button
 number buttons
 number clientX
@@ -209,18 +88,8 @@ number pageY
 <span class="token maybe-class-name">DOMEventTarget</span> relatedTarget
 number screenX
 number screenY
-boolean shiftKey</code></pre>
-          <hr>
-        </section>
-        <section id="pointer-events" class="level3">
-          <h3>指標事件</h3>
-          <p>事件名稱：</p>
-          <pre class="language-text"><code class="language-text">onPointerDown onPointerMove onPointerUp onPointerCancel onGotPointerCapture
-onLostPointerCapture onPointerEnter onPointerLeave onPointerOver onPointerOut</code></pre>
-          <p><code>onPointerEnter</code> 和 <code>onPointerLeave</code> 事件從離開的 element 向正在進入的 element 傳播，而不是正常的冒泡，也沒有捕獲階段。</p>
-          <p>屬性：</p>
-          <p>如同在 <a href="https://www.w3.org/TR/pointerevents/">W3 spec</a> 內定義的，指標事件是<a href="#mouse-events">滑鼠事件</a>的延伸，並帶有以下屬性：</p>
-          <pre class="language-javascript"><code class="language-javascript">number pointerId
+boolean shiftKey</code></pre><hr></section><section id="pointer-events"class="level3"><h3>指標事件</h3><p>事件名稱：<pre class="language-text"><code class="language-text">onPointerDown onPointerMove onPointerUp onPointerCancel onGotPointerCapture
+onLostPointerCapture onPointerEnter onPointerLeave onPointerOver onPointerOut</code></pre><p><code>onPointerEnter</code> 和 <code>onPointerLeave</code> 事件從離開的 element 向正在進入的 element 傳播，而不是正常的冒泡，也沒有捕獲階段。<p>屬性：<p>如同在 <a href="https://www.w3.org/TR/pointerevents/">W3 spec</a> 內定義的，指標事件是<a href="#mouse-events">滑鼠事件</a>的延伸，並帶有以下屬性：<pre class="language-javascript"><code class="language-javascript">number pointerId
 number width
 number height
 number pressure
@@ -229,99 +98,22 @@ number tiltX
 number tiltY
 number twist
 string pointerType
-boolean isPrimary</code></pre>
-          <p>關於跨瀏覽器支援的說明：</p>
-          <p>目前為止，並非所有的瀏覽器都支援指標事件（在這篇文章撰寫的時候，支援該事件的瀏覽器有：Chrome、Firefox、Edge 以及 Internet Explorer）。React 刻意不通過 polyfill 的方式支援其他瀏覽器，因為符合標準的 polyfill 會明顯地增加 <code>react-dom</code> 的 bundle 大小。</p>
-          <p>如果你的應用程式需要指標事件，我們建議你加上第三方的指針事件 polyfill。</p>
-          <hr>
-        </section>
-        <section id="selection-events" class="level3">
-          <h3>選擇事件</h3>
-          <p>事件名稱：</p>
-          <pre class="language-text"><code class="language-text">onSelect</code></pre>
-          <hr>
-        </section>
-        <section id="touch-events" class="level3">
-          <h3>觸摸事件</h3>
-          <p>事件名稱：</p>
-          <pre class="language-text"><code class="language-text">onTouchCancel onTouchEnd onTouchMove onTouchStart</code></pre>
-          <p>屬性：</p>
-          <pre class="language-javascript"><code class="language-javascript">boolean altKey
+boolean isPrimary</code></pre><p>關於跨瀏覽器支援的說明：<p>目前為止，並非所有的瀏覽器都支援指標事件（在這篇文章撰寫的時候，支援該事件的瀏覽器有：Chrome、Firefox、Edge 以及 Internet Explorer）。React 刻意不通過 polyfill 的方式支援其他瀏覽器，因為符合標準的 polyfill 會明顯地增加 <code>react-dom</code> 的 bundle 大小。<p>如果你的應用程式需要指標事件，我們建議你加上第三方的指針事件 polyfill。<hr></section><section id="selection-events"class="level3"><h3>選擇事件</h3><p>事件名稱：<pre class="language-text"><code class="language-text">onSelect</code></pre><hr></section><section id="touch-events"class="level3"><h3>觸摸事件</h3><p>事件名稱：<pre class="language-text"><code class="language-text">onTouchCancel onTouchEnd onTouchMove onTouchStart</code></pre><p>屬性：<pre class="language-javascript"><code class="language-javascript">boolean altKey
 <span class="token maybe-class-name">DOMTouchList</span> changedTouches
 boolean ctrlKey
 boolean <span class="token function">getModifierState</span><span class="token punctuation">(</span>key<span class="token punctuation">)</span>
 boolean metaKey
 boolean shiftKey
 <span class="token maybe-class-name">DOMTouchList</span> targetTouches
-<span class="token maybe-class-name">DOMTouchList</span> touches</code></pre>
-          <hr>
-        </section>
-        <section id="ui-events" class="level3">
-          <h3>UI 事件</h3>
-          <p>事件名稱：</p>
-          <pre class="language-text"><code class="language-text">onScroll</code></pre>
-          <blockquote>
-            <p>注意：</p>
-            <p>從 React 17 開始，<code>onScroll</code> 事件就不是冒泡了，這與瀏覽器的行為相符，並且避免了當巢狀滾動元件觸發事件時，在遠處 parent 元件上的混亂現象。</p>
-          </blockquote>
-          <p>屬性：</p>
-          <pre class="language-javascript"><code class="language-javascript">number detail
-<span class="token maybe-class-name">DOMAbstractView</span> view</code></pre>
-          <hr>
-        </section>
-        <section id="wheel-events" class="level3">
-          <h3>滾輪事件</h3>
-          <p>事件名稱：</p>
-          <pre class="language-text"><code class="language-text">onWheel</code></pre>
-          <p>屬性：</p>
-          <pre class="language-javascript"><code class="language-javascript">number deltaMode
+<span class="token maybe-class-name">DOMTouchList</span> touches</code></pre><hr></section><section id="ui-events"class="level3"><h3>UI 事件</h3><p>事件名稱：<pre class="language-text"><code class="language-text">onScroll</code></pre><blockquote><p>注意：<p>從 React 17 開始，<code>onScroll</code> 事件就不是冒泡了，這與瀏覽器的行為相符，並且避免了當巢狀滾動元件觸發事件時，在遠處 parent 元件上的混亂現象。</blockquote><p>屬性：<pre class="language-javascript"><code class="language-javascript">number detail
+<span class="token maybe-class-name">DOMAbstractView</span> view</code></pre><hr></section><section id="wheel-events"class="level3"><h3>滾輪事件</h3><p>事件名稱：<pre class="language-text"><code class="language-text">onWheel</code></pre><p>屬性：<pre class="language-javascript"><code class="language-javascript">number deltaMode
 number deltaX
 number deltaY
-number deltaZ</code></pre>
-          <hr>
-        </section>
-        <section id="media-events" class="level3">
-          <h3>媒體事件</h3>
-          <p>事件名稱：</p>
-          <pre class="language-text"><code class="language-text">onAbort onCanPlay onCanPlayThrough onDurationChange onEmptied onEncrypted
+number deltaZ</code></pre><hr></section><section id="media-events"class="level3"><h3>媒體事件</h3><p>事件名稱：<pre class="language-text"><code class="language-text">onAbort onCanPlay onCanPlayThrough onDurationChange onEmptied onEncrypted
 onEnded onError onLoadedData onLoadedMetadata onLoadStart onPause onPlay
 onPlaying onProgress onRateChange onSeeked onSeeking onStalled onSuspend
-onTimeUpdate onVolumeChange onWaiting</code></pre>
-          <hr>
-        </section>
-        <section id="image-events" class="level3">
-          <h3>圖片事件</h3>
-          <p>事件名稱：</p>
-          <pre class="language-text"><code class="language-text">onLoad onError</code></pre>
-          <hr>
-        </section>
-        <section id="animation-events" class="level3">
-          <h3>動畫事件</h3>
-          <p>事件名稱：</p>
-          <pre class="language-text"><code class="language-text">onAnimationStart onAnimationEnd onAnimationIteration</code></pre>
-          <p>屬性：</p>
-          <pre class="language-javascript"><code class="language-javascript">string animationName
+onTimeUpdate onVolumeChange onWaiting</code></pre><hr></section><section id="image-events"class="level3"><h3>圖片事件</h3><p>事件名稱：<pre class="language-text"><code class="language-text">onLoad onError</code></pre><hr></section><section id="animation-events"class="level3"><h3>動畫事件</h3><p>事件名稱：<pre class="language-text"><code class="language-text">onAnimationStart onAnimationEnd onAnimationIteration</code></pre><p>屬性：<pre class="language-javascript"><code class="language-javascript">string animationName
 string pseudoElement
-float elapsedTime</code></pre>
-          <hr>
-        </section>
-        <section id="transition-events" class="level3">
-          <h3>過渡事件</h3>
-          <p>事件名稱：</p>
-          <pre class="language-text"><code class="language-text">onTransitionEnd</code></pre>
-          <p>屬性：</p>
-          <pre class="language-javascript"><code class="language-javascript">string propertyName
+float elapsedTime</code></pre><hr></section><section id="transition-events"class="level3"><h3>過渡事件</h3><p>事件名稱：<pre class="language-text"><code class="language-text">onTransitionEnd</code></pre><p>屬性：<pre class="language-javascript"><code class="language-javascript">string propertyName
 string pseudoElement
-float elapsedTime</code></pre>
-          <hr>
-        </section>
-        <section id="other-events" class="level3">
-          <h3>其他事件</h3>
-          <p>事件名稱：</p>
-          <pre class="language-text"><code class="language-text">onToggle</code></pre>
-          <p><span style="float: footnote;"><a href="./index.html#toc">Go to TOC</a></span></p>
-        </section>
-      </section>
-    </section>
-  </body>
-</html>
+float elapsedTime</code></pre><hr></section><section id="other-events"class="level3"><h3>其他事件</h3><p>事件名稱：<pre class="language-text"><code class="language-text">onToggle</code></pre><p><span style="float:footnote"><a href="./index.html#toc">Go to TOC</a></span></section></section></section>

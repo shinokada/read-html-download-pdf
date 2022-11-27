@@ -1,20 +1,4 @@
-<!doctype html>
-<html lang="ja">
-  <head>
-    <meta charset="utf-8">
-    <title>合成イベント (SyntheticEvent)</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <link rel="stylesheet" href="https://raw.githubusercontent.com/shinokada/prism-coy-theme/main/theme_common.css">
-  </head>
-  <body>
-    <section id="合成イベント-syntheticevent" class="level1">
-      <h1>合成イベント (SyntheticEvent)</h1>
-      <p>このリファレンスガイドでは、React のイベントシステムの一部を構成する <code>SyntheticEvent</code>（合成イベント）ラッパについて説明します。詳細については、<a href="./handling-events.html">イベント処理</a>ガイドを参照してください。</p>
-      <section id="overview" class="level2">
-        <h2>概要</h2>
-        <p>イベントハンドラには、<code>SyntheticEvent</code> のインスタンスが渡されます。これはブラウザのネイティブイベントに対するクロスブラウザ版のラッパです。<code>stopPropagation()</code> と <code>preventDefault()</code> を含む、ブラウザのネイティブイベントと同じインターフェイスを持ちつつ、ブラウザ間で同じ挙動をするようになっています。</p>
-        <p>何らかの理由で実際のブラウザイベントが必要な場合は、単に <code>nativeEvent</code> 属性を使用するだけで取得できます。合成イベントはブラウザのネイティブイベントとは別物であり、直接の対応があるわけでもありません。例えば <code>onMouseLeave</code> イベントの場合、<code>event.nativeEvent</code> は <code>mouseout</code> イベントになっています。個々の対応については公開 API の範疇ではなく、常に変わる可能性があります。すべての <code>SyntheticEvent</code> オブジェクトは以下の属性を持っています。</p>
-        <pre class="language-javascript"><code class="language-javascript">boolean bubbles
+<!doctypehtml><html lang="ja"><meta charset="utf-8"><title>合成イベント (SyntheticEvent)</title><meta name="viewport"content="width=device-width,initial-scale=1"><link rel="stylesheet"href="https://raw.githubusercontent.com/shinokada/prism-coy-theme/main/theme_common.css"><section id="合成イベント-syntheticevent"class="level1"><h1>合成イベント (SyntheticEvent)</h1><p>このリファレンスガイドでは、React のイベントシステムの一部を構成する <code>SyntheticEvent</code>（合成イベント）ラッパについて説明します。詳細については、<a href="./handling-events.html">イベント処理</a>ガイドを参照してください。<section id="overview"class="level2"><h2>概要</h2><p>イベントハンドラには、<code>SyntheticEvent</code> のインスタンスが渡されます。これはブラウザのネイティブイベントに対するクロスブラウザ版のラッパです。<code>stopPropagation()</code> と <code>preventDefault()</code> を含む、ブラウザのネイティブイベントと同じインターフェイスを持ちつつ、ブラウザ間で同じ挙動をするようになっています。<p>何らかの理由で実際のブラウザイベントが必要な場合は、単に <code>nativeEvent</code> 属性を使用するだけで取得できます。合成イベントはブラウザのネイティブイベントとは別物であり、直接の対応があるわけでもありません。例えば <code>onMouseLeave</code> イベントの場合、<code>event.nativeEvent</code> は <code>mouseout</code> イベントになっています。個々の対応については公開 API の範疇ではなく、常に変わる可能性があります。すべての <code>SyntheticEvent</code> オブジェクトは以下の属性を持っています。<pre class="language-javascript"><code class="language-javascript">boolean bubbles
 boolean cancelable
 <span class="token maybe-class-name">DOMEventTarget</span> currentTarget
 boolean defaultPrevented
@@ -28,66 +12,8 @@ boolean <span class="token function">isPropagationStopped</span><span class="tok
 <span class="token keyword">void</span> <span class="token function">persist</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
 <span class="token maybe-class-name">DOMEventTarget</span> target
 number timeStamp
-string type</code></pre>
-        <blockquote>
-          <p>補足</p>
-          <p>v17 以降、<code>SyntheticEvent</code> は<a href="./legacy-event-pooling.html">プーリング</a>されなくなったため、<code>e.persist()</code> は何も行わなくなります。</p>
-        </blockquote>
-        <blockquote>
-          <p>補足</p>
-          <p>v0.14 以降、イベントハンドラから <code>false</code> を返してもイベントの伝播は止まりません。代わりに、<code>e.stopPropagation()</code> または <code>e.preventDefault()</code> を手動で呼び出す必要があります。</p>
-        </blockquote>
-      </section>
-      <section id="supported-events" class="level2">
-        <h2>サポートするイベント</h2>
-        <p>React は異なるブラウザ間でも一貫したプロパティを持つようにイベントを正規化します。</p>
-        <p>以下のイベントハンドラはイベント伝搬のバブリングフェーズで呼び出されます。キャプチャフェーズのイベントハンドラを登録するには、イベント名に <code>Capture</code> を追加します。たとえば、キャプチャフェーズでクリックイベントを処理するには <code>onClick</code> の代わりに <code>onClickCapture</code> を使用します。</p>
-        <ul>
-          <li><a href="#clipboard-events">クリップボードイベント</a></li>
-          <li><a href="#composition-events">コンポジションイベント</a></li>
-          <li><a href="#keyboard-events">キーボードイベント</a></li>
-          <li><a href="#focus-events">フォーカスイベント</a></li>
-          <li><a href="#form-events">フォームイベント</a></li>
-          <li><a href="#generic-events">汎用イベント</a></li>
-          <li><a href="#mouse-events">マウスイベント</a></li>
-          <li><a href="#pointer-events">ポインタイベント</a></li>
-          <li><a href="#selection-events">選択イベント</a></li>
-          <li><a href="#touch-events">タッチイベント</a></li>
-          <li><a href="#ui-events">UI イベント</a></li>
-          <li><a href="#wheel-events">ホイールイベント</a></li>
-          <li><a href="#media-events">メディアイベント</a></li>
-          <li><a href="#image-events">画像イベント</a></li>
-          <li><a href="#animation-events">アニメーションイベント</a></li>
-          <li><a href="#transition-events">遷移イベント</a></li>
-          <li><a href="#other-events">その他のイベント</a></li>
-        </ul>
-        <hr>
-      </section>
-      <section id="reference" class="level2">
-        <h2>リファレンス</h2>
-        <section id="clipboard-events" class="level3">
-          <h3>クリップボードイベント</h3>
-          <p>イベント名：</p>
-          <pre class="language-text"><code class="language-text">onCopy onCut onPaste</code></pre>
-          <p>プロパティ：</p>
-          <pre class="language-javascript"><code class="language-javascript"><span class="token maybe-class-name">DOMDataTransfer</span> clipboardData</code></pre>
-          <hr>
-        </section>
-        <section id="composition-events" class="level3">
-          <h3>コンポジションイベント</h3>
-          <p>イベント名：</p>
-          <pre class="language-text"><code class="language-text">onCompositionEnd onCompositionStart onCompositionUpdate</code></pre>
-          <p>プロパティ：</p>
-          <pre class="language-javascript"><code class="language-javascript">string data
-</code></pre>
-          <hr>
-        </section>
-        <section id="keyboard-events" class="level3">
-          <h3>キーボードイベント</h3>
-          <p>イベント名：</p>
-          <pre class="language-text"><code class="language-text">onKeyDown onKeyPress onKeyUp</code></pre>
-          <p>プロパティ：</p>
-          <pre class="language-javascript"><code class="language-javascript">boolean altKey
+string type</code></pre><blockquote><p>補足<p>v17 以降、<code>SyntheticEvent</code> は<a href="./legacy-event-pooling.html">プーリング</a>されなくなったため、<code>e.persist()</code> は何も行わなくなります。</blockquote><blockquote><p>補足<p>v0.14 以降、イベントハンドラから <code>false</code> を返してもイベントの伝播は止まりません。代わりに、<code>e.stopPropagation()</code> または <code>e.preventDefault()</code> を手動で呼び出す必要があります。</blockquote></section><section id="supported-events"class="level2"><h2>サポートするイベント</h2><p>React は異なるブラウザ間でも一貫したプロパティを持つようにイベントを正規化します。<p>以下のイベントハンドラはイベント伝搬のバブリングフェーズで呼び出されます。キャプチャフェーズのイベントハンドラを登録するには、イベント名に <code>Capture</code> を追加します。たとえば、キャプチャフェーズでクリックイベントを処理するには <code>onClick</code> の代わりに <code>onClickCapture</code> を使用します。<ul><li><a href="#clipboard-events">クリップボードイベント</a><li><a href="#composition-events">コンポジションイベント</a><li><a href="#keyboard-events">キーボードイベント</a><li><a href="#focus-events">フォーカスイベント</a><li><a href="#form-events">フォームイベント</a><li><a href="#generic-events">汎用イベント</a><li><a href="#mouse-events">マウスイベント</a><li><a href="#pointer-events">ポインタイベント</a><li><a href="#selection-events">選択イベント</a><li><a href="#touch-events">タッチイベント</a><li><a href="#ui-events">UI イベント</a><li><a href="#wheel-events">ホイールイベント</a><li><a href="#media-events">メディアイベント</a><li><a href="#image-events">画像イベント</a><li><a href="#animation-events">アニメーションイベント</a><li><a href="#transition-events">遷移イベント</a><li><a href="#other-events">その他のイベント</a></ul><hr></section><section id="reference"class="level2"><h2>リファレンス</h2><section id="clipboard-events"class="level3"><h3>クリップボードイベント</h3><p>イベント名：<pre class="language-text"><code class="language-text">onCopy onCut onPaste</code></pre><p>プロパティ：<pre class="language-javascript"><code class="language-javascript"><span class="token maybe-class-name">DOMDataTransfer</span> clipboardData</code></pre><hr></section><section id="composition-events"class="level3"><h3>コンポジションイベント</h3><p>イベント名：<pre class="language-text"><code class="language-text">onCompositionEnd onCompositionStart onCompositionUpdate</code></pre><p>プロパティ：<pre class="language-javascript"><code class="language-javascript">string data
+</code></pre><hr></section><section id="keyboard-events"class="level3"><h3>キーボードイベント</h3><p>イベント名：<pre class="language-text"><code class="language-text">onKeyDown onKeyPress onKeyUp</code></pre><p>プロパティ：<pre class="language-javascript"><code class="language-javascript">boolean altKey
 number charCode
 boolean ctrlKey
 boolean <span class="token function">getModifierState</span><span class="token punctuation">(</span>key<span class="token punctuation">)</span>
@@ -98,21 +24,7 @@ number <span class="token dom variable">location</span>
 boolean metaKey
 boolean repeat
 boolean shiftKey
-number which</code></pre>
-          <p><code>key</code> プロパティは <a href="https://www.w3.org/TR/uievents-key/#named-key-attribute-values">DOM Level 3 Events spec</a> に記載されている任意の値を取ることができます。</p>
-          <hr>
-        </section>
-        <section id="focus-events" class="level3">
-          <h3>フォーカスイベント</h3>
-          <p>イベント名：</p>
-          <pre class="language-text"><code class="language-text">onFocus onBlur</code></pre>
-          <p>これらのフォーカスイベントは、フォーム要素だけでなくすべての React DOM 要素で動作します。</p>
-          <p>プロパティ：</p>
-          <pre class="language-js"><code class="language-js"><span class="token maybe-class-name">DOMEventTarget</span> relatedTarget</code></pre>
-          <section id="onfocus" class="level4">
-            <h4>onFocus</h4>
-            <p><code>onFocus</code> イベントは要素（あるいはその内部の別の要素）がフォーカスを受け取った時に呼び出されます。例えば、ユーザがテキスト入力をクリックした際に呼び出されます。</p>
-            <pre class="language-javascript"><code class="language-javascript"><span class="token keyword">function</span> <span class="token function"><span class="token maybe-class-name">Example</span></span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+number which</code></pre><p><code>key</code> プロパティは <a href="https://www.w3.org/TR/uievents-key/#named-key-attribute-values">DOM Level 3 Events spec</a> に記載されている任意の値を取ることができます。<hr></section><section id="focus-events"class="level3"><h3>フォーカスイベント</h3><p>イベント名：<pre class="language-text"><code class="language-text">onFocus onBlur</code></pre><p>これらのフォーカスイベントは、フォーム要素だけでなくすべての React DOM 要素で動作します。<p>プロパティ：<pre class="language-js"><code class="language-js"><span class="token maybe-class-name">DOMEventTarget</span> relatedTarget</code></pre><section id="onfocus"class="level4"><h4>onFocus</h4><p><code>onFocus</code> イベントは要素（あるいはその内部の別の要素）がフォーカスを受け取った時に呼び出されます。例えば、ユーザがテキスト入力をクリックした際に呼び出されます。<pre class="language-javascript"><code class="language-javascript"><span class="token keyword">function</span> <span class="token function"><span class="token maybe-class-name">Example</span></span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
   <span class="token keyword control-flow">return</span> <span class="token punctuation">(</span>
     <span class="token operator">&#x3C;</span>input
       onFocus<span class="token operator">=</span><span class="token punctuation">{</span><span class="token punctuation">(</span><span class="token parameter">e</span><span class="token punctuation">)</span> <span class="token arrow operator">=></span> <span class="token punctuation">{</span>
@@ -121,12 +33,7 @@ number which</code></pre>
       placeholder<span class="token operator">=</span><span class="token string">"onFocus is triggered when you click this input."</span>
     <span class="token operator">/</span><span class="token operator">></span>
   <span class="token punctuation">)</span>
-<span class="token punctuation">}</span></code></pre>
-          </section>
-          <section id="onblur" class="level4">
-            <h4>onBlur</h4>
-            <p><code>onBlur</code> イベントハンドラは要素（あるいはその内部の別の要素）からフォーカスが外れた場合に呼び出されます。例えば、ユーザが既にフォーカスされているテキスト入力の外側でクリックした場合に呼び出されます。</p>
-            <pre class="language-javascript"><code class="language-javascript"><span class="token keyword">function</span> <span class="token function"><span class="token maybe-class-name">Example</span></span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+<span class="token punctuation">}</span></code></pre></section><section id="onblur"class="level4"><h4>onBlur</h4><p><code>onBlur</code> イベントハンドラは要素（あるいはその内部の別の要素）からフォーカスが外れた場合に呼び出されます。例えば、ユーザが既にフォーカスされているテキスト入力の外側でクリックした場合に呼び出されます。<pre class="language-javascript"><code class="language-javascript"><span class="token keyword">function</span> <span class="token function"><span class="token maybe-class-name">Example</span></span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
   <span class="token keyword control-flow">return</span> <span class="token punctuation">(</span>
     <span class="token operator">&#x3C;</span>input
       onBlur<span class="token operator">=</span><span class="token punctuation">{</span><span class="token punctuation">(</span><span class="token parameter">e</span><span class="token punctuation">)</span> <span class="token arrow operator">=></span> <span class="token punctuation">{</span>
@@ -135,12 +42,7 @@ number which</code></pre>
       placeholder<span class="token operator">=</span><span class="token string">"onBlur is triggered when you click this input and then you click outside of it."</span>
     <span class="token operator">/</span><span class="token operator">></span>
   <span class="token punctuation">)</span>
-<span class="token punctuation">}</span></code></pre>
-          </section>
-          <section id="detecting-focus-entering-and-leaving" class="level4">
-            <h4>フォーカスが当たった・外れたことの検出</h4>
-            <p><code>currentTarget</code> と <code>relatedTarget</code> を用いることで、フォーカスが当たった・外れた際のイベントが親要素の<em>外側</em>で起こったかどうかを判定できます。以下のコピー・ペーストで使えるデモでは、子要素のどれかへのフォーカス、要素自身へのフォーカス、サブツリー全体から出入りするフォーカスを、それぞれどのように検出するかを示しています。</p>
-            <pre class="language-javascript"><code class="language-javascript"><span class="token keyword">function</span> <span class="token function"><span class="token maybe-class-name">Example</span></span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+<span class="token punctuation">}</span></code></pre></section><section id="detecting-focus-entering-and-leaving"class="level4"><h4>フォーカスが当たった・外れたことの検出</h4><p><code>currentTarget</code> と <code>relatedTarget</code> を用いることで、フォーカスが当たった・外れた際のイベントが親要素の<em>外側</em>で起こったかどうかを判定できます。以下のコピー・ペーストで使えるデモでは、子要素のどれかへのフォーカス、要素自身へのフォーカス、サブツリー全体から出入りするフォーカスを、それぞれどのように検出するかを示しています。<pre class="language-javascript"><code class="language-javascript"><span class="token keyword">function</span> <span class="token function"><span class="token maybe-class-name">Example</span></span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
   <span class="token keyword control-flow">return</span> <span class="token punctuation">(</span>
     <span class="token operator">&#x3C;</span>div
       tabIndex<span class="token operator">=</span><span class="token punctuation">{</span><span class="token number">1</span><span class="token punctuation">}</span>
@@ -171,32 +73,9 @@ number which</code></pre>
       <span class="token operator">&#x3C;</span>input id<span class="token operator">=</span><span class="token string">"2"</span> <span class="token operator">/</span><span class="token operator">></span>
     <span class="token operator">&#x3C;</span><span class="token operator">/</span>div<span class="token operator">></span>
   <span class="token punctuation">)</span><span class="token punctuation">;</span>
-<span class="token punctuation">}</span></code></pre>
-            <hr>
-          </section>
-        </section>
-        <section id="form-events" class="level3">
-          <h3>フォームイベント</h3>
-          <p>イベント名：</p>
-          <pre class="language-text"><code class="language-text">onChange onInput onInvalid onReset onSubmit </code></pre>
-          <p>onChange イベントの詳細については、<a href="./forms.html">Forms</a> を参照してください。</p>
-          <hr>
-        </section>
-        <section id="generic-events" class="level3">
-          <h3>汎用イベント</h3>
-          <p>イベント名：</p>
-          <pre class="language-text"><code class="language-text">onError onLoad</code></pre>
-          <hr>
-        </section>
-        <section id="mouse-events" class="level3">
-          <h3>マウスイベント</h3>
-          <p>イベント名：</p>
-          <pre class="language-text"><code class="language-text">onClick onContextMenu onDoubleClick onDrag onDragEnd onDragEnter onDragExit
+<span class="token punctuation">}</span></code></pre><hr></section></section><section id="form-events"class="level3"><h3>フォームイベント</h3><p>イベント名：<pre class="language-text"><code class="language-text">onChange onInput onInvalid onReset onSubmit </code></pre><p>onChange イベントの詳細については、<a href="./forms.html">Forms</a> を参照してください。<hr></section><section id="generic-events"class="level3"><h3>汎用イベント</h3><p>イベント名：<pre class="language-text"><code class="language-text">onError onLoad</code></pre><hr></section><section id="mouse-events"class="level3"><h3>マウスイベント</h3><p>イベント名：<pre class="language-text"><code class="language-text">onClick onContextMenu onDoubleClick onDrag onDragEnd onDragEnter onDragExit
 onDragLeave onDragOver onDragStart onDrop onMouseDown onMouseEnter onMouseLeave
-onMouseMove onMouseOut onMouseOver onMouseUp</code></pre>
-          <p><code>onMouseEnter</code> と <code>onMouseLeave</code> イベントは通常のバブリングとは異なり、（ポインタが）出て行った要素から入ってきた要素に伝播し、キャプチャフェーズを持ちません。</p>
-          <p>プロパティ：</p>
-          <pre class="language-javascript"><code class="language-javascript">boolean altKey
+onMouseMove onMouseOut onMouseOver onMouseUp</code></pre><p><code>onMouseEnter</code> と <code>onMouseLeave</code> イベントは通常のバブリングとは異なり、（ポインタが）出て行った要素から入ってきた要素に伝播し、キャプチャフェーズを持ちません。<p>プロパティ：<pre class="language-javascript"><code class="language-javascript">boolean altKey
 number button
 number buttons
 number clientX
@@ -209,18 +88,8 @@ number pageY
 <span class="token maybe-class-name">DOMEventTarget</span> relatedTarget
 number screenX
 number screenY
-boolean shiftKey</code></pre>
-          <hr>
-        </section>
-        <section id="pointer-events" class="level3">
-          <h3>ポインタイベント</h3>
-          <p>イベント名：</p>
-          <pre class="language-text"><code class="language-text">onPointerDown onPointerMove onPointerUp onPointerCancel onGotPointerCapture
-onLostPointerCapture onPointerEnter onPointerLeave onPointerOver onPointerOut</code></pre>
-          <p><code>onPointerEnter</code> と <code>onPointerLeave</code> イベントは通常のバブリングとは異なり、（ポインタが）出て行った要素から入ってきた要素に伝播し、キャプチャフェーズを持ちません。</p>
-          <p>プロパティ：</p>
-          <p><a href="https://www.w3.org/TR/pointerevents/">W3 spec</a> に定義されている通り、ポインタイベントは下記のプロパティを持つマウスイベントの拡張です。</p>
-          <pre class="language-javascript"><code class="language-javascript">number pointerId
+boolean shiftKey</code></pre><hr></section><section id="pointer-events"class="level3"><h3>ポインタイベント</h3><p>イベント名：<pre class="language-text"><code class="language-text">onPointerDown onPointerMove onPointerUp onPointerCancel onGotPointerCapture
+onLostPointerCapture onPointerEnter onPointerLeave onPointerOver onPointerOut</code></pre><p><code>onPointerEnter</code> と <code>onPointerLeave</code> イベントは通常のバブリングとは異なり、（ポインタが）出て行った要素から入ってきた要素に伝播し、キャプチャフェーズを持ちません。<p>プロパティ：<p><a href="https://www.w3.org/TR/pointerevents/">W3 spec</a> に定義されている通り、ポインタイベントは下記のプロパティを持つマウスイベントの拡張です。<pre class="language-javascript"><code class="language-javascript">number pointerId
 number width
 number height
 number pressure
@@ -229,99 +98,22 @@ number tiltX
 number tiltY
 number twist
 string pointerType
-boolean isPrimary</code></pre>
-          <p>クロスブラウザサポートについての補足：</p>
-          <p>すべてのブラウザでポインタイベントがサポートされているわけではありません（この記事の執筆時点でサポートされているブラウザは、Chrome、Firefox、Edge、および Internet Explorer です）。標準に準拠したポリフィルは <code>react-dom</code> のバンドルサイズを大幅に増加させるため、React は意図的にその他ブラウザのためのポリフィルを提供しません。</p>
-          <p>アプリケーションでポインタイベントが必要な場合は、サードパーティのポインタイベントポリフィルを追加することをお勧めします。</p>
-          <hr>
-        </section>
-        <section id="selection-events" class="level3">
-          <h3>選択イベント</h3>
-          <p>イベント名：</p>
-          <pre class="language-text"><code class="language-text">onSelect</code></pre>
-          <hr>
-        </section>
-        <section id="touch-events" class="level3">
-          <h3>タッチイベント</h3>
-          <p>イベント名：</p>
-          <pre class="language-text"><code class="language-text">onTouchCancel onTouchEnd onTouchMove onTouchStart</code></pre>
-          <p>プロパティ：</p>
-          <pre class="language-javascript"><code class="language-javascript">boolean altKey
+boolean isPrimary</code></pre><p>クロスブラウザサポートについての補足：<p>すべてのブラウザでポインタイベントがサポートされているわけではありません（この記事の執筆時点でサポートされているブラウザは、Chrome、Firefox、Edge、および Internet Explorer です）。標準に準拠したポリフィルは <code>react-dom</code> のバンドルサイズを大幅に増加させるため、React は意図的にその他ブラウザのためのポリフィルを提供しません。<p>アプリケーションでポインタイベントが必要な場合は、サードパーティのポインタイベントポリフィルを追加することをお勧めします。<hr></section><section id="selection-events"class="level3"><h3>選択イベント</h3><p>イベント名：<pre class="language-text"><code class="language-text">onSelect</code></pre><hr></section><section id="touch-events"class="level3"><h3>タッチイベント</h3><p>イベント名：<pre class="language-text"><code class="language-text">onTouchCancel onTouchEnd onTouchMove onTouchStart</code></pre><p>プロパティ：<pre class="language-javascript"><code class="language-javascript">boolean altKey
 <span class="token maybe-class-name">DOMTouchList</span> changedTouches
 boolean ctrlKey
 boolean <span class="token function">getModifierState</span><span class="token punctuation">(</span>key<span class="token punctuation">)</span>
 boolean metaKey
 boolean shiftKey
 <span class="token maybe-class-name">DOMTouchList</span> targetTouches
-<span class="token maybe-class-name">DOMTouchList</span> touches</code></pre>
-          <hr>
-        </section>
-        <section id="ui-events" class="level3">
-          <h3>UI イベント</h3>
-          <p>イベント名：</p>
-          <pre class="language-text"><code class="language-text">onScroll</code></pre>
-          <blockquote>
-            <p>補足</p>
-            <p>React 17 以降、<code>onScroll</code> イベントは<strong>バブルしなく</strong>なりました。これはブラウザの挙動と合致しており、スクロール可能な要素がネストされている場合に離れた親要素に対してイベントが発火する場合に起きる混乱を回避できます。</p>
-          </blockquote>
-          <p>プロパティ：</p>
-          <pre class="language-javascript"><code class="language-javascript">number detail
-<span class="token maybe-class-name">DOMAbstractView</span> view</code></pre>
-          <hr>
-        </section>
-        <section id="wheel-events" class="level3">
-          <h3>ホイールイベント</h3>
-          <p>イベント名：</p>
-          <pre class="language-text"><code class="language-text">onWheel</code></pre>
-          <p>プロパティ：</p>
-          <pre class="language-javascript"><code class="language-javascript">number deltaMode
+<span class="token maybe-class-name">DOMTouchList</span> touches</code></pre><hr></section><section id="ui-events"class="level3"><h3>UI イベント</h3><p>イベント名：<pre class="language-text"><code class="language-text">onScroll</code></pre><blockquote><p>補足<p>React 17 以降、<code>onScroll</code> イベントは<strong>バブルしなく</strong>なりました。これはブラウザの挙動と合致しており、スクロール可能な要素がネストされている場合に離れた親要素に対してイベントが発火する場合に起きる混乱を回避できます。</blockquote><p>プロパティ：<pre class="language-javascript"><code class="language-javascript">number detail
+<span class="token maybe-class-name">DOMAbstractView</span> view</code></pre><hr></section><section id="wheel-events"class="level3"><h3>ホイールイベント</h3><p>イベント名：<pre class="language-text"><code class="language-text">onWheel</code></pre><p>プロパティ：<pre class="language-javascript"><code class="language-javascript">number deltaMode
 number deltaX
 number deltaY
-number deltaZ</code></pre>
-          <hr>
-        </section>
-        <section id="media-events" class="level3">
-          <h3>メディアイベント</h3>
-          <p>イベント名：</p>
-          <pre class="language-text"><code class="language-text">onAbort onCanPlay onCanPlayThrough onDurationChange onEmptied onEncrypted
+number deltaZ</code></pre><hr></section><section id="media-events"class="level3"><h3>メディアイベント</h3><p>イベント名：<pre class="language-text"><code class="language-text">onAbort onCanPlay onCanPlayThrough onDurationChange onEmptied onEncrypted
 onEnded onError onLoadedData onLoadedMetadata onLoadStart onPause onPlay
 onPlaying onProgress onRateChange onSeeked onSeeking onStalled onSuspend
-onTimeUpdate onVolumeChange onWaiting</code></pre>
-          <hr>
-        </section>
-        <section id="image-events" class="level3">
-          <h3>画像イベント</h3>
-          <p>イベント名：</p>
-          <pre class="language-text"><code class="language-text">onLoad onError</code></pre>
-          <hr>
-        </section>
-        <section id="animation-events" class="level3">
-          <h3>アニメーションイベント</h3>
-          <p>イベント名：</p>
-          <pre class="language-text"><code class="language-text">onAnimationStart onAnimationEnd onAnimationIteration</code></pre>
-          <p>プロパティ：</p>
-          <pre class="language-javascript"><code class="language-javascript">string animationName
+onTimeUpdate onVolumeChange onWaiting</code></pre><hr></section><section id="image-events"class="level3"><h3>画像イベント</h3><p>イベント名：<pre class="language-text"><code class="language-text">onLoad onError</code></pre><hr></section><section id="animation-events"class="level3"><h3>アニメーションイベント</h3><p>イベント名：<pre class="language-text"><code class="language-text">onAnimationStart onAnimationEnd onAnimationIteration</code></pre><p>プロパティ：<pre class="language-javascript"><code class="language-javascript">string animationName
 string pseudoElement
-float elapsedTime</code></pre>
-          <hr>
-        </section>
-        <section id="transition-events" class="level3">
-          <h3>遷移イベント</h3>
-          <p>イベント名：</p>
-          <pre class="language-text"><code class="language-text">onTransitionEnd</code></pre>
-          <p>プロパティ：</p>
-          <pre class="language-javascript"><code class="language-javascript">string propertyName
+float elapsedTime</code></pre><hr></section><section id="transition-events"class="level3"><h3>遷移イベント</h3><p>イベント名：<pre class="language-text"><code class="language-text">onTransitionEnd</code></pre><p>プロパティ：<pre class="language-javascript"><code class="language-javascript">string propertyName
 string pseudoElement
-float elapsedTime</code></pre>
-          <hr>
-        </section>
-        <section id="other-events" class="level3">
-          <h3>その他のイベント</h3>
-          <p>イベント名：</p>
-          <pre class="language-text"><code class="language-text">onToggle</code></pre>
-          <p><span style="float: footnote;"><a href="./index.html#toc">Go to TOC</a></span></p>
-        </section>
-      </section>
-    </section>
-  </body>
-</html>
+float elapsedTime</code></pre><hr></section><section id="other-events"class="level3"><h3>その他のイベント</h3><p>イベント名：<pre class="language-text"><code class="language-text">onToggle</code></pre><p><span style="float:footnote"><a href="./index.html#toc">Go to TOC</a></span></section></section></section>

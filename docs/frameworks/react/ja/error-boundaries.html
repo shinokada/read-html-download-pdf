@@ -1,31 +1,4 @@
-<!doctype html>
-<html lang="ja">
-  <head>
-    <meta charset="utf-8">
-    <title>Error Boundary</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <link rel="stylesheet" href="https://raw.githubusercontent.com/shinokada/prism-coy-theme/main/theme_common.css">
-  </head>
-  <body>
-    <section id="error-boundary" class="level1">
-      <h1>Error Boundary</h1>
-      <p>かつて、コンポーネント内で発生した JavaScript エラーは React の内部状態を破壊し、以降のレンダーで<a href="https://github.com/facebook/react/issues/4026">不可解な</a> <a href="https://github.com/facebook/react/issues/6895">エラーを</a> <a href="https://github.com/facebook/react/issues/8579">引き起こして</a>いました。このようなエラーはアプリケーションコード中のどこか前の段階で発生したエラーによって引き起こされますが、React はエラーをコンポーネント内で適切に処理する方法を提供していなかったため回復できませんでした。</p>
-      <section id="introducing-error-boundaries" class="level2">
-        <h2>error boundary とは</h2>
-        <p>UI の一部に JavaScript エラーがあってもアプリ全体が壊れてはいけません。React ユーザがこの問題に対応できるように、React 16 では “error boundary” という新しい概念を導入しました。</p>
-        <p>error boundary は<strong>自身の子コンポーネントツリーで発生した JavaScript エラーをキャッチ</strong>し、<strong>エラーを記録</strong>し、クラッシュしたコンポーネントツリーの代わりに<strong>フォールバック用の UI を表示</strong>する React コンポーネントです。error boundary は配下のツリー全体のレンダー中、ライフサイクルメソッド内、およびコンストラクタ内で発生したエラーをキャッチします。</p>
-        <blockquote>
-          <p>補足</p>
-          <p>error boundary は以下のエラーをキャッチ<strong>しません</strong>：</p>
-          <ul>
-            <li>イベントハンドラ（<a href="#how-about-event-handlers">詳細</a>）</li>
-            <li>非同期コード（例：<code>setTimeout</code> や <code>requestAnimationFrame</code> のコールバック）</li>
-            <li>サーバサイドレンダリング</li>
-            <li>（子コンポーネントではなく）error boundary 自身がスローしたエラー</li>
-          </ul>
-        </blockquote>
-        <p>クラスコンポーネントに、ライフサイクルメソッドの <a href="./react-component.html#static-getderivedstatefromerror"><code>static getDerivedStateFromError()</code></a> か <a href="./react-component.html#componentdidcatch"><code>componentDidCatch()</code></a> のいずれか（または両方）を定義すると、error boundary になります。<code>static getDerivedStateFromError()</code> はエラーがスローされた後にフォールバック UI をレンダーするために使用します。<code>componentDidCatch()</code> はエラー情報をログに記録するために使用します。</p>
-        <pre class="language-js{7-10,12-15,18-21}"><code class="language-js{7-10,12-15,18-21}">class ErrorBoundary extends React.Component {
+<!doctypehtml><html lang="ja"><meta charset="utf-8"><title>Error Boundary</title><meta name="viewport"content="width=device-width,initial-scale=1"><link rel="stylesheet"href="https://raw.githubusercontent.com/shinokada/prism-coy-theme/main/theme_common.css"><section id="error-boundary"class="level1"><h1>Error Boundary</h1><p>かつて、コンポーネント内で発生した JavaScript エラーは React の内部状態を破壊し、以降のレンダーで<a href="https://github.com/facebook/react/issues/4026">不可解な</a> <a href="https://github.com/facebook/react/issues/6895">エラーを</a> <a href="https://github.com/facebook/react/issues/8579">引き起こして</a>いました。このようなエラーはアプリケーションコード中のどこか前の段階で発生したエラーによって引き起こされますが、React はエラーをコンポーネント内で適切に処理する方法を提供していなかったため回復できませんでした。<section id="introducing-error-boundaries"class="level2"><h2>error boundary とは</h2><p>UI の一部に JavaScript エラーがあってもアプリ全体が壊れてはいけません。React ユーザがこの問題に対応できるように、React 16 では “error boundary” という新しい概念を導入しました。<p>error boundary は<strong>自身の子コンポーネントツリーで発生した JavaScript エラーをキャッチ</strong>し、<strong>エラーを記録</strong>し、クラッシュしたコンポーネントツリーの代わりに<strong>フォールバック用の UI を表示</strong>する React コンポーネントです。error boundary は配下のツリー全体のレンダー中、ライフサイクルメソッド内、およびコンストラクタ内で発生したエラーをキャッチします。<blockquote><p>補足<p>error boundary は以下のエラーをキャッチ<strong>しません</strong>：<ul><li>イベントハンドラ（<a href="#how-about-event-handlers">詳細</a>）<li>非同期コード（例：<code>setTimeout</code> や <code>requestAnimationFrame</code> のコールバック）<li>サーバサイドレンダリング<li>（子コンポーネントではなく）error boundary 自身がスローしたエラー</ul></blockquote><p>クラスコンポーネントに、ライフサイクルメソッドの <a href="./react-component.html#static-getderivedstatefromerror"><code>static getDerivedStateFromError()</code></a> か <a href="./react-component.html#componentdidcatch"><code>componentDidCatch()</code></a> のいずれか（または両方）を定義すると、error boundary になります。<code>static getDerivedStateFromError()</code> はエラーがスローされた後にフォールバック UI をレンダーするために使用します。<code>componentDidCatch()</code> はエラー情報をログに記録するために使用します。<pre class="language-js{7-10,12-15,18-21}"><code class="language-js{7-10,12-15,18-21}">class ErrorBoundary extends React.Component {
   constructor(props) {
     super(props);
     this.state = { hasError: false };
@@ -49,60 +22,13 @@
 
     return this.props.children; 
   }
-}</code></pre>
-        <p>使用する際は通常のコンポーネントとして扱います：</p>
-        <pre class="language-js"><code class="language-js"><span class="token operator">&#x3C;</span><span class="token maybe-class-name">ErrorBoundary</span><span class="token operator">></span>
+}</code></pre><p>使用する際は通常のコンポーネントとして扱います：<pre class="language-js"><code class="language-js"><span class="token operator">&#x3C;</span><span class="token maybe-class-name">ErrorBoundary</span><span class="token operator">></span>
   <span class="token operator">&#x3C;</span><span class="token maybe-class-name">MyWidget</span> <span class="token operator">/</span><span class="token operator">></span>
-<span class="token operator">&#x3C;</span><span class="token operator">/</span><span class="token maybe-class-name">ErrorBoundary</span><span class="token operator">></span></code></pre>
-        <p>error boundary はコンポーネントに対して JavaScript の <code>catch {}</code> ブロックのように動作します。error boundary になれるのはクラスコンポーネントだけです。実用上、一度だけ error boundary を定義してそれをアプリケーションの至るところで使用することがよくあります。</p>
-        <p><strong>error boundary は配下のツリー内のコンポーネントで発生したエラーのみをキャッチする</strong>ことに注意してください。error boundary は自身で起こるエラーをキャッチできません。error boundary がエラーメッセージのレンダーに失敗した場合、そのエラーは最も近い上位の error boundary に伝搬します。この動作もまた、JavaScript の <code>catch {}</code> ブロックの動作と似ています。</p>
-      </section>
-      <section id="live-demo" class="level2">
-        <h2>ライブデモ</h2>
-        <p><a href="https://codepen.io/gaearon/pen/wqvxGa?editors=0010">error boundary を宣言して利用する例</a>を確認してください。</p>
-      </section>
-      <section id="where-to-place-error-boundaries" class="level2">
-        <h2>error boundary を配置すべき場所</h2>
-        <p>error boundary の粒度はあなた次第です。サーバサイドフレームワークがクラッシュを処理する際によく見られるように、最上位のルートコンポーネントをラップしてユーザに “Something went wrong” メッセージを表示してもいいでしょう。各ウィジェットを個別にラップしてアプリケーションの残りの部分をクラッシュから守るのもいいでしょう。</p>
-      </section>
-      <section id="new-behavior-for-uncaught-errors" class="level2">
-        <h2>エラーがキャッチされなかった場合の新しい動作</h2>
-        <p>この変更には重要な意味があります。<strong>React 16 から、どの error boundary でもエラーがキャッチされなかった場合に React コンポーネントツリー全体がアンマウントされるようになりました。</strong></p>
-        <p>この決定については議論がありましたが、我々の経験上、壊れた UI をそのまま表示しておくことは、完全に削除してしまうよりももっと悪いことです。例えば、Messenger のような製品において壊れた UI を表示したままにしておくと、誰かが誤って別の人にメッセージを送ってしまう可能性があります。同様に、支払いアプリで間違った金額を表示することは、何も表示しないよりも悪いことです。</p>
-        <p>この変更のため、React 16 に移行すると、これまで気付かれていなかったアプリケーションの既存の不具合が明らかになることでしょう。error boundary を追加することで、問題が発生したときのユーザ体験を向上できます。</p>
-        <p>例えば、Facebook Messenger はサイドバー、情報パネル、会話ログ、メッセージ入力欄といったコンテンツを個別の error boundary でラップしています。これらの UI エリアの一部のコンポーネントがクラッシュしても、残りの部分はインタラクティブなままです。</p>
-        <p>また、本番環境で発生したキャッチされなかった例外について知って修正できるように、JS エラー報告サービスを利用（もしくは自身で構築）することもお勧めします。</p>
-      </section>
-      <section id="component-stack-traces" class="level2">
-        <h2>コンポーネントのスタックトレース</h2>
-        <p>React 16 は開発時に、レンダー中に起こった全てのエラーをコンソールに出力します（アプリケーションが誤ってエラーを握り潰してしまっても出力します）。そこではエラーメッセージと JavaScript のスタックに加えて、コンポーネントのスタックトレースも提供します。これにより、コンポーネントツリーのどこでエラーが発生したのかが正確にわかります：</p>
-        <img src="./docs/error-boundaries-stack-trace.png" style="max-width:100%" alt="Error caught by Error Boundary component">
-        <p>コンポーネントスタックトレースにはファイル名と行番号も出力できます。<a href="https://github.com/facebookincubator/create-react-app">Create React App</a> のプロジェクトではこれがデフォルトで有効になっています：</p>
-        <img src="./docs/error-boundaries-stack-trace-line-numbers.png" style="max-width:100%" alt="Error caught by Error Boundary component with line numbers">
-        <p>Create React App を使用しない場合は、<a href="https://www.npmjs.com/package/@babel/plugin-transform-react-jsx-source">このプラグイン</a>を手動で Babel の設定に追加してください。ただし、この機能は開発専用であり、<strong>本番では必ず無効化しなければならない</strong>ことに注意してください。</p>
-        <blockquote>
-          <p>補足</p>
-          <p>スタックトレースで表示されるコンポーネント名は <a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Function/name"><code>Function.name</code></a> プロパティに依存します。このプロパティをネイティブで提供しない古いブラウザやデバイス（IE 11 など）をサポートする場合は、アプリケーションバンドルに <code>Function.name</code> のポリフィル（<a href="https://github.com/JamesMGreene/Function.name"><code>function.name-polyfill</code></a> など）を含めることを検討してください。もしくは、全てのコンポーネントに <a href="./react-component.html#displayname"><code>displayName</code></a> プロパティを明示的に設定することもできます。</p>
-        </blockquote>
-      </section>
-      <section id="how-about-trycatch" class="level2">
-        <h2>try/catch について</h2>
-        <p><code>try</code> / <code>catch</code> は素晴らしいですが、命令型のコードでのみ動作します：</p>
-        <pre class="language-js"><code class="language-js"><span class="token keyword control-flow">try</span> <span class="token punctuation">{</span>
+<span class="token operator">&#x3C;</span><span class="token operator">/</span><span class="token maybe-class-name">ErrorBoundary</span><span class="token operator">></span></code></pre><p>error boundary はコンポーネントに対して JavaScript の <code>catch {}</code> ブロックのように動作します。error boundary になれるのはクラスコンポーネントだけです。実用上、一度だけ error boundary を定義してそれをアプリケーションの至るところで使用することがよくあります。<p><strong>error boundary は配下のツリー内のコンポーネントで発生したエラーのみをキャッチする</strong>ことに注意してください。error boundary は自身で起こるエラーをキャッチできません。error boundary がエラーメッセージのレンダーに失敗した場合、そのエラーは最も近い上位の error boundary に伝搬します。この動作もまた、JavaScript の <code>catch {}</code> ブロックの動作と似ています。</section><section id="live-demo"class="level2"><h2>ライブデモ</h2><p><a href="https://codepen.io/gaearon/pen/wqvxGa?editors=0010">error boundary を宣言して利用する例</a>を確認してください。</section><section id="where-to-place-error-boundaries"class="level2"><h2>error boundary を配置すべき場所</h2><p>error boundary の粒度はあなた次第です。サーバサイドフレームワークがクラッシュを処理する際によく見られるように、最上位のルートコンポーネントをラップしてユーザに “Something went wrong” メッセージを表示してもいいでしょう。各ウィジェットを個別にラップしてアプリケーションの残りの部分をクラッシュから守るのもいいでしょう。</section><section id="new-behavior-for-uncaught-errors"class="level2"><h2>エラーがキャッチされなかった場合の新しい動作</h2><p>この変更には重要な意味があります。<strong>React 16 から、どの error boundary でもエラーがキャッチされなかった場合に React コンポーネントツリー全体がアンマウントされるようになりました。</strong><p>この決定については議論がありましたが、我々の経験上、壊れた UI をそのまま表示しておくことは、完全に削除してしまうよりももっと悪いことです。例えば、Messenger のような製品において壊れた UI を表示したままにしておくと、誰かが誤って別の人にメッセージを送ってしまう可能性があります。同様に、支払いアプリで間違った金額を表示することは、何も表示しないよりも悪いことです。<p>この変更のため、React 16 に移行すると、これまで気付かれていなかったアプリケーションの既存の不具合が明らかになることでしょう。error boundary を追加することで、問題が発生したときのユーザ体験を向上できます。<p>例えば、Facebook Messenger はサイドバー、情報パネル、会話ログ、メッセージ入力欄といったコンテンツを個別の error boundary でラップしています。これらの UI エリアの一部のコンポーネントがクラッシュしても、残りの部分はインタラクティブなままです。<p>また、本番環境で発生したキャッチされなかった例外について知って修正できるように、JS エラー報告サービスを利用（もしくは自身で構築）することもお勧めします。</section><section id="component-stack-traces"class="level2"><h2>コンポーネントのスタックトレース</h2><p>React 16 は開発時に、レンダー中に起こった全てのエラーをコンソールに出力します（アプリケーションが誤ってエラーを握り潰してしまっても出力します）。そこではエラーメッセージと JavaScript のスタックに加えて、コンポーネントのスタックトレースも提供します。これにより、コンポーネントツリーのどこでエラーが発生したのかが正確にわかります：</p><img src="./docs/error-boundaries-stack-trace.png"style="max-width:100%"alt="Error caught by Error Boundary component"><p>コンポーネントスタックトレースにはファイル名と行番号も出力できます。<a href="https://github.com/facebookincubator/create-react-app">Create React App</a> のプロジェクトではこれがデフォルトで有効になっています：</p><img src="./docs/error-boundaries-stack-trace-line-numbers.png"style="max-width:100%"alt="Error caught by Error Boundary component with line numbers"><p>Create React App を使用しない場合は、<a href="https://www.npmjs.com/package/@babel/plugin-transform-react-jsx-source">このプラグイン</a>を手動で Babel の設定に追加してください。ただし、この機能は開発専用であり、<strong>本番では必ず無効化しなければならない</strong>ことに注意してください。<blockquote><p>補足<p>スタックトレースで表示されるコンポーネント名は <a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Function/name"><code>Function.name</code></a> プロパティに依存します。このプロパティをネイティブで提供しない古いブラウザやデバイス（IE 11 など）をサポートする場合は、アプリケーションバンドルに <code>Function.name</code> のポリフィル（<a href="https://github.com/JamesMGreene/Function.name"><code>function.name-polyfill</code></a> など）を含めることを検討してください。もしくは、全てのコンポーネントに <a href="./react-component.html#displayname"><code>displayName</code></a> プロパティを明示的に設定することもできます。</blockquote></section><section id="how-about-trycatch"class="level2"><h2>try/catch について</h2><p><code>try</code> / <code>catch</code> は素晴らしいですが、命令型のコードでのみ動作します：<pre class="language-js"><code class="language-js"><span class="token keyword control-flow">try</span> <span class="token punctuation">{</span>
   <span class="token function">showButton</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
 <span class="token punctuation">}</span> <span class="token keyword control-flow">catch</span> <span class="token punctuation">(</span>error<span class="token punctuation">)</span> <span class="token punctuation">{</span>
   <span class="token comment">// ...</span>
-<span class="token punctuation">}</span></code></pre>
-        <p>一方、React コンポーネントは宣言型であり、<em>何が</em>レンダーされるべきなのかを指定します：</p>
-        <pre class="language-js"><code class="language-js"><span class="token operator">&#x3C;</span><span class="token maybe-class-name">Button</span> <span class="token operator">/</span><span class="token operator">></span></code></pre>
-        <p>error boundary は React の宣言型という性質を保持しつつ、期待通りの動作をします。例えば、<code>componentDidUpdate</code> メソッドで発生したエラーがツリー内のどこか深い場所にある <code>setState</code> によって引き起こされていた場合でも、最も近い error boundary にそのことが正しく伝播します。</p>
-      </section>
-      <section id="how-about-event-handlers" class="level2">
-        <h2>イベントハンドラについて</h2>
-        <p>error boundary はイベントハンドラ内で発生したエラーをキャッチ<strong>しません</strong>。</p>
-        <p>イベントハンドラ内のエラーから回復するのに error boundary は不要です。レンダーメソッドやライフサイクルメソッドとは異なり、イベントハンドラはレンダー中には実行されません。そのためイベントハンドラ内でエラーが発生しても、React が画面に表示する内容は変わりません。</p>
-        <p>イベントハンドラ内のエラーをキャッチする必要がある場合は、普通の JavaScript の <code>try</code> / <code>catch</code> 文を使用してください：</p>
-        <pre class="language-js{9-13,17-20}"><code class="language-js{9-13,17-20}">class MyComponent extends React.Component {
+<span class="token punctuation">}</span></code></pre><p>一方、React コンポーネントは宣言型であり、<em>何が</em>レンダーされるべきなのかを指定します：<pre class="language-js"><code class="language-js"><span class="token operator">&#x3C;</span><span class="token maybe-class-name">Button</span> <span class="token operator">/</span><span class="token operator">></span></code></pre><p>error boundary は React の宣言型という性質を保持しつつ、期待通りの動作をします。例えば、<code>componentDidUpdate</code> メソッドで発生したエラーがツリー内のどこか深い場所にある <code>setState</code> によって引き起こされていた場合でも、最も近い error boundary にそのことが正しく伝播します。</section><section id="how-about-event-handlers"class="level2"><h2>イベントハンドラについて</h2><p>error boundary はイベントハンドラ内で発生したエラーをキャッチ<strong>しません</strong>。<p>イベントハンドラ内のエラーから回復するのに error boundary は不要です。レンダーメソッドやライフサイクルメソッドとは異なり、イベントハンドラはレンダー中には実行されません。そのためイベントハンドラ内でエラーが発生しても、React が画面に表示する内容は変わりません。<p>イベントハンドラ内のエラーをキャッチする必要がある場合は、普通の JavaScript の <code>try</code> / <code>catch</code> 文を使用してください：<pre class="language-js{9-13,17-20}"><code class="language-js{9-13,17-20}">class MyComponent extends React.Component {
   constructor(props) {
     super(props);
     this.state = { error: null };
@@ -123,17 +49,4 @@
     }
     return &#x3C;button onClick={this.handleClick}>Click Me&#x3C;/button>
   }
-}</code></pre>
-        <p>上記の例は標準の JavaScript の動作説明であって error boundary を使用していないことに注意してください。</p>
-      </section>
-      <section id="naming-changes-from-react-15" class="level2">
-        <h2>React 15 からの命名の変更</h2>
-        <p>React 15 は error boundary を異なるメソッド名（<code>unstable_handleError</code>）で非常に限定的にサポートしていました。このメソッドはもう動作しないため、16 ベータ版リリース以降はコードを <code>componentDidCatch</code> に変更する必要があります。</p>
-        <p>
-          この変更について、自動的にコードを移行できる <a href="https://github.com/reactjs/react-codemod#error-boundaries">codemod</a> が提供されています。
-          <span style="float: footnote;"><a href="./index.html#toc">Go to TOC</a></span>
-        </p>
-      </section>
-    </section>
-  </body>
-</html>
+}</code></pre><p>上記の例は標準の JavaScript の動作説明であって error boundary を使用していないことに注意してください。</section><section id="naming-changes-from-react-15"class="level2"><h2>React 15 からの命名の変更</h2><p>React 15 は error boundary を異なるメソッド名（<code>unstable_handleError</code>）で非常に限定的にサポートしていました。このメソッドはもう動作しないため、16 ベータ版リリース以降はコードを <code>componentDidCatch</code> に変更する必要があります。<p>この変更について、自動的にコードを移行できる <a href="https://github.com/reactjs/react-codemod#error-boundaries">codemod</a> が提供されています。 <span style="float:footnote"><a href="./index.html#toc">Go to TOC</a></span></section></section>

@@ -1,90 +1,19 @@
-<!doctype html>
-<html lang="pt-br">
-  <head>
-    <meta charset="utf-8">
-    <title>Renderização do Lado do Servidor</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <meta name="description" content="A Renderização do lado do servidor (SSR), é a capacidade de uma aplicação renderizar uma página web no servidor em vez de renderizá-la no navegador.">
-    <meta name="category" content="concepts">
-    <link rel="stylesheet" href="https://raw.githubusercontent.com/shinokada/prism-coy-theme/main/theme_common.css">
-  </head>
-  <body>
-    <section id="renderização-do-lado-do-servidor" class="level1">
-      <h1>Renderização do Lado do Servidor</h1>
-      <p>A renderização do lado do servidor (SSR), é a capacidade de uma aplicação renderizar uma página web no servidor em vez de renderizá-la no navegador. O lado do servidor envia uma página totalmente renderizada para o cliente; o JavaScript no lado do cliente assume o controle e permite que Vue.js <a href="https://ssr.vuejs.org/guide/hydration.html">hidrate</a> nossa aplicação.</p>
-      <hr>
-      <section id="servidor-nodejs-obrigatório" class="level2">
-        <h2>Servidor Node.js obrigatório</h2>
-        <p>Um ambiente JavaScript é necessário para renderizar sua página da web.</p>
-        <p>Um servidor Node.js precisa ser configurado para executar sua aplicação Vue.js.</p>
-      </section>
-      <section id="estender-e-melhorar-o-servidor" class="level2">
-        <h2>Estender e melhorar o servidor</h2>
-        <p>Você pode estender o servidor com serverMiddleware e controlar rotas com o middleware.</p>
-        <pre class="language-js{}[server-middleware/logger.js]"><code class="language-js{}[server-middleware/logger.js]">
+<!doctypehtml><html lang="pt-br"><meta charset="utf-8"><title>Renderização do Lado do Servidor</title><meta name="viewport"content="width=device-width,initial-scale=1"><meta name="description"content="A Renderização do lado do servidor (SSR), é a capacidade de uma aplicação renderizar uma página web no servidor em vez de renderizá-la no navegador."><meta name="category"content="concepts"><link rel="stylesheet"href="https://raw.githubusercontent.com/shinokada/prism-coy-theme/main/theme_common.css"><section id="renderização-do-lado-do-servidor"class="level1"><h1>Renderização do Lado do Servidor</h1><p>A renderização do lado do servidor (SSR), é a capacidade de uma aplicação renderizar uma página web no servidor em vez de renderizá-la no navegador. O lado do servidor envia uma página totalmente renderizada para o cliente; o JavaScript no lado do cliente assume o controle e permite que Vue.js <a href="https://ssr.vuejs.org/guide/hydration.html">hidrate</a> nossa aplicação.<hr><section id="servidor-nodejs-obrigatório"class="level2"><h2>Servidor Node.js obrigatório</h2><p>Um ambiente JavaScript é necessário para renderizar sua página da web.<p>Um servidor Node.js precisa ser configurado para executar sua aplicação Vue.js.</section><section id="estender-e-melhorar-o-servidor"class="level2"><h2>Estender e melhorar o servidor</h2><p>Você pode estender o servidor com serverMiddleware e controlar rotas com o middleware.<pre class="language-js{}[server-middleware/logger.js]"><code class="language-js{}[server-middleware/logger.js]">
 export default function (req, res, next) {
   console.log(req.url)
   next()
-}</code></pre>
-        <pre class="language-js{}[nuxt.config.js]"><code class="language-js{}[nuxt.config.js]">export default {
+}</code></pre><pre class="language-js{}[nuxt.config.js]"><code class="language-js{}[nuxt.config.js]">export default {
   serverMiddleware: ['~/server-middleware/logger']
 
-}</code></pre>
-      </section>
-      <section id="ambiente-servidor-vs-navegador" class="level2">
-        <h2>Ambiente Servidor vs Navegador</h2>
-        <p>Como você está em um ambiente Node.js você tem acesso a objetos do Node.js como <code>req</code> e <code>res</code>. Você não tem acesso aos objetos <code>window</code> ou <code>document</code> pois eles pertencem no ambiente do navegador. No entanto, você pode utilizar <code>window</code> ou <code>document</code> através dos hooks <code>beforeMount</code> ou <code>mounted</code></p>
-        <pre class="language-js"><code class="language-js"><span class="token function">beforeMount</span> <span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+}</code></pre></section><section id="ambiente-servidor-vs-navegador"class="level2"><h2>Ambiente Servidor vs Navegador</h2><p>Como você está em um ambiente Node.js você tem acesso a objetos do Node.js como <code>req</code> e <code>res</code>. Você não tem acesso aos objetos <code>window</code> ou <code>document</code> pois eles pertencem no ambiente do navegador. No entanto, você pode utilizar <code>window</code> ou <code>document</code> através dos hooks <code>beforeMount</code> ou <code>mounted</code><pre class="language-js"><code class="language-js"><span class="token function">beforeMount</span> <span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
   <span class="token dom variable">window</span><span class="token punctuation">.</span><span class="token method function property-access">alert</span><span class="token punctuation">(</span><span class="token string">'olá'</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
 <span class="token punctuation">}</span>
 <span class="token function">mounted</span> <span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
   <span class="token dom variable">window</span><span class="token punctuation">.</span><span class="token method function property-access">alert</span><span class="token punctuation">(</span><span class="token string">'olá'</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
-<span class="token punctuation">}</span></code></pre>
-      </section>
-      <section id="passos-da-renderização-do-lado-do-servidor-com-nuxt" class="level2">
-        <h2>Passos da renderização do lado do servidor com Nuxt</h2>
-        <section id="passo-1-navegador-para-o-servidor" class="level3">
-          <h3>Passo 1: Navegador para o servidor</h3>
-          <p>Quando o navegador envia o primeiro request, ele chamará o servidor interno Node.js. O Nuxt irá gerar o HTML e enviar de volta ao navegador com os resultados das funções executadas, por exemplo <code>asyncData</code>, <code>nuxtServerInit</code> ou <code>fetch</code>. Funções hooks também são executadas.</p>
-        </section>
-        <section id="passo-2-servidor-para-o-navegador" class="level3">
-          <h3>Passo 2: Servidor para o Navegador</h3>
-          <p>O navegador recebe a página renderizada do servidor com o HTML gerado. O conteúdo é exibido e a hidratação do Vue.js entra em ação. Após esse processo, a página será interativa.</p>
-        </section>
-        <section id="passo-3-navegador-para-o-navegador" class="level3">
-          <h3>Passo 3: Navegador para o Navegador</h3>
-          <p>A navegação entre página com <a href="./features/nuxt-componentes#the-nuxtlink-componente"><code>&#x3C;NuxtLink></code></a> é feita no lado do cliente para que o servidor não seja requisitado novamente, a menos que você atualize o navegador.</p>
-        </section>
-      </section>
-      <section id="cavernas" class="level2">
-        <h2>Cavernas</h2>
-        <section id="window-ou-document-indefinidos" class="level3">
-          <h3>window ou document indefinidos</h3>
-          <p>Isso acontece por conta da renderização do lado do servidor. Se você deseja importar um recurso somente no lado do cliente, você precisa utilizar a variável <code>process.client</code>.</p>
-          <p>Por exemplo, no seu arquivo <code>.vue</code>:</p>
-          <pre class="language-js"><code class="language-js"><span class="token keyword control-flow">if</span> <span class="token punctuation">(</span>process<span class="token punctuation">.</span><span class="token property-access">client</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+<span class="token punctuation">}</span></code></pre></section><section id="passos-da-renderização-do-lado-do-servidor-com-nuxt"class="level2"><h2>Passos da renderização do lado do servidor com Nuxt</h2><section id="passo-1-navegador-para-o-servidor"class="level3"><h3>Passo 1: Navegador para o servidor</h3><p>Quando o navegador envia o primeiro request, ele chamará o servidor interno Node.js. O Nuxt irá gerar o HTML e enviar de volta ao navegador com os resultados das funções executadas, por exemplo <code>asyncData</code>, <code>nuxtServerInit</code> ou <code>fetch</code>. Funções hooks também são executadas.</section><section id="passo-2-servidor-para-o-navegador"class="level3"><h3>Passo 2: Servidor para o Navegador</h3><p>O navegador recebe a página renderizada do servidor com o HTML gerado. O conteúdo é exibido e a hidratação do Vue.js entra em ação. Após esse processo, a página será interativa.</section><section id="passo-3-navegador-para-o-navegador"class="level3"><h3>Passo 3: Navegador para o Navegador</h3><p>A navegação entre página com <a href="./features/nuxt-componentes#the-nuxtlink-componente"><code>&#x3C;NuxtLink></code></a> é feita no lado do cliente para que o servidor não seja requisitado novamente, a menos que você atualize o navegador.</section></section><section id="cavernas"class="level2"><h2>Cavernas</h2><section id="window-ou-document-indefinidos"class="level3"><h3>window ou document indefinidos</h3><p>Isso acontece por conta da renderização do lado do servidor. Se você deseja importar um recurso somente no lado do cliente, você precisa utilizar a variável <code>process.client</code>.<p>Por exemplo, no seu arquivo <code>.vue</code>:<pre class="language-js"><code class="language-js"><span class="token keyword control-flow">if</span> <span class="token punctuation">(</span>process<span class="token punctuation">.</span><span class="token property-access">client</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
   <span class="token function">require</span><span class="token punctuation">(</span><span class="token string">'external_library'</span><span class="token punctuation">)</span>
-<span class="token punctuation">}</span></code></pre>
-        </section>
-        <section id="ios-e-números-de-telefone" class="level3">
-          <h3>iOS e números de telefone</h3>
-          <p>Algumas versões móveis do Safari vão transformar números de telefone em links automaticamente. Isso acionará um aviso <code>NodeMismatch</code>, pois o conteúdo do SSR não corresponde com o conteúdo do site. Isso pode tornar seu app inutilizável nessas versões do Safari.</p>
-          <p>Se você incluir números de telefone em sua página Nuxt, você tem duas opções</p>
-        </section>
-      </section>
-      <section id="use-um-meta-tag-para-parar-a-transformação" class="level2">
-        <h2>Use um meta tag para parar a transformação</h2>
-        <pre class="language-html"><code class="language-html"><span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;</span>meta</span> <span class="token attr-name">name</span><span class="token attr-value"><span class="token punctuation attr-equals">=</span><span class="token punctuation">"</span>format-detection<span class="token punctuation">"</span></span> <span class="token attr-name">content</span><span class="token attr-value"><span class="token punctuation attr-equals">=</span><span class="token punctuation">"</span>telephone=no<span class="token punctuation">"</span></span> <span class="token punctuation">/></span></span></code></pre>
-      </section>
-      <section id="coloque-links-em-volta-do-seu-número-de-telefone" class="level2">
-        <h2>Coloque links em volta do seu número de telefone</h2>
-        <pre class="language-html"><code class="language-html"><span class="token comment">&#x3C;!-- Exemplo de número de telefone: +55 (13) 91961-3555 --></span>
+<span class="token punctuation">}</span></code></pre></section><section id="ios-e-números-de-telefone"class="level3"><h3>iOS e números de telefone</h3><p>Algumas versões móveis do Safari vão transformar números de telefone em links automaticamente. Isso acionará um aviso <code>NodeMismatch</code>, pois o conteúdo do SSR não corresponde com o conteúdo do site. Isso pode tornar seu app inutilizável nessas versões do Safari.<p>Se você incluir números de telefone em sua página Nuxt, você tem duas opções</section></section><section id="use-um-meta-tag-para-parar-a-transformação"class="level2"><h2>Use um meta tag para parar a transformação</h2><pre class="language-html"><code class="language-html"><span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;</span>meta</span> <span class="token attr-name">name</span><span class="token attr-value"><span class="token punctuation attr-equals">=</span><span class="token punctuation">"</span>format-detection<span class="token punctuation">"</span></span> <span class="token attr-name">content</span><span class="token attr-value"><span class="token punctuation attr-equals">=</span><span class="token punctuation">"</span>telephone=no<span class="token punctuation">"</span></span> <span class="token punctuation">/></span></span></code></pre></section><section id="coloque-links-em-volta-do-seu-número-de-telefone"class="level2"><h2>Coloque links em volta do seu número de telefone</h2><pre class="language-html"><code class="language-html"><span class="token comment">&#x3C;!-- Exemplo de número de telefone: +55 (13) 91961-3555 --></span>
 
 <span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;</span>template</span><span class="token punctuation">></span></span>
   <span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;</span>a</span> <span class="token attr-name">href</span><span class="token attr-value"><span class="token punctuation attr-equals">=</span><span class="token punctuation">"</span>tel: +55 (13) 91961-3555<span class="token punctuation">"</span></span><span class="token punctuation">></span></span>+55 (13) 91961-3555<span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;/</span>a</span><span class="token punctuation">></span></span>
-<span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;/</span>template</span><span class="token punctuation">></span></span></code></pre>
-        <p><span style="float: footnote;"><a href="../index.html#toc">Go to TOC</a></span></p>
-      </section>
-    </section>
-  </body>
-</html>
+<span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;/</span>template</span><span class="token punctuation">></span></span></code></pre><p><span style="float:footnote"><a href="../index.html#toc">Go to TOC</a></span></section></section>

@@ -1,75 +1,9 @@
-<!doctype html>
-<html lang="en">
-  <head>
-    <meta charset="utf-8">
-    <title>Using Changesets with pnpm</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <link rel="stylesheet" href="https://raw.githubusercontent.com/shinokada/prism-coy-theme/main/theme_common.css">
-  </head>
-  <body>
-    <section id="using-changesets-with-pnpm" class="level1">
-      <h1>Using Changesets with pnpm</h1>
-      <blockquote>
-        <p>
-          At the time of writing this documentation, the latest pnpm version was
-          v6.14. The latest <a href="https://github.com/changesets/changesets">Changesets</a> version was v2.16.0.)
-        </p>
-      </blockquote>
-      <section id="setup" class="level2">
-        <h2>Setup</h2>
-        <p>
-          To setup changesets on a pnpm workspace, install changesets as a dev dependency
-          in the root of the workspace:
-        </p>
-        <pre class="language-sh"><code class="language-sh">pnpm add -Dw @changesets/cli</code></pre>
-        <p>Then changesets' init command:</p>
-        <pre class="language-sh"><code class="language-sh">pnpm changeset init</code></pre>
-      </section>
-      <section id="adding-new-changesets" class="level2">
-        <h2>Adding new changesets</h2>
-        <p>
-          To generate a new changeset, run <code>pnpm changeset</code> in the root of the repository.
-          The generated markdown files in the <code>.changeset</code> directory should be committed
-          to the repository.
-        </p>
-      </section>
-      <section id="releasing-changes" class="level2">
-        <h2>Releasing changes</h2>
-        <ol>
-          <li>
-            Run <code>pnpm changeset version</code>. This will bump the versions of the packages
-            previously specified with <code>pnpm changeset</code> (and any dependents of those) and
-            update the changelog files.
-          </li>
-          <li>Run <code>pnpm install</code>. This will update the lockfile and rebuild packages.</li>
-          <li>Commit the changes.</li>
-          <li>
-            Run <code>pnpm publish -r</code>. This command will publish all packages that have
-            bumped versions not yet present in the registry.
-          </li>
-        </ol>
-      </section>
-      <section id="using-github-actions" class="level2">
-        <h2>Using GitHub Actions</h2>
-        <p>To automate the process, you can use <code>changeset version</code> with GitHub actions.</p>
-        <section id="bump-up-package-versions" class="level3">
-          <h3>Bump up package versions</h3>
-          <p>The action will detect when changeset files arrive in the <code>main</code> branch, and then open a new PR listing all the packages with bumped versions. Once merged, the packages will be updated and you can decide whether to publish or not by adding the <code>publish</code> property.</p>
-        </section>
-        <section id="publishing" class="level3">
-          <h3>Publishing</h3>
-          <p>
-            Add a new script <code>ci:publish</code> which executes <code>pnpm publish -r</code>.
-            It will publish to the registry once the PR is opened by <code>changeset version</code>.
-          </p>
-          <p><strong>package.json</strong></p>
-          <pre class="language-json"><code class="language-json"><span class="token punctuation">{</span>
+<!doctypehtml><html lang="en"><meta charset="utf-8"><title>Using Changesets with pnpm</title><meta name="viewport"content="width=device-width,initial-scale=1"><link rel="stylesheet"href="https://raw.githubusercontent.com/shinokada/prism-coy-theme/main/theme_common.css"><section id="using-changesets-with-pnpm"class="level1"><h1>Using Changesets with pnpm</h1><blockquote><p>At the time of writing this documentation, the latest pnpm version was v6.14. The latest <a href="https://github.com/changesets/changesets">Changesets</a> version was v2.16.0.)</blockquote><section id="setup"class="level2"><h2>Setup</h2><p>To setup changesets on a pnpm workspace, install changesets as a dev dependency in the root of the workspace:<pre class="language-sh"><code class="language-sh">pnpm add -Dw @changesets/cli</code></pre><p>Then changesets' init command:<pre class="language-sh"><code class="language-sh">pnpm changeset init</code></pre></section><section id="adding-new-changesets"class="level2"><h2>Adding new changesets</h2><p>To generate a new changeset, run <code>pnpm changeset</code> in the root of the repository. The generated markdown files in the <code>.changeset</code> directory should be committed to the repository.</section><section id="releasing-changes"class="level2"><h2>Releasing changes</h2><ol><li>Run <code>pnpm changeset version</code>. This will bump the versions of the packages previously specified with <code>pnpm changeset</code> (and any dependents of those) and update the changelog files.<li>Run <code>pnpm install</code>. This will update the lockfile and rebuild packages.<li>Commit the changes.<li>Run <code>pnpm publish -r</code>. This command will publish all packages that have bumped versions not yet present in the registry.</ol></section><section id="using-github-actions"class="level2"><h2>Using GitHub Actions</h2><p>To automate the process, you can use <code>changeset version</code> with GitHub actions.<section id="bump-up-package-versions"class="level3"><h3>Bump up package versions</h3><p>The action will detect when changeset files arrive in the <code>main</code> branch, and then open a new PR listing all the packages with bumped versions. Once merged, the packages will be updated and you can decide whether to publish or not by adding the <code>publish</code> property.</section><section id="publishing"class="level3"><h3>Publishing</h3><p>Add a new script <code>ci:publish</code> which executes <code>pnpm publish -r</code>. It will publish to the registry once the PR is opened by <code>changeset version</code>.<p><strong>package.json</strong><pre class="language-json"><code class="language-json"><span class="token punctuation">{</span>
    scripts<span class="token operator">:</span> <span class="token punctuation">{</span>
       ci<span class="token operator">:</span>publish<span class="token operator">:</span> pnpm publish -r
    <span class="token punctuation">}</span><span class="token punctuation">,</span>
    ...
-<span class="token punctuation">}</span></code></pre>
-          <pre class="language-yaml"><code class="language-yaml"><span class="token key atrule">name</span><span class="token punctuation">:</span> Changesets
+<span class="token punctuation">}</span></code></pre><pre class="language-yaml"><code class="language-yaml"><span class="token key atrule">name</span><span class="token punctuation">:</span> Changesets
 <span class="token key atrule">on</span><span class="token punctuation">:</span>
   <span class="token key atrule">push</span><span class="token punctuation">:</span>
     <span class="token key atrule">branches</span><span class="token punctuation">:</span>
@@ -106,14 +40,4 @@
           <span class="token comment"># chore: update versions</span>
           <span class="token key atrule">publish</span><span class="token punctuation">:</span> pnpm ci<span class="token punctuation">:</span>publish
         <span class="token key atrule">env</span><span class="token punctuation">:</span>
-          <span class="token key atrule">GITHUB_TOKEN</span><span class="token punctuation">:</span> $<span class="token punctuation">{</span><span class="token punctuation">{</span> secrets.GITHUB_TOKEN <span class="token punctuation">}</span><span class="token punctuation">}</span></code></pre>
-          <p>
-            More info and documentation regarding this action can be found
-            <a href="https://github.com/changesets/action">here</a>.)
-            <span style="float: footnote;"><a href="./index.html#toc">Go to TOC</a></span>
-          </p>
-        </section>
-      </section>
-    </section>
-  </body>
-</html>
+          <span class="token key atrule">GITHUB_TOKEN</span><span class="token punctuation">:</span> $<span class="token punctuation">{</span><span class="token punctuation">{</span> secrets.GITHUB_TOKEN <span class="token punctuation">}</span><span class="token punctuation">}</span></code></pre><p>More info and documentation regarding this action can be found <a href="https://github.com/changesets/action">here</a>.) <span style="float:footnote"><a href="./index.html#toc">Go to TOC</a></span></section></section></section>

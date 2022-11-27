@@ -1,65 +1,4 @@
-<!doctype html>
-<html lang="pl">
-  <head>
-    <meta charset="utf-8">
-    <title>Tryb rygorystyczny</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <link rel="stylesheet" href="https://raw.githubusercontent.com/shinokada/prism-coy-theme/main/theme_common.css">
-  </head>
-  <body>
-    <section id="tryb-rygorystyczny" class="level1">
-      <h1>Tryb rygorystyczny</h1>
-      <p><code>StrictMode</code> jest narzędziem podkreślającym potencjalne problemy w aplikacji. Tak samo jak <code>Fragment</code>, <code>StrictMode</code> nie renderuje żadnego widocznego UI. Służy natomiast do aktywacji dodatkowych sprawdzeń i ostrzeżeń dla swoich potomków.</p>
-      <blockquote>
-        <p>Uwaga:</p>
-        <p>Sprawdzenia dla trybu rygorystycznego są uruchamiane wyłącznie w trybie deweloperskim; <em>nie mają one wpływu na build produkcyjny</em>.</p>
-      </blockquote>
-      <p>
-        Możesz uruchomić tryb rygorystyczny dla jakiejkolwiek części swojej aplikacji. Dla przykładu:
-        <code>embed:strict-mode/enabling-strict-mode.js</code>
-      </p>
-      <p>W powyższym przykładzie sprawdzenia trybu rygorystycznego <em>nie</em> zostaną uruchomione dla komponentów <code>Header</code> i <code>Footer</code>. Zadziałają one natomiast dla <code>ComponentOne</code> i <code>ComponentTwo</code> oraz wszystkich ich potomków.</p>
-      <p><code>StrictMode</code> aktualnie pomaga w:</p>
-      <ul>
-        <li><a href="#identifying-unsafe-lifecycles">Identyfikacji komponentów używających niebezpiecznych metod cyklu życia komponentu</a></li>
-        <li><a href="#warning-about-legacy-string-ref-api-usage">Ostrzeganiu o użyciu przestarzałego API tekstowych referencji</a></li>
-        <li><a href="#warning-about-deprecated-finddomnode-usage">Ostrzeganiu o użyciu przestarzałego findDOMNode</a></li>
-        <li><a href="#detecting-unexpected-side-effects">Wykrywaniu nieoczekiwanych efektów ubocznych</a></li>
-        <li><a href="#detecting-legacy-context-api">Wykrywaniu użycia przestrzałego API kontekstów</a></li>
-        <li><a href="#ensuring-reusable-state">Zapewnianiu wielokrotności użycia stanu</a></li>
-      </ul>
-      <p>Dodatkowe funkcjonalności zostaną dodane w przyszłych wydaniach Reacta.</p>
-      <section id="identifying-unsafe-lifecycles" class="level3">
-        <h3>Identyfikacja niebezpiecznych metod cyklu życia komponentu</h3>
-        <p>Tak jak zostało to wytłumaczone <a href="/blog/2018/03/27/update-on-async-rendering.html">w tym poście</a>, niektóre stare metody cyklu życia komponentu nie są bezpiecznie dla asynchronicznych aplikacji reactowych. Jednakże jeżeli twoja aplikacja używa bibliotek firm trzecich, upewnienie się, że nie używa ona niebezpiecznych metod cyklu życia komponentu może być trudne. Na szczęście, tryb rygorystyczny może z tym pomóc!</p>
-        <p>Gdy tryb rygorystyczny jest włączony, React tworzy listę wszystkich komponentów klasowych, które używają niebezpiecznych metod cyklu życia, i loguje komunikaty ostrzegawcze z informacją o tych komponentach, jak na przykładzie:</p>
-        <p>
-          <img src="../images/blog/strict-mode-unsafe-lifecycles-warning.png">
-        </p>
-        <p>Rozwiązanie <em>teraz</em> problemów zidentyfikowanych przez tryb rygorystyczny ułatwi użycie współbieżnego renderowania w przyszłych wydaniach Reacta.</p>
-      </section>
-      <section id="warning-about-legacy-string-ref-api-usage" class="level3">
-        <h3>Ostrzeganiu o użyciu przestarzałego API tekstowych referencji</h3>
-        <p>Poprzednio React umożliwiał zarządzanie referencjami na dwa sposoby: przestarzałe referencje tekstowe i funkcje zwrotne. Pomimo że referencja tekstowa była z tych dwóch wygodniejsza, miała <a href="https://github.com/facebook/react/issues/1373">kilka wad</a>, dlatego też naszą oficjalną rekomendacją było <a href="./refs-and-the-dom.html#legacy-api-string-refs">używanie formy funkcji zwrotnej</a>.</p>
-        <p>
-          React 16.3 wprowadził trzecią opcję, która oferuję wygodę jak w przypadku referencji tekstowej, bez żadnych wad:
-          <code>embed:16-3-release-blog-post/create-ref-example.js</code>
-        </p>
-        <p>Z uwagi na fakt, iż referencje obiektowe zostały dodane głównie jako zamiennik za referencje tekstowe, tryb rygorystyczny obecnie ostrzega w przypadku użyciu referencji tekstowych.</p>
-        <blockquote>
-          <p><strong>Uwaga:</strong></p>
-          <p>Referencje w formie funkcji zwrotnej nadal będą wspierane wraz z nowym interfejsem <code>createRef</code>.</p>
-          <p>Nie musisz zamieniać referencji w postaci funkcji zwrotnej w swoich komponentach. Są one nieco bardziej elastyczne, więc pozostaną jako zaawansowana funkcjonalność.</p>
-        </blockquote>
-        <p><a href="./refs-and-the-dom.html">Dowiedz się więcej o nowym API <code>createRef</code> tutaj.</a></p>
-      </section>
-      <section id="warning-about-deprecated-finddomnode-usage" class="level3">
-        <h3>Ostrzeganie o użyciu przestarzałego findDOMNode</h3>
-        <p>React wspierał <code>findDOMNode</code>, aby umożliwić wyszukanie węzła powiązanego z daną instancją klasy w drzewie DOM. Zwykle jest to zbędna funkcjonalność, gdyż możesz <a href="./refs-and-the-dom.html#creating-refs">podczepić referencję bezpośrednio do węzła DOM</a>.</p>
-        <p><code>findDOMNode</code> mógł również być używany na komponencie klasy, jednak powodowało to zakłócenie poziomów abstrakcji poprzez umożliwienie rodzicowi, aby wymagał wyrenderowania się pewnego potomka. Tworzyło to ryzyko podczas tzw. "refactoringu", ponieważ nie można było zmienić implementacji komponentu, z węzłów którego mógłby korzystać rodzic. <code>findDOMNode</code> zawsze zwraca pierwsze dziecko, ale w przypadku użycia fragmentów jest możliwe, że komponent wyrenderuje wiele węzłów DOM. <code>findDOMNode</code> pozwala na jednorazowy odczyt, zwracając wynik tylko na żądanie. Jeżeli komponent potomny wyrenderuje inny węzeł, nie ma sposobu na obsłużenie tej zmiany. Innymi słowy <code>findDOMNode</code> działa wyłącznie gdy komponenty zwracają zawsze pojedynczy węzeł DOM, który nigdy się nie zmienia.</p>
-        <p>Zamiast tego do komponentu możesz jawnie przekazać referencję, którą następnie przekażesz do drzewa DOM przy użyciu <a href="./forwarding-refs.html#forwarding-refs-to-dom-components">przekierowania referencji</a>.</p>
-        <p>Możesz również dodać do swojego komponentu opakowujący węzeł DOM i bezpośrednio do niego dowiązać referencję.</p>
-        <pre class="language-javascript{4,7}"><code class="language-javascript{4,7}">class MyComponent extends React.Component {
+<!doctypehtml><html lang="pl"><meta charset="utf-8"><title>Tryb rygorystyczny</title><meta name="viewport"content="width=device-width,initial-scale=1"><link rel="stylesheet"href="https://raw.githubusercontent.com/shinokada/prism-coy-theme/main/theme_common.css"><section id="tryb-rygorystyczny"class="level1"><h1>Tryb rygorystyczny</h1><p><code>StrictMode</code> jest narzędziem podkreślającym potencjalne problemy w aplikacji. Tak samo jak <code>Fragment</code>, <code>StrictMode</code> nie renderuje żadnego widocznego UI. Służy natomiast do aktywacji dodatkowych sprawdzeń i ostrzeżeń dla swoich potomków.<blockquote><p>Uwaga:<p>Sprawdzenia dla trybu rygorystycznego są uruchamiane wyłącznie w trybie deweloperskim; <em>nie mają one wpływu na build produkcyjny</em>.</blockquote><p>Możesz uruchomić tryb rygorystyczny dla jakiejkolwiek części swojej aplikacji. Dla przykładu: <code>embed:strict-mode/enabling-strict-mode.js</code><p>W powyższym przykładzie sprawdzenia trybu rygorystycznego <em>nie</em> zostaną uruchomione dla komponentów <code>Header</code> i <code>Footer</code>. Zadziałają one natomiast dla <code>ComponentOne</code> i <code>ComponentTwo</code> oraz wszystkich ich potomków.<p><code>StrictMode</code> aktualnie pomaga w:<ul><li><a href="#identifying-unsafe-lifecycles">Identyfikacji komponentów używających niebezpiecznych metod cyklu życia komponentu</a><li><a href="#warning-about-legacy-string-ref-api-usage">Ostrzeganiu o użyciu przestarzałego API tekstowych referencji</a><li><a href="#warning-about-deprecated-finddomnode-usage">Ostrzeganiu o użyciu przestarzałego findDOMNode</a><li><a href="#detecting-unexpected-side-effects">Wykrywaniu nieoczekiwanych efektów ubocznych</a><li><a href="#detecting-legacy-context-api">Wykrywaniu użycia przestrzałego API kontekstów</a><li><a href="#ensuring-reusable-state">Zapewnianiu wielokrotności użycia stanu</a></ul><p>Dodatkowe funkcjonalności zostaną dodane w przyszłych wydaniach Reacta.<section id="identifying-unsafe-lifecycles"class="level3"><h3>Identyfikacja niebezpiecznych metod cyklu życia komponentu</h3><p>Tak jak zostało to wytłumaczone <a href="/blog/2018/03/27/update-on-async-rendering.html">w tym poście</a>, niektóre stare metody cyklu życia komponentu nie są bezpiecznie dla asynchronicznych aplikacji reactowych. Jednakże jeżeli twoja aplikacja używa bibliotek firm trzecich, upewnienie się, że nie używa ona niebezpiecznych metod cyklu życia komponentu może być trudne. Na szczęście, tryb rygorystyczny może z tym pomóc!<p>Gdy tryb rygorystyczny jest włączony, React tworzy listę wszystkich komponentów klasowych, które używają niebezpiecznych metod cyklu życia, i loguje komunikaty ostrzegawcze z informacją o tych komponentach, jak na przykładzie:<p><img src="../images/blog/strict-mode-unsafe-lifecycles-warning.png"><p>Rozwiązanie <em>teraz</em> problemów zidentyfikowanych przez tryb rygorystyczny ułatwi użycie współbieżnego renderowania w przyszłych wydaniach Reacta.</section><section id="warning-about-legacy-string-ref-api-usage"class="level3"><h3>Ostrzeganiu o użyciu przestarzałego API tekstowych referencji</h3><p>Poprzednio React umożliwiał zarządzanie referencjami na dwa sposoby: przestarzałe referencje tekstowe i funkcje zwrotne. Pomimo że referencja tekstowa była z tych dwóch wygodniejsza, miała <a href="https://github.com/facebook/react/issues/1373">kilka wad</a>, dlatego też naszą oficjalną rekomendacją było <a href="./refs-and-the-dom.html#legacy-api-string-refs">używanie formy funkcji zwrotnej</a>.<p>React 16.3 wprowadził trzecią opcję, która oferuję wygodę jak w przypadku referencji tekstowej, bez żadnych wad: <code>embed:16-3-release-blog-post/create-ref-example.js</code><p>Z uwagi na fakt, iż referencje obiektowe zostały dodane głównie jako zamiennik za referencje tekstowe, tryb rygorystyczny obecnie ostrzega w przypadku użyciu referencji tekstowych.<blockquote><p><strong>Uwaga:</strong><p>Referencje w formie funkcji zwrotnej nadal będą wspierane wraz z nowym interfejsem <code>createRef</code>.<p>Nie musisz zamieniać referencji w postaci funkcji zwrotnej w swoich komponentach. Są one nieco bardziej elastyczne, więc pozostaną jako zaawansowana funkcjonalność.</blockquote><p><a href="./refs-and-the-dom.html">Dowiedz się więcej o nowym API <code>createRef</code> tutaj.</a></section><section id="warning-about-deprecated-finddomnode-usage"class="level3"><h3>Ostrzeganie o użyciu przestarzałego findDOMNode</h3><p>React wspierał <code>findDOMNode</code>, aby umożliwić wyszukanie węzła powiązanego z daną instancją klasy w drzewie DOM. Zwykle jest to zbędna funkcjonalność, gdyż możesz <a href="./refs-and-the-dom.html#creating-refs">podczepić referencję bezpośrednio do węzła DOM</a>.<p><code>findDOMNode</code> mógł również być używany na komponencie klasy, jednak powodowało to zakłócenie poziomów abstrakcji poprzez umożliwienie rodzicowi, aby wymagał wyrenderowania się pewnego potomka. Tworzyło to ryzyko podczas tzw. "refactoringu", ponieważ nie można było zmienić implementacji komponentu, z węzłów którego mógłby korzystać rodzic. <code>findDOMNode</code> zawsze zwraca pierwsze dziecko, ale w przypadku użycia fragmentów jest możliwe, że komponent wyrenderuje wiele węzłów DOM. <code>findDOMNode</code> pozwala na jednorazowy odczyt, zwracając wynik tylko na żądanie. Jeżeli komponent potomny wyrenderuje inny węzeł, nie ma sposobu na obsłużenie tej zmiany. Innymi słowy <code>findDOMNode</code> działa wyłącznie gdy komponenty zwracają zawsze pojedynczy węzeł DOM, który nigdy się nie zmienia.<p>Zamiast tego do komponentu możesz jawnie przekazać referencję, którą następnie przekażesz do drzewa DOM przy użyciu <a href="./forwarding-refs.html#forwarding-refs-to-dom-components">przekierowania referencji</a>.<p>Możesz również dodać do swojego komponentu opakowujący węzeł DOM i bezpośrednio do niego dowiązać referencję.<pre class="language-javascript{4,7}"><code class="language-javascript{4,7}">class MyComponent extends React.Component {
   constructor(props) {
     super(props);
     this.wrapper = React.createRef();
@@ -67,75 +6,9 @@
   render() {
     return &#x3C;div ref={this.wrapper}>{this.props.children}&#x3C;/div>;
   }
-}</code></pre>
-        <blockquote>
-          <p>Uwaga:</p>
-          <p>W CSS możesz użyć atrybutu <a href="https://developer.mozilla.org/en-US/docs/Web/CSS/display#display_contents"><code>display: contents</code></a>, jeżeli nie chcesz, aby węzeł nie był częścią szablonu.</p>
-        </blockquote>
-      </section>
-      <section id="detecting-unexpected-side-effects" class="level3">
-        <h3>Wykrywanie nieoczekiwanych efektów ubocznych</h3>
-        <p>Zasadniczo, React działa w dwóch fazach:</p>
-        <ul>
-          <li>Faza <strong>renderowania</strong> określa, jakie zmiany należy zaaplikować w np. drzewie DOM. Podczas tej fazy React wywołuje metodę <code>render</code> i porównuje jej wynik z poprzednim.</li>
-          <li>Faza <strong>aktualizacji</strong> następuje wtedy, gdy React aplikuje zmiany. (W przypadku React DOM następuje to, gdy React dodaje, aktualizuje i usuwa węzły DOM.) Podczas tej fazy React wywołuje również metody cyklu życia komponentu tj. <code>componentDidMount</code> czy <code>componentDidUpdate</code>.</li>
-        </ul>
-        <p>Faza aktualizacji jest zazwyczaj bardzo szybka, jednak renderowanie może być powolne. Z tego powodu nadchodzący tryb współbieżny (który nie jest jeszcze domyślnie włączony), rozbija pracę związaną z renderowaniem na części, zatrzymując i wznawiając pracę, aby uniknąć blokowania przeglądarki. To oznacza, że React może wywołać metody cyklu życia w fazie renderowania więcej niż raz przed aktualizacją lub może je wywołać nawet bez aktualizacji (z powodu błędu lub przerwania o wyższym priorytecie).</p>
-        <p>Cykl życia fazy renderowania odnosi się do poniższych metod z komponentu klasowego:</p>
-        <ul>
-          <li><code>constructor</code></li>
-          <li><code>componentWillMount</code> (or <code>UNSAFE_componentWillMount</code>)</li>
-          <li><code>componentWillReceiveProps</code> (or <code>UNSAFE_componentWillReceiveProps</code>)</li>
-          <li><code>componentWillUpdate</code> (or <code>UNSAFE_componentWillUpdate</code>)</li>
-          <li><code>getDerivedStateFromProps</code></li>
-          <li><code>shouldComponentUpdate</code></li>
-          <li><code>render</code></li>
-          <li>funkcje aktualizujące dla <code>setState</code> (pierwszy argument)</li>
-        </ul>
-        <p>Ponieważ powyższe metody mogą być wywołane więcej niż raz, ważne jest, aby nie zawierały efektów ubocznych (ang. <em>side-effects</em>). Zignorowanie tej zasady może prowadzić do różnych problemów, włączając w to wycieki pamięci i niepoprawny stan aplikacji. Niestety, może być ciężko wykryć problemy tego typu, ponieważ są one często <a href="https://pl.wikipedia.org/wiki/Algorytm_deterministyczny">niedeterministyczne</a>.</p>
-        <p>Tryb rygorystyczny nie zapewni automatycznego wykrywania efektów ubocznych, ale może pomóc w ich zauważeniu poprzez sprawienie, by były trochę bardziej deterministyczne. Dzieje się to za sprawą celowego podwójnego wywoływania poniższych funkcji:</p>
-        <ul>
-          <li>Metod <code>constructor</code>, <code>render</code> oraz <code>shouldComponentUpdate</code> komponentu klasowego</li>
-          <li>Metody statycznej <code>getDerivedStateFromProps</code> komponentu klasowego</li>
-          <li>Ciała komponentu funkcyjnego</li>
-          <li>Funkcji aktualizującej stanu (pierwszy argument <code>setState</code>)</li>
-          <li>Funkcji przekazywanych do <code>useState</code>, <code>useMemo</code> oraz <code>useReducer</code></li>
-        </ul>
-        <blockquote>
-          <p>Uwaga:</p>
-          <p>Ma to zastosowanie tylko w trybie deweloperskim. <em>Metody życia komponentu nie będą podwójnie wywoływane w trybie produkcyjnym.</em></p>
-        </blockquote>
-        <p>
-          Dla przykładu, rozważ poniższy kod:
-          <code>embed:strict-mode/side-effects-in-constructor.js</code>
-        </p>
-        <p>Na pierwszy rzut oka kod nie wydaje się problematyczny. Ale jeżeli <code>SharedApplicationState.recordEvent</code> nie jest <a href="https://pl.wikipedia.org/wiki/Idempotentno%C5%9B%C4%87#Informatyka">idempotentna</a>, to stworzenie wielu instancji tego komponentu może prowadzić do niepoprawnego stanu aplikacji. Ten subtelny błąd może się nie ukazać podczas dewelopmentu lub może występować sporadycznie i zostać przeoczony.</p>
-        <p>Przez celowe podwójne wywołanie metod, takich jak konstruktor komponentu, tryb rygorystyczny sprawia, że wzorce tego typu są łatwiejsze do zauważenia.</p>
-        <blockquote>
-          <p>Uwaga:</p>
-          <p>Począwszy od wersji 17, React automatycznie modyfikuje metody takie jak <code>console.log()</code>, aby uciszyć logi przy powtórnym wywołaniu funkcji odpowiedzialnych za cykl życia komponentów. Jednak w niektórych przypadkach może to prowadzić do niepożądanych zachowań, <a href="https://github.com/facebook/react/issues/20090#issuecomment-715927125">na co można zaradzić w ten sposób</a>.</p>
-          <p>Od wersji React 18, React nie ucisza żadnych logów. Jeśli jednak korzystasz z React DevTools, logi z drugiego wywołania będą nieco bardziej wyszarzone. React DevTools posiada również opcję (domyślnie wyłączoną), która pozwala całkowicie je uciszyć.</p>
-        </blockquote>
-      </section>
-      <section id="detecting-legacy-context-api" class="level3">
-        <h3>Wykrywanie przestarzałego API kontekstów</h3>
-        <p>Przestarzałe API kontekstów jest podatne na błędy i może zostać usunięte w przyszłych wersjach. Nadal będzie działać dla wszystkich wydań 16.x, ale w trybie rygorystycznym będzie w nich wyświetlany poniższy komunikat ostrzegawczy:</p>
-        <p>
-          <img src="../images/blog/warn-legacy-context-in-strict-mode.png">
-        </p>
-        <p>Przeczytaj <a href="./context.html">dokumentację nowego API kontekstów</a>, aby dowiedzieć się, jak zmigrować do nowej wersji.</p>
-      </section>
-      <section id="ensuring-reusable-state" class="level3">
-        <h3>Zapewnienie wielorazowego stanu</h3>
-        <p>W przyszłości planujemy dodać do Reacta funkcjonalność, która pozwalałaby na dodawanie i usuwanie fragmentów interfejsu, jednocześnie zachowując ich stan. Na przykład, kiedy użytkownik zmienia zakładkę i za chwilę wraca z powrotem, React powinien być w stanie natychmiast pokazać poprzedni widok. Aby to było możliwe, React musi móc ponownie zamontować poddrzewo z takim samym stanem, jaki był przed jego odmontowaniem.</p>
-        <p>Taka funkcjonalność dałaby Reactowi lepszą wydajność bez żadnej dodatkowej konfiguracji, lecz wymaga ona, by komponenty były odporne na efekty podczas wielokrotnego montowanie i odmontowywania. Większość efektów będzie działać bez żadnych zmian, jednak niektóre nie sprzątają po sobie poprawnie subskrypcji w funkcji zwracanej przez efekt albo po prostu z góry zakładają, że komponent będzie zamontowany lub odmontowany tylko jeden raz.</p>
-        <p>Aby uwypuklić te problemy, w Reakcie 18 do trybu rygorystycznego dodaliśmy nowy test, działający tylko w środowisku deweloperskim. Ów test automatycznie odmontuje i zamontuje ponownie każdy komponent renderowany po raz pierwszy, przywracając jego poprzedni stan podczas drugiego montowania.</p>
-        <p>Aby zademonstrować zachowanie aplikacji w takiej sytuacji, zastanówmy się, co się dzieje, gdy React montuje nowy komponent. Jeśli na chwilę zapomnimy o tym teście, to podczas montowania komponentu React tworzy efekty:</p>
-        <pre class="language-text"><code class="language-text">* React montuje komponent.
+}</code></pre><blockquote><p>Uwaga:<p>W CSS możesz użyć atrybutu <a href="https://developer.mozilla.org/en-US/docs/Web/CSS/display#display_contents"><code>display: contents</code></a>, jeżeli nie chcesz, aby węzeł nie był częścią szablonu.</blockquote></section><section id="detecting-unexpected-side-effects"class="level3"><h3>Wykrywanie nieoczekiwanych efektów ubocznych</h3><p>Zasadniczo, React działa w dwóch fazach:<ul><li>Faza <strong>renderowania</strong> określa, jakie zmiany należy zaaplikować w np. drzewie DOM. Podczas tej fazy React wywołuje metodę <code>render</code> i porównuje jej wynik z poprzednim.<li>Faza <strong>aktualizacji</strong> następuje wtedy, gdy React aplikuje zmiany. (W przypadku React DOM następuje to, gdy React dodaje, aktualizuje i usuwa węzły DOM.) Podczas tej fazy React wywołuje również metody cyklu życia komponentu tj. <code>componentDidMount</code> czy <code>componentDidUpdate</code>.</ul><p>Faza aktualizacji jest zazwyczaj bardzo szybka, jednak renderowanie może być powolne. Z tego powodu nadchodzący tryb współbieżny (który nie jest jeszcze domyślnie włączony), rozbija pracę związaną z renderowaniem na części, zatrzymując i wznawiając pracę, aby uniknąć blokowania przeglądarki. To oznacza, że React może wywołać metody cyklu życia w fazie renderowania więcej niż raz przed aktualizacją lub może je wywołać nawet bez aktualizacji (z powodu błędu lub przerwania o wyższym priorytecie).<p>Cykl życia fazy renderowania odnosi się do poniższych metod z komponentu klasowego:<ul><li><code>constructor</code><li><code>componentWillMount</code> (or <code>UNSAFE_componentWillMount</code>)<li><code>componentWillReceiveProps</code> (or <code>UNSAFE_componentWillReceiveProps</code>)<li><code>componentWillUpdate</code> (or <code>UNSAFE_componentWillUpdate</code>)<li><code>getDerivedStateFromProps</code><li><code>shouldComponentUpdate</code><li><code>render</code><li>funkcje aktualizujące dla <code>setState</code> (pierwszy argument)</ul><p>Ponieważ powyższe metody mogą być wywołane więcej niż raz, ważne jest, aby nie zawierały efektów ubocznych (ang. <em>side-effects</em>). Zignorowanie tej zasady może prowadzić do różnych problemów, włączając w to wycieki pamięci i niepoprawny stan aplikacji. Niestety, może być ciężko wykryć problemy tego typu, ponieważ są one często <a href="https://pl.wikipedia.org/wiki/Algorytm_deterministyczny">niedeterministyczne</a>.<p>Tryb rygorystyczny nie zapewni automatycznego wykrywania efektów ubocznych, ale może pomóc w ich zauważeniu poprzez sprawienie, by były trochę bardziej deterministyczne. Dzieje się to za sprawą celowego podwójnego wywoływania poniższych funkcji:<ul><li>Metod <code>constructor</code>, <code>render</code> oraz <code>shouldComponentUpdate</code> komponentu klasowego<li>Metody statycznej <code>getDerivedStateFromProps</code> komponentu klasowego<li>Ciała komponentu funkcyjnego<li>Funkcji aktualizującej stanu (pierwszy argument <code>setState</code>)<li>Funkcji przekazywanych do <code>useState</code>, <code>useMemo</code> oraz <code>useReducer</code></ul><blockquote><p>Uwaga:<p>Ma to zastosowanie tylko w trybie deweloperskim. <em>Metody życia komponentu nie będą podwójnie wywoływane w trybie produkcyjnym.</em></blockquote><p>Dla przykładu, rozważ poniższy kod: <code>embed:strict-mode/side-effects-in-constructor.js</code><p>Na pierwszy rzut oka kod nie wydaje się problematyczny. Ale jeżeli <code>SharedApplicationState.recordEvent</code> nie jest <a href="https://pl.wikipedia.org/wiki/Idempotentno%C5%9B%C4%87#Informatyka">idempotentna</a>, to stworzenie wielu instancji tego komponentu może prowadzić do niepoprawnego stanu aplikacji. Ten subtelny błąd może się nie ukazać podczas dewelopmentu lub może występować sporadycznie i zostać przeoczony.<p>Przez celowe podwójne wywołanie metod, takich jak konstruktor komponentu, tryb rygorystyczny sprawia, że wzorce tego typu są łatwiejsze do zauważenia.<blockquote><p>Uwaga:<p>Począwszy od wersji 17, React automatycznie modyfikuje metody takie jak <code>console.log()</code>, aby uciszyć logi przy powtórnym wywołaniu funkcji odpowiedzialnych za cykl życia komponentów. Jednak w niektórych przypadkach może to prowadzić do niepożądanych zachowań, <a href="https://github.com/facebook/react/issues/20090#issuecomment-715927125">na co można zaradzić w ten sposób</a>.<p>Od wersji React 18, React nie ucisza żadnych logów. Jeśli jednak korzystasz z React DevTools, logi z drugiego wywołania będą nieco bardziej wyszarzone. React DevTools posiada również opcję (domyślnie wyłączoną), która pozwala całkowicie je uciszyć.</blockquote></section><section id="detecting-legacy-context-api"class="level3"><h3>Wykrywanie przestarzałego API kontekstów</h3><p>Przestarzałe API kontekstów jest podatne na błędy i może zostać usunięte w przyszłych wersjach. Nadal będzie działać dla wszystkich wydań 16.x, ale w trybie rygorystycznym będzie w nich wyświetlany poniższy komunikat ostrzegawczy:<p><img src="../images/blog/warn-legacy-context-in-strict-mode.png"><p>Przeczytaj <a href="./context.html">dokumentację nowego API kontekstów</a>, aby dowiedzieć się, jak zmigrować do nowej wersji.</section><section id="ensuring-reusable-state"class="level3"><h3>Zapewnienie wielorazowego stanu</h3><p>W przyszłości planujemy dodać do Reacta funkcjonalność, która pozwalałaby na dodawanie i usuwanie fragmentów interfejsu, jednocześnie zachowując ich stan. Na przykład, kiedy użytkownik zmienia zakładkę i za chwilę wraca z powrotem, React powinien być w stanie natychmiast pokazać poprzedni widok. Aby to było możliwe, React musi móc ponownie zamontować poddrzewo z takim samym stanem, jaki był przed jego odmontowaniem.<p>Taka funkcjonalność dałaby Reactowi lepszą wydajność bez żadnej dodatkowej konfiguracji, lecz wymaga ona, by komponenty były odporne na efekty podczas wielokrotnego montowanie i odmontowywania. Większość efektów będzie działać bez żadnych zmian, jednak niektóre nie sprzątają po sobie poprawnie subskrypcji w funkcji zwracanej przez efekt albo po prostu z góry zakładają, że komponent będzie zamontowany lub odmontowany tylko jeden raz.<p>Aby uwypuklić te problemy, w Reakcie 18 do trybu rygorystycznego dodaliśmy nowy test, działający tylko w środowisku deweloperskim. Ów test automatycznie odmontuje i zamontuje ponownie każdy komponent renderowany po raz pierwszy, przywracając jego poprzedni stan podczas drugiego montowania.<p>Aby zademonstrować zachowanie aplikacji w takiej sytuacji, zastanówmy się, co się dzieje, gdy React montuje nowy komponent. Jeśli na chwilę zapomnimy o tym teście, to podczas montowania komponentu React tworzy efekty:<pre class="language-text"><code class="language-text">* React montuje komponent.
   * Tworzone są efekty układu interfejsu (ang. *layout effects*).
-  * Tworzone są zwykłe efekty.</code></pre>
-        <p>W trybie rygorystycznym w Reakcie 18 podczas montowania komponentu React natychmiast zasymuluje jego odmontowanie i ponowne zamontowanie:</p>
-        <pre class="language-text"><code class="language-text">* React montuje komponent.
+  * Tworzone są zwykłe efekty.</code></pre><p>W trybie rygorystycznym w Reakcie 18 podczas montowania komponentu React natychmiast zasymuluje jego odmontowanie i ponowne zamontowanie:<pre class="language-text"><code class="language-text">* React montuje komponent.
     * Tworzone są efekty układu interfejsu.
     * Tworzone są zwykłe efekty.
 * React symuluje zniszczenie efektów zamontowanego komponentu.
@@ -143,32 +16,6 @@
     * Niszczone są zwykłe efekty.
 * React symuluje ponownie utworzenie efektów zamontowanego komponentu.
     * Tworzone są efekty układu interfejsu.
-    * Tworzone są zwykłe efekty.</code></pre>
-        <p>Przy drugim montowaniu React przywróci stan z pierwszego montowania. Symuluje to zachowanie użytkownika, np. w przypadku przejścia na inną zakładkę i z powrotem na aktualną, upewniając się, że kod poprawnie obsłuży przywrócenie stanu komponentu.</p>
-        <p>Kiedy komponent zostaje odmontowany, efekty są usuwane standardowo:</p>
-        <pre class="language-text"><code class="language-text">* React odmontowuje komponent.
+    * Tworzone są zwykłe efekty.</code></pre><p>Przy drugim montowaniu React przywróci stan z pierwszego montowania. Symuluje to zachowanie użytkownika, np. w przypadku przejścia na inną zakładkę i z powrotem na aktualną, upewniając się, że kod poprawnie obsłuży przywrócenie stanu komponentu.<p>Kiedy komponent zostaje odmontowany, efekty są usuwane standardowo:<pre class="language-text"><code class="language-text">* React odmontowuje komponent.
   * Niszczone są efekty układu interfejsu.
-  * Niszczone są zwykłe efekty.</code></pre>
-        <p>Do cyklu odmontowywania i ponowne montowania zalicza się:</p>
-        <ul>
-          <li><code>componentDidMount</code></li>
-          <li><code>componentWillUnmount</code></li>
-          <li><code>useEffect</code></li>
-          <li><code>useLayoutEffect</code></li>
-          <li><code>useInsertionEffect</code></li>
-        </ul>
-        <blockquote>
-          <p>Uwaga:</p>
-          <p>Zachowanie opisane powyżej dotyczy tylko trybu deweloperskiego, <em>zachowanie na produkcji pozostaje bez zmian</em>.</p>
-        </blockquote>
-        <p>Opis najczęstszych błędów znajdziesz na:</p>
-        <ul>
-          <li>
-            <a href="https://github.com/reactwg/react-18/discussions/18">Jak obsłużyć wielorazowy stan w efektach</a>
-            <span style="float: footnote;"><a href="./index.html#toc">Go to TOC</a></span>
-          </li>
-        </ul>
-      </section>
-    </section>
-  </body>
-</html>
+  * Niszczone są zwykłe efekty.</code></pre><p>Do cyklu odmontowywania i ponowne montowania zalicza się:<ul><li><code>componentDidMount</code><li><code>componentWillUnmount</code><li><code>useEffect</code><li><code>useLayoutEffect</code><li><code>useInsertionEffect</code></ul><blockquote><p>Uwaga:<p>Zachowanie opisane powyżej dotyczy tylko trybu deweloperskiego, <em>zachowanie na produkcji pozostaje bez zmian</em>.</blockquote><p>Opis najczęstszych błędów znajdziesz na:<ul><li><a href="https://github.com/reactwg/react-18/discussions/18">Jak obsłużyć wielorazowy stan w efektach</a> <span style="float:footnote"><a href="./index.html#toc">Go to TOC</a></span></ul></section></section>
