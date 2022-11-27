@@ -24,9 +24,9 @@
 | Name | Languages | Link |
 |--|---|--|
 |Svelte| English |[Viewer](https://read-html-download-pdf.vercel.app/#src=/docs/frameworks/svelte/en/index.html)|
-|Svelte| 日本語 |[Viewer](https://read-html-download-pdf.vercel.app/#src=/Viewer/frameworks/svelte/ja/index.html)|
-| SvelteKit| English | [Viewer](https://read-html-download-pdf.vercel.app/#src=/Viewer/frameworks/sveltekit/en/index.html)|
-| SvelteKit| 日本語 | [Viewer](https://read-html-download-pdf.vercel.app/#src=/Viewer/frameworks/sveltekit/ja/index.html)|
+|Svelte| 日本語 |[Viewer](https://read-html-download-pdf.vercel.app/#src=/docs/frameworks/svelte/ja/index.html)|
+| SvelteKit| English | [Viewer](https://read-html-download-pdf.vercel.app/#src=/docs/frameworks/sveltekit/en/index.html)|
+| SvelteKit| 日本語 | [Viewer](https://read-html-download-pdf.vercel.app/#src=/docs/frameworks/sveltekit/ja/index.html)|
 
 ### Vite family
 
