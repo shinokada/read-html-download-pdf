@@ -1,68 +1,73 @@
-# Vivliostyle Viewer
+# Read HTML Download PDF
 
-[![npm][npm]][npm-url]
-[![Build Status][build-status]][build-status-url]
-[![deps][deps]][deps-url]
-[![Install Size][size]][size-url]
-[![Downloads][downloads]][downloads-url]
+[Demo](https://read-html-download-pdf.vercel.app/)
 
-Vivliostyle Viewer is a Web application for HTML+CSS typesetting and rich paged viewing with EPUB/Web publications support.
+## Available Viewer
 
-- Online Vivliostyle Viewer: <https://vivliostyle.org/viewer/>
-- Download Vivliostyle Viewer: <https://vivliostyle.github.io>
-- View samples online: <https://vivliostyle.org/samples/>
+### React family
 
-## How to use
+| Name | Languages | Link |
+|--|---|--|
+|React| English |[Viewer](https://read-html-download-pdf.vercel.app/#src=/docs/frameworks/react/en/index.html) |
+|React | Deutsch |[Viewer](https://read-html-download-pdf.vercel.app/#src=/docs/frameworks/react/de/index.html) |
+| React| Français|[Viewer](https://read-html-download-pdf.vercel.app/#src=/docs/frameworks/react/fr/index.html) |
+| React| עברית| [Viewer](https://read-html-download-pdf.vercel.app/#src=/docs/frameworks/react/he/index.html)|
+| React|  日本語| [Viewer](https://read-html-download-pdf.vercel.app/#src=/docs/frameworks/react/ja/index.html)|
+|React | 한국어 | [Viewer](https://read-html-download-pdf.vercel.app/#src=/docs/frameworks/react/ko/index.html)|
+|React | Polski| [Viewer](https://read-html-download-pdf.vercel.app/#src=/docs/frameworks/react/pl/index.html)|
+| React| 中文 |[Viewer](https://read-html-download-pdf.vercel.app/#src=/docs/frameworks/react/zh-hans/index.html) |
+| React| 漢語| [Viewer](https://read-html-download-pdf.vercel.app/#src=/docs/frameworks/react/zh-hant/index.html)|
 
-### To use the distribution package `vivliostyle-viewer-*.zip`
 
-1. Unzip the downloaded ZIP file.
-2. Open a terminal (or Windows command prompt)
-3. Run the `start-webserver` or `start-viewer` script (or Windows batch) file located in the unzipped directory. For example:
+### Svelte family
 
-```
-$ ./vivliostyle-viewer-latest/start-webserver
-```
+| Name | Languages | Link |
+|--|---|--|
+|Svelte| English |[Viewer](https://read-html-download-pdf.vercel.app/#src=/docs/frameworks/svelte/en/index.html)|
+|Svelte| 日本語 |[Viewer](https://read-html-download-pdf.vercel.app/#src=/Viewer/frameworks/svelte/ja/index.html)|
+| SvelteKit| English | [Viewer](https://read-html-download-pdf.vercel.app/#src=/Viewer/frameworks/sveltekit/en/index.html)|
+| SvelteKit| 日本語 | [Viewer](https://read-html-download-pdf.vercel.app/#src=/Viewer/frameworks/sveltekit/ja/index.html)|
 
-or in Windows command prompt,
+### Vite family
 
-```
-> vivliostyle-viewer-latest\start-webserver
-```
+| Name | Languages | Link |
+|--|---|--|
+| Vite | English | [Viewer](https://read-html-download-pdf.vercel.app/#src=/docs/frameworks/vite/en/guide/index.html)|
+| Vitest| English | [Viewer](https://read-html-download-pdf.vercel.app/#src=/docs/frameworks/vitest/en/index.html)|
 
-If a message,
+### Vue family
 
-```
-Please install Node.js or Ruby or Python and rerun this script, or use your favorite HTTP server.
-```
+| Name | Languages | Link |
+|--|---|--|
+| Nuxt | English| [Viewer](https://read-html-download-pdf.vercel.app/#src=/docs/frameworks/nuxt/en/index.html)|
+| Nuxt | Español | [Viewer](https://read-html-download-pdf.vercel.app/#src=/docs/frameworks/nuxt/es/index.html)|
+| Nuxt | Français| [Viewer](https://read-html-download-pdf.vercel.app/#src=/docs/frameworks/nuxt/fr/index.html)|
+| Nuxt | 日本語 | [Viewer](https://read-html-download-pdf.vercel.app/#src=/docs/frameworks/nuxt/ja/index.html)|
+| Nuxt | Português | [Viewer](https://read-html-download-pdf.vercel.app/#src=/docs/frameworks/nuxt/pt/index.html)|
+| Nuxt | Português(BR)| [Viewer](https://read-html-download-pdf.vercel.app/#src=/docs/frameworks/nuxt/pt-br/index.html)|
+|Slidev| English |[Viewer](https://read-html-download-pdf.vercel.app/#src=/docs/frameworks/slidev/en/index.html)|
+|Slidev | Português-BR| [Viewer](https://read-html-download-pdf.vercel.app/#src=/docs/frameworks/slidev/br/index.html)|
+|Slidev | 简体中文 | [Viewer](https://read-html-download-pdf.vercel.app/#src=/docs/frameworks/slidev/cn/index.html)|
+|Slidev | Deutsch |[Viewer](https://read-html-download-pdf.vercel.app/#src=/docs/frameworks/slidev/de/index.html) |
+|Slidev | Ελληνικά | [Viewer](https://read-html-download-pdf.vercel.app/#src=/docs/frameworks/slidev/el/index.html)|
+|Slidev | Español |[Viewer](https://read-html-download-pdf.vercel.app/#src=/docs/frameworks/slidev/es/index.html) |
+|Slidev | Français | [Viewer](https://read-html-download-pdf.vercel.app/#src=/docs/frameworks/slidev/fr/index.html)|
+|Slidev | 日本語 | [Viewer](https://read-html-download-pdf.vercel.app/#src=/docs/frameworks/slidev/ja/index.html)|
+|Slidev | Русский | [Viewer](https://read-html-download-pdf.vercel.app/#src=/docs/frameworks/slidev/ru/index.html)|
+|Slidev | Việt Nam| [Viewer](https://read-html-download-pdf.vercel.app/#src=/docs/frameworks/slidev/vn/index.html)|
+|Vue| English | [Viewer](https://read-html-download-pdf.vercel.app/#src=/docs/frameworks/vue/en/index.html)|
+| Vitepress | English | [Viewer](https://read-html-download-pdf.vercel.app/#src=/docs/frameworks/vitepress/en/index.html)|
 
-is shown, install either of them (recommend [Node.js](https://nodejs.org/) and rerun the script, or use your favorite web server.
 
-The `start-webserver` script starts a local web server and opens the default browser. The current directory is used as the root of the web server. Run `start-webserver --help` to see the usage help.
+## Other Viewer
 
-The `start-viewer` script starts a local web server (calls `start-webserver`) and opens Vivliostyle Viewer (located in `./viewer/`) in browser. Run `start-viewer --help` to see the usage help.
+| Name | Languages | Link |
+|--|--|--|
+| pnpm | English | [Viewer](https://read-html-download-pdf.vercel.app/#src=/docs/frameworks/pnpm/en/index.html)|
+| Shellspec | English | [Viewer](https://read-html-download-pdf.vercel.app/#src=/docs/frameworks/shellspec/en/index.html) |
+| Tauri | English | [Viewer](https://read-html-download-pdf.vercel.app/#src=/docs/frameworks/tauri/en/index.html) |
+| Bullet proof React | English | [Viewer](https://read-html-download-pdf.vercel.app/#src=/docs/frameworks/bullet-proof-react/en/index.htmlt)|
 
-### To use the npm package [`@vivliostyle/viewer`](https://www.npmjs.com/package/@vivliostyle/viewer)
-
-```
-npm install @vivliostyle/viewer
-```
-
-Vivliostyle Viewer is located in `./node_modules/@vivliostyle/viewer/lib/`, so you need to start a web server and open this location in the browser to start the Vivliostyle Viewer.
-
-## Documentation
-
-See online [Vivliostyle Documents](https://vivliostyle.org/documents/) for the latest documents, or open `./docs/` in the distribution package using local web server.
-
-## Bug reports & feature requests
-
-Please send them to
-
-- GitHub Issues: <https://github.com/vivliostyle/vivliostyle.js/issues>
-
-## Source code
-
-- Vivliostyle.js on GitHub: <https://github.com/vivliostyle/vivliostyle.js>
 
 ## License
 
