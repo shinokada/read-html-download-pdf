@@ -1,124 +1,48 @@
-<!doctype html>
-<html lang="en">
-  <head>
-    <meta charset="utf-8">
-    <title>Calling Rust from the frontend</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <link rel="stylesheet" href="https://raw.githubusercontent.com/shinokada/prism-coy-theme/main/theme_common.css">
-  </head>
-  <body>
-    <section id="calling-rust-from-the-frontend" class="level1">
-      <h1>Calling Rust from the frontend</h1>
-      <p>
-        Tauri provides a simple yet powerful <code>command</code> system for calling Rust functions from your web app.
-        Commands can accept arguments and return values. They can also return errors and be <code>async</code>.
-      </p>
-      <section id="basic-example" class="level2">
-        <h2>Basic Example</h2>
-        <p>Commands are defined in your <code>src-tauri/src/main.rs</code> file. To create a command, just add a function and annotate it with <code>#[tauri::command]</code>:</p>
-        <pre class="language-rust"><code class="language-rust"><span class="token attribute attr-name">#[tauri::command]</span>
+<!doctypehtml><html lang="en"><meta charset="utf-8"><title>Calling Rust from the frontend</title><meta name="viewport"content="width=device-width,initial-scale=1"><link rel="stylesheet"href="https://raw.githubusercontent.com/shinokada/prism-coy-theme/main/theme_common.css"><section id="calling-rust-from-the-frontend"class="level1"><h1>Calling Rust from the frontend</h1><p>Tauri provides a simple yet powerful <code>command</code> system for calling Rust functions from your web app. Commands can accept arguments and return values. They can also return errors and be <code>async</code>.<section id="basic-example"class="level2"><h2>Basic Example</h2><p>Commands are defined in your <code>src-tauri/src/main.rs</code> file. To create a command, just add a function and annotate it with <code>#[tauri::command]</code>:<pre class="language-rust"><code class="language-rust"><span class="token attribute attr-name">#[tauri::command]</span>
 <span class="token keyword">fn</span> <span class="token function-definition function">my_custom_command</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
   <span class="token macro property">println!</span><span class="token punctuation">(</span><span class="token class-name">I</span> was invoked from <span class="token macro property">JS!</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
-<span class="token punctuation">}</span></code></pre>
-        <p>You will have to provide a list of your commands to the builder function like so:</p>
-        <pre class="language-rust"><code class="language-rust"><span class="token comment">// Also in main.rs</span>
+<span class="token punctuation">}</span></code></pre><p>You will have to provide a list of your commands to the builder function like so:<pre class="language-rust"><code class="language-rust"><span class="token comment">// Also in main.rs</span>
 <span class="token keyword">fn</span> <span class="token function-definition function">main</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
   <span class="token namespace">tauri<span class="token punctuation">::</span></span><span class="token class-name">Builder</span><span class="token punctuation">::</span><span class="token function">default</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
     <span class="token comment">// This is where you pass in your commands</span>
     <span class="token punctuation">.</span><span class="token function">invoke_handler</span><span class="token punctuation">(</span><span class="token namespace">tauri<span class="token punctuation">::</span></span><span class="token macro property">generate_handler!</span><span class="token punctuation">[</span>my_custom_command<span class="token punctuation">]</span><span class="token punctuation">)</span>
     <span class="token punctuation">.</span><span class="token function">run</span><span class="token punctuation">(</span><span class="token namespace">tauri<span class="token punctuation">::</span></span><span class="token macro property">generate_context!</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
     <span class="token punctuation">.</span><span class="token function">expect</span><span class="token punctuation">(</span>failed to run app<span class="token punctuation">)</span><span class="token punctuation">;</span>
-<span class="token punctuation">}</span></code></pre>
-        <p>Now, you can invoke the command from your JS code:</p>
-        <pre class="language-js"><code class="language-js"><span class="token comment">// When using the Tauri API npm package:</span>
+<span class="token punctuation">}</span></code></pre><p>Now, you can invoke the command from your JS code:<pre class="language-js"><code class="language-js"><span class="token comment">// When using the Tauri API npm package:</span>
 <span class="token keyword module">import</span> <span class="token imports"><span class="token punctuation">{</span> invoke <span class="token punctuation">}</span></span> <span class="token keyword module">from</span> <span class="token string">'@tauri-apps/api/tauri'</span>
 <span class="token comment">// When using the Tauri global script (if not using the npm package)</span>
 <span class="token comment">// Be sure to set `build.withGlobalTauri` in `tauri.conf.json` to true</span>
 <span class="token keyword">const</span> invoke <span class="token operator">=</span> <span class="token dom variable">window</span><span class="token punctuation">.</span><span class="token property-access">__TAURI__</span><span class="token punctuation">.</span><span class="token property-access">invoke</span>
 
 <span class="token comment">// Invoke the command</span>
-<span class="token function">invoke</span><span class="token punctuation">(</span><span class="token string">'my_custom_command'</span><span class="token punctuation">)</span></code></pre>
-      </section>
-      <section id="passing-arguments" class="level2">
-        <h2>Passing Arguments</h2>
-        <p>Your command handlers can take arguments:</p>
-        <pre class="language-rust"><code class="language-rust"><span class="token attribute attr-name">#[tauri::command]</span>
+<span class="token function">invoke</span><span class="token punctuation">(</span><span class="token string">'my_custom_command'</span><span class="token punctuation">)</span></code></pre></section><section id="passing-arguments"class="level2"><h2>Passing Arguments</h2><p>Your command handlers can take arguments:<pre class="language-rust"><code class="language-rust"><span class="token attribute attr-name">#[tauri::command]</span>
 <span class="token keyword">fn</span> <span class="token function-definition function">my_custom_command</span><span class="token punctuation">(</span>invoke_message<span class="token punctuation">:</span> <span class="token class-name">String</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
   <span class="token macro property">println!</span><span class="token punctuation">(</span><span class="token class-name">I</span> was invoked from <span class="token constant">JS</span><span class="token punctuation">,</span> with this message<span class="token punctuation">:</span> <span class="token punctuation">{</span><span class="token punctuation">}</span><span class="token punctuation">,</span> invoke_message<span class="token punctuation">)</span><span class="token punctuation">;</span>
-<span class="token punctuation">}</span></code></pre>
-        <p>Arguments should be passed as a JSON object with camelCase keys:</p>
-        <pre class="language-js"><code class="language-js"><span class="token function">invoke</span><span class="token punctuation">(</span><span class="token string">'my_custom_command'</span><span class="token punctuation">,</span> <span class="token punctuation">{</span> <span class="token literal-property property">invokeMessage</span><span class="token operator">:</span> <span class="token string">'Hello!'</span> <span class="token punctuation">}</span><span class="token punctuation">)</span></code></pre>
-        <p>Arguments can be of any type, as long as they implement <a href="https://docs.serde.rs/serde/trait.Deserialize.html"><code>serde::Deserialize</code></a>.</p>
-      </section>
-      <section id="returning-data" class="level2">
-        <h2>Returning Data</h2>
-        <p>Command handlers can return data as well:</p>
-        <pre class="language-rust"><code class="language-rust"><span class="token attribute attr-name">#[tauri::command]</span>
+<span class="token punctuation">}</span></code></pre><p>Arguments should be passed as a JSON object with camelCase keys:<pre class="language-js"><code class="language-js"><span class="token function">invoke</span><span class="token punctuation">(</span><span class="token string">'my_custom_command'</span><span class="token punctuation">,</span> <span class="token punctuation">{</span> <span class="token literal-property property">invokeMessage</span><span class="token operator">:</span> <span class="token string">'Hello!'</span> <span class="token punctuation">}</span><span class="token punctuation">)</span></code></pre><p>Arguments can be of any type, as long as they implement <a href="https://docs.serde.rs/serde/trait.Deserialize.html"><code>serde::Deserialize</code></a>.</section><section id="returning-data"class="level2"><h2>Returning Data</h2><p>Command handlers can return data as well:<pre class="language-rust"><code class="language-rust"><span class="token attribute attr-name">#[tauri::command]</span>
 <span class="token keyword">fn</span> <span class="token function-definition function">my_custom_command</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">-></span> <span class="token class-name">String</span> <span class="token punctuation">{</span>
   <span class="token class-name">Hello</span> from <span class="token macro property">Rust!</span><span class="token punctuation">.</span><span class="token function">into</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
-<span class="token punctuation">}</span></code></pre>
-        <p>The <code>invoke</code> function returns a promise that resolves with the returned value:</p>
-        <pre class="language-js"><code class="language-js"><span class="token function">invoke</span><span class="token punctuation">(</span><span class="token string">'my_custom_command'</span><span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token method function property-access">then</span><span class="token punctuation">(</span><span class="token punctuation">(</span><span class="token parameter">message</span><span class="token punctuation">)</span> <span class="token arrow operator">=></span> <span class="token console class-name">console</span><span class="token punctuation">.</span><span class="token method function property-access">log</span><span class="token punctuation">(</span>message<span class="token punctuation">)</span><span class="token punctuation">)</span></code></pre>
-        <p>Returned data can be of any type, as long as it implements <a href="https://docs.serde.rs/serde/trait.Serialize.html"><code>serde::Serialize</code></a>.</p>
-      </section>
-      <section id="error-handling" class="level2">
-        <h2>Error Handling</h2>
-        <p>If your handler could fail and needs to be able to return an error, have the function return a <code>Result</code>:</p>
-        <pre class="language-rust"><code class="language-rust"><span class="token attribute attr-name">#[tauri::command]</span>
+<span class="token punctuation">}</span></code></pre><p>The <code>invoke</code> function returns a promise that resolves with the returned value:<pre class="language-js"><code class="language-js"><span class="token function">invoke</span><span class="token punctuation">(</span><span class="token string">'my_custom_command'</span><span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token method function property-access">then</span><span class="token punctuation">(</span><span class="token punctuation">(</span><span class="token parameter">message</span><span class="token punctuation">)</span> <span class="token arrow operator">=></span> <span class="token console class-name">console</span><span class="token punctuation">.</span><span class="token method function property-access">log</span><span class="token punctuation">(</span>message<span class="token punctuation">)</span><span class="token punctuation">)</span></code></pre><p>Returned data can be of any type, as long as it implements <a href="https://docs.serde.rs/serde/trait.Serialize.html"><code>serde::Serialize</code></a>.</section><section id="error-handling"class="level2"><h2>Error Handling</h2><p>If your handler could fail and needs to be able to return an error, have the function return a <code>Result</code>:<pre class="language-rust"><code class="language-rust"><span class="token attribute attr-name">#[tauri::command]</span>
 <span class="token keyword">fn</span> <span class="token function-definition function">my_custom_command</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">-></span> <span class="token class-name">Result</span><span class="token operator">&#x3C;</span><span class="token class-name">String</span><span class="token punctuation">,</span> <span class="token class-name">String</span><span class="token operator">></span> <span class="token punctuation">{</span>
   <span class="token comment">// If something fails</span>
   <span class="token class-name">Err</span><span class="token punctuation">(</span><span class="token class-name">This</span> <span class="token macro property">failed!</span><span class="token punctuation">.</span><span class="token function">into</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
   <span class="token comment">// If it worked</span>
   <span class="token class-name">Ok</span><span class="token punctuation">(</span><span class="token class-name">This</span> <span class="token macro property">worked!</span><span class="token punctuation">.</span><span class="token function">into</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
-<span class="token punctuation">}</span></code></pre>
-        <p>If the command returns an error, the promise will reject, otherwise, it resolves:</p>
-        <pre class="language-js"><code class="language-js"><span class="token function">invoke</span><span class="token punctuation">(</span><span class="token string">'my_custom_command'</span><span class="token punctuation">)</span>
+<span class="token punctuation">}</span></code></pre><p>If the command returns an error, the promise will reject, otherwise, it resolves:<pre class="language-js"><code class="language-js"><span class="token function">invoke</span><span class="token punctuation">(</span><span class="token string">'my_custom_command'</span><span class="token punctuation">)</span>
   <span class="token punctuation">.</span><span class="token method function property-access">then</span><span class="token punctuation">(</span><span class="token punctuation">(</span><span class="token parameter">message</span><span class="token punctuation">)</span> <span class="token arrow operator">=></span> <span class="token console class-name">console</span><span class="token punctuation">.</span><span class="token method function property-access">log</span><span class="token punctuation">(</span>message<span class="token punctuation">)</span><span class="token punctuation">)</span>
-  <span class="token punctuation">.</span><span class="token keyword control-flow">catch</span><span class="token punctuation">(</span><span class="token punctuation">(</span><span class="token parameter">error</span><span class="token punctuation">)</span> <span class="token arrow operator">=></span> <span class="token console class-name">console</span><span class="token punctuation">.</span><span class="token method function property-access">error</span><span class="token punctuation">(</span>error<span class="token punctuation">)</span><span class="token punctuation">)</span></code></pre>
-      </section>
-      <section id="async-commands" class="level2">
-        <h2>Async Commands</h2>
-        <blockquote>
-          <p>
-            Async commands are executed on a separate thread using <a href="https://docs.rs/tauri/1/tauri/async_runtime/fn.spawn.html"><code>async_runtime::spawn</code></a>.
-            Commands without the <em>async</em> keyword are executed on the main thread unless defined with <em>#[tauri::command(async)]</em>.
-          </p>
-        </blockquote>
-        <p>If your command needs to run asynchronously, simply declare it as <code>async</code>:</p>
-        <pre class="language-rust"><code class="language-rust"><span class="token attribute attr-name">#[tauri::command]</span>
+  <span class="token punctuation">.</span><span class="token keyword control-flow">catch</span><span class="token punctuation">(</span><span class="token punctuation">(</span><span class="token parameter">error</span><span class="token punctuation">)</span> <span class="token arrow operator">=></span> <span class="token console class-name">console</span><span class="token punctuation">.</span><span class="token method function property-access">error</span><span class="token punctuation">(</span>error<span class="token punctuation">)</span><span class="token punctuation">)</span></code></pre></section><section id="async-commands"class="level2"><h2>Async Commands</h2><blockquote><p>Async commands are executed on a separate thread using <a href="https://docs.rs/tauri/1/tauri/async_runtime/fn.spawn.html"><code>async_runtime::spawn</code></a>. Commands without the <em>async</em> keyword are executed on the main thread unless defined with <em>#[tauri::command(async)]</em>.</blockquote><p>If your command needs to run asynchronously, simply declare it as <code>async</code>:<pre class="language-rust"><code class="language-rust"><span class="token attribute attr-name">#[tauri::command]</span>
 <span class="token keyword">async</span> <span class="token keyword">fn</span> <span class="token function-definition function">my_custom_command</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
   <span class="token comment">// Call another async function and wait for it to finish</span>
   <span class="token keyword">let</span> result <span class="token operator">=</span> <span class="token function">some_async_function</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token keyword">await</span><span class="token punctuation">;</span>
   <span class="token macro property">println!</span><span class="token punctuation">(</span><span class="token class-name">Result</span><span class="token punctuation">:</span> <span class="token punctuation">{</span><span class="token punctuation">}</span><span class="token punctuation">,</span> result<span class="token punctuation">)</span><span class="token punctuation">;</span>
-<span class="token punctuation">}</span></code></pre>
-        <p>Since invoking the command from JS already returns a promise, it works just like any other command:</p>
-        <pre class="language-js"><code class="language-js"><span class="token function">invoke</span><span class="token punctuation">(</span><span class="token string">'my_custom_command'</span><span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token method function property-access">then</span><span class="token punctuation">(</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token arrow operator">=></span> <span class="token console class-name">console</span><span class="token punctuation">.</span><span class="token method function property-access">log</span><span class="token punctuation">(</span><span class="token string">'Completed!'</span><span class="token punctuation">)</span><span class="token punctuation">)</span></code></pre>
-      </section>
-      <section id="accessing-the-window-in-commands" class="level2">
-        <h2>Accessing the Window in Commands</h2>
-        <p>Commands can access the <code>Window</code> instance that invoked the message:</p>
-        <pre class="language-rust"><code class="language-rust"><span class="token attribute attr-name">#[tauri::command]</span>
+<span class="token punctuation">}</span></code></pre><p>Since invoking the command from JS already returns a promise, it works just like any other command:<pre class="language-js"><code class="language-js"><span class="token function">invoke</span><span class="token punctuation">(</span><span class="token string">'my_custom_command'</span><span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token method function property-access">then</span><span class="token punctuation">(</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token arrow operator">=></span> <span class="token console class-name">console</span><span class="token punctuation">.</span><span class="token method function property-access">log</span><span class="token punctuation">(</span><span class="token string">'Completed!'</span><span class="token punctuation">)</span><span class="token punctuation">)</span></code></pre></section><section id="accessing-the-window-in-commands"class="level2"><h2>Accessing the Window in Commands</h2><p>Commands can access the <code>Window</code> instance that invoked the message:<pre class="language-rust"><code class="language-rust"><span class="token attribute attr-name">#[tauri::command]</span>
 <span class="token keyword">async</span> <span class="token keyword">fn</span> <span class="token function-definition function">my_custom_command</span><span class="token punctuation">(</span>window<span class="token punctuation">:</span> <span class="token namespace">tauri<span class="token punctuation">::</span></span><span class="token class-name">Window</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
   <span class="token macro property">println!</span><span class="token punctuation">(</span><span class="token class-name">Window</span><span class="token punctuation">:</span> <span class="token punctuation">{</span><span class="token punctuation">}</span><span class="token punctuation">,</span> window<span class="token punctuation">.</span><span class="token function">label</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
-<span class="token punctuation">}</span></code></pre>
-      </section>
-      <section id="accessing-an-apphandle-in-commands" class="level2">
-        <h2>Accessing an AppHandle in Commands</h2>
-        <p>Commands can access an <code>AppHandle</code> instance:</p>
-        <pre class="language-rust"><code class="language-rust"><span class="token attribute attr-name">#[tauri::command]</span>
+<span class="token punctuation">}</span></code></pre></section><section id="accessing-an-apphandle-in-commands"class="level2"><h2>Accessing an AppHandle in Commands</h2><p>Commands can access an <code>AppHandle</code> instance:<pre class="language-rust"><code class="language-rust"><span class="token attribute attr-name">#[tauri::command]</span>
 <span class="token keyword">async</span> <span class="token keyword">fn</span> <span class="token function-definition function">my_custom_command</span><span class="token punctuation">(</span>app_handle<span class="token punctuation">:</span> <span class="token namespace">tauri<span class="token punctuation">::</span></span><span class="token class-name">AppHandle</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
   <span class="token keyword">let</span> app_dir <span class="token operator">=</span> app_handle<span class="token punctuation">.</span><span class="token function">path_resolver</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">app_dir</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
   <span class="token keyword">use</span> <span class="token namespace">tauri<span class="token punctuation">::</span></span><span class="token class-name">GlobalShortcutManager</span><span class="token punctuation">;</span>
   app_handle<span class="token punctuation">.</span><span class="token function">global_shortcut_manager</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">register</span><span class="token punctuation">(</span><span class="token constant">CTRL</span> <span class="token operator">+</span> <span class="token class-name">U</span><span class="token punctuation">,</span> <span class="token keyword">move</span> <span class="token closure-params"><span class="token closure-punctuation punctuation">|</span><span class="token closure-punctuation punctuation">|</span></span> <span class="token punctuation">{</span><span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
-<span class="token punctuation">}</span></code></pre>
-      </section>
-      <section id="accessing-managed-state" class="level2">
-        <h2>Accessing managed state</h2>
-        <p>
-          Tauri can manage state using the <code>manage</code> function on <code>tauri::Builder</code>.
-          The state can be accessed on a command using <code>tauri::State</code>:
-        </p>
-        <pre class="language-rust"><code class="language-rust"><span class="token keyword">struct</span> <span class="token type-definition class-name">MyState</span><span class="token punctuation">(</span><span class="token class-name">String</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span></code></pre></section><section id="accessing-managed-state"class="level2"><h2>Accessing managed state</h2><p>Tauri can manage state using the <code>manage</code> function on <code>tauri::Builder</code>. The state can be accessed on a command using <code>tauri::State</code>:<pre class="language-rust"><code class="language-rust"><span class="token keyword">struct</span> <span class="token type-definition class-name">MyState</span><span class="token punctuation">(</span><span class="token class-name">String</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
 
 <span class="token attribute attr-name">#[tauri::command]</span>
 <span class="token keyword">fn</span> <span class="token function-definition function">my_custom_command</span><span class="token punctuation">(</span>state<span class="token punctuation">:</span> <span class="token namespace">tauri<span class="token punctuation">::</span></span><span class="token class-name">State</span><span class="token operator">&#x3C;</span><span class="token class-name">MyState</span><span class="token operator">></span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
@@ -131,17 +55,7 @@
     <span class="token punctuation">.</span><span class="token function">invoke_handler</span><span class="token punctuation">(</span><span class="token namespace">tauri<span class="token punctuation">::</span></span><span class="token macro property">generate_handler!</span><span class="token punctuation">[</span>my_custom_command<span class="token punctuation">]</span><span class="token punctuation">)</span>
     <span class="token punctuation">.</span><span class="token function">run</span><span class="token punctuation">(</span><span class="token namespace">tauri<span class="token punctuation">::</span></span><span class="token macro property">generate_context!</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
     <span class="token punctuation">.</span><span class="token function">expect</span><span class="token punctuation">(</span>error <span class="token keyword">while</span> running tauri application<span class="token punctuation">)</span><span class="token punctuation">;</span>
-<span class="token punctuation">}</span></code></pre>
-      </section>
-      <section id="creating-multiple-commands" class="level2">
-        <h2>Creating Multiple Commands</h2>
-        <p>
-          The <code>tauri::generate_handler!</code> macro takes an array of commands. To register
-          multiple commands, you cannot call invoke_handler multiple times. Only the last
-          call will be used. You must pass each command to a single call of
-          <code>tauri::generate_handler!</code>.
-        </p>
-        <pre class="language-rust"><code class="language-rust"><span class="token attribute attr-name">#[tauri::command]</span>
+<span class="token punctuation">}</span></code></pre></section><section id="creating-multiple-commands"class="level2"><h2>Creating Multiple Commands</h2><p>The <code>tauri::generate_handler!</code> macro takes an array of commands. To register multiple commands, you cannot call invoke_handler multiple times. Only the last call will be used. You must pass each command to a single call of <code>tauri::generate_handler!</code>.<pre class="language-rust"><code class="language-rust"><span class="token attribute attr-name">#[tauri::command]</span>
 <span class="token keyword">fn</span> <span class="token function-definition function">cmd_a</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">-></span> <span class="token class-name">String</span> <span class="token punctuation">{</span>
 	<span class="token class-name">Command</span> a
 <span class="token punctuation">}</span>
@@ -155,12 +69,7 @@
     <span class="token punctuation">.</span><span class="token function">invoke_handler</span><span class="token punctuation">(</span><span class="token namespace">tauri<span class="token punctuation">::</span></span><span class="token macro property">generate_handler!</span><span class="token punctuation">[</span>cmd_a<span class="token punctuation">,</span> cmd_b<span class="token punctuation">]</span><span class="token punctuation">)</span>
     <span class="token punctuation">.</span><span class="token function">run</span><span class="token punctuation">(</span><span class="token namespace">tauri<span class="token punctuation">::</span></span><span class="token macro property">generate_context!</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
     <span class="token punctuation">.</span><span class="token function">expect</span><span class="token punctuation">(</span>error <span class="token keyword">while</span> running tauri application<span class="token punctuation">)</span><span class="token punctuation">;</span>
-<span class="token punctuation">}</span></code></pre>
-      </section>
-      <section id="complete-example" class="level2">
-        <h2>Complete Example</h2>
-        <p>Any or all of the above features can be combined:</p>
-        <pre class="language-rust"><code class="language-rust">
+<span class="token punctuation">}</span></code></pre></section><section id="complete-example"class="level2"><h2>Complete Example</h2><p>Any or all of the above features can be combined:<pre class="language-rust"><code class="language-rust">
 <span class="token keyword">struct</span> <span class="token type-definition class-name">Database</span><span class="token punctuation">;</span>
 
 <span class="token attribute attr-name">#[derive(serde::Serialize)]</span>
@@ -197,8 +106,7 @@
     <span class="token punctuation">.</span><span class="token function">invoke_handler</span><span class="token punctuation">(</span><span class="token namespace">tauri<span class="token punctuation">::</span></span><span class="token macro property">generate_handler!</span><span class="token punctuation">[</span>my_custom_command<span class="token punctuation">]</span><span class="token punctuation">)</span>
     <span class="token punctuation">.</span><span class="token function">run</span><span class="token punctuation">(</span><span class="token namespace">tauri<span class="token punctuation">::</span></span><span class="token macro property">generate_context!</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
     <span class="token punctuation">.</span><span class="token function">expect</span><span class="token punctuation">(</span>error <span class="token keyword">while</span> running tauri application<span class="token punctuation">)</span><span class="token punctuation">;</span>
-<span class="token punctuation">}</span></code></pre>
-        <pre class="language-js"><code class="language-js"><span class="token comment">// Invocation from JS</span>
+<span class="token punctuation">}</span></code></pre><pre class="language-js"><code class="language-js"><span class="token comment">// Invocation from JS</span>
 
 <span class="token function">invoke</span><span class="token punctuation">(</span><span class="token string">'my_custom_command'</span><span class="token punctuation">,</span> <span class="token punctuation">{</span>
   <span class="token literal-property property">number</span><span class="token operator">:</span> <span class="token number">42</span><span class="token punctuation">,</span>
@@ -206,9 +114,4 @@
   <span class="token punctuation">.</span><span class="token method function property-access">then</span><span class="token punctuation">(</span><span class="token punctuation">(</span><span class="token parameter">res</span><span class="token punctuation">)</span> <span class="token arrow operator">=></span>
     <span class="token console class-name">console</span><span class="token punctuation">.</span><span class="token method function property-access">log</span><span class="token punctuation">(</span><span class="token template-string"><span class="token template-punctuation string">`</span><span class="token string">Message: </span><span class="token interpolation"><span class="token interpolation-punctuation punctuation">${</span>res<span class="token punctuation">.</span><span class="token property-access">message</span><span class="token interpolation-punctuation punctuation">}</span></span><span class="token string">, Other Val: </span><span class="token interpolation"><span class="token interpolation-punctuation punctuation">${</span>res<span class="token punctuation">.</span><span class="token property-access">other_val</span><span class="token interpolation-punctuation punctuation">}</span></span><span class="token template-punctuation string">`</span></span><span class="token punctuation">)</span>
   <span class="token punctuation">)</span>
-  <span class="token punctuation">.</span><span class="token keyword control-flow">catch</span><span class="token punctuation">(</span><span class="token punctuation">(</span><span class="token parameter">e</span><span class="token punctuation">)</span> <span class="token arrow operator">=></span> <span class="token console class-name">console</span><span class="token punctuation">.</span><span class="token method function property-access">error</span><span class="token punctuation">(</span>e<span class="token punctuation">)</span><span class="token punctuation">)</span></code></pre>
-        <p><span style="float: footnote;"><a href="../../index.html#toc">Go to TOC</a></span></p>
-      </section>
-    </section>
-  </body>
-</html>
+  <span class="token punctuation">.</span><span class="token keyword control-flow">catch</span><span class="token punctuation">(</span><span class="token punctuation">(</span><span class="token parameter">e</span><span class="token punctuation">)</span> <span class="token arrow operator">=></span> <span class="token console class-name">console</span><span class="token punctuation">.</span><span class="token method function property-access">error</span><span class="token punctuation">(</span>e<span class="token punctuation">)</span><span class="token punctuation">)</span></code></pre><p><span style="float:footnote"><a href="../../index.html#toc">Go to TOC</a></span></section></section>

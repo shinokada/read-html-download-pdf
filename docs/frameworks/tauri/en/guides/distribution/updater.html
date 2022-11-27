@@ -1,57 +1,11 @@
-<!doctype html>
-<html lang="en">
-  <head>
-    <meta charset="utf-8">
-    <title>Updater</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <meta name="sidebar_position" content="5">
-    <link rel="stylesheet" href="https://raw.githubusercontent.com/shinokada/prism-coy-theme/main/theme_common.css">
-  </head>
-  <body>
-    <section id="updater" class="level1">
-      <h1>Updater</h1>
-      <section id="configuration" class="level2">
-        <h2>Configuration</h2>
-        <p>Once you have your Tauri project ready, you need to configure the updater.</p>
-        <p>Add this in tauri.conf.json</p>
-        <pre class="language-json"><code class="language-json">updater<span class="token operator">:</span> <span class="token punctuation">{</span>
+<!doctypehtml><html lang="en"><meta charset="utf-8"><title>Updater</title><meta name="viewport"content="width=device-width,initial-scale=1"><meta name="sidebar_position"content="5"><link rel="stylesheet"href="https://raw.githubusercontent.com/shinokada/prism-coy-theme/main/theme_common.css"><section id="updater"class="level1"><h1>Updater</h1><section id="configuration"class="level2"><h2>Configuration</h2><p>Once you have your Tauri project ready, you need to configure the updater.<p>Add this in tauri.conf.json<pre class="language-json"><code class="language-json">updater<span class="token operator">:</span> <span class="token punctuation">{</span>
     active<span class="token operator">:</span> <span class="token boolean">true</span><span class="token punctuation">,</span>
     endpoints<span class="token operator">:</span> <span class="token punctuation">[</span>
         https<span class="token operator">:</span><span class="token comment">//releases.myapp.com/{{target}}/{{current_version}}</span>
     <span class="token punctuation">]</span><span class="token punctuation">,</span>
     dialog<span class="token operator">:</span> <span class="token boolean">true</span><span class="token punctuation">,</span>
     pubkey<span class="token operator">:</span> YOUR_UPDATER_SIGNATURE_PUBKEY_HERE
-<span class="token punctuation">}</span></code></pre>
-        <p>The required keys are active, endpoints and pubkey; others are optional.</p>
-        <p>active must be a boolean. By default, it's set to false.</p>
-        <p>endpoints must be an array. The string <code>{{target}}</code> and <code>{{current_version}}</code> are automatically replaced in the URL allowing you to determine <a href="#update-server-json-format">server-side</a> if an update is available. If multiple endpoints are specified, the updater will fallback if a server is not responding within the pre-defined timeout.</p>
-        <p>dialog if present must be a boolean. By default, it's set to true. If enabled, <a href="#events">events</a> are turned off as the updater handles everything. If you need the custom events, you MUST turn off the built-in dialog.</p>
-        <p>pubkey must be a valid public-key generated with Tauri CLI. See <a href="#signing-updates">Signing updates</a>.</p>
-        <section id="update-requests" class="level3">
-          <h3>Update Requests</h3>
-          <p>Tauri is indifferent to the request the client application provides for update checking.</p>
-          <p><code>Accept: application/json</code> is added to the request headers because Tauri is responsible for parsing the response.</p>
-          <p>For the requirements imposed on the responses and the body format of an update, response see <a href="#server-support">Server Support</a>.</p>
-          <p>Your update request must <em>at least</em> include a version identifier so that the server can determine whether an update for this specific version is required.</p>
-          <p>It may also include other identifying criteria, such as operating system version, to allow the server to deliver as fine-grained an update as you would like.</p>
-          <p>How you include the version identifier, or other criteria is specific to the server from which you request updates. A common approach is to use query parameters, <a href="#configuration">Configuration</a> shows an example.</p>
-        </section>
-        <section id="built-in-dialog" class="level3">
-          <h3>Built-in dialog</h3>
-          <p>By default, the updater uses a built-in dialog API from Tauri.</p>
-          <figure>
-            <img src="https://i.imgur.com/UMilB5A.png" alt="New Update">
-            <figcaption aria-hidden="true">New Update</figcaption>
-          </figure>
-          <p>
-            The dialog release notes are represented by the update <code>note</code> provided by the <a href="#server-support">server</a>.
-            If the user accepts, the update is downloaded and installed. Afterward, the user is prompted to restart the application.
-          </p>
-        </section>
-        <section id="javascript-api" class="level3">
-          <h3>Javascript API</h3>caution
-          You need to _disable built-in dialog_ in your [tauri configuration](#configuration); Otherwise, the javascript API will NOT work.
-          <pre class="language-js"><code class="language-js"><span class="token keyword module">import</span> <span class="token imports"><span class="token punctuation">{</span> checkUpdate<span class="token punctuation">,</span> installUpdate <span class="token punctuation">}</span></span> <span class="token keyword module">from</span> <span class="token string">'@tauri-apps/api/updater'</span>
+<span class="token punctuation">}</span></code></pre><p>The required keys are active, endpoints and pubkey; others are optional.<p>active must be a boolean. By default, it's set to false.<p>endpoints must be an array. The string <code>{{target}}</code> and <code>{{current_version}}</code> are automatically replaced in the URL allowing you to determine <a href="#update-server-json-format">server-side</a> if an update is available. If multiple endpoints are specified, the updater will fallback if a server is not responding within the pre-defined timeout.<p>dialog if present must be a boolean. By default, it's set to true. If enabled, <a href="#events">events</a> are turned off as the updater handles everything. If you need the custom events, you MUST turn off the built-in dialog.<p>pubkey must be a valid public-key generated with Tauri CLI. See <a href="#signing-updates">Signing updates</a>.<section id="update-requests"class="level3"><h3>Update Requests</h3><p>Tauri is indifferent to the request the client application provides for update checking.<p><code>Accept: application/json</code> is added to the request headers because Tauri is responsible for parsing the response.<p>For the requirements imposed on the responses and the body format of an update, response see <a href="#server-support">Server Support</a>.<p>Your update request must <em>at least</em> include a version identifier so that the server can determine whether an update for this specific version is required.<p>It may also include other identifying criteria, such as operating system version, to allow the server to deliver as fine-grained an update as you would like.<p>How you include the version identifier, or other criteria is specific to the server from which you request updates. A common approach is to use query parameters, <a href="#configuration">Configuration</a> shows an example.</section><section id="built-in-dialog"class="level3"><h3>Built-in dialog</h3><p>By default, the updater uses a built-in dialog API from Tauri.<figure><img src="https://i.imgur.com/UMilB5A.png"alt="New Update"><figcaption aria-hidden="true">New Update</figcaption></figure><p>The dialog release notes are represented by the update <code>note</code> provided by the <a href="#server-support">server</a>. If the user accepts, the update is downloaded and installed. Afterward, the user is prompted to restart the application.</section><section id="javascript-api"class="level3"><h3>Javascript API</h3>caution You need to _disable built-in dialog_ in your [tauri configuration](#configuration); Otherwise, the javascript API will NOT work.<pre class="language-js"><code class="language-js"><span class="token keyword module">import</span> <span class="token imports"><span class="token punctuation">{</span> checkUpdate<span class="token punctuation">,</span> installUpdate <span class="token punctuation">}</span></span> <span class="token keyword module">from</span> <span class="token string">'@tauri-apps/api/updater'</span>
 <span class="token keyword module">import</span> <span class="token imports"><span class="token punctuation">{</span> relaunch <span class="token punctuation">}</span></span> <span class="token keyword module">from</span> <span class="token string">'@tauri-apps/api/process'</span>
 <span class="token keyword control-flow">try</span> <span class="token punctuation">{</span>
   <span class="token keyword">const</span> <span class="token punctuation">{</span> shouldUpdate<span class="token punctuation">,</span> manifest <span class="token punctuation">}</span> <span class="token operator">=</span> <span class="token keyword control-flow">await</span> <span class="token function">checkUpdate</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
@@ -63,112 +17,30 @@
   <span class="token punctuation">}</span>
 <span class="token punctuation">}</span> <span class="token keyword control-flow">catch</span> <span class="token punctuation">(</span>error<span class="token punctuation">)</span> <span class="token punctuation">{</span>
   <span class="token console class-name">console</span><span class="token punctuation">.</span><span class="token method function property-access">log</span><span class="token punctuation">(</span>error<span class="token punctuation">)</span>
-<span class="token punctuation">}</span></code></pre>
-        </section>
-        <section id="events" class="level3">
-          <h3>Events</h3>caution
-          <p>You need to <em>disable the built-in dialog</em> in your <a href="#configuration">tauri configuration</a>; Otherwise, events aren't emitted.</p>
-          <p>To know when an update is ready to be installed, you can subscribe to these events:</p>
-          <section id="initialize-updater-and-check-if-a-new-version-is-available" class="level4">
-            <h4>Initialize updater and check if a new version is available</h4>
-            <section id="if-a-new-version-is-available-the-event-tauriupdate-available-is-emitted" class="level5">
-              <h5>If a new version is available, the event <code>tauri://update-available</code> is emitted.</h5>
-              <p>Event: <code>tauri://update</code></p>
-            </section>
-          </section>
-          <section id="rust" class="level4">
-            <h4>Rust</h4>
-            <pre class="language-rust"><code class="language-rust">window<span class="token punctuation">.</span><span class="token function">emit</span><span class="token punctuation">(</span>tauri<span class="token punctuation">:</span><span class="token operator">/</span><span class="token operator">/</span>update<span class="token punctuation">.</span><span class="token function">to_string</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">,</span> <span class="token class-name">None</span><span class="token punctuation">)</span><span class="token punctuation">;</span></code></pre>
-          </section>
-          <section id="javascript" class="level4">
-            <h4>Javascript</h4>
-            <pre class="language-js"><code class="language-js"><span class="token keyword module">import</span> <span class="token imports"><span class="token punctuation">{</span> emit <span class="token punctuation">}</span></span> <span class="token keyword module">from</span> <span class="token string">'@tauri-apps/api/event'</span>
-<span class="token function">emit</span><span class="token punctuation">(</span><span class="token string">'tauri://update'</span><span class="token punctuation">)</span></code></pre>
-          </section>
-          <section id="listen-to-the-new-update-available-event" class="level4">
-            <h4>Listen to the New Update Available event</h4>
-            <p>Event: <code>tauri://update-available</code></p>
-            <p>Emitted data:</p>
-            <pre class="language-text"><code class="language-text">version    Version announced by the server
+<span class="token punctuation">}</span></code></pre></section><section id="events"class="level3"><h3>Events</h3>caution<p>You need to <em>disable the built-in dialog</em> in your <a href="#configuration">tauri configuration</a>; Otherwise, events aren't emitted.<p>To know when an update is ready to be installed, you can subscribe to these events:<section id="initialize-updater-and-check-if-a-new-version-is-available"class="level4"><h4>Initialize updater and check if a new version is available</h4><section id="if-a-new-version-is-available-the-event-tauriupdate-available-is-emitted"class="level5"><h5>If a new version is available, the event <code>tauri://update-available</code> is emitted.</h5><p>Event: <code>tauri://update</code></section></section><section id="rust"class="level4"><h4>Rust</h4><pre class="language-rust"><code class="language-rust">window<span class="token punctuation">.</span><span class="token function">emit</span><span class="token punctuation">(</span>tauri<span class="token punctuation">:</span><span class="token operator">/</span><span class="token operator">/</span>update<span class="token punctuation">.</span><span class="token function">to_string</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">,</span> <span class="token class-name">None</span><span class="token punctuation">)</span><span class="token punctuation">;</span></code></pre></section><section id="javascript"class="level4"><h4>Javascript</h4><pre class="language-js"><code class="language-js"><span class="token keyword module">import</span> <span class="token imports"><span class="token punctuation">{</span> emit <span class="token punctuation">}</span></span> <span class="token keyword module">from</span> <span class="token string">'@tauri-apps/api/event'</span>
+<span class="token function">emit</span><span class="token punctuation">(</span><span class="token string">'tauri://update'</span><span class="token punctuation">)</span></code></pre></section><section id="listen-to-the-new-update-available-event"class="level4"><h4>Listen to the New Update Available event</h4><p>Event: <code>tauri://update-available</code><p>Emitted data:<pre class="language-text"><code class="language-text">version    Version announced by the server
 date       Date announced by the server
 body       Note announced by the server
 
-</code></pre>
-          </section>
-          <section id="rust-1" class="level4">
-            <h4>Rust</h4>
-            <pre class="language-rust"><code class="language-rust">window<span class="token punctuation">.</span><span class="token function">listen</span><span class="token punctuation">(</span>tauri<span class="token punctuation">:</span><span class="token operator">/</span><span class="token operator">/</span>update<span class="token operator">-</span>available<span class="token punctuation">.</span><span class="token function">to_string</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">,</span> <span class="token keyword">move</span> <span class="token closure-params"><span class="token closure-punctuation punctuation">|</span>msg<span class="token closure-punctuation punctuation">|</span></span> <span class="token punctuation">{</span>
+</code></pre></section><section id="rust-1"class="level4"><h4>Rust</h4><pre class="language-rust"><code class="language-rust">window<span class="token punctuation">.</span><span class="token function">listen</span><span class="token punctuation">(</span>tauri<span class="token punctuation">:</span><span class="token operator">/</span><span class="token operator">/</span>update<span class="token operator">-</span>available<span class="token punctuation">.</span><span class="token function">to_string</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">,</span> <span class="token keyword">move</span> <span class="token closure-params"><span class="token closure-punctuation punctuation">|</span>msg<span class="token closure-punctuation punctuation">|</span></span> <span class="token punctuation">{</span>
   <span class="token macro property">println!</span><span class="token punctuation">(</span><span class="token class-name">New</span> version available<span class="token punctuation">:</span> <span class="token punctuation">{</span><span class="token punctuation">:</span><span class="token operator">?</span><span class="token punctuation">}</span><span class="token punctuation">,</span> msg<span class="token punctuation">)</span><span class="token punctuation">;</span>
-<span class="token punctuation">}</span><span class="token punctuation">)</span></code></pre>
-          </section>
-          <section id="javascript-1" class="level4">
-            <h4>Javascript</h4>
-            <pre class="language-js"><code class="language-js"><span class="token keyword module">import</span> <span class="token imports"><span class="token punctuation">{</span> listen <span class="token punctuation">}</span></span> <span class="token keyword module">from</span> <span class="token string">'@tauri-apps/api/event'</span>
+<span class="token punctuation">}</span><span class="token punctuation">)</span></code></pre></section><section id="javascript-1"class="level4"><h4>Javascript</h4><pre class="language-js"><code class="language-js"><span class="token keyword module">import</span> <span class="token imports"><span class="token punctuation">{</span> listen <span class="token punctuation">}</span></span> <span class="token keyword module">from</span> <span class="token string">'@tauri-apps/api/event'</span>
 <span class="token function">listen</span><span class="token punctuation">(</span><span class="token string">'tauri://update-available'</span><span class="token punctuation">,</span> <span class="token keyword">function</span> <span class="token punctuation">(</span><span class="token parameter">res</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
   <span class="token console class-name">console</span><span class="token punctuation">.</span><span class="token method function property-access">log</span><span class="token punctuation">(</span><span class="token string">'New version available: '</span><span class="token punctuation">,</span> res<span class="token punctuation">)</span>
-<span class="token punctuation">}</span><span class="token punctuation">)</span></code></pre>
-          </section>
-          <section id="emit-install-and-download-events" class="level4">
-            <h4>Emit Install and Download events</h4>
-            <p>You need to emit this event to initialize the download and listen to the <a href="#listen-install-progress">install progress</a>.</p>
-            <p>Event: <code>tauri://update-install</code></p>
-          </section>
-          <section id="rust-2" class="level4">
-            <h4>Rust</h4>
-            <pre class="language-rust"><code class="language-rust">window<span class="token punctuation">.</span><span class="token function">emit</span><span class="token punctuation">(</span>tauri<span class="token punctuation">:</span><span class="token operator">/</span><span class="token operator">/</span>update<span class="token operator">-</span>install<span class="token punctuation">.</span><span class="token function">to_string</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">,</span> <span class="token class-name">None</span><span class="token punctuation">)</span><span class="token punctuation">;</span></code></pre>
-          </section>
-          <section id="javascript-2" class="level4">
-            <h4>Javascript</h4>
-            <pre class="language-js"><code class="language-js"><span class="token keyword module">import</span> <span class="token imports"><span class="token punctuation">{</span> emit <span class="token punctuation">}</span></span> <span class="token keyword module">from</span> <span class="token string">'@tauri-apps/api/event'</span>
-<span class="token function">emit</span><span class="token punctuation">(</span><span class="token string">'tauri://update-install'</span><span class="token punctuation">)</span></code></pre>
-          </section>
-          <section id="listen-to-the-install-progress" class="level4">
-            <h4>Listen to the Install Progress</h4>
-            <p>Event: <code>tauri://update-status</code></p>
-            <p>Emitted data:</p>
-            <pre class="language-text"><code class="language-text">status    [ERROR/PENDING/DONE]
-error     String/null</code></pre>
-            <p>PENDING is emitted when the download is started and DONE when the installation is complete. You can then ask to restart the application.</p>
-            <p>ERROR is emitted when there is an error with the updater. We suggest listening to this event even if the dialog is enabled.</p>
-          </section>
-          <section id="rust-3" class="level4">
-            <h4>Rust</h4>
-            <pre class="language-rust"><code class="language-rust">window<span class="token punctuation">.</span><span class="token function">listen</span><span class="token punctuation">(</span>tauri<span class="token punctuation">:</span><span class="token operator">/</span><span class="token operator">/</span>update<span class="token operator">-</span>status<span class="token punctuation">.</span><span class="token function">to_string</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">,</span> <span class="token keyword">move</span> <span class="token closure-params"><span class="token closure-punctuation punctuation">|</span>msg<span class="token closure-punctuation punctuation">|</span></span> <span class="token punctuation">{</span>
+<span class="token punctuation">}</span><span class="token punctuation">)</span></code></pre></section><section id="emit-install-and-download-events"class="level4"><h4>Emit Install and Download events</h4><p>You need to emit this event to initialize the download and listen to the <a href="#listen-install-progress">install progress</a>.<p>Event: <code>tauri://update-install</code></section><section id="rust-2"class="level4"><h4>Rust</h4><pre class="language-rust"><code class="language-rust">window<span class="token punctuation">.</span><span class="token function">emit</span><span class="token punctuation">(</span>tauri<span class="token punctuation">:</span><span class="token operator">/</span><span class="token operator">/</span>update<span class="token operator">-</span>install<span class="token punctuation">.</span><span class="token function">to_string</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">,</span> <span class="token class-name">None</span><span class="token punctuation">)</span><span class="token punctuation">;</span></code></pre></section><section id="javascript-2"class="level4"><h4>Javascript</h4><pre class="language-js"><code class="language-js"><span class="token keyword module">import</span> <span class="token imports"><span class="token punctuation">{</span> emit <span class="token punctuation">}</span></span> <span class="token keyword module">from</span> <span class="token string">'@tauri-apps/api/event'</span>
+<span class="token function">emit</span><span class="token punctuation">(</span><span class="token string">'tauri://update-install'</span><span class="token punctuation">)</span></code></pre></section><section id="listen-to-the-install-progress"class="level4"><h4>Listen to the Install Progress</h4><p>Event: <code>tauri://update-status</code><p>Emitted data:<pre class="language-text"><code class="language-text">status    [ERROR/PENDING/DONE]
+error     String/null</code></pre><p>PENDING is emitted when the download is started and DONE when the installation is complete. You can then ask to restart the application.<p>ERROR is emitted when there is an error with the updater. We suggest listening to this event even if the dialog is enabled.</section><section id="rust-3"class="level4"><h4>Rust</h4><pre class="language-rust"><code class="language-rust">window<span class="token punctuation">.</span><span class="token function">listen</span><span class="token punctuation">(</span>tauri<span class="token punctuation">:</span><span class="token operator">/</span><span class="token operator">/</span>update<span class="token operator">-</span>status<span class="token punctuation">.</span><span class="token function">to_string</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">,</span> <span class="token keyword">move</span> <span class="token closure-params"><span class="token closure-punctuation punctuation">|</span>msg<span class="token closure-punctuation punctuation">|</span></span> <span class="token punctuation">{</span>
   <span class="token macro property">println!</span><span class="token punctuation">(</span><span class="token class-name">New</span> status<span class="token punctuation">:</span> <span class="token punctuation">{</span><span class="token punctuation">:</span><span class="token operator">?</span><span class="token punctuation">}</span><span class="token punctuation">,</span> msg<span class="token punctuation">)</span><span class="token punctuation">;</span>
-<span class="token punctuation">}</span><span class="token punctuation">)</span></code></pre>
-          </section>
-          <section id="javascript-3" class="level4">
-            <h4>Javascript</h4>
-            <pre class="language-js"><code class="language-js"><span class="token keyword module">import</span> <span class="token imports"><span class="token punctuation">{</span> listen <span class="token punctuation">}</span></span> <span class="token keyword module">from</span> <span class="token string">'@tauri-apps/api/event'</span>
+<span class="token punctuation">}</span><span class="token punctuation">)</span></code></pre></section><section id="javascript-3"class="level4"><h4>Javascript</h4><pre class="language-js"><code class="language-js"><span class="token keyword module">import</span> <span class="token imports"><span class="token punctuation">{</span> listen <span class="token punctuation">}</span></span> <span class="token keyword module">from</span> <span class="token string">'@tauri-apps/api/event'</span>
 <span class="token function">listen</span><span class="token punctuation">(</span><span class="token string">'tauri://update-status'</span><span class="token punctuation">,</span> <span class="token keyword">function</span> <span class="token punctuation">(</span><span class="token parameter">res</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
   <span class="token console class-name">console</span><span class="token punctuation">.</span><span class="token method function property-access">log</span><span class="token punctuation">(</span><span class="token string">'New status: '</span><span class="token punctuation">,</span> res<span class="token punctuation">)</span>
-<span class="token punctuation">}</span><span class="token punctuation">)</span></code></pre>
-          </section>
-        </section>
-      </section>
-      <section id="server-support" class="level2">
-        <h2>Server Support</h2>
-        <p>Your server should determine whether an update is required based on the <a href="#update-requests">Update Request</a> your client issues.</p>
-        <p>If an update is required, your server should respond with a status code of <a href="http://tools.ietf.org/html/rfc2616#section-10.2.1">200 OK</a> and include the <a href="#update-server-json-format">update JSON</a> in the body.</p>
-        <p>If no update is required your server must respond with a status code of <a href="http://tools.ietf.org/html/rfc2616#section-10.2.5">204 No Content</a>.</p>
-        <section id="update-server-json-format" class="level3">
-          <h3>Update Server JSON Format</h3>
-          <p>When an update is available, Tauri expects the following schema in response to the update request provided:</p>
-          <pre class="language-json"><code class="language-json"><span class="token punctuation">{</span>
+<span class="token punctuation">}</span><span class="token punctuation">)</span></code></pre></section></section></section><section id="server-support"class="level2"><h2>Server Support</h2><p>Your server should determine whether an update is required based on the <a href="#update-requests">Update Request</a> your client issues.<p>If an update is required, your server should respond with a status code of <a href="http://tools.ietf.org/html/rfc2616#section-10.2.1">200 OK</a> and include the <a href="#update-server-json-format">update JSON</a> in the body.<p>If no update is required your server must respond with a status code of <a href="http://tools.ietf.org/html/rfc2616#section-10.2.5">204 No Content</a>.<section id="update-server-json-format"class="level3"><h3>Update Server JSON Format</h3><p>When an update is available, Tauri expects the following schema in response to the update request provided:<pre class="language-json"><code class="language-json"><span class="token punctuation">{</span>
   url<span class="token operator">:</span> https<span class="token operator">:</span><span class="token comment">//mycompany.example.com/myapp/releases/myrelease.tar.gz,</span>
   version<span class="token operator">:</span> <span class="token number">0.0</span>.<span class="token number">1</span><span class="token punctuation">,</span>
   notes<span class="token operator">:</span> Theses are some release notes<span class="token punctuation">,</span>
   pub_date<span class="token operator">:</span> <span class="token number">2020</span><span class="token number">-09</span>-18T12<span class="token operator">:</span><span class="token number">29</span><span class="token operator">:</span><span class="token number">53</span>+<span class="token number">01</span><span class="token operator">:</span><span class="token number">00</span><span class="token punctuation">,</span>
   signature<span class="token operator">:</span> 
-<span class="token punctuation">}</span></code></pre>
-          <p>The required keys are url, version and signature; the others are optional.</p>
-          <p>pub_date if present must be formatted according to <a href="https://datatracker.ietf.org/doc/html/rfc3339#section-5.8">RFC 3339</a>.</p>
-          <p>signature is the content of the <code>.sig</code> file which was generated by Tauri's CLI. See <a href="#signing-updates">Signing Updates</a> for instructions on how to set up the required keys.</p>
-        </section>
-        <section id="update-file-json-format" class="level3">
-          <h3>Update File JSON Format</h3>
-          <p>The alternate update technique uses a plain JSON file, storing your update metadata on S3, gist, or another static file store. Tauri checks against the version field, and if the version of the running process is smaller than the reported one of the JSON and the platform is available, it triggers an update. The format of this file is detailed below:</p>
-          <pre class="language-json"><code class="language-json"><span class="token punctuation">{</span>
+<span class="token punctuation">}</span></code></pre><p>The required keys are url, version and signature; the others are optional.<p>pub_date if present must be formatted according to <a href="https://datatracker.ietf.org/doc/html/rfc3339#section-5.8">RFC 3339</a>.<p>signature is the content of the <code>.sig</code> file which was generated by Tauri's CLI. See <a href="#signing-updates">Signing Updates</a> for instructions on how to set up the required keys.</section><section id="update-file-json-format"class="level3"><h3>Update File JSON Format</h3><p>The alternate update technique uses a plain JSON file, storing your update metadata on S3, gist, or another static file store. Tauri checks against the version field, and if the version of the running process is smaller than the reported one of the JSON and the platform is available, it triggers an update. The format of this file is detailed below:<pre class="language-json"><code class="language-json"><span class="token punctuation">{</span>
   version<span class="token operator">:</span> v1.<span class="token number">0.0</span><span class="token punctuation">,</span>
   notes<span class="token operator">:</span> Test version<span class="token punctuation">,</span>
   pub_date<span class="token operator">:</span> <span class="token number">2020</span><span class="token number">-06</span>-22T19<span class="token operator">:</span><span class="token number">25</span><span class="token operator">:</span>57Z<span class="token punctuation">,</span>
@@ -190,56 +62,19 @@ error     String/null</code></pre>
       url<span class="token operator">:</span> https<span class="token operator">:</span><span class="token comment">//github.com/lemarier/tauri-test/releases/download/v1.0.0/app.x64.msi.zip</span>
     <span class="token punctuation">}</span>
   <span class="token punctuation">}</span>
-<span class="token punctuation">}</span></code></pre>
-          <p>Note that each platform key is in the <code>OS-ARCH</code> format, where <code>OS</code> is one of <code>linux</code>, <code>darwin</code> or <code>windows</code>, and <code>ARCH</code> is one of <code>x86_64</code>, <code>aarch64</code>, <code>i686</code> or <code>armv7</code>.</p>
-        </section>
-      </section>
-      <section id="bundler-artifacts" class="level2">
-        <h2>Bundler (Artifacts)</h2>
-        <p>
-          The Tauri bundler automatically generates update artifacts if the updater is enabled in <code>tauri.conf.json</code>
-          Your update artifacts are automatically signed if the bundler can locate your private and public keys.
-        </p>
-        <p>The signature is the content of the generated <code>.sig</code> file. The signature can be uploaded to GitHub safely or made public if your private key is secure.</p>
-        <p>You can see how it's <a href="https://github.com/tauri-apps/tauri/blob/5b6c7bb6ee3661f5a42917ce04a89d94f905c949/.github/workflows/artifacts-updater.yml#L44">bundled with the CI</a> and a <a href="https://github.com/tauri-apps/tauri/blob/5b6c7bb6ee3661f5a42917ce04a89d94f905c949/examples/updater/src-tauri/tauri.conf.json#L52">sample tauri.conf.json</a>.</p>
-        <section id="macos" class="level3">
-          <h3>macOS</h3>
-          <p>On macOS, we create a .tar.gz from the whole application. (.app)</p>
-          <pre class="language-text"><code class="language-text">target/release/bundle
+<span class="token punctuation">}</span></code></pre><p>Note that each platform key is in the <code>OS-ARCH</code> format, where <code>OS</code> is one of <code>linux</code>, <code>darwin</code> or <code>windows</code>, and <code>ARCH</code> is one of <code>x86_64</code>, <code>aarch64</code>, <code>i686</code> or <code>armv7</code>.</section></section><section id="bundler-artifacts"class="level2"><h2>Bundler (Artifacts)</h2><p>The Tauri bundler automatically generates update artifacts if the updater is enabled in <code>tauri.conf.json</code> Your update artifacts are automatically signed if the bundler can locate your private and public keys.<p>The signature is the content of the generated <code>.sig</code> file. The signature can be uploaded to GitHub safely or made public if your private key is secure.<p>You can see how it's <a href="https://github.com/tauri-apps/tauri/blob/5b6c7bb6ee3661f5a42917ce04a89d94f905c949/.github/workflows/artifacts-updater.yml#L44">bundled with the CI</a> and a <a href="https://github.com/tauri-apps/tauri/blob/5b6c7bb6ee3661f5a42917ce04a89d94f905c949/examples/updater/src-tauri/tauri.conf.json#L52">sample tauri.conf.json</a>.<section id="macos"class="level3"><h3>macOS</h3><p>On macOS, we create a .tar.gz from the whole application. (.app)<pre class="language-text"><code class="language-text">target/release/bundle
 └── macos
     └── app.app
     └── app.app.tar.gz (update bundle)
-    └── app.app.tar.gz.sig</code></pre>
-        </section>
-        <section id="windows" class="level3">
-          <h3>Windows</h3>
-          <p>On Windows, we create a .zip from the MSI; when downloaded and validated, we run the MSI install.</p>
-          <pre class="language-text"><code class="language-text">target/release/bundle
+    └── app.app.tar.gz.sig</code></pre></section><section id="windows"class="level3"><h3>Windows</h3><p>On Windows, we create a .zip from the MSI; when downloaded and validated, we run the MSI install.<pre class="language-text"><code class="language-text">target/release/bundle
 └── msi
     └── app.x64.msi
     └── app.x64.msi.zip (update bundle)
-    └── app.x64.msi.zip.sig</code></pre>
-        </section>
-        <section id="linux" class="level3">
-          <h3>Linux</h3>
-          <p>On Linux, we create a .tar.gz from the AppImage.</p>
-          <pre class="language-text"><code class="language-text">target/release/bundle
+    └── app.x64.msi.zip.sig</code></pre></section><section id="linux"class="level3"><h3>Linux</h3><p>On Linux, we create a .tar.gz from the AppImage.<pre class="language-text"><code class="language-text">target/release/bundle
 └── appimage
     └── app.AppImage
     └── app.AppImage.tar.gz (update bundle)
-    └── app.AppImage.tar.gz.sig</code></pre>
-        </section>
-      </section>
-      <section id="signing-updates" class="level2">
-        <h2>Signing updates</h2>
-        <p>We offer a built-in signature to ensure your update is safe to be installed.</p>
-        <p>To sign your updates, you need two things.</p>
-        <p>The <em>Public-key</em> (pubkey) should be added inside your <code>tauri.conf.json</code> to validate the update archive before installing.</p>
-        <p>The <em>Private key</em> (privkey) is used to sign your update and should NEVER be shared with anyone. Also, if you lost this key, you'll NOT be able to publish a new update to the current user base. It's crucial to save it in a safe place, and you can always access it.</p>
-        <p>To generate your keys, you need to use the Tauri CLI:</p>
-        <pre class="language-shell"><code class="language-shell">tauri signer generate -w ~/.tauri/myapp.key</code></pre>
-        <p>You have multiple options available</p>
-        <pre class="language-text"><code class="language-text">Generate keypair to sign files
+    └── app.AppImage.tar.gz.sig</code></pre></section></section><section id="signing-updates"class="level2"><h2>Signing updates</h2><p>We offer a built-in signature to ensure your update is safe to be installed.<p>To sign your updates, you need two things.<p>The <em>Public-key</em> (pubkey) should be added inside your <code>tauri.conf.json</code> to validate the update archive before installing.<p>The <em>Private key</em> (privkey) is used to sign your update and should NEVER be shared with anyone. Also, if you lost this key, you'll NOT be able to publish a new update to the current user base. It's crucial to save it in a safe place, and you can always access it.<p>To generate your keys, you need to use the Tauri CLI:<pre class="language-shell"><code class="language-shell">tauri signer generate -w ~/.tauri/myapp.key</code></pre><p>You have multiple options available<pre class="language-text"><code class="language-text">Generate keypair to sign files
 
 USAGE:
     tauri signer generate [OPTIONS]
@@ -249,11 +84,4 @@ OPTIONS:
     -h, --help                       Print help information
     -p, --password &#x3C;PASSWORD>        Set private key password when signing
     -V, --version                    Print version information
-    -w, --write-keys &#x3C;WRITE_KEYS>    Write private key to a file</code></pre>
-        <hr>
-        <p>Environment variables used to sign with the Tauri <code>bundler</code>:<br>If they are set, the bundler automatically generates and signs the updater artifacts.<br><code>TAURI_PRIVATE_KEY</code> Path or String of your private key<br><code>TAURI_KEY_PASSWORD</code> Your private key password (optional)</p>
-        <p><span style="float: footnote;"><a href="../../index.html#toc">Go to TOC</a></span></p>
-      </section>
-    </section>
-  </body>
-</html>
+    -w, --write-keys &#x3C;WRITE_KEYS>    Write private key to a file</code></pre><hr><p>Environment variables used to sign with the Tauri <code>bundler</code>:<br>If they are set, the bundler automatically generates and signs the updater artifacts.<br><code>TAURI_PRIVATE_KEY</code> Path or String of your private key<br><code>TAURI_KEY_PASSWORD</code> Your private key password (optional)<p><span style="float:footnote"><a href="../../index.html#toc">Go to TOC</a></span></section></section>

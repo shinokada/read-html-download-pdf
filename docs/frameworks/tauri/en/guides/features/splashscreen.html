@@ -1,19 +1,4 @@
-<!doctype html>
-<html lang="en">
-  <head>
-    <meta charset="utf-8">
-    <title>Splashscreen</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <link rel="stylesheet" href="https://raw.githubusercontent.com/shinokada/prism-coy-theme/main/theme_common.css">
-  </head>
-  <body>
-    <section id="splashscreen" class="level1">
-      <h1>Splashscreen</h1>
-      <p>If your webpage could take some time to load, or if you need to run an initialization procedure in Rust before displaying your main window, a splashscreen could improve the loading experience for the user.</p>
-      <section id="setup" class="level3">
-        <h3>Setup</h3>
-        <p>First, create a <code>splashscreen.html</code> in your <code>distDir</code> that contains the HTML code for a splashscreen. Then, update your <code>tauri.conf.json</code> like so:</p>
-        <pre class="language-diff"><code class="language-diff">windows: [
+<!doctypehtml><html lang="en"><meta charset="utf-8"><title>Splashscreen</title><meta name="viewport"content="width=device-width,initial-scale=1"><link rel="stylesheet"href="https://raw.githubusercontent.com/shinokada/prism-coy-theme/main/theme_common.css"><section id="splashscreen"class="level1"><h1>Splashscreen</h1><p>If your webpage could take some time to load, or if you need to run an initialization procedure in Rust before displaying your main window, a splashscreen could improve the loading experience for the user.<section id="setup"class="level3"><h3>Setup</h3><p>First, create a <code>splashscreen.html</code> in your <code>distDir</code> that contains the HTML code for a splashscreen. Then, update your <code>tauri.conf.json</code> like so:<pre class="language-diff"><code class="language-diff">windows: [
 <span class="token unchanged"><span class="token prefix unchanged"> </span><span class="token line"> {
 </span><span class="token prefix unchanged"> </span><span class="token line">   title: Tauri App,
 </span><span class="token prefix unchanged"> </span><span class="token line">   width: 800,
@@ -30,13 +15,7 @@
 </span><span class="token prefix inserted">+</span><span class="token line">   url: splashscreen.html,
 </span><span class="token prefix inserted">+</span><span class="token line">   label: splashscreen
 </span><span class="token prefix inserted">+</span><span class="token line"> }
-</span></span>]</code></pre>
-        <p>Now, your main window will be hidden and the splashscreen window will show when your app is launched. Next, you'll need a way to close the splashscreen and show the main window when your app is ready. How you do this depends on what you are waiting for before closing the splashscreen.</p>
-      </section>
-      <section id="waiting-for-webpage" class="level3">
-        <h3>Waiting for Webpage</h3>
-        <p>If you are waiting for your web code, you'll want to create a <code>close_splashscreen</code> <a href="command">command</a>.</p>
-        <pre class="language-rust"><code class="language-rust"><span class="token keyword">use</span> <span class="token namespace">tauri<span class="token punctuation">::</span></span><span class="token class-name">Manager</span><span class="token punctuation">;</span>
+</span></span>]</code></pre><p>Now, your main window will be hidden and the splashscreen window will show when your app is launched. Next, you'll need a way to close the splashscreen and show the main window when your app is ready. How you do this depends on what you are waiting for before closing the splashscreen.</section><section id="waiting-for-webpage"class="level3"><h3>Waiting for Webpage</h3><p>If you are waiting for your web code, you'll want to create a <code>close_splashscreen</code> <a href="command">command</a>.<pre class="language-rust"><code class="language-rust"><span class="token keyword">use</span> <span class="token namespace">tauri<span class="token punctuation">::</span></span><span class="token class-name">Manager</span><span class="token punctuation">;</span>
 <span class="token comment">// Create the command:</span>
 <span class="token comment">// This command must be async so that it doesn't run on the main thread.</span>
 <span class="token attribute attr-name">#[tauri::command]</span>
@@ -57,9 +36,7 @@
     <span class="token punctuation">.</span><span class="token function">run</span><span class="token punctuation">(</span><span class="token namespace">tauri<span class="token punctuation">::</span></span><span class="token macro property">generate_context!</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
     <span class="token punctuation">.</span><span class="token function">expect</span><span class="token punctuation">(</span>failed to run app<span class="token punctuation">)</span><span class="token punctuation">;</span>
 <span class="token punctuation">}</span>
-</code></pre>
-        <p>Then, you can call it from your JS:</p>
-        <pre class="language-js"><code class="language-js"><span class="token comment">// With the Tauri API npm package:</span>
+</code></pre><p>Then, you can call it from your JS:<pre class="language-js"><code class="language-js"><span class="token comment">// With the Tauri API npm package:</span>
 <span class="token keyword module">import</span> <span class="token imports"><span class="token punctuation">{</span> invoke <span class="token punctuation">}</span></span> <span class="token keyword module">from</span> <span class="token string">'@tauri-apps/api/tauri'</span>
 <span class="token comment">// With the Tauri global script:</span>
 <span class="token keyword">const</span> invoke <span class="token operator">=</span> <span class="token dom variable">window</span><span class="token punctuation">.</span><span class="token property-access">__TAURI__</span><span class="token punctuation">.</span><span class="token property-access">invoke</span>
@@ -68,12 +45,7 @@
   <span class="token comment">// This will wait for the window to load, but you could</span>
   <span class="token comment">// run this function on whatever trigger you want</span>
   <span class="token function">invoke</span><span class="token punctuation">(</span><span class="token string">'close_splashscreen'</span><span class="token punctuation">)</span>
-<span class="token punctuation">}</span><span class="token punctuation">)</span></code></pre>
-      </section>
-      <section id="waiting-for-rust" class="level3">
-        <h3>Waiting for Rust</h3>
-        <p>If you are waiting for Rust code to run, put it in the <code>setup</code> function handler so you have access to the <code>App</code> instance:</p>
-        <pre class="language-rust"><code class="language-rust"><span class="token keyword">use</span> <span class="token namespace">tauri<span class="token punctuation">::</span></span><span class="token class-name">Manager</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span><span class="token punctuation">)</span></code></pre></section><section id="waiting-for-rust"class="level3"><h3>Waiting for Rust</h3><p>If you are waiting for Rust code to run, put it in the <code>setup</code> function handler so you have access to the <code>App</code> instance:<pre class="language-rust"><code class="language-rust"><span class="token keyword">use</span> <span class="token namespace">tauri<span class="token punctuation">::</span></span><span class="token class-name">Manager</span><span class="token punctuation">;</span>
 <span class="token keyword">fn</span> <span class="token function-definition function">main</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
   <span class="token namespace">tauri<span class="token punctuation">::</span></span><span class="token class-name">Builder</span><span class="token punctuation">::</span><span class="token function">default</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
     <span class="token punctuation">.</span><span class="token function">setup</span><span class="token punctuation">(</span><span class="token closure-params"><span class="token closure-punctuation punctuation">|</span>app<span class="token closure-punctuation punctuation">|</span></span> <span class="token punctuation">{</span>
@@ -94,9 +66,4 @@
     <span class="token punctuation">}</span><span class="token punctuation">)</span>
     <span class="token punctuation">.</span><span class="token function">run</span><span class="token punctuation">(</span><span class="token namespace">tauri<span class="token punctuation">::</span></span><span class="token macro property">generate_context!</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
     <span class="token punctuation">.</span><span class="token function">expect</span><span class="token punctuation">(</span>failed to run app<span class="token punctuation">)</span><span class="token punctuation">;</span>
-<span class="token punctuation">}</span></code></pre>
-        <p><span style="float: footnote;"><a href="../../index.html#toc">Go to TOC</a></span></p>
-      </section>
-    </section>
-  </body>
-</html>
+<span class="token punctuation">}</span></code></pre><p><span style="float:footnote"><a href="../../index.html#toc">Go to TOC</a></span></section></section>

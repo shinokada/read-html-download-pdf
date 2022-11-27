@@ -1,24 +1,4 @@
-<!doctype html>
-<html lang="en">
-  <head>
-    <meta charset="utf-8">
-    <title>Embedding External Binaries</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <meta name="sidebar_position" content="7">
-    <link rel="stylesheet" href="https://raw.githubusercontent.com/shinokada/prism-coy-theme/main/theme_common.css">
-  </head>
-  <body>
-    <section id="embedding-external-binaries" class="level1">
-      <h1>Embedding External Binaries</h1>
-      <p>
-        You may need to embed depending binaries to make your application work or prevent users from installing additional dependencies (e.g., Node.js or Python).
-        We call this binary a <code>sidecar</code>.
-      </p>
-      <p>To bundle the binaries of your choice, you can add the <code>externalBin</code> property to the <code>tauri > bundle</code> object in your <code>tauri.conf.json</code>.</p>
-      <p>See more about tauri.conf.json configuration <a href="../../api/config.md#tauri.bundle">here</a>.</p>
-      <p><code>externalBin</code> expects a list of strings targeting binaries either with absolute or relative paths.</p>
-      <p>Here is a sample to illustrate the configuration. This is not a complete <code>tauri.conf.json</code> file:</p>
-      <pre class="language-json"><code class="language-json"><span class="token punctuation">{</span>
+<!doctypehtml><html lang="en"><meta charset="utf-8"><title>Embedding External Binaries</title><meta name="viewport"content="width=device-width,initial-scale=1"><meta name="sidebar_position"content="7"><link rel="stylesheet"href="https://raw.githubusercontent.com/shinokada/prism-coy-theme/main/theme_common.css"><section id="embedding-external-binaries"class="level1"><h1>Embedding External Binaries</h1><p>You may need to embed depending binaries to make your application work or prevent users from installing additional dependencies (e.g., Node.js or Python). We call this binary a <code>sidecar</code>.<p>To bundle the binaries of your choice, you can add the <code>externalBin</code> property to the <code>tauri > bundle</code> object in your <code>tauri.conf.json</code>.<p>See more about tauri.conf.json configuration <a href="../../api/config.md#tauri.bundle">here</a>.<p><code>externalBin</code> expects a list of strings targeting binaries either with absolute or relative paths.<p>Here is a sample to illustrate the configuration. This is not a complete <code>tauri.conf.json</code> file:<pre class="language-json"><code class="language-json"><span class="token punctuation">{</span>
   tauri<span class="token operator">:</span> <span class="token punctuation">{</span>
     bundle<span class="token operator">:</span> <span class="token punctuation">{</span>
       externalBin<span class="token operator">:</span> <span class="token punctuation">[</span>
@@ -38,11 +18,7 @@
       <span class="token punctuation">}</span>
     <span class="token punctuation">}</span>
   <span class="token punctuation">}</span>
-<span class="token punctuation">}</span></code></pre>
-      <p>A binary with the same name and a <code>-$TARGET_TRIPLE</code> suffix must exist on the specified path. For instance, <code>externalBin: [binaries/my-sidecar]</code> requires a <code>src-tauri/binaries/my-sidecar-x86_64-unknown-linux-gnu</code> executable on Linux. You can find the current platform's target triple by running the following command:</p>
-      <pre class="language-shell"><code class="language-shell">rustc -Vv <span class="token operator">|</span> <span class="token function">grep</span> <span class="token function">host</span> <span class="token operator">|</span> <span class="token function">cut</span> -f2 -d<span class="token string">' '</span></code></pre>
-      <p>Here's a Node.js script to append the target triple to a binary:</p>
-      <pre class="language-javascript"><code class="language-javascript"><span class="token keyword">const</span> execa <span class="token operator">=</span> <span class="token function">require</span><span class="token punctuation">(</span><span class="token string">'execa'</span><span class="token punctuation">)</span>
+<span class="token punctuation">}</span></code></pre><p>A binary with the same name and a <code>-$TARGET_TRIPLE</code> suffix must exist on the specified path. For instance, <code>externalBin: [binaries/my-sidecar]</code> requires a <code>src-tauri/binaries/my-sidecar-x86_64-unknown-linux-gnu</code> executable on Linux. You can find the current platform's target triple by running the following command:<pre class="language-shell"><code class="language-shell">rustc -Vv <span class="token operator">|</span> <span class="token function">grep</span> <span class="token function">host</span> <span class="token operator">|</span> <span class="token function">cut</span> -f2 -d<span class="token string">' '</span></code></pre><p>Here's a Node.js script to append the target triple to a binary:<pre class="language-javascript"><code class="language-javascript"><span class="token keyword">const</span> execa <span class="token operator">=</span> <span class="token function">require</span><span class="token punctuation">(</span><span class="token string">'execa'</span><span class="token punctuation">)</span>
 <span class="token keyword">const</span> fs <span class="token operator">=</span> <span class="token function">require</span><span class="token punctuation">(</span><span class="token string">'fs'</span><span class="token punctuation">)</span>
 
 <span class="token keyword">let</span> extension <span class="token operator">=</span> <span class="token string">''</span>
@@ -64,21 +40,11 @@
 
 <span class="token function">main</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token keyword control-flow">catch</span><span class="token punctuation">(</span><span class="token punctuation">(</span><span class="token parameter">e</span><span class="token punctuation">)</span> <span class="token arrow operator">=></span> <span class="token punctuation">{</span>
   <span class="token keyword control-flow">throw</span> e
-<span class="token punctuation">}</span><span class="token punctuation">)</span></code></pre>
-      <section id="running-it-from-javascript" class="level2">
-        <h2>Running it from JavaScript</h2>
-        <p>In the JavaScript code, import the <code>Command</code> class on the <code>shell</code> module and use the <code>sidecar</code> static method.</p>
-        <p>Note that you must configure the allowlist to enable <code>shell > sidecar</code> and configure all binaries in <code>shell > scope</code>.</p>
-        <pre class="language-javascript"><code class="language-javascript"><span class="token keyword module">import</span> <span class="token imports"><span class="token punctuation">{</span> <span class="token maybe-class-name">Command</span> <span class="token punctuation">}</span></span> <span class="token keyword module">from</span> <span class="token string">'@tauri-apps/api/shell'</span>
+<span class="token punctuation">}</span><span class="token punctuation">)</span></code></pre><section id="running-it-from-javascript"class="level2"><h2>Running it from JavaScript</h2><p>In the JavaScript code, import the <code>Command</code> class on the <code>shell</code> module and use the <code>sidecar</code> static method.<p>Note that you must configure the allowlist to enable <code>shell > sidecar</code> and configure all binaries in <code>shell > scope</code>.<pre class="language-javascript"><code class="language-javascript"><span class="token keyword module">import</span> <span class="token imports"><span class="token punctuation">{</span> <span class="token maybe-class-name">Command</span> <span class="token punctuation">}</span></span> <span class="token keyword module">from</span> <span class="token string">'@tauri-apps/api/shell'</span>
 <span class="token comment">// alternatively, use `window.__TAURI__.shell.Command`</span>
 <span class="token comment">// `binaries/my-sidecar` is the EXACT value specified on `tauri.conf.json > tauri > bundle > externalBin`</span>
 <span class="token keyword">const</span> command <span class="token operator">=</span> <span class="token maybe-class-name">Command</span><span class="token punctuation">.</span><span class="token method function property-access">sidecar</span><span class="token punctuation">(</span><span class="token string">'binaries/my-sidecar'</span><span class="token punctuation">)</span>
-<span class="token keyword">const</span> output <span class="token operator">=</span> <span class="token keyword control-flow">await</span> command<span class="token punctuation">.</span><span class="token method function property-access">execute</span><span class="token punctuation">(</span><span class="token punctuation">)</span></code></pre>
-      </section>
-      <section id="running-it-from-rust" class="level2">
-        <h2>Running it from Rust</h2>
-        <p>On the Rust side, import the <code>Command</code> struct from the <code>tauri::api::process</code> module:</p>
-        <pre class="language-rust"><code class="language-rust"><span class="token comment">// `new_sidecar()` expects just the filename, NOT the whole path like in JavaScript</span>
+<span class="token keyword">const</span> output <span class="token operator">=</span> <span class="token keyword control-flow">await</span> command<span class="token punctuation">.</span><span class="token method function property-access">execute</span><span class="token punctuation">(</span><span class="token punctuation">)</span></code></pre></section><section id="running-it-from-rust"class="level2"><h2>Running it from Rust</h2><p>On the Rust side, import the <code>Command</code> struct from the <code>tauri::api::process</code> module:<pre class="language-rust"><code class="language-rust"><span class="token comment">// `new_sidecar()` expects just the filename, NOT the whole path like in JavaScript</span>
 <span class="token keyword">let</span> <span class="token punctuation">(</span><span class="token keyword">mut</span> rx<span class="token punctuation">,</span> <span class="token keyword">mut</span> child<span class="token punctuation">)</span> <span class="token operator">=</span> <span class="token class-name">Command</span><span class="token punctuation">::</span><span class="token function">new_sidecar</span><span class="token punctuation">(</span>my<span class="token operator">-</span>sidecar<span class="token punctuation">)</span>
   <span class="token punctuation">.</span><span class="token function">expect</span><span class="token punctuation">(</span>failed to create `my<span class="token operator">-</span>sidecar` binary command<span class="token punctuation">)</span>
   <span class="token punctuation">.</span><span class="token function">spawn</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
@@ -95,20 +61,6 @@
       child<span class="token punctuation">.</span><span class="token function">write</span><span class="token punctuation">(</span>message from <span class="token class-name">Rust</span>\n<span class="token punctuation">.</span><span class="token function">as_bytes</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">unwrap</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
     <span class="token punctuation">}</span>
   <span class="token punctuation">}</span>
-<span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">;</span></code></pre>
-        <p>Note that you must enable the <strong>process-command-api</strong> Cargo feature (Tauri's CLI will do this for you once you changed the config):</p>
-        <pre class="language-toml"><code class="language-toml"><span class="token comment"># Cargo.toml</span>
+<span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">;</span></code></pre><p>Note that you must enable the <strong>process-command-api</strong> Cargo feature (Tauri's CLI will do this for you once you changed the config):<pre class="language-toml"><code class="language-toml"><span class="token comment"># Cargo.toml</span>
 <span class="token punctuation">[</span><span class="token table class-name">dependencies</span><span class="token punctuation">]</span>
-<span class="token key property">tauri</span> <span class="token punctuation">=</span> <span class="token punctuation">{</span> <span class="token key property">version</span> <span class="token punctuation">=</span> <span class="token number">1</span><span class="token punctuation">,</span> <span class="token key property">features</span> <span class="token punctuation">=</span> <span class="token punctuation">[</span>process-command-api<span class="token punctuation">,</span> <span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">]</span> <span class="token punctuation">}</span></code></pre>
-      </section>
-      <section id="using-nodejs-on-a-sidecar" class="level2">
-        <h2>Using Node.js on a Sidecar</h2>
-        <p>
-          The Tauri <a href="https://github.com/tauri-apps/tauri/tree/dev/examples/sidecar">sidecar example</a> demonstrates how to use the sidecar API to run a Node.js application on Tauri.
-          It compiles the Node.js code using <a href="https://github.com/vercel/pkg">pkg</a> and uses the scripts above to run it.
-        </p>
-        <p><span style="float: footnote;"><a href="../../index.html#toc">Go to TOC</a></span></p>
-      </section>
-    </section>
-  </body>
-</html>
+<span class="token key property">tauri</span> <span class="token punctuation">=</span> <span class="token punctuation">{</span> <span class="token key property">version</span> <span class="token punctuation">=</span> <span class="token number">1</span><span class="token punctuation">,</span> <span class="token key property">features</span> <span class="token punctuation">=</span> <span class="token punctuation">[</span>process-command-api<span class="token punctuation">,</span> <span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">]</span> <span class="token punctuation">}</span></code></pre></section><section id="using-nodejs-on-a-sidecar"class="level2"><h2>Using Node.js on a Sidecar</h2><p>The Tauri <a href="https://github.com/tauri-apps/tauri/tree/dev/examples/sidecar">sidecar example</a> demonstrates how to use the sidecar API to run a Node.js application on Tauri. It compiles the Node.js code using <a href="https://github.com/vercel/pkg">pkg</a> and uses the scripts above to run it.<p><span style="float:footnote"><a href="../../index.html#toc">Go to TOC</a></span></section></section>
