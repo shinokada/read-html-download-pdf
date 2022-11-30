@@ -1,0 +1,54 @@
+<!doctype html><html id="cron-guide"lang="en"><meta charset="utf-8"><title>Cron Jobs</title><meta name="viewport"content="width=device-width,initial-scale=1"><meta name="sidebar_label"content="Cron Jobs"><link rel="stylesheet"href="../../../../../../../../docs/themes/packages/prism-coy-theme/theme_common.css"><p>import Tabs from '@theme/Tabs'; import TabItem from '@theme/TabItem';<p>A Deta Micro can be set to run on a schedule from the <code>deta cli</code> using the <a href="../cli/commands#deta-cron-set">deta cron set</a> command.<p>In this guide we are going to configure a deta micro to run every five minutes.<p>The guide assumes you have already signed up for Deta and have the <a href="../cli/install.md">Deta CLI</a> installed.<p>&#x3C;Tabs groupId=preferred-language defaultValue=js values={[ { label: 'JavaScript', value: 'js', }, { label: 'Python', value: 'py', }, ] }></p><tabitem value="js"><ol><li><p>Create a directory <code>cron-job</code> and change the current directory to it.<pre class="language-shell"><code class="language-shell">$ <span class="token function">mkdir</span> cron-job <span class="token operator">&#x26;&#x26;</span> <span class="token builtin class-name">cd</span> cron-job</code></pre><li><p>In order to set a micro to run on a schedule, the micro's code needs to define a function that will be run on the schedule with the help of our library <code>deta</code>, which is pre-installed on a micro and can just be imported directly.<p>Create a <code>index.js</code> file and define the function that should run on the schedule.<pre class="language-javascript"><code class="language-javascript"><span class="token comment">// import app from 'deta'</span>
+<span class="token keyword">const</span> <span class="token punctuation">{</span> app <span class="token punctuation">}</span> <span class="token operator">=</span> <span class="token function">require</span><span class="token punctuation">(</span><span class="token string">'deta'</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+<span class="token comment">// use app.lib.cron to define the function that runs on the schedule</span>
+<span class="token comment">// takes an `event` as an argument</span>
+app<span class="token punctuation">.</span><span class="token property-access">lib</span><span class="token punctuation">.</span><span class="token method function property-access">cron</span><span class="token punctuation">(</span><span class="token parameter">event</span> <span class="token arrow operator">=></span> <span class="token punctuation">{</span>
+    <span class="token console class-name">console</span><span class="token punctuation">.</span><span class="token method function property-access">log</span><span class="token punctuation">(</span>running on a schedule<span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+module<span class="token punctuation">.</span><span class="token property-access">exports</span> <span class="token operator">=</span> app<span class="token punctuation">;</span> </code></pre><li><p>Create a new <code>nodejs</code> micro with <code>deta new</code>.<pre class="language-shell"><code class="language-shell">$ deta new
+Successfully created a new micro
+<span class="token punctuation">{</span>
+    name: cron-job,
+    runtime: nodejs12.x,
+    endpoint: https://<span class="token punctuation">{</span>micro_name<span class="token punctuation">}</span>.deta.dev,
+    visor: enabled,
+    http_auth: enabled
+<span class="token punctuation">}</span></code></pre><p>Even though the output shows a HTTP endpoint, you do not need it for cron.<li><p>Set the micro to run on a schedule with the <a href="../cli/commands#deta-cron-set">deta cron set</a> command.<pre class="language-shell"><code class="language-shell">$ deta <span class="token function">cron</span> <span class="token builtin class-name">set</span> <span class="token number">5</span> minutes
+Scheduling micro<span class="token punctuation">..</span>.
+Successfully <span class="token builtin class-name">set</span> micro to schedule <span class="token keyword">for</span> <span class="token number">5</span> minutes</code></pre><p>We have set the micro to run every five minutes. In order to see if a micro is running on a schedule, you can use the <code>deta details</code> command.<pre class="language-shell"><code class="language-shell">$ deta details
+<span class="token punctuation">{</span>
+    name: cron-job,
+    runtime: nodejs12.x,
+    endpoint: https://<span class="token punctuation">{</span>micro_name<span class="token punctuation">}</span>.deta.dev,
+    visor: enabled,
+    http_auth: enabled,
+    cron: <span class="token number">5</span> minutes
+<span class="token punctuation">}</span></code></pre><p>The details show that the <code>cron</code> has ben set for <code>5 minutes</code><li><p>In order to see logs of your cron-job, you can use <code>Deta Visor</code>, which enables you to see real-time logs of a Deta Micro. Open your micro's visor page with <code>deta visor open</code> from the cli or by navigating to your micro's visor page on the browser.<pre class="language-shell"><code class="language-shell">$ deta visor <span class="token function">open</span>
+Opening visor <span class="token keyword">in</span> the browser<span class="token punctuation">..</span>.</code></pre></ol><p>We have a micro which prints running on a schedule every five minutes. You should see the execution logs in your micro's visor page every five minutes.</p><tabitem value="py"><ol><li><p>Create a directory <code>cron-job</code> and change the current directory to it.<pre class="language-shell"><code class="language-shell">$ <span class="token function">mkdir</span> cron-job <span class="token operator">&#x26;&#x26;</span> <span class="token builtin class-name">cd</span> cron-job</code></pre><li><p>In order to set a micro to run on a schedule, the micro's code needs to define a function that will be run on the schedule with the help of our library <code>deta</code>, which is pre-installed on a micro and can just be imported directly.<p>Create a <code>main.py</code> file and define the function that should run on the schedule.<pre class="language-python"><code class="language-python"><span class="token keyword">from</span> deta <span class="token keyword">import</span> app
+
+<span class="token comment"># use app.lib.cron decorator for the function that runs on the schedule</span>
+<span class="token comment"># the function takes an `event` as an argument</span>
+<span class="token decorator annotation punctuation">@app<span class="token punctuation">.</span>lib<span class="token punctuation">.</span>cron</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+<span class="token keyword">def</span> <span class="token function">cron_task</span><span class="token punctuation">(</span>event<span class="token punctuation">)</span><span class="token punctuation">:</span>
+    <span class="token keyword">print</span><span class="token punctuation">(</span>running on a schedule<span class="token punctuation">)</span> </code></pre><li><p>Create a new <code>python</code> micro with <code>deta new</code>.<pre class="language-shell"><code class="language-shell">$ deta new
+Successfully created a new micro
+<span class="token punctuation">{</span>
+    name: cron-job,
+    runtime: python3.7,
+    endpoint: https://<span class="token punctuation">{</span>micro_name<span class="token punctuation">}</span>.deta.dev,
+    visor: enabled,
+    http_auth: enabled
+<span class="token punctuation">}</span></code></pre><p>Even though the output shows a HTTP endpoint, you do not need it for cron.<li><p>Set the micro to run on a schedule with <a href="../cli/commands#deta-cron-set">deta cron set</a> command.<pre class="language-shell"><code class="language-shell">$ deta <span class="token function">cron</span> <span class="token builtin class-name">set</span> <span class="token number">5</span> minutes
+Scheduling micro<span class="token punctuation">..</span>.
+Successfully <span class="token builtin class-name">set</span> micro to schedule <span class="token keyword">for</span> <span class="token number">5</span> minutes</code></pre><p>We have set the micro to run every five minutes. In order to see if a micro is running on a schedule, you can use the <code>deta details</code> command.<pre class="language-shell"><code class="language-shell">$ deta details
+<span class="token punctuation">{</span>
+    name: cron-job
+    runtime: python3.7,
+    endpoint: https://<span class="token punctuation">{</span>micro_name<span class="token punctuation">}</span>.deta.dev,
+    visor: enabled,
+    http_auth: enabled,
+    cron: <span class="token number">5</span> minutes
+<span class="token punctuation">}</span></code></pre><p>The details show that the <code>cron</code> has ben set for <code>5 minutes</code><li><p>In order to see logs of your cron-job, you can use <code>Deta Visor</code>, which enables you to see real-time logs of a Deta Micro. Open your micro's visor page with <code>deta visor open</code> from the cli or by navigating to your micro's visor page on the browser.<pre class="language-shell"><code class="language-shell">$ deta visor <span class="token function">open</span>
+Opening visor <span class="token keyword">in</span> the browser<span class="token punctuation">..</span>.</code></pre></ol><p>We have successfully deployed a micro which prints running on a schedule every five minutes. You should see the execution logs in your micro's visor page every five minutes.<p>Full documentation on cron is available <a href="https://docs.deta.sh/docs/micros/cron">here</a>.</p></tabitem><span style="float:footnote"><a href="../index.html#toc">Go to TOC</a></span></tabitem>

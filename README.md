@@ -68,6 +68,12 @@
 | Tauri | English | [Viewer](https://read-html-download-pdf.vercel.app/#src=/docs/frameworks/tauri/en/index.html) |
 | Bullet proof React | English | [Viewer](https://read-html-download-pdf.vercel.app/#src=/docs/frameworks/bullet-proof-react/en/index.htmlt)|
 
+## How to start server
+
+```
+./start-webserver
+```
+
 
 ## License
 

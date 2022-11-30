@@ -1,0 +1,79 @@
+<!doctype html><html lang="en"><meta charset="utf-8"><title>Introduction</title><meta name="viewport"content="width=device-width,initial-scale=1"><link rel="stylesheet"href="../../../../../../../../../docs/themes/packages/prism-coy-theme/theme_common.css"><section id="introduction"class="level3"><h3>Introduction</h3><p>The <a href="https://swagger.io/specification/">OpenAPI</a> specification is a language-agnostic definition format used to describe RESTful APIs. Nest provides a dedicated <a href="https://github.com/nestjs/swagger">module</a> which allows generating such a specification by leveraging decorators.<section id="installation"class="level4"><h4>Installation</h4><p>To begin using it, we first install the required dependency.<pre class="language-bash"><code class="language-bash">$ <span class="token function">npm</span> <span class="token function">install</span> --save @nestjs/swagger</code></pre></section><section id="bootstrap"class="level4"><h4>Bootstrap</h4><p>Once the installation process is complete, open the <code>main.ts</code> file and initialize Swagger using the <code>SwaggerModule</code> class:<pre class="language-typescript"><code class="language-typescript">@<span class="token decorator"><span class="token at operator">@</span><span class="token function">filename</span></span><span class="token punctuation">(</span>main<span class="token punctuation">)</span>
+<span class="token keyword module">import</span> <span class="token imports"><span class="token punctuation">{</span> <span class="token maybe-class-name">NestFactory</span> <span class="token punctuation">}</span></span> <span class="token keyword module">from</span> <span class="token string">'@nestjs/core'</span><span class="token punctuation">;</span>
+<span class="token keyword module">import</span> <span class="token imports"><span class="token punctuation">{</span> <span class="token maybe-class-name">SwaggerModule</span><span class="token punctuation">,</span> <span class="token maybe-class-name">DocumentBuilder</span> <span class="token punctuation">}</span></span> <span class="token keyword module">from</span> <span class="token string">'@nestjs/swagger'</span><span class="token punctuation">;</span>
+<span class="token keyword module">import</span> <span class="token imports"><span class="token punctuation">{</span> <span class="token maybe-class-name">AppModule</span> <span class="token punctuation">}</span></span> <span class="token keyword module">from</span> <span class="token string">'./app.module'</span><span class="token punctuation">;</span>
+
+<span class="token keyword">async</span> <span class="token keyword">function</span> <span class="token function">bootstrap</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  <span class="token keyword">const</span> app <span class="token operator">=</span> <span class="token keyword control-flow">await</span> <span class="token maybe-class-name">NestFactory</span><span class="token punctuation">.</span><span class="token method function property-access">create</span><span class="token punctuation">(</span><span class="token maybe-class-name">AppModule</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+  <span class="token keyword">const</span> config <span class="token operator">=</span> <span class="token keyword">new</span> <span class="token class-name"><span class="token maybe-class-name">DocumentBuilder</span></span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+    <span class="token punctuation">.</span><span class="token method function property-access">setTitle</span><span class="token punctuation">(</span><span class="token string">'Cats example'</span><span class="token punctuation">)</span>
+    <span class="token punctuation">.</span><span class="token method function property-access">setDescription</span><span class="token punctuation">(</span><span class="token string">'The cats API description'</span><span class="token punctuation">)</span>
+    <span class="token punctuation">.</span><span class="token method function property-access">setVersion</span><span class="token punctuation">(</span><span class="token string">'1.0'</span><span class="token punctuation">)</span>
+    <span class="token punctuation">.</span><span class="token method function property-access">addTag</span><span class="token punctuation">(</span><span class="token string">'cats'</span><span class="token punctuation">)</span>
+    <span class="token punctuation">.</span><span class="token method function property-access">build</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token keyword">const</span> <span class="token dom variable">document</span> <span class="token operator">=</span> <span class="token maybe-class-name">SwaggerModule</span><span class="token punctuation">.</span><span class="token method function property-access">createDocument</span><span class="token punctuation">(</span>app<span class="token punctuation">,</span> config<span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token maybe-class-name">SwaggerModule</span><span class="token punctuation">.</span><span class="token method function property-access">setup</span><span class="token punctuation">(</span><span class="token string">'api'</span><span class="token punctuation">,</span> app<span class="token punctuation">,</span> <span class="token dom variable">document</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+  <span class="token keyword control-flow">await</span> app<span class="token punctuation">.</span><span class="token method function property-access">listen</span><span class="token punctuation">(</span><span class="token number">3000</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+<span class="token function">bootstrap</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span></code></pre><blockquote><p>info <strong>Hint</strong> <code>document</code> (returned by the <code>SwaggerModule#createDocument()</code> method) is a serializable object conforming to <a href="https://swagger.io/specification/#openapi-document">OpenAPI Document</a>. Instead of hosting it via HTTP, you could also save it as a JSON/YAML file, and consume it in different ways.</blockquote><p>The <code>DocumentBuilder</code> helps to structure a base document that conforms to the OpenAPI Specification. It provides several methods that allow setting such properties as title, description, version, etc. In order to create a full document (with all HTTP routes defined) we use the <code>createDocument()</code> method of the <code>SwaggerModule</code> class. This method takes two arguments, an application instance and a Swagger options object. Alternatively, we can provide a third argument, which should be of type <code>SwaggerDocumentOptions</code>. More on this in the <a href="/openapi/introduction#document-options">Document options section</a>.<p>Once we create a document, we can call the <code>setup()</code> method. It accepts:<ol><li>The path to mount the Swagger UI<li>An application instance<li>The document object instantiated above<li>Optional configuration parameter (read more <a href="/openapi/introduction#document-options">here</a>)</ol><p>Now you can run the following command to start the HTTP server:<pre class="language-bash"><code class="language-bash">$ <span class="token function">npm</span> run start</code></pre><p>While the application is running, open your browser and navigate to <code>http://localhost:3000/api</code>. You should see the Swagger UI.<figure><img src="/Users/shinichiokada/Bash_Projects/markdown-docs-as-pdf/.vivliostyle/nestjs/en/src/assets/swagger1.png"></figure><p>As you can see, the <code>SwaggerModule</code> automatically reflects all of your endpoints.<blockquote><p>info <strong>Hint</strong> To generate and download a Swagger JSON file, navigate to <code>http://localhost:3000/api-json</code> (assuming that your Swagger documentation is available under <code>http://localhost:3000/api</code>).</blockquote><blockquote><p>warning <strong>Warning</strong> When using <code>fastify</code> and <code>helmet</code>, there may be a problem with <a href="https://developer.mozilla.org/en-US/docs/Web/HTTP/CSP">CSP</a>, to solve this collision, configure the CSP as shown below:<pre class="language-typescript"><code class="language-typescript">app<span class="token punctuation">.</span><span class="token method function property-access">register</span><span class="token punctuation">(</span>helmet<span class="token punctuation">,</span> <span class="token punctuation">{</span>
+  contentSecurityPolicy<span class="token operator">:</span> <span class="token punctuation">{</span>
+    directives<span class="token operator">:</span> <span class="token punctuation">{</span>
+      defaultSrc<span class="token operator">:</span> <span class="token punctuation">[</span><span class="token template-string"><span class="token template-punctuation string">`</span><span class="token string">'self'</span><span class="token template-punctuation string">`</span></span><span class="token punctuation">]</span><span class="token punctuation">,</span>
+      styleSrc<span class="token operator">:</span> <span class="token punctuation">[</span><span class="token template-string"><span class="token template-punctuation string">`</span><span class="token string">'self'</span><span class="token template-punctuation string">`</span></span><span class="token punctuation">,</span> <span class="token template-string"><span class="token template-punctuation string">`</span><span class="token string">'unsafe-inline'</span><span class="token template-punctuation string">`</span></span><span class="token punctuation">]</span><span class="token punctuation">,</span>
+      imgSrc<span class="token operator">:</span> <span class="token punctuation">[</span><span class="token template-string"><span class="token template-punctuation string">`</span><span class="token string">'self'</span><span class="token template-punctuation string">`</span></span><span class="token punctuation">,</span> <span class="token string">'data:'</span><span class="token punctuation">,</span> <span class="token string">'validator.swagger.io'</span><span class="token punctuation">]</span><span class="token punctuation">,</span>
+      scriptSrc<span class="token operator">:</span> <span class="token punctuation">[</span><span class="token template-string"><span class="token template-punctuation string">`</span><span class="token string">'self'</span><span class="token template-punctuation string">`</span></span><span class="token punctuation">,</span> <span class="token template-string"><span class="token template-punctuation string">`</span><span class="token string">https: 'unsafe-inline'</span><span class="token template-punctuation string">`</span></span><span class="token punctuation">]</span><span class="token punctuation">,</span>
+    <span class="token punctuation">}</span><span class="token punctuation">,</span>
+  <span class="token punctuation">}</span><span class="token punctuation">,</span>
+<span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+<span class="token comment">// If you are not going to use CSP at all, you can use this:</span>
+app<span class="token punctuation">.</span><span class="token method function property-access">register</span><span class="token punctuation">(</span>helmet<span class="token punctuation">,</span> <span class="token punctuation">{</span>
+  contentSecurityPolicy<span class="token operator">:</span> <span class="token boolean">false</span><span class="token punctuation">,</span>
+<span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">;</span></code></pre></blockquote></section><section id="document-options"class="level4"><h4>Document options</h4><p>When creating a document, it is possible to provide some extra options to fine tune the library's behavior. These options should be of type <code>SwaggerDocumentOptions</code>, which can be the following:<pre class="language-TypeScript"><code class="language-TypeScript">export interface SwaggerDocumentOptions {
+  /**
+   * List of modules to include in the specification
+   */
+  include?: Function[];
+
+  /**
+   * Additional, extra models that should be inspected and included in the specification
+   */
+  extraModels?: Function[];
+
+  /**
+   * If `true`, swagger will ignore the global prefix set through `setGlobalPrefix()` method
+   */
+  ignoreGlobalPrefix?: boolean;
+
+  /**
+   * If `true`, swagger will also load routes from the modules imported by `include` modules
+   */
+  deepScanRoutes?: boolean;
+
+  /**
+   * Custom operationIdFactory that will be used to generate the `operationId`
+   * based on the `controllerKey` and `methodKey`
+   * @default () => controllerKey_methodKey
+   */
+  operationIdFactory?: (controllerKey: string, methodKey: string) => string;
+}</code></pre><p>For example, if you want to make sure that the library generates operation names like <code>createUser</code> instead of <code>UserController_createUser</code>, you can set the following:<pre class="language-TypeScript"><code class="language-TypeScript">const options: SwaggerDocumentOptions =  {
+  operationIdFactory: (
+    controllerKey: string,
+    methodKey: string
+  ) => methodKey
+};
+const document = SwaggerModule.createDocument(app, config, options);</code></pre></section><section id="setup-options"class="level4"><h4>Setup options</h4><p>You can configure Swagger UI by passing the options object which fulfills the <code>ExpressSwaggerCustomOptions</code> (if you use express) interface as a fourth argument of the <code>SwaggerModule#setup</code> method.<pre class="language-TypeScript"><code class="language-TypeScript">export interface ExpressSwaggerCustomOptions {
+  explorer?: boolean;
+  swaggerOptions?: Record&#x3C;string, any>;
+  customCss?: string;
+  customCssUrl?: string;
+  customJs?: string;
+  customfavIcon?: string;
+  swaggerUrl?: string;
+  customSiteTitle?: string;
+  validatorUrl?: string;
+  url?: string;
+  urls?: Record&#x3C;'url' | 'name', string>[];
+}</code></pre></section><section id="example"class="level4"><h4>Example</h4><p>A working example is available <a href="https://github.com/nestjs/nest/tree/master/sample/11-swagger">here</a>. <span style="float:footnote"><a href="../index.html#toc">Go to TOC</a></span></section></section>

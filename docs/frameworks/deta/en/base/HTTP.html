@@ -1,0 +1,128 @@
+<!doctype html><html id="http"lang="en"><meta charset="utf-8"><title>HTTP API</title><meta name="viewport"content="width=device-width,initial-scale=1"><meta name="sidebar_label"content="HTTP API"><link rel="stylesheet"href="../../../../../../../../docs/themes/packages/prism-coy-theme/theme_common.css"><p>import Tabs from '@theme/Tabs'; import TabItem from '@theme/TabItem';<p>export let Bubble = ({ item }) => { return (<div>&#x3C;div style={{ display: 'flex', fontFamily: 'monospace', borderRadius: '3px', backgroundColor: '#ddd', display: 'inline', padding: '5px'}}> {item}</div><div class="twentypx/"></div>); }<p><section id="general--auth"class="level2"><h2>General &#x26; Auth</h2><blockquote>You can get your **Project Key** and your **Project ID** from your [Deta dashboard](https://web.deta.sh). You need these to talk with the Deta API.</blockquote><blockquote>Base currently supports **maximum 16 digit numbers** (integers and floating points), please store larger numbers as a string.</blockquote><section id="root-url"class="level3"><h3>Root URL</h3><p>This URL is the base for all your HTTP requests:<p><strong><code>https://database.deta.sh/v1/{project_id}/{base_name}</code></strong><blockquote><p>The <code>base_name</code> is the name given to your database. If you already have a <strong>Base</strong>, then you can go ahead and provide it's name here. Additionally, you could provide any name here when doing any <code>PUT</code> or <code>POST</code> request and our backend will automatically create a new base for you if it does not exist. There is no limit on how many Bases you can create.</blockquote></section><section id="auth"class="level3"><h3>Auth</h3><p>A <strong>Project Key</strong> <em>must</em> to be provided in the request <strong>headers</strong> as a value for the <code>X-API-Key</code> key for authentication. This is how we authorize your requests.<p>Example <code>'X-API-Key: a0abcyxz_aSecretValue'</code>.</section><section id="content-type"class="level3"><h3>Content Type</h3><p>We only accept JSON payloads. Make sure you set the headers correctly: <code>'Content-Type: application/json'</code></section></section><section id="endpoints"class="level2"><h2>Endpoints</h2><section id="put-items"class="level3"><h3>Put Items</h3><p><strong><code>PUT /items</code></strong><p>Stores multiple items in a single request. This request overwrites an item if the key already exists.<p>&#x3C;Tabs defaultValue=request values={[ { label: 'Request', value: 'request', }, { label: 'Response', value: 'response', }, ] }><tabitem value="request"></tabitem><table><thead><tr><th>JSON Payload<th>Required<th>Type<th>Description<tbody><tr><td><code>items</code><td>Yes<td><code>array</code><td>An array of items <code>object</code> to be stored.</table><section id="example"class="level4"><h4>Example</h4><pre class="language-json"><code class="language-json"><span class="token punctuation">{</span>
+   <span class="token comment">// array of items to put</span>
+   items<span class="token operator">:</span> <span class="token punctuation">[</span>
+        <span class="token punctuation">{</span>
+            key<span class="token operator">:</span> <span class="token punctuation">{</span>key<span class="token punctuation">}</span><span class="token punctuation">,</span> <span class="token comment">// optional, a random key is generated if not provided</span>
+            field1<span class="token operator">:</span> value1<span class="token punctuation">,</span>
+            <span class="token comment">// rest of item</span>
+        <span class="token punctuation">}</span><span class="token punctuation">,</span>
+        <span class="token comment">// rest of items</span>
+    <span class="token punctuation">]</span>
+<span class="token punctuation">}</span></code></pre><tabitem value="response"></tabitem></section><section id="207-multi-status"class="level4"><h4><code>207 Multi Status</code></h4><pre class="language-js"><code class="language-js"><span class="token punctuation">{</span>
+    <span class="token literal-property property">processed</span><span class="token operator">:</span> <span class="token punctuation">{</span>
+        <span class="token literal-property property">items</span><span class="token operator">:</span> <span class="token punctuation">[</span>
+            <span class="token comment">// items which were stored </span>
+        <span class="token punctuation">]</span>
+    <span class="token punctuation">}</span><span class="token punctuation">,</span>
+    <span class="token literal-property property">failed</span><span class="token operator">:</span> <span class="token punctuation">{</span>
+       <span class="token literal-property property">items</span><span class="token operator">:</span> <span class="token punctuation">[</span>
+           <span class="token comment">// items failed because of internal processing</span>
+       <span class="token punctuation">]</span>
+    <span class="token punctuation">}</span>
+<span class="token punctuation">}</span></code></pre></section><section id="client-errors"class="level4"><h4>Client errors</h4><p>In case of client errors, <strong>no items</strong> in the request are stored.</section><section id="400-bad-request"class="level4"><h4><code>400 Bad Request</code></h4><pre class="language-js"><code class="language-js"><span class="token punctuation">{</span>
+    <span class="token literal-property property">errors</span> <span class="token operator">:</span> <span class="token punctuation">[</span>
+       <span class="token comment">// error messages</span>
+    <span class="token punctuation">]</span> 
+<span class="token punctuation">}</span></code></pre><p>Bad requests occur in the following cases:<ul><li>if an item has a non-string key<li>if the number of items in the requests exceeds 25<li>if total request size exceeds 16 MB<li>if any individual item exceeds 400KB<li>if there are two items with identical keys</ul><blockquote>Empty keys in objects/dictionaries/structs, like `{: value}` are invalid and will fail to be added during the backend processing stage.</blockquote></section></section><section id="get-item"class="level3"><h3>Get Item</h3><p><strong><code>GET /items/{key}</code></strong><p>Get a stored item.<blockquote>If the *key* contains url unsafe or reserved characters, make sure to url-encode the *key*. Otherwise, it will lead to unexpected behavior.</blockquote><p>&#x3C;Tabs defaultValue=request values={[ { label: 'Request', value: 'request', }, { label: 'Response', value: 'response', }, ] }><tabitem value="request"></tabitem><table><thead><tr><th>URL Parameter<th>Required<th>Type<th>Description<tbody><tr><td><code>key</code><td>Yes<td><code>string</code><td>The key (aka. ID) of the item you want to retrieve</table><tabitem value="response"><section id="200-ok"class="level4"><h4><code>200 OK</code></h4><pre class="language-js"><code class="language-js"><span class="token punctuation">{</span>
+  <span class="token literal-property property">key</span><span class="token operator">:</span> <span class="token punctuation">{</span>key<span class="token punctuation">}</span><span class="token punctuation">,</span>
+  <span class="token comment">// the rest of the item</span>
+<span class="token punctuation">}</span></code></pre></section><section id="404-not-found"class="level4"><h4><code>404 Not Found</code></h4><pre class="language-js"><code class="language-js"><span class="token punctuation">{</span>
+  <span class="token literal-property property">key</span><span class="token operator">:</span> <span class="token punctuation">{</span>key<span class="token punctuation">}</span>
+<span class="token punctuation">}</span></code></pre></section></tabitem></section><section id="delete-item"class="level3"><h3>Delete Item</h3><p><strong><code>DELETE /items/{key}</code></strong><p>Delete a stored item.<blockquote>If the *key* contains url unsafe or reserved characters, make sure to url-encode the *key*. Otherwise, it will lead to unexpected behavior.</blockquote><p>&#x3C;Tabs defaultValue=request values={[ { label: 'Request', value: 'request', }, { label: 'Response', value: 'response', }, ] }><tabitem value="request"></tabitem><table><thead><tr><th>URL Parameter<th>Required<th>Type<th>Description<tbody><tr><td><code>key</code><td>Yes<td><code>string</code><td>The key (aka. ID) of the item you want to delete.</table><tabitem value="response"><p>The server will always return <code>200</code> regardless if an item with that <code>key</code> existed or not.<section id="200-ok-1"class="level4"><h4><code>200 OK</code></h4><pre class="language-json"><code class="language-json"><span class="token punctuation">{</span>
+  key<span class="token operator">:</span> <span class="token punctuation">{</span>key<span class="token punctuation">}</span>
+<span class="token punctuation">}</span></code></pre></section></tabitem></section><section id="insert-item"class="level3"><h3>Insert Item</h3><p><strong><code>POST /items</code></strong><p>Creates a new item only if no item with the same <code>key</code> exists.<p>&#x3C;Tabs defaultValue=request values={[ { label: 'Request', value: 'request', }, { label: 'Response', value: 'response', }, ] }><tabitem value="request"></tabitem><table><thead><tr><th>JSON Payload<th>Required<th>Type<th>Description<tbody><tr><td><code>item</code><td>Yes<td><code>object</code><td>The item to be stored.</table><section id="example-1"class="level4"><h4>Example</h4><pre class="language-json"><code class="language-json"><span class="token punctuation">{</span>
+    item<span class="token operator">:</span> <span class="token punctuation">{</span>
+        key<span class="token operator">:</span> <span class="token punctuation">{</span>key<span class="token punctuation">}</span><span class="token punctuation">,</span> <span class="token comment">// optional</span>
+        <span class="token comment">// rest of item</span>
+    <span class="token punctuation">}</span>
+<span class="token punctuation">}</span></code></pre><tabitem value="response"></tabitem></section><section id="201-created"class="level4"><h4><code>201 Created</code></h4><pre class="language-json"><code class="language-json"><span class="token punctuation">{</span>
+  key<span class="token operator">:</span> <span class="token punctuation">{</span>key<span class="token punctuation">}</span><span class="token punctuation">,</span> <span class="token comment">// auto generated key if key was not provided in the request</span>
+  field1<span class="token operator">:</span> value1<span class="token punctuation">,</span>
+  <span class="token comment">// the rest of the item</span>
+<span class="token punctuation">}</span></code></pre></section><section id="client-errors-1"class="level4"><h4>Client errors</h4></section><section id="409-conflict-if-key-already-exists"class="level4"><h4><code>409 Conflict</code> (if key already exists)</h4><pre class="language-json"><code class="language-json"><span class="token punctuation">{</span>
+  errors<span class="token operator">:</span> <span class="token punctuation">[</span>Key already exists<span class="token punctuation">]</span> 
+<span class="token punctuation">}</span></code></pre></section><section id="400-bad-request-1"class="level4"><h4><code>400 Bad Request</code></h4><pre class="language-json"><code class="language-json"><span class="token punctuation">{</span>
+  errors<span class="token operator">:</span> <span class="token punctuation">[</span>
+     <span class="token comment">// error messages</span>
+  <span class="token punctuation">]</span>
+<span class="token punctuation">}</span></code></pre><p>Bad requests occur in the following cases:<ul><li>if the item has a non-string key<li>if size of the item exceeds 400KB</ul></section></section><section id="update-item"class="level3"><h3>Update Item</h3><p><strong><code>PATCH /items/{key}</code></strong><p>Updates an item only if an item with <code>key</code> exists.<blockquote>If the *key* contains url unsafe or reserved characters, make sure to url-encode the *key*. Otherwise, it will lead to unexpected behavior.</blockquote><p>&#x3C;Tabs defaultValue=request values={[ { label: 'Request', value: 'request', }, { label: 'Response', value: 'response', }, ] }><tabitem value="request"></tabitem><table><thead><tr><th>JSON Payload<th>Required<th>Type<th>Description<tbody><tr><td><code>set</code><td>no<td><code>object</code><td>The attributes to be updated or created.<tr><td><code>increment</code><td>no<td><code>object</code><td>The attributes to be incremented. Increment value can be negative.<tr><td><code>append</code><td>no<td><code>object</code><td>The attributes to append a value to. Appended value must be a list.<tr><td><code>prepend</code><td>no<td><code>object</code><td>The attributes to prepend a value to. Prepended value must be a list.<tr><td><code>delete</code><td>no<td><code>string array</code><td>The attributes to be deleted.</table><section id="example-2"class="level4"><h4>Example</h4><p>If the following item exists in the database<pre class="language-json"><code class="language-json"><span class="token punctuation">{</span>
+  key<span class="token operator">:</span> user-a<span class="token punctuation">,</span>
+  username<span class="token operator">:</span> jimmy<span class="token punctuation">,</span>
+  profile<span class="token operator">:</span> <span class="token punctuation">{</span>
+    age<span class="token operator">:</span> <span class="token number">32</span><span class="token punctuation">,</span>
+    active<span class="token operator">:</span> <span class="token boolean">false</span><span class="token punctuation">,</span>
+    hometown<span class="token operator">:</span> pittsburgh 
+  <span class="token punctuation">}</span><span class="token punctuation">,</span>
+  on_mobile<span class="token operator">:</span> <span class="token boolean">true</span><span class="token punctuation">,</span>
+  likes<span class="token operator">:</span> <span class="token punctuation">[</span>anime<span class="token punctuation">]</span><span class="token punctuation">,</span>
+  purchases<span class="token operator">:</span> <span class="token number">1</span>
+<span class="token punctuation">}</span></code></pre><p>Then the request<pre class="language-json"><code class="language-json"><span class="token punctuation">{</span>
+   set <span class="token operator">:</span> <span class="token punctuation">{</span>
+     <span class="token comment">// change ages to 33</span>
+     profile.age<span class="token operator">:</span> <span class="token number">33</span><span class="token punctuation">,</span> 
+     <span class="token comment">// change active to true</span>
+     profile.active<span class="token operator">:</span> <span class="token boolean">true</span><span class="token punctuation">,</span> 
+     <span class="token comment">// add a new attribute `profile.email`</span>
+     profile.email<span class="token operator">:</span> jimmy@deta.sh
+   <span class="token punctuation">}</span><span class="token punctuation">,</span>
+
+   increment <span class="token operator">:</span><span class="token punctuation">{</span>
+     <span class="token comment">// increment purchases by 2</span>
+     purchases<span class="token operator">:</span> <span class="token number">2</span>
+   <span class="token punctuation">}</span><span class="token punctuation">,</span>
+
+   append<span class="token operator">:</span> <span class="token punctuation">{</span>
+     <span class="token comment">// append to 'likes' </span>
+     likes<span class="token operator">:</span> <span class="token punctuation">[</span>ramen<span class="token punctuation">]</span>
+   <span class="token punctuation">}</span><span class="token punctuation">,</span>
+
+   <span class="token comment">// remove attributes 'profile.hometown' and 'on_mobile'</span>
+   delete<span class="token operator">:</span> <span class="token punctuation">[</span>profile.hometown<span class="token punctuation">,</span> on_mobile<span class="token punctuation">]</span>
+<span class="token punctuation">}</span></code></pre><p>results in the following item in the database:<pre class="language-json"><code class="language-json"><span class="token punctuation">{</span>
+  key<span class="token operator">:</span> user-a<span class="token punctuation">,</span>
+  username<span class="token operator">:</span> jimmy<span class="token punctuation">,</span>
+  profile<span class="token operator">:</span> <span class="token punctuation">{</span>
+    age<span class="token operator">:</span> <span class="token number">33</span><span class="token punctuation">,</span>
+    active<span class="token operator">:</span> <span class="token boolean">true</span><span class="token punctuation">,</span>
+    email<span class="token operator">:</span> jimmy@deta.sh
+  <span class="token punctuation">}</span><span class="token punctuation">,</span>
+  likes<span class="token operator">:</span> <span class="token punctuation">[</span>anime<span class="token punctuation">,</span> ramen<span class="token punctuation">]</span><span class="token punctuation">,</span>
+  purchases<span class="token operator">:</span> <span class="token number">3</span>
+<span class="token punctuation">}</span></code></pre><tabitem value="response"></tabitem></section><section id="200-ok-2"class="level4"><h4><code>200 OK</code></h4><pre class="language-json"><code class="language-json"><span class="token punctuation">{</span>
+   key<span class="token operator">:</span> <span class="token punctuation">{</span>key<span class="token punctuation">}</span><span class="token punctuation">,</span>
+   set<span class="token operator">:</span> <span class="token punctuation">{</span>
+     <span class="token comment">// identical to the request</span>
+   <span class="token punctuation">}</span><span class="token punctuation">,</span>
+   delete<span class="token operator">:</span> <span class="token punctuation">[</span>field1<span class="token punctuation">,</span> ..<span class="token punctuation">]</span> <span class="token comment">// identical to the request </span>
+<span class="token punctuation">}</span></code></pre></section><section id="client-errors-2"class="level4"><h4>Client errors</h4></section><section id="404-not-found-if-key-does-not-exist"class="level4"><h4><code>404 Not Found</code> (if key does not exist)</h4><pre class="language-json"><code class="language-json"><span class="token punctuation">{</span>
+  errors<span class="token operator">:</span> <span class="token punctuation">[</span>Key not found<span class="token punctuation">]</span> 
+<span class="token punctuation">}</span></code></pre></section><section id="400-bad-request-2"class="level4"><h4><code>400 Bad Request</code></h4><pre class="language-json"><code class="language-json"><span class="token punctuation">{</span>
+  errors<span class="token operator">:</span> <span class="token punctuation">[</span>
+     <span class="token comment">// error messages</span>
+  <span class="token punctuation">]</span>
+<span class="token punctuation">}</span></code></pre><p>Bad requests occur in the following cases:<ul><li>if you're updating or deleting the <code>key</code><li>if <code>set</code> and <code>delete</code> have conflicting attributes<li>if you're setting a hierarchical attribute but an upper level attribute does not exist, for eg. <code>{set: {user.age: 22}}</code> but <code>user</code> is not an attribute of the item.</ul></section></section><section id="query-items"class="level3"><h3>Query Items</h3><p><strong><code>POST /query</code></strong><p>List items that match a <a href="https://docs.deta.sh/docs/base/queries/">query</a>.<p>&#x3C;Tabs defaultValue=request values={[ { label: 'Request', value: 'request', }, { label: 'Response', value: 'response', }, ] }><tabitem value="request"></tabitem><table><thead><tr><th>JSON Payload<th>Required<th>Type<th>Description<tbody><tr><td><code>query</code><td>No<td><code>list</code><td>list of a <a href="https://docs.deta.sh/docs/base/queries/">query</a><tr><td><code>limit</code><td>No<td><code>int</code><td>no of items to return. min value 1 if used<tr><td><code>last</code><td>No<td><code>string</code><td>last key seen in a previous paginated response</table><section id="example-3"class="level4"><h4>Example</h4><pre class="language-json"><code class="language-json"><span class="token punctuation">{</span>
+   query<span class="token operator">:</span> <span class="token punctuation">[</span>
+        <span class="token comment">// separate objects in the list are ORed</span>
+        <span class="token comment">// query evaluates to list all users whose hometown is Berlin and is active OR all users who age less than 40</span>
+        <span class="token punctuation">{</span>user.hometown<span class="token operator">:</span> Berlin<span class="token punctuation">,</span> user.active<span class="token operator">:</span> <span class="token boolean">true</span><span class="token punctuation">}</span><span class="token punctuation">,</span>
+        <span class="token punctuation">{</span>user.age?lt<span class="token operator">:</span> <span class="token number">40</span><span class="token punctuation">}</span>
+   <span class="token punctuation">]</span><span class="token punctuation">,</span>
+   limit<span class="token operator">:</span> <span class="token number">5</span><span class="token punctuation">,</span>
+   last<span class="token operator">:</span> afsefasd <span class="token comment">// last key if applicable</span>
+<span class="token punctuation">}</span></code></pre><tabitem value="response"><p>The response is paginated if data process size exceeds 1 MB (before the query is applied) or the total number of items matching the <code>query</code> exceeds the <code>limit</code> provided in the request.<p>For paginated responses, <code>last</code> will return the last key seen in the response. You must use this <code>key</code> in the following request to continue retreival of items. If the response does not have the <code>last</code> key, then no further items are to be retreived.<blockquote>Upto 1 MB of data is retrieved before filtering with the query. Thus, in some cases you might get an empty list of items but still the `last` key evaluated in the response.<p>To apply the query through all the items in your base, you have to call fetch until <code>last</code> is empty.</blockquote></tabitem></section><section id="200-ok-3"class="level4"><h4><code>200 OK</code></h4><pre class="language-json"><code class="language-json"><span class="token punctuation">{</span>
+    paging<span class="token operator">:</span> <span class="token punctuation">{</span>
+        size<span class="token operator">:</span> <span class="token number">5</span><span class="token punctuation">,</span> <span class="token comment">// size of items returned</span>
+        last<span class="token operator">:</span> adfjie <span class="token comment">// last key seen if paginated, provide this key in the following request</span>
+    <span class="token punctuation">}</span><span class="token punctuation">,</span>
+    items<span class="token operator">:</span> <span class="token punctuation">[</span>
+       <span class="token punctuation">{</span>
+         key<span class="token operator">:</span> <span class="token punctuation">{</span>key<span class="token punctuation">}</span><span class="token punctuation">,</span>
+         <span class="token comment">// rest of the item</span>
+       <span class="token punctuation">}</span><span class="token punctuation">,</span>
+       <span class="token comment">// rest of the items</span>
+   <span class="token punctuation">]</span>
+<span class="token punctuation">}</span></code></pre></section><section id="client-errors-3"class="level4"><h4>Client Errors</h4></section><section id="400-bad-request-3"class="level4"><h4><code>400 Bad Request</code></h4><pre class="language-json"><code class="language-json"><span class="token punctuation">{</span>
+  errors<span class="token operator">:</span> <span class="token punctuation">[</span>
+    <span class="token comment">// error messages</span>
+  <span class="token punctuation">]</span>
+<span class="token punctuation">}</span></code></pre><p>Bad requests occur in the following cases:<ul><li>if a query is made on the <code>key</code><li>if a query is not of the right format<li>if <code>limit</code> is provided in the request and is less than 1</ul></section></section></section><section id="issues"class="level2"><h2>Issues</h2><p>If you run into any issues, consider reporting them in our <a href="https://github.com/orgs/deta/discussions">Github Discussions</a>.<span style="float:footnote"><a href="../index.html#toc">Go to TOC</a></span></section>
