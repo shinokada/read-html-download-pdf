@@ -1,0 +1,24 @@
+<!doctype html><html lang="it"><meta charset="utf-8"><title>Sviluppo dei motori di template per Express</title><meta name="viewport"content="width=device-width,initial-scale=1"><meta name="layout"content="page"><meta name="menu"content="advanced"><link rel="stylesheet"href="../../../../../../../../../docs/themes/packages/prism-coy-theme/theme_common.css"><section id="sviluppo-dei-motori-di-template-per-express"class="level1"><h1>Sviluppo dei motori di template per Express</h1><p>Utilizzare il metodo <code>app.engine(ext, callback)</code> per creare il proprio motore di template. <code>ext</code> è l'estensione file e <code>callback</code> è la funzione del motore di template, la quale accetta le seguenti voci come parametri: l'ubicazione del file, l'oggetto delle opzioni e la funzione callback.<p>Il seguente codice è un esempio di implementazione di un motore di template molto semplice per il rendering del file <code>.ntl</code>.<pre><code class="language-javascript"translate="no">
+var fs = require('fs'); // this engine requires the fs module
+app.engine('ntl', function (filePath, options, callback) { // define the template engine
+  fs.readFile(filePath, function (err, content) {
+    if (err) return callback(new Error(err));
+    // this is an extremely simple template engine
+    var rendered = content.toString().replace('#title#', '<title>'+ options.title +'</title>')
+    .replace('#message#', '<h1>'+ options.message +'</h1>');
+    return callback(null, rendered);
+  });
+});
+app.set('views', './views'); // specify the views directory
+app.set('view engine', 'ntl'); // register the template engine
+</code>
+</pre><p>L'applicazione sarà ora in grado di effettuare il rendering dei file <code>.ntl</code>. Creare un file denominato <code>index.ntl</code> nella directory <code>views</code> con il seguente contenuto.<pre><code class="language-javascript"translate="no">
+#title#
+#message#
+</code>
+</pre><p>Successivamente, creare il seguente percorso nell'applicazione.<pre><code class="language-javascript"translate="no">
+app.get('/', function (req, res) {
+  res.render('index', { title: 'Hey', message: 'Hello there!'});
+});
+</code>
+</pre><p>Quando si effettua una richiesta per la home page, <code>index.ntl</code> verrà visualizzato come HTML. <span style="float:footnote"><a href="../index.html#toc">Go to TOC</a></span></section>
