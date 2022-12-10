@@ -1,0 +1,44 @@
+<!doctype html><html lang="en"><meta charset="utf-8"><title>Global: Modifying Module</title><meta name="viewport"content="width=device-width,initial-scale=1"><meta name="layout"content="docs"><meta name="permalink"content="/docs/handbook/declaration-files/templates/global-modifying-module-d-ts.html"><link rel="stylesheet"href="../../../../../../../../../docs/themes/packages/prism-coy-theme/theme_common.css"><section id="global-modifying-modules"class="level2"><h2><em>Global-modifying Modules</em></h2><p>A <em>global-modifying module</em> alters existing values in the global scope when they are imported. For example, there might exist a library which adds new members to <code>String.prototype</code> when imported. This pattern is somewhat dangerous due to the possibility of runtime conflicts, but we can still write a declaration file for it.</section><section id="identifying-global-modifying-modules"class="level2"><h2>Identifying global-modifying modules</h2><p>Global-modifying modules are generally easy to identify from their documentation. In general, they're similar to global plugins, but need a <code>require</code> call to activate their effects.<p>You might see documentation like this:<pre class="language-js"><code class="language-js"><span class="token comment">// 'require' call that doesn't use its return value</span>
+<span class="token keyword">var</span> unused <span class="token operator">=</span> <span class="token function">require</span><span class="token punctuation">(</span><span class="token string">"magic-string-time"</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token comment">/* or */</span>
+<span class="token function">require</span><span class="token punctuation">(</span><span class="token string">"magic-string-time"</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+<span class="token keyword">var</span> x <span class="token operator">=</span> <span class="token string">"hello, world"</span><span class="token punctuation">;</span>
+<span class="token comment">// Creates new methods on built-in types</span>
+<span class="token console class-name">console</span><span class="token punctuation">.</span><span class="token method function property-access">log</span><span class="token punctuation">(</span>x<span class="token punctuation">.</span><span class="token method function property-access">startsWithHello</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+<span class="token keyword">var</span> y <span class="token operator">=</span> <span class="token punctuation">[</span><span class="token number">1</span><span class="token punctuation">,</span> <span class="token number">2</span><span class="token punctuation">,</span> <span class="token number">3</span><span class="token punctuation">]</span><span class="token punctuation">;</span>
+<span class="token comment">// Creates new methods on built-in types</span>
+<span class="token console class-name">console</span><span class="token punctuation">.</span><span class="token method function property-access">log</span><span class="token punctuation">(</span>y<span class="token punctuation">.</span><span class="token method function property-access">reverseAndSort</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span></code></pre><p>Here is an example<pre class="language-ts"><code class="language-ts"><span class="token comment">// Type definitions for [~THE LIBRARY NAME~] [~OPTIONAL VERSION NUMBER~]</span>
+<span class="token comment">// Project: [~THE PROJECT NAME~]</span>
+<span class="token comment">// Definitions by: [~YOUR NAME~] &#x3C;[~A URL FOR YOU~]></span>
+
+<span class="token comment">/*~ This is the global-modifying module template file. You should rename it to index.d.ts
+ *~ and place it in a folder with the same name as the module.
+ *~ For example, if you were writing a file for "super-greeter", this
+ *~ file should be 'super-greeter/index.d.ts'
+ */</span>
+
+<span class="token comment">/*~ Note: If your global-modifying module is callable or constructable, you'll
+ *~ need to combine the patterns here with those in the module-class or module-function
+ *~ template files
+ */</span>
+<span class="token keyword">declare</span> global <span class="token punctuation">{</span>
+  <span class="token comment">/*~ Here, declare things that go in the global namespace, or augment
+   *~ existing declarations in the global namespace
+   */</span>
+  <span class="token keyword">interface</span> <span class="token class-name"><span class="token known-class-name class-name">String</span></span> <span class="token punctuation">{</span>
+    <span class="token function">fancyFormat</span><span class="token punctuation">(</span>opts<span class="token operator">:</span> <span class="token maybe-class-name">StringFormatOptions</span><span class="token punctuation">)</span><span class="token operator">:</span> <span class="token builtin">string</span><span class="token punctuation">;</span>
+  <span class="token punctuation">}</span>
+<span class="token punctuation">}</span>
+
+<span class="token comment">/*~ If your module exports types or values, write them as usual */</span>
+<span class="token keyword module">export</span> <span class="token keyword">interface</span> <span class="token class-name"><span class="token maybe-class-name">StringFormatOptions</span></span> <span class="token punctuation">{</span>
+  fancinessLevel<span class="token operator">:</span> <span class="token builtin">number</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+
+<span class="token comment">/*~ For example, declaring a method on the module (in addition to its global side effects) */</span>
+<span class="token keyword module">export</span> <span class="token keyword">function</span> <span class="token function">doSomething</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token operator">:</span> <span class="token keyword">void</span><span class="token punctuation">;</span>
+
+<span class="token comment">/*~ If your module exports nothing, you'll need this line. Otherwise, delete it */</span>
+<span class="token keyword module">export</span> <span class="token exports"><span class="token punctuation">{</span><span class="token punctuation">}</span></span><span class="token punctuation">;</span></code></pre><p><span style="float:footnote"><a href="../../index.html#toc">Go to TOC</a></span></section>

@@ -1,0 +1,68 @@
+<!doctype html><html lang="en"><meta charset="utf-8"><title>Global .d.ts</title><meta name="viewport"content="width=device-width,initial-scale=1"><meta name="layout"content="docs"><meta name="permalink"content="/docs/handbook/declaration-files/templates/global-d-ts.html"><link rel="stylesheet"href="../../../../../../../../../docs/themes/packages/prism-coy-theme/theme_common.css"><section id="global-libraries"class="level2"><h2>Global Libraries</h2><p>A <em>global</em> library is one that can be accessed from the global scope (i.e. without using any form of <code>import</code>). Many libraries simply expose one or more global variables for use. For example, if you were using <a href="https://jquery.com/">jQuery</a>, the <code>$</code> variable can be used by simply referring to it:<pre class="language-ts"><code class="language-ts"><span class="token function">$</span><span class="token punctuation">(</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token arrow operator">=></span> <span class="token punctuation">{</span>
+  <span class="token console class-name">console</span><span class="token punctuation">.</span><span class="token method function property-access">log</span><span class="token punctuation">(</span><span class="token string">"hello!"</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">;</span></code></pre><p>You'll usually see guidance in the documentation of a global library of how to use the library in an HTML script tag:<pre class="language-html"><code class="language-html"><span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;</span>script</span> <span class="token attr-name">src</span><span class="token attr-value"><span class="token punctuation attr-equals">=</span><span class="token punctuation">"</span>http://a.great.cdn.for/someLib.js<span class="token punctuation">"</span></span><span class="token punctuation">></span></span><span class="token script"></span><span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;/</span>script</span><span class="token punctuation">></span></span></code></pre><p>Today, most popular globally-accessible libraries are actually written as UMD libraries (see below). UMD library documentation is hard to distinguish from global library documentation. Before writing a global declaration file, make sure the library isn't actually UMD.</section><section id="identifying-a-global-library-from-code"class="level2"><h2>Identifying a Global Library from Code</h2><p>Global library code is usually extremely simple. A global "Hello, world" library might look like this:<pre class="language-js"><code class="language-js"><span class="token keyword">function</span> <span class="token function">createGreeting</span><span class="token punctuation">(</span><span class="token parameter">s</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  <span class="token keyword control-flow">return</span> <span class="token string">"Hello, "</span> <span class="token operator">+</span> s<span class="token punctuation">;</span>
+<span class="token punctuation">}</span></code></pre><p>or like this:<pre class="language-js"><code class="language-js"><span class="token dom variable">window</span><span class="token punctuation">.</span><span class="token method-variable function-variable method function property-access">createGreeting</span> <span class="token operator">=</span> <span class="token keyword">function</span> <span class="token punctuation">(</span><span class="token parameter">s</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  <span class="token keyword control-flow">return</span> <span class="token string">"Hello, "</span> <span class="token operator">+</span> s<span class="token punctuation">;</span>
+<span class="token punctuation">}</span><span class="token punctuation">;</span></code></pre><p>When looking at the code of a global library, you'll usually see:<ul><li>Top-level <code>var</code> statements or <code>function</code> declarations<li>One or more assignments to <code>window.someName</code><li>Assumptions that DOM primitives like <code>document</code> or <code>window</code> exist</ul><p>You <em>won't</em> see:<ul><li>Checks for, or usage of, module loaders like <code>require</code> or <code>define</code><li>CommonJS/Node.js-style imports of the form <code>var fs = require("fs");</code><li>Calls to <code>define(...)</code><li>Documentation describing how to <code>require</code> or import the library</ul></section><section id="examples-of-global-libraries"class="level2"><h2>Examples of Global Libraries</h2><p>Because it's usually easy to turn a global library into a UMD library, very few popular libraries are still written in the global style. However, libraries that are small and require the DOM (or have <em>no</em> dependencies) may still be global.</section><section id="global-library-template"class="level2"><h2>Global Library Template</h2><p>You can see an example DTS below:<pre class="language-ts"><code class="language-ts"><span class="token comment">// Type definitions for [~THE LIBRARY NAME~] [~OPTIONAL VERSION NUMBER~]</span>
+<span class="token comment">// Project: [~THE PROJECT NAME~]</span>
+<span class="token comment">// Definitions by: [~YOUR NAME~] &#x3C;[~A URL FOR YOU~]></span>
+
+<span class="token comment">/*~ If this library is callable (e.g. can be invoked as myLib(3)),
+ *~ include those call signatures here.
+ *~ Otherwise, delete this section.
+ */</span>
+<span class="token keyword">declare</span> <span class="token keyword">function</span> <span class="token function">myLib</span><span class="token punctuation">(</span>a<span class="token operator">:</span> <span class="token builtin">string</span><span class="token punctuation">)</span><span class="token operator">:</span> <span class="token builtin">string</span><span class="token punctuation">;</span>
+<span class="token keyword">declare</span> <span class="token keyword">function</span> <span class="token function">myLib</span><span class="token punctuation">(</span>a<span class="token operator">:</span> <span class="token builtin">number</span><span class="token punctuation">)</span><span class="token operator">:</span> <span class="token builtin">number</span><span class="token punctuation">;</span>
+
+<span class="token comment">/*~ If you want the name of this library to be a valid type name,
+ *~ you can do so here.
+ *~
+ *~ For example, this allows us to write 'var x: myLib';
+ *~ Be sure this actually makes sense! If it doesn't, just
+ *~ delete this declaration and add types inside the namespace below.
+ */</span>
+<span class="token keyword">interface</span> <span class="token class-name">myLib</span> <span class="token punctuation">{</span>
+  name<span class="token operator">:</span> <span class="token builtin">string</span><span class="token punctuation">;</span>
+  length<span class="token operator">:</span> <span class="token builtin">number</span><span class="token punctuation">;</span>
+  extras<span class="token operator">?</span><span class="token operator">:</span> <span class="token builtin">string</span><span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+
+<span class="token comment">/*~ If your library has properties exposed on a global variable,
+ *~ place them here.
+ *~ You should also place types (interfaces and type alias) here.
+ */</span>
+<span class="token keyword">declare</span> <span class="token keyword">namespace</span> myLib <span class="token punctuation">{</span>
+  <span class="token comment">//~ We can write 'myLib.timeout = 50;'</span>
+  <span class="token keyword">let</span> timeout<span class="token operator">:</span> <span class="token builtin">number</span><span class="token punctuation">;</span>
+
+  <span class="token comment">//~ We can access 'myLib.version', but not change it</span>
+  <span class="token keyword">const</span> version<span class="token operator">:</span> <span class="token builtin">string</span><span class="token punctuation">;</span>
+
+  <span class="token comment">//~ There's some class we can create via 'let c = new myLib.Cat(42)'</span>
+  <span class="token comment">//~ Or reference e.g. 'function f(c: myLib.Cat) { ... }</span>
+  <span class="token keyword">class</span> <span class="token class-name"><span class="token maybe-class-name">Cat</span></span> <span class="token punctuation">{</span>
+    <span class="token function">constructor</span><span class="token punctuation">(</span>n<span class="token operator">:</span> <span class="token builtin">number</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+    <span class="token comment">//~ We can read 'c.age' from a 'Cat' instance</span>
+    <span class="token keyword">readonly</span> age<span class="token operator">:</span> <span class="token builtin">number</span><span class="token punctuation">;</span>
+
+    <span class="token comment">//~ We can invoke 'c.purr()' from a 'Cat' instance</span>
+    <span class="token function">purr</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token operator">:</span> <span class="token keyword">void</span><span class="token punctuation">;</span>
+  <span class="token punctuation">}</span>
+
+  <span class="token comment">//~ We can declare a variable as</span>
+  <span class="token comment">//~   'var s: myLib.CatSettings = { weight: 5, name: "Maru" };'</span>
+  <span class="token keyword">interface</span> <span class="token class-name"><span class="token maybe-class-name">CatSettings</span></span> <span class="token punctuation">{</span>
+    weight<span class="token operator">:</span> <span class="token builtin">number</span><span class="token punctuation">;</span>
+    name<span class="token operator">:</span> <span class="token builtin">string</span><span class="token punctuation">;</span>
+    tailLength<span class="token operator">?</span><span class="token operator">:</span> <span class="token builtin">number</span><span class="token punctuation">;</span>
+  <span class="token punctuation">}</span>
+
+  <span class="token comment">//~ We can write 'const v: myLib.VetID = 42;'</span>
+  <span class="token comment">//~  or 'const v: myLib.VetID = "bob";'</span>
+  <span class="token keyword">type</span> <span class="token class-name"><span class="token maybe-class-name">VetID</span></span> <span class="token operator">=</span> <span class="token builtin">string</span> <span class="token operator">|</span> <span class="token builtin">number</span><span class="token punctuation">;</span>
+
+  <span class="token comment">//~ We can invoke 'myLib.checkCat(c)' or 'myLib.checkCat(c, v);'</span>
+  <span class="token keyword">function</span> <span class="token function">checkCat</span><span class="token punctuation">(</span>c<span class="token operator">:</span> <span class="token maybe-class-name">Cat</span><span class="token punctuation">,</span> s<span class="token operator">?</span><span class="token operator">:</span> <span class="token maybe-class-name">VetID</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span></code></pre><p><span style="float:footnote"><a href="../../index.html#toc">Go to TOC</a></span></section>
