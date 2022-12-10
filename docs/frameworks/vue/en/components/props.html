@@ -1,0 +1,231 @@
+<!doctype html><html lang="en"><meta charset="utf-8"><title>Props</title><meta name="viewport"content="width=device-width,initial-scale=1"><link rel="stylesheet"href="../../../../../../../../docs/themes/packages/prism-coy-theme/theme_common.css"><section id="props"class="level1"><h1>Props</h1><blockquote><p>This page assumes you've already read the <a href="/guide/essentials/component-basics">Components Basics</a>. Read that first if you are new to components.</blockquote><div class="options-api"><vueschoollink href="https://vueschool.io/lessons/vue-3-reusable-components-with-props"title="Free Vue.js Props Lesson"></vueschoollink></div><section id="props-declaration"class="level2"><h2>Props Declaration</h2><p>Vue components require explicit props declaration so that Vue knows what external props passed to the component should be treated as fallthrough attributes (which will be discussed in <a href="/guide/components/attrs">its dedicated section</a>).<div class="composition-api"><p>In SFCs using <code>&#x3C;script setup></code>, props can be declared using the <code>defineProps()</code> macro:<pre class="language-vue"><code class="language-vue">&#x3C;script setup>
+const props = defineProps(['foo'])
+
+console.log(props.foo)
+&#x3C;/script></code></pre><p>In non-<code>&#x3C;script setup></code> components, props are declared using the <a href="/api/options-state.html#props"><code>props</code></a> option:<pre class="language-js"><code class="language-js"><span class="token keyword module">export</span> <span class="token keyword module">default</span> <span class="token punctuation">{</span>
+  <span class="token literal-property property">props</span><span class="token operator">:</span> <span class="token punctuation">[</span><span class="token string">'foo'</span><span class="token punctuation">]</span><span class="token punctuation">,</span>
+  <span class="token function">setup</span><span class="token punctuation">(</span><span class="token parameter">props</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token comment">// setup() receives props as the first argument.</span>
+    <span class="token console class-name">console</span><span class="token punctuation">.</span><span class="token method function property-access">log</span><span class="token punctuation">(</span>props<span class="token punctuation">.</span><span class="token property-access">foo</span><span class="token punctuation">)</span>
+  <span class="token punctuation">}</span>
+<span class="token punctuation">}</span></code></pre><p>Notice the argument passed to <code>defineProps()</code> is the same as the value provided to the <code>props</code> options: the same props options API is shared between the two declaration styles.</div><div class="options-api"><p>Props are declared using the <a href="/api/options-state.html#props"><code>props</code></a> option:<pre class="language-js"><code class="language-js"><span class="token keyword module">export</span> <span class="token keyword module">default</span> <span class="token punctuation">{</span>
+  <span class="token literal-property property">props</span><span class="token operator">:</span> <span class="token punctuation">[</span><span class="token string">'foo'</span><span class="token punctuation">]</span><span class="token punctuation">,</span>
+  <span class="token function">created</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token comment">// props are exposed on `this`</span>
+    <span class="token console class-name">console</span><span class="token punctuation">.</span><span class="token method function property-access">log</span><span class="token punctuation">(</span><span class="token keyword">this</span><span class="token punctuation">.</span><span class="token property-access">foo</span><span class="token punctuation">)</span>
+  <span class="token punctuation">}</span>
+<span class="token punctuation">}</span></code></pre></div><p>In addition to declaring props using an array of strings, we can also use the object syntax:<div class="options-api"><pre class="language-js"><code class="language-js"><span class="token keyword module">export</span> <span class="token keyword module">default</span> <span class="token punctuation">{</span>
+  <span class="token literal-property property">props</span><span class="token operator">:</span> <span class="token punctuation">{</span>
+    <span class="token literal-property property">title</span><span class="token operator">:</span> <span class="token known-class-name class-name">String</span><span class="token punctuation">,</span>
+    <span class="token literal-property property">likes</span><span class="token operator">:</span> <span class="token known-class-name class-name">Number</span>
+  <span class="token punctuation">}</span>
+<span class="token punctuation">}</span></code></pre></div><div class="composition-api"><pre class="language-js"><code class="language-js"><span class="token comment">// in &#x3C;script setup></span>
+<span class="token function">defineProps</span><span class="token punctuation">(</span><span class="token punctuation">{</span>
+  <span class="token literal-property property">title</span><span class="token operator">:</span> <span class="token known-class-name class-name">String</span><span class="token punctuation">,</span>
+  <span class="token literal-property property">likes</span><span class="token operator">:</span> <span class="token known-class-name class-name">Number</span>
+<span class="token punctuation">}</span><span class="token punctuation">)</span></code></pre><pre class="language-js"><code class="language-js"><span class="token comment">// in non-&#x3C;script setup></span>
+<span class="token keyword module">export</span> <span class="token keyword module">default</span> <span class="token punctuation">{</span>
+  <span class="token literal-property property">props</span><span class="token operator">:</span> <span class="token punctuation">{</span>
+    <span class="token literal-property property">title</span><span class="token operator">:</span> <span class="token known-class-name class-name">String</span><span class="token punctuation">,</span>
+    <span class="token literal-property property">likes</span><span class="token operator">:</span> <span class="token known-class-name class-name">Number</span>
+  <span class="token punctuation">}</span>
+<span class="token punctuation">}</span></code></pre></div><p>For each property in the object declaration syntax, the key is the name of the prop, while the value should be the constructor function of the expected type.<p>This not only documents your component, but will also warn other developers using your component in the browser console if they pass the wrong type. We will discuss more details about <a href="#prop-validation">prop validation</a> further down this page.<div class="options-api"><p>See also: <a href="/guide/typescript/options-api.html#typing-component-props">Typing Component Props</a><sup class="vt-badge ts"></sup></div><div class="composition-api"><p>If you are using TypeScript with <code>&#x3C;script setup></code>, it's also possible to declare props using pure type annotations:<pre class="language-vue"><code class="language-vue">&#x3C;script setup lang="ts">
+defineProps&#x3C;{
+  title?: string
+  likes?: number
+}>()
+&#x3C;/script></code></pre><p>More details: <a href="/guide/typescript/composition-api.html#typing-component-props">Typing Component Props</a><sup class="vt-badge ts"></sup></div></section><section id="prop-passing-details"class="level2"><h2>Prop Passing Details</h2><section id="prop-name-casing"class="level3"><h3>Prop Name Casing</h3><p>We declare long prop names using camelCase because this avoids having to use quotes when using them as property keys, and allows us to reference them directly in template expressions because they are valid JavaScript identifiers:<div class="composition-api"><pre class="language-js"><code class="language-js"><span class="token function">defineProps</span><span class="token punctuation">(</span><span class="token punctuation">{</span>
+  <span class="token literal-property property">greetingMessage</span><span class="token operator">:</span> <span class="token known-class-name class-name">String</span>
+<span class="token punctuation">}</span><span class="token punctuation">)</span></code></pre></div><div class="options-api"><pre class="language-js"><code class="language-js"><span class="token keyword module">export</span> <span class="token keyword module">default</span> <span class="token punctuation">{</span>
+  <span class="token literal-property property">props</span><span class="token operator">:</span> <span class="token punctuation">{</span>
+    <span class="token literal-property property">greetingMessage</span><span class="token operator">:</span> <span class="token known-class-name class-name">String</span>
+  <span class="token punctuation">}</span>
+<span class="token punctuation">}</span></code></pre></div><pre class="language-vue-html"><code class="language-vue-html">&#x3C;span>{{ greetingMessage }}&#x3C;/span></code></pre><p>Technically, you can also use camelCase when passing props to a child component (except in <a href="/guide/essentials/component-basics.html#dom-template-parsing-caveats">DOM templates</a>). However, the convention is using kebab-case in all cases to align with HTML attributes:<pre class="language-vue-html"><code class="language-vue-html">&#x3C;MyComponent greeting-message="hello" /></code></pre><p>We use <a href="/guide/components/registration.html#component-name-casing">PascalCase for component tags</a> when possible because it improves template readability by differentiating Vue components from native elements. However, there isn't as much practical benefit in using camelCase when passing props, so we choose to follow each language's conventions.</section><section id="static-vs-dynamic-props"class="level3"><h3>Static vs. Dynamic Props</h3><p>So far, you've seen props passed as static values, like in:<pre class="language-vue-html"><code class="language-vue-html">&#x3C;BlogPost title="My journey with Vue" /></code></pre><p>You've also seen props assigned dynamically with <code>v-bind</code> or its <code>:</code> shortcut, such as in:<pre class="language-vue-html"><code class="language-vue-html">&#x3C;!-- Dynamically assign the value of a variable -->
+&#x3C;BlogPost :title="post.title" />
+
+&#x3C;!-- Dynamically assign the value of a complex expression -->
+&#x3C;BlogPost :title="post.title + ' by ' + post.author.name" /></code></pre></section><section id="passing-different-value-types"class="level3"><h3>Passing Different Value Types</h3><p>In the two examples above, we happen to pass string values, but <em>any</em> type of value can be passed to a prop.<section id="number"class="level4"><h4>Number</h4><pre class="language-vue-html"><code class="language-vue-html">&#x3C;!-- Even though `42` is static, we need v-bind to tell Vue that -->
+&#x3C;!-- this is a JavaScript expression rather than a string.       -->
+&#x3C;BlogPost :likes="42" />
+
+&#x3C;!-- Dynamically assign to the value of a variable. -->
+&#x3C;BlogPost :likes="post.likes" /></code></pre></section><section id="boolean"class="level4"><h4>Boolean</h4><pre class="language-vue-html"><code class="language-vue-html">&#x3C;!-- Including the prop with no value will imply `true`. -->
+&#x3C;BlogPost is-published />
+
+&#x3C;!-- Even though `false` is static, we need v-bind to tell Vue that -->
+&#x3C;!-- this is a JavaScript expression rather than a string.          -->
+&#x3C;BlogPost :is-published="false" />
+
+&#x3C;!-- Dynamically assign to the value of a variable. -->
+&#x3C;BlogPost :is-published="post.isPublished" /></code></pre></section><section id="array"class="level4"><h4>Array</h4><pre class="language-vue-html"><code class="language-vue-html">&#x3C;!-- Even though the array is static, we need v-bind to tell Vue that -->
+&#x3C;!-- this is a JavaScript expression rather than a string.            -->
+&#x3C;BlogPost :comment-ids="[234, 266, 273]" />
+
+&#x3C;!-- Dynamically assign to the value of a variable. -->
+&#x3C;BlogPost :comment-ids="post.commentIds" /></code></pre></section><section id="object"class="level4"><h4>Object</h4><pre class="language-vue-html"><code class="language-vue-html">&#x3C;!-- Even though the object is static, we need v-bind to tell Vue that -->
+&#x3C;!-- this is a JavaScript expression rather than a string.             -->
+&#x3C;BlogPost
+  :author="{
+    name: 'Veronica',
+    company: 'Veridian Dynamics'
+  }"
+ />
+
+&#x3C;!-- Dynamically assign to the value of a variable. -->
+&#x3C;BlogPost :author="post.author" /></code></pre></section></section><section id="binding-multiple-properties-using-an-object"class="level3"><h3>Binding Multiple Properties Using an Object</h3><p>If you want to pass all the properties of an object as props, you can use <a href="/guide/essentials/template-syntax.html#dynamically-binding-multiple-attributes"><code>v-bind</code> without an argument</a> (<code>v-bind</code> instead of <code>:prop-name</code>). For example, given a <code>post</code> object:<div class="options-api"><pre class="language-js"><code class="language-js"><span class="token keyword module">export</span> <span class="token keyword module">default</span> <span class="token punctuation">{</span>
+  <span class="token function">data</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token keyword control-flow">return</span> <span class="token punctuation">{</span>
+      <span class="token literal-property property">post</span><span class="token operator">:</span> <span class="token punctuation">{</span>
+        <span class="token literal-property property">id</span><span class="token operator">:</span> <span class="token number">1</span><span class="token punctuation">,</span>
+        <span class="token literal-property property">title</span><span class="token operator">:</span> <span class="token string">'My Journey with Vue'</span>
+      <span class="token punctuation">}</span>
+    <span class="token punctuation">}</span>
+  <span class="token punctuation">}</span>
+<span class="token punctuation">}</span></code></pre></div><div class="composition-api"><pre class="language-js"><code class="language-js"><span class="token keyword">const</span> post <span class="token operator">=</span> <span class="token punctuation">{</span>
+  <span class="token literal-property property">id</span><span class="token operator">:</span> <span class="token number">1</span><span class="token punctuation">,</span>
+  <span class="token literal-property property">title</span><span class="token operator">:</span> <span class="token string">'My Journey with Vue'</span>
+<span class="token punctuation">}</span></code></pre></div><p>The following template:<pre class="language-vue-html"><code class="language-vue-html">&#x3C;BlogPost v-bind="post" /></code></pre><p>Will be equivalent to:<pre class="language-vue-html"><code class="language-vue-html">&#x3C;BlogPost :id="post.id" :title="post.title" /></code></pre></section></section><section id="one-way-data-flow"class="level2"><h2>One-Way Data Flow</h2><p>All props form a <strong>one-way-down binding</strong> between the child property and the parent one: when the parent property updates, it will flow down to the child, but not the other way around. This prevents child components from accidentally mutating the parent's state, which can make your app's data flow harder to understand.<p>In addition, every time the parent component is updated, all props in the child component will be refreshed with the latest value. This means you should <strong>not</strong> attempt to mutate a prop inside a child component. If you do, Vue will warn you in the console:<div class="composition-api"><pre class="language-js"><code class="language-js"><span class="token keyword">const</span> props <span class="token operator">=</span> <span class="token function">defineProps</span><span class="token punctuation">(</span><span class="token punctuation">[</span><span class="token string">'foo'</span><span class="token punctuation">]</span><span class="token punctuation">)</span>
+
+<span class="token comment">// ❌ warning, props are readonly!</span>
+props<span class="token punctuation">.</span><span class="token property-access">foo</span> <span class="token operator">=</span> <span class="token string">'bar'</span></code></pre></div><div class="options-api"><pre class="language-js"><code class="language-js"><span class="token keyword module">export</span> <span class="token keyword module">default</span> <span class="token punctuation">{</span>
+  <span class="token literal-property property">props</span><span class="token operator">:</span> <span class="token punctuation">[</span><span class="token string">'foo'</span><span class="token punctuation">]</span><span class="token punctuation">,</span>
+  <span class="token function">created</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token comment">// ❌ warning, props are readonly!</span>
+    <span class="token keyword">this</span><span class="token punctuation">.</span><span class="token property-access">foo</span> <span class="token operator">=</span> <span class="token string">'bar'</span>
+  <span class="token punctuation">}</span>
+<span class="token punctuation">}</span></code></pre></div><p>There are usually two cases where it's tempting to mutate a prop:<ol><li><p><strong>The prop is used to pass in an initial value; the child component wants to use it as a local data property afterwards.</strong> In this case, it's best to define a local data property that uses the prop as its initial value:<div class="composition-api"><pre class="language-js"><code class="language-js"><span class="token keyword">const</span> props <span class="token operator">=</span> <span class="token function">defineProps</span><span class="token punctuation">(</span><span class="token punctuation">[</span><span class="token string">'initialCounter'</span><span class="token punctuation">]</span><span class="token punctuation">)</span>
+
+<span class="token comment">// counter only uses props.initialCounter as the initial value;</span>
+<span class="token comment">// it is disconnected from future prop updates.</span>
+<span class="token keyword">const</span> counter <span class="token operator">=</span> <span class="token function">ref</span><span class="token punctuation">(</span>props<span class="token punctuation">.</span><span class="token property-access">initialCounter</span><span class="token punctuation">)</span></code></pre></div><div class="options-api"><pre class="language-js"><code class="language-js"><span class="token keyword module">export</span> <span class="token keyword module">default</span> <span class="token punctuation">{</span>
+  <span class="token literal-property property">props</span><span class="token operator">:</span> <span class="token punctuation">[</span><span class="token string">'initialCounter'</span><span class="token punctuation">]</span><span class="token punctuation">,</span>
+  <span class="token function">data</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token keyword control-flow">return</span> <span class="token punctuation">{</span>
+      <span class="token comment">// counter only uses this.initialCounter as the initial value;</span>
+      <span class="token comment">// it is disconnected from future prop updates.</span>
+      <span class="token literal-property property">counter</span><span class="token operator">:</span> <span class="token keyword">this</span><span class="token punctuation">.</span><span class="token property-access">initialCounter</span>
+    <span class="token punctuation">}</span>
+  <span class="token punctuation">}</span>
+<span class="token punctuation">}</span></code></pre></div><li><p><strong>The prop is passed in as a raw value that needs to be transformed.</strong> In this case, it's best to define a computed property using the prop's value:<div class="composition-api"><pre class="language-js"><code class="language-js"><span class="token keyword">const</span> props <span class="token operator">=</span> <span class="token function">defineProps</span><span class="token punctuation">(</span><span class="token punctuation">[</span><span class="token string">'size'</span><span class="token punctuation">]</span><span class="token punctuation">)</span>
+
+<span class="token comment">// computed property that auto-updates when the prop changes</span>
+<span class="token keyword">const</span> normalizedSize <span class="token operator">=</span> <span class="token function">computed</span><span class="token punctuation">(</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token arrow operator">=></span> props<span class="token punctuation">.</span><span class="token property-access">size</span><span class="token punctuation">.</span><span class="token method function property-access">trim</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token method function property-access">toLowerCase</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span></code></pre></div><div class="options-api"><pre class="language-js"><code class="language-js"><span class="token keyword module">export</span> <span class="token keyword module">default</span> <span class="token punctuation">{</span>
+  <span class="token literal-property property">props</span><span class="token operator">:</span> <span class="token punctuation">[</span><span class="token string">'size'</span><span class="token punctuation">]</span><span class="token punctuation">,</span>
+  <span class="token literal-property property">computed</span><span class="token operator">:</span> <span class="token punctuation">{</span>
+    <span class="token comment">// computed property that auto-updates when the prop changes</span>
+    <span class="token function">normalizedSize</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+      <span class="token keyword control-flow">return</span> <span class="token keyword">this</span><span class="token punctuation">.</span><span class="token property-access">size</span><span class="token punctuation">.</span><span class="token method function property-access">trim</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token method function property-access">toLowerCase</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+    <span class="token punctuation">}</span>
+  <span class="token punctuation">}</span>
+<span class="token punctuation">}</span></code></pre></div></ol><section id="mutating-object-array-props"class="level3"><h3>Mutating Object / Array Props</h3><p>When objects and arrays are passed as props, while the child component cannot mutate the prop binding, it <strong>will</strong> be able to mutate the object or array's nested properties. This is because in JavaScript objects and arrays are passed by reference, and it is unreasonably expensive for Vue to prevent such mutations.<p>The main drawback of such mutations is that it allows the child component to affect parent state in a way that isn't obvious to the parent component, potentially making it more difficult to reason about the data flow in the future. As a best practice, you should avoid such mutations unless the parent and child are tightly coupled by design. In most cases, the child should <a href="/guide/components/events.html">emit an event</a> to let the parent perform the mutation.</section></section><section id="prop-validation"class="level2"><h2>Prop Validation</h2><p>Components can specify requirements for their props, such as the types you've already seen. If a requirement is not met, Vue will warn you in the browser's JavaScript console. This is especially useful when developing a component that is intended to be used by others.<p>To specify prop validations, you can provide an object with validation requirements to the <span class="composition-api"><code>defineProps()</code> macro</span><span class="options-api"><code>props</code> option</span>, instead of an array of strings. For example:<div class="composition-api"><pre class="language-js"><code class="language-js"><span class="token function">defineProps</span><span class="token punctuation">(</span><span class="token punctuation">{</span>
+  <span class="token comment">// Basic type check</span>
+  <span class="token comment">//  (`null` and `undefined` values will allow any type)</span>
+  <span class="token literal-property property">propA</span><span class="token operator">:</span> <span class="token known-class-name class-name">Number</span><span class="token punctuation">,</span>
+  <span class="token comment">// Multiple possible types</span>
+  <span class="token literal-property property">propB</span><span class="token operator">:</span> <span class="token punctuation">[</span><span class="token known-class-name class-name">String</span><span class="token punctuation">,</span> <span class="token known-class-name class-name">Number</span><span class="token punctuation">]</span><span class="token punctuation">,</span>
+  <span class="token comment">// Required string</span>
+  <span class="token literal-property property">propC</span><span class="token operator">:</span> <span class="token punctuation">{</span>
+    <span class="token literal-property property">type</span><span class="token operator">:</span> <span class="token known-class-name class-name">String</span><span class="token punctuation">,</span>
+    <span class="token literal-property property">required</span><span class="token operator">:</span> <span class="token boolean">true</span>
+  <span class="token punctuation">}</span><span class="token punctuation">,</span>
+  <span class="token comment">// Number with a default value</span>
+  <span class="token literal-property property">propD</span><span class="token operator">:</span> <span class="token punctuation">{</span>
+    <span class="token literal-property property">type</span><span class="token operator">:</span> <span class="token known-class-name class-name">Number</span><span class="token punctuation">,</span>
+    <span class="token keyword module">default</span><span class="token operator">:</span> <span class="token number">100</span>
+  <span class="token punctuation">}</span><span class="token punctuation">,</span>
+  <span class="token comment">// Object with a default value</span>
+  <span class="token literal-property property">propE</span><span class="token operator">:</span> <span class="token punctuation">{</span>
+    <span class="token literal-property property">type</span><span class="token operator">:</span> <span class="token known-class-name class-name">Object</span><span class="token punctuation">,</span>
+    <span class="token comment">// Object or array defaults must be returned from</span>
+    <span class="token comment">// a factory function. The function receives the raw</span>
+    <span class="token comment">// props received by the component as the argument.</span>
+    <span class="token keyword module">default</span><span class="token punctuation">(</span>rawProps<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+      <span class="token keyword control-flow">return</span> <span class="token punctuation">{</span> <span class="token literal-property property">message</span><span class="token operator">:</span> <span class="token string">'hello'</span> <span class="token punctuation">}</span>
+    <span class="token punctuation">}</span>
+  <span class="token punctuation">}</span><span class="token punctuation">,</span>
+  <span class="token comment">// Custom validator function</span>
+  <span class="token literal-property property">propF</span><span class="token operator">:</span> <span class="token punctuation">{</span>
+    <span class="token function">validator</span><span class="token punctuation">(</span><span class="token parameter">value</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+      <span class="token comment">// The value must match one of these strings</span>
+      <span class="token keyword control-flow">return</span> <span class="token punctuation">[</span><span class="token string">'success'</span><span class="token punctuation">,</span> <span class="token string">'warning'</span><span class="token punctuation">,</span> <span class="token string">'danger'</span><span class="token punctuation">]</span><span class="token punctuation">.</span><span class="token method function property-access">includes</span><span class="token punctuation">(</span>value<span class="token punctuation">)</span>
+    <span class="token punctuation">}</span>
+  <span class="token punctuation">}</span><span class="token punctuation">,</span>
+  <span class="token comment">// Function with a default value</span>
+  <span class="token literal-property property">propG</span><span class="token operator">:</span> <span class="token punctuation">{</span>
+    <span class="token literal-property property">type</span><span class="token operator">:</span> <span class="token known-class-name class-name">Function</span><span class="token punctuation">,</span>
+    <span class="token comment">// Unlike object or array default, this is not a factory function - this is a function to serve as a default value</span>
+    <span class="token keyword module">default</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+      <span class="token keyword control-flow">return</span> <span class="token string">'Default function'</span>
+    <span class="token punctuation">}</span>
+  <span class="token punctuation">}</span>
+<span class="token punctuation">}</span><span class="token punctuation">)</span></code></pre><p>:::tip Code inside the <code>defineProps()</code> argument <strong>cannot access other variables declared in <code>&#x3C;script setup></code></strong>, because the entire expression is moved to an outer function scope when compiled. :::</div><div class="options-api"><pre class="language-js"><code class="language-js"><span class="token keyword module">export</span> <span class="token keyword module">default</span> <span class="token punctuation">{</span>
+  <span class="token literal-property property">props</span><span class="token operator">:</span> <span class="token punctuation">{</span>
+    <span class="token comment">// Basic type check</span>
+    <span class="token comment">//  (`null` and `undefined` values will allow any type)</span>
+    <span class="token literal-property property">propA</span><span class="token operator">:</span> <span class="token known-class-name class-name">Number</span><span class="token punctuation">,</span>
+    <span class="token comment">// Multiple possible types</span>
+    <span class="token literal-property property">propB</span><span class="token operator">:</span> <span class="token punctuation">[</span><span class="token known-class-name class-name">String</span><span class="token punctuation">,</span> <span class="token known-class-name class-name">Number</span><span class="token punctuation">]</span><span class="token punctuation">,</span>
+    <span class="token comment">// Required string</span>
+    <span class="token literal-property property">propC</span><span class="token operator">:</span> <span class="token punctuation">{</span>
+      <span class="token literal-property property">type</span><span class="token operator">:</span> <span class="token known-class-name class-name">String</span><span class="token punctuation">,</span>
+      <span class="token literal-property property">required</span><span class="token operator">:</span> <span class="token boolean">true</span>
+    <span class="token punctuation">}</span><span class="token punctuation">,</span>
+    <span class="token comment">// Number with a default value</span>
+    <span class="token literal-property property">propD</span><span class="token operator">:</span> <span class="token punctuation">{</span>
+      <span class="token literal-property property">type</span><span class="token operator">:</span> <span class="token known-class-name class-name">Number</span><span class="token punctuation">,</span>
+      <span class="token keyword module">default</span><span class="token operator">:</span> <span class="token number">100</span>
+    <span class="token punctuation">}</span><span class="token punctuation">,</span>
+    <span class="token comment">// Object with a default value</span>
+    <span class="token literal-property property">propE</span><span class="token operator">:</span> <span class="token punctuation">{</span>
+      <span class="token literal-property property">type</span><span class="token operator">:</span> <span class="token known-class-name class-name">Object</span><span class="token punctuation">,</span>
+      <span class="token comment">// Object or array defaults must be returned from</span>
+      <span class="token comment">// a factory function. The function receives the raw</span>
+      <span class="token comment">// props received by the component as the argument.</span>
+      <span class="token keyword module">default</span><span class="token punctuation">(</span>rawProps<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token keyword control-flow">return</span> <span class="token punctuation">{</span> <span class="token literal-property property">message</span><span class="token operator">:</span> <span class="token string">'hello'</span> <span class="token punctuation">}</span>
+      <span class="token punctuation">}</span>
+    <span class="token punctuation">}</span><span class="token punctuation">,</span>
+    <span class="token comment">// Custom validator function</span>
+    <span class="token literal-property property">propF</span><span class="token operator">:</span> <span class="token punctuation">{</span>
+      <span class="token function">validator</span><span class="token punctuation">(</span><span class="token parameter">value</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token comment">// The value must match one of these strings</span>
+        <span class="token keyword control-flow">return</span> <span class="token punctuation">[</span><span class="token string">'success'</span><span class="token punctuation">,</span> <span class="token string">'warning'</span><span class="token punctuation">,</span> <span class="token string">'danger'</span><span class="token punctuation">]</span><span class="token punctuation">.</span><span class="token method function property-access">includes</span><span class="token punctuation">(</span>value<span class="token punctuation">)</span>
+      <span class="token punctuation">}</span>
+    <span class="token punctuation">}</span><span class="token punctuation">,</span>
+    <span class="token comment">// Function with a default value</span>
+    <span class="token literal-property property">propG</span><span class="token operator">:</span> <span class="token punctuation">{</span>
+      <span class="token literal-property property">type</span><span class="token operator">:</span> <span class="token known-class-name class-name">Function</span><span class="token punctuation">,</span>
+      <span class="token comment">// Unlike object or array default, this is not a factory function - this is a function to serve as a default value</span>
+      <span class="token keyword module">default</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token keyword control-flow">return</span> <span class="token string">'Default function'</span>
+      <span class="token punctuation">}</span>
+    <span class="token punctuation">}</span>
+  <span class="token punctuation">}</span>
+<span class="token punctuation">}</span></code></pre></div><p>Additional details:<ul><li><p>All props are optional by default, unless <code>required: true</code> is specified.<li><p>An absent optional prop other than <code>Boolean</code> will have <code>undefined</code> value.<li><p>The <code>Boolean</code> absent props will be cast to <code>false</code>. You can change this by setting a <code>default</code> for it — i.e.: <code>default: undefined</code> to behave as a non-Boolean prop.<li><p>If a <code>default</code> value is specified, it will be used if the resolved prop value is <code>undefined</code> - this includes both when the prop is absent, or an explicit <code>undefined</code> value is passed.</ul><p>When prop validation fails, Vue will produce a console warning (if using the development build).<div class="composition-api"><p>If using <a href="/api/sfc-script-setup.html#typescript-only-features">Type-based props declarations</a> <sup class="vt-badge ts">, Vue will try its best to compile the type annotations into equivalent runtime prop declarations. For example, <code>defineProps&#x3C;{ msg: string }></code> will be compiled into <code>{ msg: { type: String, required: true }}</code>.</sup></div><div class="options-api"><p>::: tip Note Note that props are validated <strong>before</strong> a component instance is created, so instance properties (e.g. <code>data</code>, <code>computed</code>, etc.) will not be available inside <code>default</code> or <code>validator</code> functions. :::</div><section id="runtime-type-checks"class="level3"><h3>Runtime Type Checks</h3><p>The <code>type</code> can be one of the following native constructors:<ul><li><code>String</code><li><code>Number</code><li><code>Boolean</code><li><code>Array</code><li><code>Object</code><li><code>Date</code><li><code>Function</code><li><code>Symbol</code></ul><p>In addition, <code>type</code> can also be a custom class or constructor function and the assertion will be made with an <code>instanceof</code> check. For example, given the following class:<pre class="language-js"><code class="language-js"><span class="token keyword">class</span> <span class="token class-name">Person</span> <span class="token punctuation">{</span>
+  <span class="token function">constructor</span><span class="token punctuation">(</span><span class="token parameter">firstName<span class="token punctuation">,</span> lastName</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token keyword">this</span><span class="token punctuation">.</span><span class="token property-access">firstName</span> <span class="token operator">=</span> firstName
+    <span class="token keyword">this</span><span class="token punctuation">.</span><span class="token property-access">lastName</span> <span class="token operator">=</span> lastName
+  <span class="token punctuation">}</span>
+<span class="token punctuation">}</span></code></pre><p>You could use it as a prop's type:<div class="composition-api"><pre class="language-js"><code class="language-js"><span class="token function">defineProps</span><span class="token punctuation">(</span><span class="token punctuation">{</span>
+  <span class="token literal-property property">author</span><span class="token operator">:</span> <span class="token maybe-class-name">Person</span>
+<span class="token punctuation">}</span><span class="token punctuation">)</span></code></pre></div><div class="options-api"><pre class="language-js"><code class="language-js"><span class="token keyword module">export</span> <span class="token keyword module">default</span> <span class="token punctuation">{</span>
+  <span class="token literal-property property">props</span><span class="token operator">:</span> <span class="token punctuation">{</span>
+    <span class="token literal-property property">author</span><span class="token operator">:</span> <span class="token maybe-class-name">Person</span>
+  <span class="token punctuation">}</span>
+<span class="token punctuation">}</span></code></pre></div><p>Vue will use <code>instanceof Person</code> to validate whether the value of the <code>author</code> prop is indeed an instance of the <code>Person</code> class.</section></section><section id="boolean-casting"class="level2"><h2>Boolean Casting</h2><p>Props with <code>Boolean</code> type has special casting rules to mimic the behavior of native boolean attributes. Given a <code>&#x3C;MyComponent></code> with the following declaration:<div class="composition-api"><pre class="language-js"><code class="language-js"><span class="token function">defineProps</span><span class="token punctuation">(</span><span class="token punctuation">{</span>
+  <span class="token literal-property property">disabled</span><span class="token operator">:</span> <span class="token known-class-name class-name">Boolean</span>
+<span class="token punctuation">}</span><span class="token punctuation">)</span></code></pre></div><div class="options-api"><pre class="language-js"><code class="language-js"><span class="token keyword module">export</span> <span class="token keyword module">default</span> <span class="token punctuation">{</span>
+  <span class="token literal-property property">props</span><span class="token operator">:</span> <span class="token punctuation">{</span>
+    <span class="token literal-property property">disabled</span><span class="token operator">:</span> <span class="token known-class-name class-name">Boolean</span>
+  <span class="token punctuation">}</span>
+<span class="token punctuation">}</span></code></pre></div><p>The component can be used like this:<pre class="language-vue-html"><code class="language-vue-html">&#x3C;!-- equivalent of passing :disabled="true" -->
+&#x3C;MyComponent disabled />
+
+&#x3C;!-- equivalent of passing :disabled="false" -->
+&#x3C;MyComponent /></code></pre><p>When a prop is declared to allow multiple types, e.g.<div class="composition-api"><pre class="language-js"><code class="language-js"><span class="token function">defineProps</span><span class="token punctuation">(</span><span class="token punctuation">{</span>
+  <span class="token literal-property property">disabled</span><span class="token operator">:</span> <span class="token punctuation">[</span><span class="token known-class-name class-name">Boolean</span><span class="token punctuation">,</span> <span class="token known-class-name class-name">Number</span><span class="token punctuation">]</span>
+<span class="token punctuation">}</span><span class="token punctuation">)</span></code></pre></div><div class="options-api"><pre class="language-js"><code class="language-js"><span class="token keyword module">export</span> <span class="token keyword module">default</span> <span class="token punctuation">{</span>
+  <span class="token literal-property property">props</span><span class="token operator">:</span> <span class="token punctuation">{</span>
+    <span class="token literal-property property">disabled</span><span class="token operator">:</span> <span class="token punctuation">[</span><span class="token known-class-name class-name">Boolean</span><span class="token punctuation">,</span> <span class="token known-class-name class-name">Number</span><span class="token punctuation">]</span>
+  <span class="token punctuation">}</span>
+<span class="token punctuation">}</span></code></pre></div><p>The casting rules for <code>Boolean</code> will apply regardless of type appearance order. <span style="float:footnote"><a href="../index.html#toc">Go to TOC</a></span></section></section>

@@ -1,0 +1,171 @@
+<!doctype html><html lang="de"><meta charset="utf-8"><title>Migration auf Express 4</title><meta name="viewport"content="width=device-width,initial-scale=1"><meta name="layout"content="page"><meta name="menu"content="guide"><link rel="stylesheet"href="../../../../../../../../../docs/themes/packages/prism-coy-theme/theme_common.css"><section id="wechsel-zu-express-4"class="level1"><h1>Wechsel zu Express 4</h1><h2 id="overview">Überblick</h2><p>Express 4 bietet grundlegende Veränderungen im Vergleich zu Express 3. Das bedeutet, dass eine Express 3-Anwendung nicht funktioniert, wenn Sie die Express-Version in ihren Abhängigkeiten aktualisieren.<p>In diesem Beitrag werden folgende Themen behandelt:<ul class="doclist"><li><a href="#changes">Änderungen in Express 4</a><li><a href="#example-migration">Beispiel</a> für die Migration einer Express 3-Anwendung auf Express 4<li><a href="#app-gen">Upgrade auf den Express 4 App Generator</a></ul><h2 id="changes">Änderungen in Express 4</h2><p>In Express 4 wurden einige signifikante Änderungen vorgenommen:<ul class="doclist"><li><a href="#core-changes">Änderungen am Express-Core- und Middlewaresystem.</a> Die Abhängigkeiten bei Connect und der integrierten Middleware wurden entfernt. Sie müssen also Middleware selbst hinzufügen.<li><a href="#routing">Änderungen am Weiterleitungssystem (Routingsystem).</a><li><a href="#other-changes">Weitere Änderungen.</a></ul><p>Siehe hierzu auch:<ul><li><a href="https://github.com/expressjs/express/wiki/New-features-in-4.x">Neue Features/Funktionen in 4.x.</a><li><a href="https://github.com/expressjs/express/wiki/Migrating-from-3.x-to-4.x">Migration von 3.x auf 4.x.</a></ul><h3 id="core-changes">Änderungen am Express-Core- und Middlewaresystem</h3><p>In Express 4 bestehen keine Abhängigkeiten mehr zu Connect. Alle integrierten Middlewarefunktionen werden aus dem Core entfernt. Ausgenommen hiervon ist die Funktion <code>express.static</code>. Das bedeutet, dass Express nun ein unabhängiges Routing- und Middleware-Web-Framework ist und Express-Versionierung und -Releases von Middleware-Updates nicht betroffen sind.<p>Ohne integrierte Middleware müssen Sie explizit alle Middlewarefunktionen hinzufügen, die für die Ausführung Ihrer Anwendung erforderlich sind. Befolgen Sie einfach diese Schritte:<ol><li>Installieren des Moduls: <code>npm install --save &#x3C;modulname></code><li>Anfordern des Moduls in Ihrer Anwendung: <code>require('modulname')</code><li>Verwendung des Moduls gemäß Dokumentation: <code>app.use( ... )</code></ol><p>In der folgenden Tabelle sind Express 3-Middlewarefunktionen und deren Entsprechungen in Express 4 aufgelistet.<table class="doctable"border="1"><tr><th>Express 3<th>Express 4<tr><td><code>express.bodyParser</code><td><a href="https://github.com/expressjs/body-parser">body-parser</a> + <a href="https://github.com/expressjs/multer">multer</a><tr><td><code>express.compress</code><td><a href="https://github.com/expressjs/compression">compression</a><tr><td><code>express.cookieSession</code><td><a href="https://github.com/expressjs/cookie-session">cookie-session</a><tr><td><code>express.cookieParser</code><td><a href="https://github.com/expressjs/cookie-parser">cookie-parser</a><tr><td><code>express.logger</code><td><a href="https://github.com/expressjs/morgan">morgan</a><tr><td><code>express.session</code><td><a href="https://github.com/expressjs/session">express-session</a><tr><td><code>express.favicon</code><td><a href="https://github.com/expressjs/serve-favicon">serve-favicon</a><tr><td><code>express.responseTime</code><td><a href="https://github.com/expressjs/response-time">response-time</a><tr><td><code>express.errorHandler</code><td><a href="https://github.com/expressjs/errorhandler">errorhandler</a><tr><td><code>express.methodOverride</code><td><a href="https://github.com/expressjs/method-override">method-override</a><tr><td><code>express.timeout</code><td><a href="https://github.com/expressjs/timeout">connect-timeout</a><tr><td><code>express.vhost</code><td><a href="https://github.com/expressjs/vhost">vhost</a><tr><td><code>express.csrf</code><td><a href="https://github.com/expressjs/csurf">csurf</a><tr><td><code>express.directory</code><td><a href="https://github.com/expressjs/serve-index">serve-index</a><tr><td><code>express.static</code><td><a href="https://github.com/expressjs/serve-static">serve-static</a></table><p>Hier finden Sie die <a href="https://github.com/senchalabs/connect#middleware">komplette Liste</a> der Express 4-Middleware.<p>In den meisten Fällen können Sie einfach nur die Middleware der alten Version 3 durch deren Entsprechung in Express 4 ersetzen. Details hierzu finden Sie in der modulspezifischen Dokumentation in GitHub.<h4 id="app-use"><code>app.use</code> akzeptiert Parameter.</h4><p>In Version 4 können Sie über einen Variablenparameter den Pfad definieren, in den Middlewarefunktionen geladen werden. Dann können Sie den Wert des Parameters aus dem Routenhandler laden. Beispiel:<pre><code class="language-javascript"translate="no">
+app.use('/book/:id', function(req, res, next) {
+  console.log('ID:', req.params.id);
+  next();
+});
+</code>
+</pre><h3 id="routing">Das Routingsystem</h3><p>Anwendungen laden nun implizit Routing-Middleware. Sie müssen sich also keine Gedanken mehr über die Reihenfolge machen, in der die Middleware in Bezug auf die <code>router</code>-Middleware geladen wird.<p>Die Art und Weise, wie Weiterleitungen (Routen) definiert werden, bleibt unverändert. Das Routingsystem verfügt jedoch über zwei neue Funktionen, die beim Organisieren Ihrer Weiterleitungen helfen:<p>{: .doclist }<ul><li>Die neue Methode <code>app.route()</code> zum Erstellen verkettbarer Routenhandler für einen Weiterleitungspfad<li>Die neue Klasse <code>express.Router</code> zum Erstellen modular einbindbarer Routenhandler</ul><h4 id="app-route">Die Methode <code>app.route()</code></h4><p>Die neue Methode <code>app.route()</code> hilft beim Erstellen verkettbarer Routenhandler für einen Weiterleitungspfad. Da der Pfad an einer einzelnen Position angegeben wird, ist das Erstellen modularer Weiterleitungen hilfreich, da Redundanzen und Schreibfehler reduziert werden. Weitere Informationen zu Weiterleitungen finden Sie in der Dokumentation zu <a href="../4x/api.html#router"><code>Router()</code></a>.<p>Dies ist ein Beispiel für verkettete Routenhandler, die mit der Funktion <code>app.route()</code> definiert werden.<pre><code class="language-javascript"translate="no">
+app.route('/book')
+  .get(function(req, res) {
+    res.send('Get a random book');
+  })
+  .post(function(req, res) {
+    res.send('Add a book');
+  })
+  .put(function(req, res) {
+    res.send('Update the book');
+  });
+</code>
+</pre><h4 id="express-router">Die Klasse <code>express.Router</code></h4><p>Eine weitere Funktion, die beim Organisieren von Weiterleitungen hilft, ist die neue Klasse <code>express.Router</code>. Über diese Klasse können Sie modular einbindbare Routenhandler erstellen. Eine <code>Router</code>-Instanz ist ein vollständiges Middleware- und Routingsystem. Aus diesem Grund wird diese Instanz oft auch als "Mini-App" bezeichnet.<p>Im folgenden Beispiel wird ein Router als Modul erstellt, Middleware in das Modul geladen, es werden Weiterleitungen definiert und das Modul letztendlich in einen Pfad in der Hauptanwendung eingebunden.<p>Beispiel: Erstellen Sie eine Routerdatei namens <code>birds.js</code> mit dem folgenden Inhalt im Anwendungsverzeichnis:<pre><code class="language-javascript"translate="no">
+var express = require('express');
+var router = express.Router();
+
+// middleware specific to this router
+router.use(function timeLog(req, res, next) {
+  console.log('Time: ', Date.now());
+  next();
+});
+// define the home page route
+router.get('/', function(req, res) {
+  res.send('Birds home page');
+});
+// define the about route
+router.get('/about', function(req, res) {
+  res.send('About birds');
+});
+
+module.exports = router;
+</code>
+</pre><p>Laden Sie dann das Routermodul in die Anwendung:<pre><code class="language-javascript"translate="no">
+var birds = require('./birds');
+...
+app.use('/birds', birds);
+</code>
+</pre><p>Die Anwendung kann nun Anforderungen an die Pfade <code>/birds</code> und <code>/birds/about</code> bearbeiten und ruft die Middleware <code>timeLog</code> auf, die speziell für diese Weiterleitung bestimmt ist.<h3 id="other-changes">Weitere Änderungen</h3><p>In der folgenden Tabelle sind andere kleinere, aber trotzdem wichtige Änderungen in Express 4 aufgeführt:<table class="doctable"border="1"><tr><th>Objekt<th>Beschreibung<tr><td>Node.js<td>Express 4 erfordert Node.js 0.10.x oder höher und unterstützt nicht mehr Node.js 0.8.x.<tr><td markdown="1">`http.createServer()`<td markdown="1">Das Modul `http` wird nicht mehr benötigt, es sei denn, Sie müssen direkt mit dem Modul arbeiten (socket.io/SPDY/HTTPS). Die Anwendung kann mithilfe der Funktion `app.listen()` gestartet werden.<tr><td markdown="1">`app.configure()`<td markdown="1">Die Funktion `app.configure()` wurde entfernt. Verwenden Sie die Funktion `process.env.NODE_ENV` oder `app.get('env')`, um die Umgebung zu erkennen und die Anwendung entsprechend zu konfigurieren.<tr><td markdown="1">`json spaces`<td markdown="1">Die Anwendungseigenschaft `json spaces` ist in Express 4 standardmäßig inaktiviert.<tr><td markdown="1">`req.accepted()`<td markdown="1">Verwenden Sie `req.accepts()`, `req.acceptsEncodings()`, `req.acceptsCharsets()` und `req.acceptsLanguages()`.<tr><td markdown="1">`res.location()`<td markdown="1">Löst keine relativen URLs mehr auf.<tr><td markdown="1">`req.params`<td markdown="1">War bisher ein Array, ist nun ein Objekt.<tr><td markdown="1">`res.locals`<td markdown="1">War bisher eine Funktion, ist nun ein Objekt.<tr><td markdown="1">`res.headerSent`<td markdown="1">Geändert in `res.headersSent`.<tr><td markdown="1">`app.route`<td markdown="1">Nun verfügbar als `app.mountpath`.<tr><td markdown="1">`res.on('header')`<td markdown="1">Entfernt.<tr><td markdown="1">`res.charset`<td markdown="1">Entfernt.<tr><td markdown="1">`res.setHeader('Set-Cookie', val)`<td markdown="1">Die Funktionalität ist nun auf die Einstellung des Basis-Cookiewerts begrenzt. Verwenden Sie `res.cookie()`, um weitere Funktionalität zu erhalten.</table><h2 id="example-migration">Beispiel für eine Anwendungsmigration</h2><p>Dies ist ein Beispiel für die Migration einer Express 3-Anwendung auf Express 4. Die dabei interessanten Dateien sind <code>app.js</code> und <code>package.json</code>.<h3 id="">Anwendung der Version 3</h3><h4 id=""><code>app.js</code></h4><p>Es wird eine Express v.3-Anwendung mit der folgenden Datei <code>app.js</code> angenommen:<pre><code class="language-javascript"translate="no">
+var express = require('express');
+var routes = require('./routes');
+var user = require('./routes/user');
+var http = require('http');
+var path = require('path');
+
+var app = express();
+
+// all environments
+app.set('port', process.env.PORT || 3000);
+app.set('views', path.join(__dirname, 'views'));
+app.set('view engine', 'pug');
+app.use(express.favicon());
+app.use(express.logger('dev'));
+app.use(express.methodOverride());
+app.use(express.session({ secret: 'your secret here' }));
+app.use(express.bodyParser());
+app.use(app.router);
+app.use(express.static(path.join(__dirname, 'public')));
+
+// development only
+if ('development' == app.get('env')) {
+  app.use(express.errorHandler());
+}
+
+app.get('/', routes.index);
+app.get('/users', user.list);
+
+http.createServer(app).listen(app.get('port'), function(){
+  console.log('Express server listening on port ' + app.get('port'));
+});
+</code>
+</pre><h4 id=""><code>package.json</code></h4><p>Die zugehörige <code>package.json</code>-Datei der Version 3 sieht in etwa wie folgt aus:<pre><code class="language-javascript"translate="no">
+{
+  "name": "application-name",
+  "version": "0.0.1",
+  "private": true,
+  "scripts": {
+    "start": "node app.js"
+  },
+  "dependencies": {
+    "express": "3.12.0",
+    "pug": "*"
+  }
+}
+</code>
+</pre><h3 id="">Prozess</h3><p>Beginnen Sie den Migrationsprozess mit der Installation der erforderlichen Middleware für die Express 4-Anwendung und der Aktualisierung von Express und Pug auf die aktuellen Versionen. Verwenden Sie hierzu den folgenden Befehl:<pre class="language-console"><code class="language-console">$ npm install serve-favicon morgan method-override express-session body-parser multer errorhandler express@latest pug@latest --save</code></pre><p>Nehmen Sie an <code>app.js</code> die folgenden Änderungen vor:<ol><li><p>Die integrierten Express-Middlewarefunktionen <code>express.favicon</code>, <code>express.logger</code>, <code>express.methodOverride</code>, <code>express.session</code>, <code>express.bodyParser</code> und <code>express.errorHandler</code> sind im Objekt <code>express</code> nicht mehr verfügbar. Sie müssen deren Alternativen manuell installieren und in die Anwendung laden.<li><p>Sie müssen die Funktion <code>app.router</code> nicht mehr laden. Sie ist kein gültiges Express 4-Anwendungsobjekt. Entfernen Sie also den Code <code>app.use(app.router);</code>.<li><p>Stellen Sie sicher, dass die Middlewarefunktionen in der richtigen Reihenfolge geladen werden – laden Sie <code>errorHandler</code> nach dem Laden der Anwendungsweiterleitungen.</ol><h3 id="">Anwendung der Version 4</h3><h4 id=""><code>package.json</code></h4><p>Durch Ausführung des Befehls <code>npm</code> wird <code>package.json</code> wie folgt aktualisiert:<pre><code class="language-javascript"translate="no">
+{
+  "name": "application-name",
+  "version": "0.0.1",
+  "private": true,
+  "scripts": {
+    "start": "node app.js"
+  },
+  "dependencies": {
+    "body-parser": "^1.5.2",
+    "errorhandler": "^1.1.1",
+    "express": "^4.8.0",
+    "express-session": "^1.7.2",
+    "pug": "^2.0.0-beta6",
+    "method-override": "^2.1.2",
+    "morgan": "^1.2.2",
+    "multer": "^0.1.3",
+    "serve-favicon": "^2.0.1"
+  }
+}
+</code>
+</pre><h4 id=""><code>app.js</code></h4><p>Entfernen Sie dann ungültigen Code, laden Sie die erforderliche Middleware und nehmen Sie andere Änderungen nach Bedarf vor. Die Datei <code>app.js</code> sieht dann wie folgt aus:<pre><code class="language-javascript"translate="no">
+var http = require('http');
+var express = require('express');
+var routes = require('./routes');
+var user = require('./routes/user');
+var path = require('path');
+
+var favicon = require('serve-favicon');
+var logger = require('morgan');
+var methodOverride = require('method-override');
+var session = require('express-session');
+var bodyParser = require('body-parser');
+var multer = require('multer');
+var errorHandler = require('errorhandler');
+
+var app = express();
+
+// all environments
+app.set('port', process.env.PORT || 3000);
+app.set('views', path.join(__dirname, 'views'));
+app.set('view engine', 'pug');
+app.use(favicon(__dirname + '/public/favicon.ico'));
+app.use(logger('dev'));
+app.use(methodOverride());
+app.use(session({ resave: true,
+                  saveUninitialized: true,
+                  secret: 'uwotm8' }));
+app.use(bodyParser.json());
+app.use(bodyParser.urlencoded({ extended: true }));
+app.use(multer());
+app.use(express.static(path.join(__dirname, 'public')));
+
+app.get('/', routes.index);
+app.get('/users', user.list);
+
+// error handling middleware should be loaded after the loading the routes
+if ('development' == app.get('env')) {
+  app.use(errorHandler());
+}
+
+var server = http.createServer(app);
+server.listen(app.get('port'), function(){
+  console.log('Express server listening on port ' + app.get('port'));
+});
+</code>
+</pre><div class="doc-box doc-info"markdown="1">Wenn Sie nicht direkt mit dem Modul `http` arbeiten müssen (socket.io/SPDY/HTTPS), ist das Laden des Moduls nicht erforderlich. Die Anwendung kann dann einfach wie folgt gestartet werden:<pre><code class="language-js"translate="no">app.listen(app.get('port'), function(){
+  console.log('Express server listening on port ' + app.get('port'));
+});
+</code>
+</pre></div><h3 id="">Anwendung ausführen</h3><p>Der Migrationsprozess ist abgeschlossen und die Anwendung ist nun eine Express 4-Anwendung. Zum Bestätigen starten Sie die Anwendung mit dem folgenden Befehl:<pre class="language-console"><code class="language-console">$ node .</code></pre><p>Laden Sie <a href="http://localhost:3000">http://localhost:3000</a> und sehen Sie, wie die Homepage von Express 4 wiedergegeben wird.<h2 id="app-gen">Upgrade auf den Express 4 App Generator</h2><p>Das Befehlszeilentool zum Generieren einer Express-Anwendung ist nach wie vor <code>express</code>. Für ein Upgrade auf die neue Version müssen Sie jedoch den Express 3 App Generator deinstallieren und dann den neuen Generator <code>express-generator</code> installieren.<h3 id="">Installation</h3><p>Wenn der Express 3 App Generator bereits auf Ihrem System installiert ist, müssen Sie diesen deinstallieren:<pre class="language-console"><code class="language-console">$ npm uninstall -g express</code></pre><p>Abhängig davon, wie Ihre Datei- und Verzeichnissberechtigungen konfiguriert sind, müssen Sie diesen Befehl möglicherweise mit <code>sudo</code> ausführen. Installieren Sie nun den neuen Generator:<pre class="language-console"><code class="language-console">$ npm install -g express-generator</code></pre><p>Abhängig davon, wie Ihre Datei- und Verzeichnissberechtigungen konfiguriert sind, müssen Sie diesen Befehl möglicherweise mit <code>sudo</code> ausführen.<p>Nun wird der Befehl <code>express</code> auf Ihrem System auf den Express 4 App Generator aktualisiert.<h3 id="">Änderungen am App Generator</h3><p>Befehlsoptionen und -nutzung bleiben größtenteils unverändert. Es gelten jedoch folgende Ausnahmen:<p>{: .doclist }<ul><li>Option <code>--sessions</code> wurde entfernt.<li>Option <code>--jshtml</code> wurde entfernt.<li>Option <code>--hogan</code> wurde hinzugefügt, um <a href="http://twitter.github.io/hogan.js/">Hogan.js</a> zu unterstützen.</ul><h3 id="">Beispiel</h3><p>Führen Sie den folgenden Befehl aus, um eine Express 4-Anwendung zu erstellen:<pre class="language-console"><code class="language-console">$ express app4</code></pre><p>Wenn Sie sich den Inhalt der Datei <code>app4/app.js</code> ansehen, werden Sie feststellen, dass alle Middlewarefunktionen (außer <code>express.static</code>), die für die Anwendung erforderlich sind, als unabhängige Module geladen werden und die Middleware <code>router</code> nicht mehr explizit in die Anwendung geladen wird.<p>Sie werden auch feststellen, dass die Datei <code>app.js</code> nun ein Node.js-Modul ist – im Gegensatz zur eigenständigen Anwendung, die vom bisherigen Generator generiert wurde.<p>Starten Sie nach der Installation der Abhängigkeiten die Anwendung mit dem folgenden Befehl:<pre class="language-console"><code class="language-console">$ npm start</code></pre><p>Wenn Sie sich das npm-Startscript in der Datei <code>package.json</code> näher ansehen, werden Sie feststellen, dass der eigentliche Befehl, der die Anwendung startet, <code>node ./bin/www</code> heißt. Dieser Befehl lautete in Express 3 <code>node app.js</code>.<p>Da die Datei <code>app.js</code>, die vom Express 4 Generator erstellt wurde, nun ein Node.js-Modul ist, kann dieses nicht mehr wie bisher unabhängig als Anwendung gestartet werden (es sei denn, Sie ändern den Code). Das Modul muss in eine Node.js-Datei geladen und über die Node.js-Datei gestartet werden. Die Node.js-Datei ist in diesem Fall <code>./bin/www</code>.<p>Weder das Verzeichnis <code>bin</code> noch die erweiterungslose Datei <code>www</code> ist für das Erstellen einer Express-Anwendung oder das Starten der Anwendung zwingend erforderlich. Dies sind lediglich Vorschläge des Generators. Sie können diese also je nach Ihren Anforderungen ändern.<p>Um das Verzeichnis <code>www</code> zu löschen und alles im "Express 3-Stil" zu belassen, löschen Sie die Zeile mit dem Eintrag <code>module.exports = app;</code> am Ende der Datei <code>app.js</code>. Fügen Sie dann stattdessen den folgenden Code an derselben Position ein:<pre><code class="language-javascript"translate="no">
+app.set('port', process.env.PORT || 3000);
+
+var server = app.listen(app.get('port'), function() {
+  debug('Express server listening on port ' + server.address().port);
+});
+</code>
+</pre><p>Stellen Sie sicher, dass Sie das Modul <code>debug</code> am Anfang der Datei <code>app.js</code> laden. Verwenden Sie dazu den folgenden Code:<pre><code class="language-javascript"translate="no">
+var debug = require('debug')('app4');
+</code>
+</pre><p>Ändern Sie als Nächstes <code>"start": "node ./bin/www"</code> in der Datei <code>package.json</code> in <code>"start": "node app.js"</code>.<p>Sie haben nun die Funktionalität von <code>./bin/www</code> wieder in <code>app.js</code> verschoben. Diese Änderung wird nicht empfohlen. Die Übung hat Ihnen jedoch geholfen, zu verstehen, wie die Datei <code>./bin/www</code> funktioniert und warum die Datei <code>app.js</code> nicht mehr automatisch gestartet wird. <span style="float:footnote"><a href="../index.html#toc">Go to TOC</a></span></section>

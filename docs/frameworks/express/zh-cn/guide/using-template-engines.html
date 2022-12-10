@@ -1,0 +1,16 @@
+<!doctype html><html lang="zh-cn"><meta charset="utf-8"><title>将模板引擎用于 Express</title><meta name="viewport"content="width=device-width,initial-scale=1"><meta name="layout"content="page"><meta name="menu"content="guide"><link rel="stylesheet"href="../../../../../../../../../docs/themes/packages/prism-coy-theme/theme_common.css"><section id="将模板引擎用于-express"class="level1"><h1>将模板引擎用于 Express</h1><p>在 Express 可以呈现模板文件之前，必须设置以下应用程序设置：<ul><li><code>views</code>：模板文件所在目录。例如：<code>app.set('views', './views')</code><li><code>view engine</code>：要使用的模板引擎。例如：<code>app.set('view engine', 'pug')</code></ul><p>然后安装对应的模板引擎 npm 包：<pre class="language-console"><code class="language-console">$ npm install pug --save</code></pre><div class="doc-box doc-notice"markdown="1">与 Express 兼容的模板引擎（例如 Pug）导出名为 `__express(filePath, options, callback)` 的函数，该函数由 `res.render()` 函数调用以呈现模板代码。 某些模板引擎并不遵循此约定。[Consolidate.js](https://www.npmjs.org/package/consolidate) 库通过映射所有流行的 Node.js 模板引擎来遵循此约定，因此可以在 Express 内无缝工作。</div><p>在设置视图引擎之后，不必指定该引擎或者在应用程序中装入模板引擎模块；Express 在内部装入此模块，如下所示（针对以上示例）。<pre><code class="language-javascript"translate="no">
+app.set('view engine', 'pug');
+</code>
+</pre><p>在 <code>views</code> 目录中创建名为 <code>index.pug</code> 的 Pug 模板文件，其中包含以下内容：<pre><code class="language-javascript"translate="no">
+html
+  head
+    title= title
+  body
+    h1= message
+</code>
+</pre><p>随后创建路由以呈现 <code>index.pug</code> 文件。如果未设置 <code>view engine</code> 属性，必须指定 <code>view</code> 文件的扩展名。否则，可以将其忽略。<pre><code class="language-javascript"translate="no">
+app.get('/', function (req, res) {
+  res.render('index', { title: 'Hey', message: 'Hello there!'});
+});
+</code>
+</pre><p>向主页发出请求时，<code>index.pug</code> 文件将呈现为 HTML。<p>要了解有关模板引擎在 Express 中如何工作的更多信息，请参阅：<a href="../advanced/developing-template-engines.html">“为 Express 开发模板引擎”</a>。 <span style="float:footnote"><a href="../index.html#toc">Go to TOC</a></span></section>

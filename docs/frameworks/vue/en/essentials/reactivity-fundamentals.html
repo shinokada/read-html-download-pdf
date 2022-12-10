@@ -1,0 +1,261 @@
+<!doctype html><html lang="en"><meta charset="utf-8"><title>Reactivity Fundamentals</title><meta name="viewport"content="width=device-width,initial-scale=1"><meta name="outline"content="deep"><link rel="stylesheet"href="../../../../../../../../docs/themes/packages/prism-coy-theme/theme_common.css"><section id="reactivity-fundamentals"class="level1"><h1>Reactivity Fundamentals</h1><p>:::tip API Preference This page and many other chapters later in the guide contain different content for Options API and Composition API. Your current preference is <span class="options-api">Options API</span><span class="composition-api">Composition API</span>. You can toggle between the API styles using the "API Preference" switches at the top of the left sidebar. :::<section id="declaring-reactive-state"class="level2"><h2>Declaring Reactive State</h2><div class="options-api"><p>With Options API, we use the <code>data</code> option to declare reactive state of a component. The option value should be a function that returns an object. Vue will call the function when creating a new component instance, and wrap the returned object in its reactivity system. Any top-level properties of this object are proxied on the component instance (<code>this</code> in methods and lifecycle hooks):<pre class="language-js{2-6}"><code class="language-js{2-6}">export default {
+  data() {
+    return {
+      count: 1
+    }
+  },
+
+  // `mounted` is a lifecycle hook which we will explain later
+  mounted() {
+    // `this` refers to the component instance.
+    console.log(this.count) // => 1
+
+    // data can be mutated as well
+    this.count = 2
+  }
+}</code></pre><p><a href="https://sfc.vuejs.org/#eyJBcHAudnVlIjoiPHNjcmlwdD5cbmV4cG9ydCBkZWZhdWx0IHtcbiAgZGF0YSgpIHtcbiAgICByZXR1cm4ge1xuICAgICAgY291bnQ6IDFcbiAgICB9XG4gIH0sXG5cbiAgLy8gYG1vdW50ZWRgIGlzIGEgbGlmZWN5Y2xlIGhvb2sgd2hpY2ggd2Ugd2lsbCBleHBsYWluIGxhdGVyXG4gIG1vdW50ZWQoKSB7XG4gICAgLy8gYHRoaXNgIHJlZmVycyB0byB0aGUgY29tcG9uZW50IGluc3RhbmNlLlxuICAgIGNvbnNvbGUubG9nKHRoaXMuY291bnQpIC8vID0+IDFcblxuICAgIC8vIGRhdGEgY2FuIGJlIG11dGF0ZWQgYXMgd2VsbFxuICAgIHRoaXMuY291bnQgPSAyXG4gIH1cbn1cbjwvc2NyaXB0PlxuXG48dGVtcGxhdGU+XG4gIENvdW50IGlzOiB7eyBjb3VudCB9fVxuPC90ZW1wbGF0ZT4iLCJpbXBvcnQtbWFwLmpzb24iOiJ7XG4gIFwiaW1wb3J0c1wiOiB7XG4gICAgXCJ2dWVcIjogXCJodHRwczovL3NmYy52dWVqcy5vcmcvdnVlLnJ1bnRpbWUuZXNtLWJyb3dzZXIuanNcIlxuICB9XG59In0=">Try it in the Playground</a><p>These instance properties are only added when the instance is first created, so you need to ensure they are all present in the object returned by the <code>data</code> function. Where necessary, use <code>null</code>, <code>undefined</code> or some other placeholder value for properties where the desired value isn't yet available.<p>It is possible to add a new property directly to <code>this</code> without including it in <code>data</code>. However, properties added this way will not be able to trigger reactive updates.<p>Vue uses a <code>$</code> prefix when exposing its own built-in APIs via the component instance. It also reserves the prefix <code>_</code> for internal properties. You should avoid using names for top-level <code>data</code> properties that start with either of these characters.<section id="reactive-proxy-vs-original--reactive-proxy-vs-original"class="level3"><h3>Reactive Proxy vs. Original * {#reactive-proxy-vs-original}</h3><p>In Vue 3, data is made reactive by leveraging <a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Proxy">JavaScript Proxies</a>. Users coming from Vue 2 should be aware of the following edge case:<pre class="language-js"><code class="language-js"><span class="token keyword module">export</span> <span class="token keyword module">default</span> <span class="token punctuation">{</span>
+  <span class="token function">data</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token keyword control-flow">return</span> <span class="token punctuation">{</span>
+      <span class="token literal-property property">someObject</span><span class="token operator">:</span> <span class="token punctuation">{</span><span class="token punctuation">}</span>
+    <span class="token punctuation">}</span>
+  <span class="token punctuation">}</span><span class="token punctuation">,</span>
+  <span class="token function">mounted</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token keyword">const</span> newObject <span class="token operator">=</span> <span class="token punctuation">{</span><span class="token punctuation">}</span>
+    <span class="token keyword">this</span><span class="token punctuation">.</span><span class="token property-access">someObject</span> <span class="token operator">=</span> newObject
+
+    <span class="token console class-name">console</span><span class="token punctuation">.</span><span class="token method function property-access">log</span><span class="token punctuation">(</span>newObject <span class="token operator">===</span> <span class="token keyword">this</span><span class="token punctuation">.</span><span class="token property-access">someObject</span><span class="token punctuation">)</span> <span class="token comment">// false</span>
+  <span class="token punctuation">}</span>
+<span class="token punctuation">}</span></code></pre><p>When you access <code>this.someObject</code> after assigning it, the value is a reactive proxy of the original <code>newObject</code>. <strong>Unlike in Vue 2, the original <code>newObject</code> is left intact and will not be made reactive: make sure to always access reactive state as a property of <code>this</code>.</strong></section></div><div class="composition-api"><p>We can create a reactive object or array with the <a href="/api/reactivity-core.html#reactive"><code>reactive()</code></a> function:<pre class="language-js"><code class="language-js"><span class="token keyword module">import</span> <span class="token imports"><span class="token punctuation">{</span> reactive <span class="token punctuation">}</span></span> <span class="token keyword module">from</span> <span class="token string">'vue'</span>
+
+<span class="token keyword">const</span> state <span class="token operator">=</span> <span class="token function">reactive</span><span class="token punctuation">(</span><span class="token punctuation">{</span> <span class="token literal-property property">count</span><span class="token operator">:</span> <span class="token number">0</span> <span class="token punctuation">}</span><span class="token punctuation">)</span></code></pre><p>Reactive objects are <a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Proxy">JavaScript Proxies</a> and behave just like normal objects. The difference is that Vue is able to track the property access and mutations of a reactive object. If you are curious about the details, we explain how Vue's reactivity system works in <a href="/guide/extras/reactivity-in-depth.html">Reactivity in Depth</a> - but we recommend reading it after you have finished the main guide.<p>See also: <a href="/guide/typescript/composition-api.html#typing-reactive">Typing Reactive</a><sup class="vt-badge ts"></sup><p>To use reactive state in a component's template, declare and return them from a component's <code>setup()</code> function:<pre class="language-js{5,9-11}"><code class="language-js{5,9-11}">import { reactive } from 'vue'
+
+export default {
+  // `setup` is a special hook dedicated for composition API.
+  setup() {
+    const state = reactive({ count: 0 })
+
+    // expose the state to the template
+    return {
+      state
+    }
+  }
+}</code></pre><pre class="language-vue-html"><code class="language-vue-html">&#x3C;div>{{ state.count }}&#x3C;/div></code></pre><p>Similarly, we can declare functions that mutate reactive state in the same scope and expose it as a method alongside the state:<pre class="language-js{7-9,14}"><code class="language-js{7-9,14}">import { reactive } from 'vue'
+
+export default {
+  setup() {
+    const state = reactive({ count: 0 })
+
+    function increment() {
+      state.count++
+    }
+
+    // don't forget to expose the function as well.
+    return {
+      state,
+      increment
+    }
+  }
+}</code></pre><p>Exposed methods are typically used as event listeners:<pre class="language-vue-html"><code class="language-vue-html">&#x3C;button @click="increment">
+  {{ state.count }}
+&#x3C;/button></code></pre></div></section><section id="script-setup--script-setup"class="level3"><h3><code>&#x3C;script setup></code> ** {#script-setup}</h3><p>Manually exposing state and methods via <code>setup()</code> can be verbose. Luckily, it is only necessary when not using a build step. When using Single-File Components (SFCs), we can greatly simplify the usage with <code>&#x3C;script setup></code>:<pre class="language-vue"><code class="language-vue">&#x3C;script setup>
+import { reactive } from 'vue'
+
+const state = reactive({ count: 0 })
+
+function increment() {
+  state.count++
+}
+&#x3C;/script>
+
+&#x3C;template>
+  &#x3C;button @click="increment">
+    {{ state.count }}
+  &#x3C;/button>
+&#x3C;/template></code></pre><p><a href="https://sfc.vuejs.org/#eyJBcHAudnVlIjoiPHNjcmlwdCBzZXR1cD5cbmltcG9ydCB7IHJlYWN0aXZlIH0gZnJvbSAndnVlJ1xuXG5jb25zdCBzdGF0ZSA9IHJlYWN0aXZlKHsgY291bnQ6IDAgfSlcblxuZnVuY3Rpb24gaW5jcmVtZW50KCkge1xuICBzdGF0ZS5jb3VudCsrXG59XG48L3NjcmlwdD5cblxuPHRlbXBsYXRlPlxuICA8YnV0dG9uIEBjbGljaz1cImluY3JlbWVudFwiPlxuICAgIHt7IHN0YXRlLmNvdW50IH19XG4gIDwvYnV0dG9uPlxuPC90ZW1wbGF0ZT4iLCJpbXBvcnQtbWFwLmpzb24iOiJ7XG4gIFwiaW1wb3J0c1wiOiB7XG4gICAgXCJ2dWVcIjogXCJodHRwczovL3NmYy52dWVqcy5vcmcvdnVlLnJ1bnRpbWUuZXNtLWJyb3dzZXIuanNcIlxuICB9XG59In0=">Try it in the Playground</a><p>Top-level imports and variables declared in <code>&#x3C;script setup></code> are automatically usable in the template of the same component.<blockquote><p>For the rest of the guide, we will be primarily using SFC + <code>&#x3C;script setup></code> syntax for Composition API code examples, as that is the most common usage for Vue developers.</blockquote><div class="options-api"></div></section></section><section id="declaring-methods--declaring-methods"class="level2"><h2>Declaring Methods * {#declaring-methods}</h2><vueschoollink href="https://vueschool.io/lessons/methods-in-vue-3"title="Free Vue.js Methods Lesson"><p>To add methods to a component instance we use the <code>methods</code> option. This should be an object containing the desired methods:<pre class="language-js{7-11}"><code class="language-js{7-11}">export default {
+  data() {
+    return {
+      count: 0
+    }
+  },
+  methods: {
+    increment() {
+      this.count++
+    }
+  },
+  mounted() {
+    // methods can be called in lifecycle hooks, or other methods!
+    this.increment()
+  }
+}</code></pre><p>Vue automatically binds the <code>this</code> value for <code>methods</code> so that it always refers to the component instance. This ensures that a method retains the correct <code>this</code> value if it's used as an event listener or callback. You should avoid using arrow functions when defining <code>methods</code>, as that prevents Vue from binding the appropriate <code>this</code> value:<pre class="language-js"><code class="language-js"><span class="token keyword module">export</span> <span class="token keyword module">default</span> <span class="token punctuation">{</span>
+  <span class="token literal-property property">methods</span><span class="token operator">:</span> <span class="token punctuation">{</span>
+    <span class="token function-variable function">increment</span><span class="token operator">:</span> <span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token arrow operator">=></span> <span class="token punctuation">{</span>
+      <span class="token comment">// BAD: no `this` access here!</span>
+    <span class="token punctuation">}</span>
+  <span class="token punctuation">}</span>
+<span class="token punctuation">}</span></code></pre><p>Just like all other properties of the component instance, the <code>methods</code> are accessible from within the component's template. Inside a template they are most commonly used as event listeners:<pre class="language-vue-html"><code class="language-vue-html">&#x3C;button @click="increment">{{ count }}&#x3C;/button></code></pre><p><a href="https://sfc.vuejs.org/#eyJBcHAudnVlIjoiPHNjcmlwdD5cbmV4cG9ydCBkZWZhdWx0IHtcbiAgZGF0YSgpIHtcbiAgICByZXR1cm4ge1xuICAgICAgY291bnQ6IDBcbiAgICB9XG4gIH0sXG4gIG1ldGhvZHM6IHtcbiAgICBpbmNyZW1lbnQoKSB7XG4gICAgICB0aGlzLmNvdW50KytcbiAgICB9XG4gIH0sXG4gIG1vdW50ZWQoKSB7XG4gICAgdGhpcy5pbmNyZW1lbnQoKVxuICB9XG59XG48L3NjcmlwdD5cblxuPHRlbXBsYXRlPlxuICA8YnV0dG9uIEBjbGljaz1cImluY3JlbWVudFwiPnt7IGNvdW50IH19PC9idXR0b24+XG48L3RlbXBsYXRlPiIsImltcG9ydC1tYXAuanNvbiI6IntcbiAgXCJpbXBvcnRzXCI6IHtcbiAgICBcInZ1ZVwiOiBcImh0dHBzOi8vc2ZjLnZ1ZWpzLm9yZy92dWUucnVudGltZS5lc20tYnJvd3Nlci5qc1wiXG4gIH1cbn0ifQ==">Try it in the Playground</a><p>In the example above, the method <code>increment</code> will be called when the <code>&#x3C;button></code> is clicked.<section id="dom-update-timing"class="level3"><h3>DOM Update Timing</h3><p>When you mutate reactive state, the DOM is updated automatically. However, it should be noted that the DOM updates are not applied synchronously. Instead, Vue buffers them until the "next tick" in the update cycle to ensure that each component updates only once no matter how many state changes you have made.<p>To wait for the DOM update to complete after a state change, you can use the <a href="/api/general.html#nexttick">nextTick()</a> global API:<div class="composition-api"><pre class="language-js"><code class="language-js"><span class="token keyword module">import</span> <span class="token imports"><span class="token punctuation">{</span> nextTick <span class="token punctuation">}</span></span> <span class="token keyword module">from</span> <span class="token string">'vue'</span>
+
+<span class="token keyword">function</span> <span class="token function">increment</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  state<span class="token punctuation">.</span><span class="token property-access">count</span><span class="token operator">++</span>
+  <span class="token function">nextTick</span><span class="token punctuation">(</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token arrow operator">=></span> <span class="token punctuation">{</span>
+    <span class="token comment">// access updated DOM</span>
+  <span class="token punctuation">}</span><span class="token punctuation">)</span>
+<span class="token punctuation">}</span></code></pre></div><div class="options-api"><pre class="language-js"><code class="language-js"><span class="token keyword module">import</span> <span class="token imports"><span class="token punctuation">{</span> nextTick <span class="token punctuation">}</span></span> <span class="token keyword module">from</span> <span class="token string">'vue'</span>
+
+<span class="token keyword module">export</span> <span class="token keyword module">default</span> <span class="token punctuation">{</span>
+  <span class="token literal-property property">methods</span><span class="token operator">:</span> <span class="token punctuation">{</span>
+    <span class="token function">increment</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+      <span class="token keyword">this</span><span class="token punctuation">.</span><span class="token property-access">count</span><span class="token operator">++</span>
+      <span class="token function">nextTick</span><span class="token punctuation">(</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token arrow operator">=></span> <span class="token punctuation">{</span>
+        <span class="token comment">// access updated DOM</span>
+      <span class="token punctuation">}</span><span class="token punctuation">)</span>
+    <span class="token punctuation">}</span>
+  <span class="token punctuation">}</span>
+<span class="token punctuation">}</span></code></pre></div></section><section id="deep-reactivity"class="level3"><h3>Deep Reactivity</h3><p>In Vue, state is deeply reactive by default. This means you can expect changes to be detected even when you mutate nested objects or arrays:<div class="options-api"><pre class="language-js"><code class="language-js"><span class="token keyword module">export</span> <span class="token keyword module">default</span> <span class="token punctuation">{</span>
+  <span class="token function">data</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token keyword control-flow">return</span> <span class="token punctuation">{</span>
+      <span class="token literal-property property">obj</span><span class="token operator">:</span> <span class="token punctuation">{</span>
+        <span class="token literal-property property">nested</span><span class="token operator">:</span> <span class="token punctuation">{</span> <span class="token literal-property property">count</span><span class="token operator">:</span> <span class="token number">0</span> <span class="token punctuation">}</span><span class="token punctuation">,</span>
+        <span class="token literal-property property">arr</span><span class="token operator">:</span> <span class="token punctuation">[</span><span class="token string">'foo'</span><span class="token punctuation">,</span> <span class="token string">'bar'</span><span class="token punctuation">]</span>
+      <span class="token punctuation">}</span>
+    <span class="token punctuation">}</span>
+  <span class="token punctuation">}</span><span class="token punctuation">,</span>
+  <span class="token literal-property property">methods</span><span class="token operator">:</span> <span class="token punctuation">{</span>
+    <span class="token function">mutateDeeply</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+      <span class="token comment">// these will work as expected.</span>
+      <span class="token keyword">this</span><span class="token punctuation">.</span><span class="token property-access">obj</span><span class="token punctuation">.</span><span class="token property-access">nested</span><span class="token punctuation">.</span><span class="token property-access">count</span><span class="token operator">++</span>
+      <span class="token keyword">this</span><span class="token punctuation">.</span><span class="token property-access">obj</span><span class="token punctuation">.</span><span class="token property-access">arr</span><span class="token punctuation">.</span><span class="token method function property-access">push</span><span class="token punctuation">(</span><span class="token string">'baz'</span><span class="token punctuation">)</span>
+    <span class="token punctuation">}</span>
+  <span class="token punctuation">}</span>
+<span class="token punctuation">}</span></code></pre></div><div class="composition-api"><pre class="language-js"><code class="language-js"><span class="token keyword module">import</span> <span class="token imports"><span class="token punctuation">{</span> reactive <span class="token punctuation">}</span></span> <span class="token keyword module">from</span> <span class="token string">'vue'</span>
+
+<span class="token keyword">const</span> obj <span class="token operator">=</span> <span class="token function">reactive</span><span class="token punctuation">(</span><span class="token punctuation">{</span>
+  <span class="token literal-property property">nested</span><span class="token operator">:</span> <span class="token punctuation">{</span> <span class="token literal-property property">count</span><span class="token operator">:</span> <span class="token number">0</span> <span class="token punctuation">}</span><span class="token punctuation">,</span>
+  <span class="token literal-property property">arr</span><span class="token operator">:</span> <span class="token punctuation">[</span><span class="token string">'foo'</span><span class="token punctuation">,</span> <span class="token string">'bar'</span><span class="token punctuation">]</span>
+<span class="token punctuation">}</span><span class="token punctuation">)</span>
+
+<span class="token keyword">function</span> <span class="token function">mutateDeeply</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  <span class="token comment">// these will work as expected.</span>
+  obj<span class="token punctuation">.</span><span class="token property-access">nested</span><span class="token punctuation">.</span><span class="token property-access">count</span><span class="token operator">++</span>
+  obj<span class="token punctuation">.</span><span class="token property-access">arr</span><span class="token punctuation">.</span><span class="token method function property-access">push</span><span class="token punctuation">(</span><span class="token string">'baz'</span><span class="token punctuation">)</span>
+<span class="token punctuation">}</span></code></pre></div><p>It is also possible to explicitly create <a href="/api/reactivity-advanced.html#shallowreactive">shallow reactive objects</a> where the reactivity is only tracked at the root-level, but these are typically only needed in advanced use cases.<div class="composition-api"></div></section><section id="reactive-proxy-vs-original--reactive-proxy-vs-original-1"class="level3"><h3>Reactive Proxy vs. Original ** {#reactive-proxy-vs-original-1}</h3><p>It is important to note that the returned value from <code>reactive()</code> is a <a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Proxy">Proxy</a> of the original object, which is not equal to the original object:<pre class="language-js"><code class="language-js"><span class="token keyword">const</span> raw <span class="token operator">=</span> <span class="token punctuation">{</span><span class="token punctuation">}</span>
+<span class="token keyword">const</span> proxy <span class="token operator">=</span> <span class="token function">reactive</span><span class="token punctuation">(</span>raw<span class="token punctuation">)</span>
+
+<span class="token comment">// proxy is NOT equal to the original.</span>
+<span class="token console class-name">console</span><span class="token punctuation">.</span><span class="token method function property-access">log</span><span class="token punctuation">(</span>proxy <span class="token operator">===</span> raw<span class="token punctuation">)</span> <span class="token comment">// false</span></code></pre><p>Only the proxy is reactive - mutating the original object will not trigger updates. Therefore, the best practice when working with Vue's reactivity system is to <strong>exclusively use the proxied versions of your state</strong>.<p>To ensure consistent access to the proxy, calling <code>reactive()</code> on the same object always returns the same proxy, and calling <code>reactive()</code> on an existing proxy also returns that same proxy:<pre class="language-js"><code class="language-js"><span class="token comment">// calling reactive() on the same object returns the same proxy</span>
+<span class="token console class-name">console</span><span class="token punctuation">.</span><span class="token method function property-access">log</span><span class="token punctuation">(</span><span class="token function">reactive</span><span class="token punctuation">(</span>raw<span class="token punctuation">)</span> <span class="token operator">===</span> proxy<span class="token punctuation">)</span> <span class="token comment">// true</span>
+
+<span class="token comment">// calling reactive() on a proxy returns itself</span>
+<span class="token console class-name">console</span><span class="token punctuation">.</span><span class="token method function property-access">log</span><span class="token punctuation">(</span><span class="token function">reactive</span><span class="token punctuation">(</span>proxy<span class="token punctuation">)</span> <span class="token operator">===</span> proxy<span class="token punctuation">)</span> <span class="token comment">// true</span></code></pre><p>This rule applies to nested objects as well. Due to deep reactivity, nested objects inside a reactive object are also proxies:<pre class="language-js"><code class="language-js"><span class="token keyword">const</span> proxy <span class="token operator">=</span> <span class="token function">reactive</span><span class="token punctuation">(</span><span class="token punctuation">{</span><span class="token punctuation">}</span><span class="token punctuation">)</span>
+
+<span class="token keyword">const</span> raw <span class="token operator">=</span> <span class="token punctuation">{</span><span class="token punctuation">}</span>
+proxy<span class="token punctuation">.</span><span class="token property-access">nested</span> <span class="token operator">=</span> raw
+
+<span class="token console class-name">console</span><span class="token punctuation">.</span><span class="token method function property-access">log</span><span class="token punctuation">(</span>proxy<span class="token punctuation">.</span><span class="token property-access">nested</span> <span class="token operator">===</span> raw<span class="token punctuation">)</span> <span class="token comment">// false</span></code></pre></section><section id="limitations-of-reactive--limitations-of-reactive"class="level3"><h3>Limitations of <code>reactive()</code> ** {#limitations-of-reactive}</h3><p>The <code>reactive()</code> API has two limitations:<ol><li><p>It only works for object types (objects, arrays, and <a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects#keyed_collections">collection types</a> such as <code>Map</code> and <code>Set</code>). It cannot hold <a href="https://developer.mozilla.org/en-US/docs/Glossary/Primitive">primitive types</a> such as <code>string</code>, <code>number</code> or <code>boolean</code>.<li><p>Since Vue's reactivity tracking works over property access, we must always keep the same reference to the reactive object. This means we can't easily "replace" a reactive object because the reactivity connection to the first reference is lost:<pre class="language-js"><code class="language-js"><span class="token keyword">let</span> state <span class="token operator">=</span> <span class="token function">reactive</span><span class="token punctuation">(</span><span class="token punctuation">{</span> <span class="token literal-property property">count</span><span class="token operator">:</span> <span class="token number">0</span> <span class="token punctuation">}</span><span class="token punctuation">)</span>
+
+<span class="token comment">// the above reference ({ count: 0 }) is no longer being tracked (reactivity connection is lost!)</span>
+state <span class="token operator">=</span> <span class="token function">reactive</span><span class="token punctuation">(</span><span class="token punctuation">{</span> <span class="token literal-property property">count</span><span class="token operator">:</span> <span class="token number">1</span> <span class="token punctuation">}</span><span class="token punctuation">)</span></code></pre><p>It also means that when we assign or destructure a reactive object's property into local variables, or when we pass that property into a function, we will lose the reactivity connection:<pre class="language-js"><code class="language-js"><span class="token keyword">const</span> state <span class="token operator">=</span> <span class="token function">reactive</span><span class="token punctuation">(</span><span class="token punctuation">{</span> <span class="token literal-property property">count</span><span class="token operator">:</span> <span class="token number">0</span> <span class="token punctuation">}</span><span class="token punctuation">)</span>
+
+<span class="token comment">// n is a local variable that is disconnected</span>
+<span class="token comment">// from state.count.</span>
+<span class="token keyword">let</span> n <span class="token operator">=</span> state<span class="token punctuation">.</span><span class="token property-access">count</span>
+<span class="token comment">// does not affect original state</span>
+n<span class="token operator">++</span>
+
+<span class="token comment">// count is also disconnected from state.count.</span>
+<span class="token keyword">let</span> <span class="token punctuation">{</span> count <span class="token punctuation">}</span> <span class="token operator">=</span> state
+<span class="token comment">// does not affect original state</span>
+count<span class="token operator">++</span>
+
+<span class="token comment">// the function receives a plain number and</span>
+<span class="token comment">// won't be able to track changes to state.count</span>
+<span class="token function">callSomeFunction</span><span class="token punctuation">(</span>state<span class="token punctuation">.</span><span class="token property-access">count</span><span class="token punctuation">)</span></code></pre></ol></section></vueschoollink></section><section id="reactive-variables-with-ref--reactive-variables-with-ref"class="level2"><h2>Reactive Variables with <code>ref()</code> ** {#reactive-variables-with-ref}</h2><p>To address the limitations of <code>reactive()</code>, Vue also provides a <a href="/api/reactivity-core.html#ref"><code>ref()</code></a> function which allows us to create reactive <strong>"refs"</strong> that can hold any value type:<pre class="language-js"><code class="language-js"><span class="token keyword module">import</span> <span class="token imports"><span class="token punctuation">{</span> ref <span class="token punctuation">}</span></span> <span class="token keyword module">from</span> <span class="token string">'vue'</span>
+
+<span class="token keyword">const</span> count <span class="token operator">=</span> <span class="token function">ref</span><span class="token punctuation">(</span><span class="token number">0</span><span class="token punctuation">)</span></code></pre><p><code>ref()</code> takes the argument and returns it wrapped within a ref object with a <code>.value</code> property:<pre class="language-js"><code class="language-js"><span class="token keyword">const</span> count <span class="token operator">=</span> <span class="token function">ref</span><span class="token punctuation">(</span><span class="token number">0</span><span class="token punctuation">)</span>
+
+<span class="token console class-name">console</span><span class="token punctuation">.</span><span class="token method function property-access">log</span><span class="token punctuation">(</span>count<span class="token punctuation">)</span> <span class="token comment">// { value: 0 }</span>
+<span class="token console class-name">console</span><span class="token punctuation">.</span><span class="token method function property-access">log</span><span class="token punctuation">(</span>count<span class="token punctuation">.</span><span class="token property-access">value</span><span class="token punctuation">)</span> <span class="token comment">// 0</span>
+
+count<span class="token punctuation">.</span><span class="token property-access">value</span><span class="token operator">++</span>
+<span class="token console class-name">console</span><span class="token punctuation">.</span><span class="token method function property-access">log</span><span class="token punctuation">(</span>count<span class="token punctuation">.</span><span class="token property-access">value</span><span class="token punctuation">)</span> <span class="token comment">// 1</span></code></pre><p>See also: <a href="/guide/typescript/composition-api.html#typing-ref">Typing Refs</a><sup class="vt-badge ts"></sup><p>Similar to properties on a reactive object, the <code>.value</code> property of a ref is reactive. In addition, when holding object types, ref automatically converts its <code>.value</code> with <code>reactive()</code>.<p>A ref containing an object value can reactively replace the entire object:<pre class="language-js"><code class="language-js"><span class="token keyword">const</span> objectRef <span class="token operator">=</span> <span class="token function">ref</span><span class="token punctuation">(</span><span class="token punctuation">{</span> <span class="token literal-property property">count</span><span class="token operator">:</span> <span class="token number">0</span> <span class="token punctuation">}</span><span class="token punctuation">)</span>
+
+<span class="token comment">// this works reactively</span>
+objectRef<span class="token punctuation">.</span><span class="token property-access">value</span> <span class="token operator">=</span> <span class="token punctuation">{</span> <span class="token literal-property property">count</span><span class="token operator">:</span> <span class="token number">1</span> <span class="token punctuation">}</span></code></pre><p>Refs can also be passed into functions or destructured from plain objects without losing reactivity:<pre class="language-js"><code class="language-js"><span class="token keyword">const</span> obj <span class="token operator">=</span> <span class="token punctuation">{</span>
+  <span class="token literal-property property">foo</span><span class="token operator">:</span> <span class="token function">ref</span><span class="token punctuation">(</span><span class="token number">1</span><span class="token punctuation">)</span><span class="token punctuation">,</span>
+  <span class="token literal-property property">bar</span><span class="token operator">:</span> <span class="token function">ref</span><span class="token punctuation">(</span><span class="token number">2</span><span class="token punctuation">)</span>
+<span class="token punctuation">}</span>
+
+<span class="token comment">// the function receives a ref</span>
+<span class="token comment">// it needs to access the value via .value but it</span>
+<span class="token comment">// will retain the reactivity connection</span>
+<span class="token function">callSomeFunction</span><span class="token punctuation">(</span>obj<span class="token punctuation">.</span><span class="token property-access">foo</span><span class="token punctuation">)</span>
+
+<span class="token comment">// still reactive</span>
+<span class="token keyword">const</span> <span class="token punctuation">{</span> foo<span class="token punctuation">,</span> bar <span class="token punctuation">}</span> <span class="token operator">=</span> obj</code></pre><p>In other words, <code>ref()</code> allows us to create a "reference" to any value and pass it around without losing reactivity. This capability is quite important as it is frequently used when extracting logic into <a href="/guide/reusability/composables.html">Composable Functions</a>.<section id="ref-unwrapping-in-templates--ref-unwrapping-in-templates"class="level3"><h3>Ref Unwrapping in Templates ** {#ref-unwrapping-in-templates}</h3><p>When refs are accessed as top-level properties in the template, they are automatically "unwrapped" so there is no need to use <code>.value</code>. Here's the previous counter example, using <code>ref()</code> instead:<pre class="language-vue{13}"><code class="language-vue{13}">&#x3C;script setup>
+import { ref } from 'vue'
+
+const count = ref(0)
+
+function increment() {
+  count.value++
+}
+&#x3C;/script>
+
+&#x3C;template>
+  &#x3C;button @click="increment">
+    {{ count }} &#x3C;!-- no .value needed -->
+  &#x3C;/button>
+&#x3C;/template></code></pre><p><a href="https://sfc.vuejs.org/#eyJBcHAudnVlIjoiPHNjcmlwdCBzZXR1cD5cbmltcG9ydCB7IHJlZiB9IGZyb20gJ3Z1ZSdcblxuY29uc3QgY291bnQgPSByZWYoMClcblxuZnVuY3Rpb24gaW5jcmVtZW50KCkge1xuICBjb3VudC52YWx1ZSsrXG59XG48L3NjcmlwdD5cblxuPHRlbXBsYXRlPlxuICA8YnV0dG9uIEBjbGljaz1cImluY3JlbWVudFwiPnt7IGNvdW50IH19PC9idXR0b24+XG48L3RlbXBsYXRlPiIsImltcG9ydC1tYXAuanNvbiI6IntcbiAgXCJpbXBvcnRzXCI6IHtcbiAgICBcInZ1ZVwiOiBcImh0dHBzOi8vc2ZjLnZ1ZWpzLm9yZy92dWUucnVudGltZS5lc20tYnJvd3Nlci5qc1wiXG4gIH1cbn0ifQ==">Try it in the Playground</a><p>Note that the unwrapping only applies if the ref is a top-level property on the template render context. As an example, <code>foo</code> is a top-level property, but <code>object.foo</code> is not.<p>So, given the following object:<pre class="language-js"><code class="language-js"><span class="token keyword">const</span> object <span class="token operator">=</span> <span class="token punctuation">{</span> <span class="token literal-property property">foo</span><span class="token operator">:</span> <span class="token function">ref</span><span class="token punctuation">(</span><span class="token number">1</span><span class="token punctuation">)</span> <span class="token punctuation">}</span></code></pre><p>The following expression will <strong>NOT</strong> work as expected:<pre class="language-vue-html"><code class="language-vue-html">{{ object.foo + 1 }}</code></pre><p>The rendered result will be <code>[object Object]</code> because <code>object.foo</code> is a ref object. We can fix that by making <code>foo</code> a top-level property:<pre class="language-js"><code class="language-js"><span class="token keyword">const</span> <span class="token punctuation">{</span> foo <span class="token punctuation">}</span> <span class="token operator">=</span> object</code></pre><pre class="language-vue-html"><code class="language-vue-html">{{ foo + 1 }}</code></pre><p>Now the render result will be <code>2</code>.<p>One thing to note is that a ref will also be unwrapped if it is the final evaluated value of a text interpolation (i.e. a <code v-pre="">{{ }}</code> tag), so the following will render <code>1</code>:<pre class="language-vue-html"><code class="language-vue-html">{{ object.foo }}</code></pre><p>This is just a convenience feature of text interpolation and is equivalent to <code v-pre="">{{ object.foo.value }}</code>.</section><section id="ref-unwrapping-in-reactive-objects--ref-unwrapping-in-reactive-objects"class="level3"><h3>Ref Unwrapping in Reactive Objects ** {#ref-unwrapping-in-reactive-objects}</h3><p>When a <code>ref</code> is accessed or mutated as a property of a reactive object, it is also automatically unwrapped so it behaves like a normal property:<pre class="language-js"><code class="language-js"><span class="token keyword">const</span> count <span class="token operator">=</span> <span class="token function">ref</span><span class="token punctuation">(</span><span class="token number">0</span><span class="token punctuation">)</span>
+<span class="token keyword">const</span> state <span class="token operator">=</span> <span class="token function">reactive</span><span class="token punctuation">(</span><span class="token punctuation">{</span>
+  count
+<span class="token punctuation">}</span><span class="token punctuation">)</span>
+
+<span class="token console class-name">console</span><span class="token punctuation">.</span><span class="token method function property-access">log</span><span class="token punctuation">(</span>state<span class="token punctuation">.</span><span class="token property-access">count</span><span class="token punctuation">)</span> <span class="token comment">// 0</span>
+
+state<span class="token punctuation">.</span><span class="token property-access">count</span> <span class="token operator">=</span> <span class="token number">1</span>
+<span class="token console class-name">console</span><span class="token punctuation">.</span><span class="token method function property-access">log</span><span class="token punctuation">(</span>count<span class="token punctuation">.</span><span class="token property-access">value</span><span class="token punctuation">)</span> <span class="token comment">// 1</span></code></pre><p>If a new ref is assigned to a property linked to an existing ref, it will replace the old ref:<pre class="language-js"><code class="language-js"><span class="token keyword">const</span> otherCount <span class="token operator">=</span> <span class="token function">ref</span><span class="token punctuation">(</span><span class="token number">2</span><span class="token punctuation">)</span>
+
+state<span class="token punctuation">.</span><span class="token property-access">count</span> <span class="token operator">=</span> otherCount
+<span class="token console class-name">console</span><span class="token punctuation">.</span><span class="token method function property-access">log</span><span class="token punctuation">(</span>state<span class="token punctuation">.</span><span class="token property-access">count</span><span class="token punctuation">)</span> <span class="token comment">// 2</span>
+<span class="token comment">// original ref is now disconnected from state.count</span>
+<span class="token console class-name">console</span><span class="token punctuation">.</span><span class="token method function property-access">log</span><span class="token punctuation">(</span>count<span class="token punctuation">.</span><span class="token property-access">value</span><span class="token punctuation">)</span> <span class="token comment">// 1</span></code></pre><p>Ref unwrapping only happens when nested inside a deep reactive object. It does not apply when it is accessed as a property of a <a href="/api/reactivity-advanced.html#shallowreactive">shallow reactive object</a>.</section><section id="ref-unwrapping-in-arrays-and-collections"class="level3"><h3>Ref Unwrapping in Arrays and Collections</h3><p>Unlike reactive objects, there is no unwrapping performed when the ref is accessed as an element of a reactive array or a native collection type like <code>Map</code>:<pre class="language-js"><code class="language-js"><span class="token keyword">const</span> books <span class="token operator">=</span> <span class="token function">reactive</span><span class="token punctuation">(</span><span class="token punctuation">[</span><span class="token function">ref</span><span class="token punctuation">(</span><span class="token string">'Vue 3 Guide'</span><span class="token punctuation">)</span><span class="token punctuation">]</span><span class="token punctuation">)</span>
+<span class="token comment">// need .value here</span>
+<span class="token console class-name">console</span><span class="token punctuation">.</span><span class="token method function property-access">log</span><span class="token punctuation">(</span>books<span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">]</span><span class="token punctuation">.</span><span class="token property-access">value</span><span class="token punctuation">)</span>
+
+<span class="token keyword">const</span> map <span class="token operator">=</span> <span class="token function">reactive</span><span class="token punctuation">(</span><span class="token keyword">new</span> <span class="token class-name">Map</span><span class="token punctuation">(</span><span class="token punctuation">[</span><span class="token punctuation">[</span><span class="token string">'count'</span><span class="token punctuation">,</span> <span class="token function">ref</span><span class="token punctuation">(</span><span class="token number">0</span><span class="token punctuation">)</span><span class="token punctuation">]</span><span class="token punctuation">]</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+<span class="token comment">// need .value here</span>
+<span class="token console class-name">console</span><span class="token punctuation">.</span><span class="token method function property-access">log</span><span class="token punctuation">(</span>map<span class="token punctuation">.</span><span class="token method function property-access">get</span><span class="token punctuation">(</span><span class="token string">'count'</span><span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token property-access">value</span><span class="token punctuation">)</span></code></pre><div class="options-api"></div></section><section id="stateful-methods--stateful-methods"class="level3"><h3>Stateful Methods * {#stateful-methods}</h3><p>In some cases, we may need to dynamically create a method function, for example creating a debounced event handler:<pre class="language-js"><code class="language-js"><span class="token keyword module">import</span> <span class="token imports"><span class="token punctuation">{</span> debounce <span class="token punctuation">}</span></span> <span class="token keyword module">from</span> <span class="token string">'lodash-es'</span>
+
+<span class="token keyword module">export</span> <span class="token keyword module">default</span> <span class="token punctuation">{</span>
+  <span class="token literal-property property">methods</span><span class="token operator">:</span> <span class="token punctuation">{</span>
+    <span class="token comment">// Debouncing with Lodash</span>
+    <span class="token literal-property property">click</span><span class="token operator">:</span> <span class="token function">debounce</span><span class="token punctuation">(</span><span class="token keyword">function</span> <span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+      <span class="token comment">// ... respond to click ...</span>
+    <span class="token punctuation">}</span><span class="token punctuation">,</span> <span class="token number">500</span><span class="token punctuation">)</span>
+  <span class="token punctuation">}</span>
+<span class="token punctuation">}</span></code></pre><p>However, this approach is problematic for components that are reused because a debounced function is <strong>stateful</strong>: it maintains some internal state on the elapsed time. If multiple component instances share the same debounced function, they will interfere with one another.<p>To keep each component instance's debounced function independent of the others, we can create the debounced version in the <code>created</code> lifecycle hook:<pre class="language-js"><code class="language-js"><span class="token keyword module">export</span> <span class="token keyword module">default</span> <span class="token punctuation">{</span>
+  <span class="token function">created</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token comment">// each instance now has its own copy of debounced handler</span>
+    <span class="token keyword">this</span><span class="token punctuation">.</span><span class="token property-access">debouncedClick</span> <span class="token operator">=</span> _<span class="token punctuation">.</span><span class="token method function property-access">debounce</span><span class="token punctuation">(</span><span class="token keyword">this</span><span class="token punctuation">.</span><span class="token property-access">click</span><span class="token punctuation">,</span> <span class="token number">500</span><span class="token punctuation">)</span>
+  <span class="token punctuation">}</span><span class="token punctuation">,</span>
+  <span class="token function">unmounted</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token comment">// also a good idea to cancel the timer</span>
+    <span class="token comment">// when the component is removed</span>
+    <span class="token keyword">this</span><span class="token punctuation">.</span><span class="token property-access">debouncedClick</span><span class="token punctuation">.</span><span class="token method function property-access">cancel</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+  <span class="token punctuation">}</span><span class="token punctuation">,</span>
+  <span class="token literal-property property">methods</span><span class="token operator">:</span> <span class="token punctuation">{</span>
+    <span class="token function">click</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+      <span class="token comment">// ... respond to click ...</span>
+    <span class="token punctuation">}</span>
+  <span class="token punctuation">}</span>
+<span class="token punctuation">}</span></code></pre><div class="composition-api"></div></section></section><section id="reactivity-transform-sup-classvt-badge-experimental---reactivity-transform"class="level2"><h2>Reactivity Transform <sup class="vt-badge experimental">** {#reactivity-transform}</sup></h2><p>Having to use <code>.value</code> with refs is a drawback imposed by the language constraints of JavaScript. However, with compile-time transforms we can improve the ergonomics by automatically appending <code>.value</code> in appropriate locations. Vue provides a compile-time transform that allows us to write the earlier "counter" example like this:<pre class="language-vue"><code class="language-vue">&#x3C;script setup>
+let count = $ref(0)
+
+function increment() {
+  // no need for .value
+  count++
+}
+&#x3C;/script>
+
+&#x3C;template>
+  &#x3C;button @click="increment">{{ count }}&#x3C;/button>
+&#x3C;/template></code></pre><p>You can learn more about <a href="/guide/extras/reactivity-transform.html">Reactivity Transform</a> in its dedicated section. Do note that it is currently still experimental and may change before being finalized.</p><span style="float:footnote"><a href="../index.html#toc">Go to TOC</a></span></section>
