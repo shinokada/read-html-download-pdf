@@ -6,8 +6,14 @@
 	<span class="token punctuation">}</span>
 <span class="token punctuation">}</span><span class="token punctuation">;</span></code></pre><p>To invoke this action from the <code>/login</code> page, just add a <code>&#x3C;form></code> — no JavaScript needed:<pre class="language-svelte"><code class="language-svelte">/// file: src/routes/login/+page.svelte
 &#x3C;form method="POST">
-	&#x3C;input name="email" type="email">
-	&#x3C;input name="password" type="password">
+	&#x3C;label>
+		Email
+		&#x3C;input name="email" type="email">
+	&#x3C;/label>
+	&#x3C;label>
+		Password
+		&#x3C;input name="password" type="password">
+	&#x3C;/label>
 	&#x3C;button>Log in&#x3C;/button>
 &#x3C;/form></code></pre><p>If someone were to click the button, the browser would send the form data via <code>POST</code> request to the server, running the default action.<blockquote><p>Actions always use <code>POST</code> requests, since <code>GET</code> requests should never have side-effects.</blockquote><p>We can also invoke the action from other pages (for example if there's a login widget in the nav in the root layout) by adding the <code>action</code> attribute, pointing to the page:<pre class="language-html"><code class="language-html">/// file: src/routes/+layout.svelte
 <span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;</span>form</span> <span class="token attr-name">method</span><span class="token attr-value"><span class="token punctuation attr-equals">=</span><span class="token punctuation">"</span>POST<span class="token punctuation">"</span></span> <span class="token attr-name">action</span><span class="token attr-value"><span class="token punctuation attr-equals">=</span><span class="token punctuation">"</span>/login<span class="token punctuation">"</span></span><span class="token punctuation">></span></span>
@@ -28,8 +34,14 @@ export const actions = {
 &#x3C;form method="POST" action="/login?/register"></code></pre><p>As well as the <code>action</code> attribute, we can use the <code>formaction</code> attribute on a button to <code>POST</code> the same form data to a different action than the parent <code>&#x3C;form></code>:<pre class="language-diff"><code class="language-diff">/// file: src/routes/login/+page.svelte
 <span class="token deleted-sign deleted"><span class="token prefix deleted">-</span><span class="token line">&#x3C;form method="POST">
 </span></span><span class="token inserted-sign inserted"><span class="token prefix inserted">+</span><span class="token line">&#x3C;form method="POST" action="?/login">
-</span></span>	&#x3C;input name="email" type="email">
-	&#x3C;input name="password" type="password">
+</span></span>	&#x3C;label>
+		Email
+		&#x3C;input name="email" type="email">
+	&#x3C;/label>
+	&#x3C;label>
+		Password
+		&#x3C;input name="password" type="password">
+	&#x3C;/label>
 	&#x3C;button>Log in&#x3C;/button>
 <span class="token inserted-sign inserted"><span class="token prefix inserted">+</span><span class="token line">	&#x3C;button formaction="?/register">Register&#x3C;/button>
 </span></span><span class="token deleted-arrow deleted"><span class="token prefix deleted">&#x3C;</span><span class="token line">/form></span></span></code></pre><blockquote><p>We can't have default actions next to named actions, because if you POST to a named action without a redirect, the query parameter is persisted in the URL, which means the next default POST would go through the named action from before.</blockquote></section><section id="anatomy-of-an-action"class="level2"><h2>Anatomy of an action</h2><p>Each action receives a <code>RequestEvent</code> object, allowing you to read the data with <code>request.formData()</code>. After processing the request (for example, logging the user in by setting a cookie), the action can respond with data that will be available through the <code>form</code> property on the corresponding page and through <code>$page.form</code> app-wide until the next update.<pre class="language-js"><code class="language-js"><span class="token comment">// @errors: 2339 2304</span>
@@ -98,12 +110,17 @@ export const actions = {
 	}
 };</code></pre><blockquote><p>Note that as a precaution, we only return the email back to the page — not the password.</blockquote><pre class="language-diff"><code class="language-diff">/// file: src/routes/login/+page.svelte
 <span class="token deleted-arrow deleted"><span class="token prefix deleted">&#x3C;</span><span class="token line">form method="POST" action="?/login">
-</span></span><span class="token deleted-sign deleted"><span class="token prefix deleted">-</span><span class="token line">	&#x3C;input name="email" type="email">
 </span></span><span class="token inserted-sign inserted"><span class="token prefix inserted">+</span><span class="token line">	{#if form?.missing}&#x3C;p class="error">The email field is required&#x3C;/p>{/if}
 </span><span class="token prefix inserted">+</span><span class="token line">	{#if form?.incorrect}&#x3C;p class="error">Invalid credentials!&#x3C;/p>{/if}
-</span><span class="token prefix inserted">+</span><span class="token line">	&#x3C;input name="email" type="email" value={form?.email ?? ''}>
-</span></span>
-	&#x3C;input name="password" type="password">
+</span></span>	&#x3C;label>
+		Email
+<span class="token deleted-sign deleted"><span class="token prefix deleted">-</span><span class="token line">		&#x3C;input name="email" type="email">
+</span></span><span class="token inserted-sign inserted"><span class="token prefix inserted">+</span><span class="token line">		&#x3C;input name="email" type="email" value={form?.email ?? ''}>
+</span></span>	&#x3C;/label>
+	&#x3C;label>
+		Password
+		&#x3C;input name="password" type="password">
+	&#x3C;/label>
 	&#x3C;button>Log in&#x3C;/button>
 	&#x3C;button formaction="?/register">Register&#x3C;/button>
 <span class="token deleted-arrow deleted"><span class="token prefix deleted">&#x3C;</span><span class="token line">/form></span></span></code></pre><p>The returned data must be serializable as JSON. Beyond that, the structure is entirely up to you. For example, if you had multiple forms on the page, you could distinguish which <code>&#x3C;form></code> the returned <code>form</code> data referred to with an <code>id</code> property or similar.</section><section id="redirects"class="level2"><h2>Redirects</h2><p>Redirects (and errors) work exactly the same as in <a href="../20-core-concepts/20-load.html#redirects"><code>load</code></a>:<pre class="language-diff"><code class="language-diff">// @errors: 2339 2304
@@ -195,7 +212,7 @@ declare namespace <span class="token maybe-class-name">App</span> <span class="t
 	export let form;
 <span class="token deleted-arrow deleted"><span class="token prefix deleted">&#x3C;</span><span class="token line">/script>
 </span></span>
-<span class="token inserted-sign inserted"><span class="token prefix inserted">+</span><span class="token line">&#x3C;form method="POST" use:enhance></span></span></code></pre><blockquote><p>Yes, it's a little confusing that the <code>enhance</code> action and <code>&#x3C;form action></code> are both called 'action'. These docs are action-packed. Sorry.</blockquote><p>Without an argument, <code>use:enhance</code> will emulate the browser-native behaviour, just without the full-page reloads. It will:<ul><li>update the <code>form</code> property, <code>$page.form</code> and <code>$page.status</code> on a successful or invalid response, but only if the action is on the same page you're submitting from. So for example if your form looks like <code>&#x3C;form action="/somewhere/else" ..></code>, <code>form</code> and <code>$page</code> will <em>not</em> be updated. This is because in the native form submission case you would be redirected to the page the action is on.<li>reset the <code>&#x3C;form></code> element and invalidate all data using <code>invalidateAll</code> on a successful response<li>call <code>goto</code> on a redirect response<li>render the nearest <code>+error</code> boundary if an error occurs</ul><p>To customise the behaviour, you can provide a <code>SubmitFunction</code> that runs immediately before the form is submitted, and (optionally) returns a callback that runs with the <code>ActionResult</code>. Note that if you return a callback, the default behavior mentioned above is not triggered. To get it back, call <code>update</code>.<pre class="language-svelte"><code class="language-svelte">&#x3C;form
+<span class="token inserted-sign inserted"><span class="token prefix inserted">+</span><span class="token line">&#x3C;form method="POST" use:enhance></span></span></code></pre><blockquote><p>Yes, it's a little confusing that the <code>enhance</code> action and <code>&#x3C;form action></code> are both called 'action'. These docs are action-packed. Sorry.</blockquote><p>Without an argument, <code>use:enhance</code> will emulate the browser-native behaviour, just without the full-page reloads. It will:<ul><li>update the <code>form</code> property, <code>$page.form</code> and <code>$page.status</code> on a successful or invalid response, but only if the action is on the same page you're submitting from. So for example if your form looks like <code>&#x3C;form action="/somewhere/else" ..></code>, <code>form</code> and <code>$page</code> will <em>not</em> be updated. This is because in the native form submission case you would be redirected to the page the action is on.<li>reset the <code>&#x3C;form></code> element and invalidate all data using <code>invalidateAll</code> on a successful response<li>call <code>goto</code> on a redirect response<li>render the nearest <code>+error</code> boundary if an error occurs<li><a href="../40-best-practices/10-accessibility.html#focus-management">reset focus</a> to the appropriate element</ul><p>To customise the behaviour, you can provide a <code>SubmitFunction</code> that runs immediately before the form is submitted, and (optionally) returns a callback that runs with the <code>ActionResult</code>. Note that if you return a callback, the default behavior mentioned above is not triggered. To get it back, call <code>update</code>.<pre class="language-svelte"><code class="language-svelte">&#x3C;form
 	method="POST"
 	use:enhance={({ form, data, action, cancel }) => {
 		// `form` is the `&#x3C;form>` element
@@ -230,7 +247,7 @@ declare namespace <span class="token maybe-class-name">App</span> <span class="t
 </span><span class="token prefix inserted">+</span><span class="token line">			}
 </span></span>		};
 	}}
-<span class="token inserted-arrow inserted"><span class="token prefix inserted">></span></span></code></pre><p>The behaviour of <code>applyAction(result)</code> depends on <code>result.type</code>:<ul><li><code>success</code>, <code>failure</code> — sets <code>$page.status</code> to <code>result.status</code> and updates <code>form</code> and <code>$page.form</code> to <code>result.data</code> (regardless of where you are submitting from, in contrast to <code>update</code> from <code>enhance</code>)<li><code>redirect</code> — calls <code>goto(result.location)</code><li><code>error</code> — renders the nearest <code>+error</code> boundary with <code>result.error</code></ul></section><section id="custom-event-listener"class="level2"><h2>Custom event listener</h2><p>We can also implement progressive enhancement ourselves, without <code>use:enhance</code>, with a normal event listener on the <code>&#x3C;form></code>:<pre class="language-svelte"><code class="language-svelte">/// file: src/routes/login/+page.svelte
+<span class="token inserted-arrow inserted"><span class="token prefix inserted">></span></span></code></pre><p>The behaviour of <code>applyAction(result)</code> depends on <code>result.type</code>:<ul><li><code>success</code>, <code>failure</code> — sets <code>$page.status</code> to <code>result.status</code> and updates <code>form</code> and <code>$page.form</code> to <code>result.data</code> (regardless of where you are submitting from, in contrast to <code>update</code> from <code>enhance</code>)<li><code>redirect</code> — calls <code>goto(result.location)</code><li><code>error</code> — renders the nearest <code>+error</code> boundary with <code>result.error</code></ul><p>In all cases, <a href="../40-best-practices/10-accessibility.html#focus-management">focus will be reset</a>.</section><section id="custom-event-listener"class="level2"><h2>Custom event listener</h2><p>We can also implement progressive enhancement ourselves, without <code>use:enhance</code>, with a normal event listener on the <code>&#x3C;form></code>:<pre class="language-svelte"><code class="language-svelte">/// file: src/routes/login/+page.svelte
 &#x3C;script>
 	import { invalidateAll, goto } from '$app/navigation';
 	import { applyAction, deserialize } from '$app/forms';
@@ -270,5 +287,8 @@ declare namespace <span class="token maybe-class-name">App</span> <span class="t
 </span><span class="token prefix inserted">+</span><span class="token line">		'x-sveltekit-action': 'true'
 </span><span class="token prefix inserted">+</span><span class="token line">	}
 </span></span>});</code></pre></section><section id="alternatives"class="level2"><h2>Alternatives</h2><p>Form actions are the preferred way to send data to the server, since they can be progressively enhanced, but you can also use <a href="../20-core-concepts/10-routing.html#server"><code>+server.js</code></a> files to expose (for example) a JSON API.</section><section id="get-vs-post"class="level2"><h2>GET vs POST</h2><p>As we've seen, to invoke a form action you must use <code>method="POST"</code>.<p>Some forms don't need to <code>POST</code> data to the server — search inputs, for example. For these you can use <code>method="GET"</code> (or, equivalently, no <code>method</code> at all), and SvelteKit will treat them like <code>&#x3C;a></code> elements, using the client-side router instead of a full page navigation:<pre class="language-html"><code class="language-html"><span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;</span>form</span> <span class="token attr-name">action</span><span class="token attr-value"><span class="token punctuation attr-equals">=</span><span class="token punctuation">"</span>/search<span class="token punctuation">"</span></span><span class="token punctuation">></span></span>
-	<span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;</span>input</span> <span class="token attr-name">name</span><span class="token attr-value"><span class="token punctuation attr-equals">=</span><span class="token punctuation">"</span>q<span class="token punctuation">"</span></span><span class="token punctuation">></span></span>
+	<span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;</span>label</span><span class="token punctuation">></span></span>
+		Search
+		<span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;</span>input</span> <span class="token attr-name">name</span><span class="token attr-value"><span class="token punctuation attr-equals">=</span><span class="token punctuation">"</span>q<span class="token punctuation">"</span></span><span class="token punctuation">></span></span>
+	<span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;/</span>label</span><span class="token punctuation">></span></span>
 <span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;/</span>form</span><span class="token punctuation">></span></span></code></pre><p>As with <code>&#x3C;a></code> elements, you can set the <a href="../30-advanced/30-link-options.html#data-sveltekit-reload"><code>data-sveltekit-reload</code></a> and <a href="../30-advanced/30-link-options.html#data-sveltekit-noscroll"><code>data-sveltekit-noscroll</code></a> attributes on the <code>&#x3C;form></code> to control the router's behaviour. <span style="float:footnote"><a href="../../index.html#toc">Go to TOC</a></span></section></section>
