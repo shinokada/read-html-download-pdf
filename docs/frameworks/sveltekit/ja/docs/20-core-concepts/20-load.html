@@ -14,7 +14,7 @@
 &#x3C;/script>
 
 &#x3C;h1>{data.post.title}&#x3C;/h1>
-&#x3C;div>{@html data.post.content}&#x3C;/div></code></pre><p>生成される <code>$types</code> モジュールのおかげで、完全な型安全性を確保できます。<p><code>+page.js</code> ファイルの <code>load</code> 関数はサーバーでもブラウザでも実行されます。<code>load</code> 関数を <em>常に</em> サーバーで実行させたければ (例えばプライベートな環境変数を使用していたり、データベースにアクセスする場合など)、代わりに <code>+page.server.js</code> に <code>load</code> 関数を置くとよいでしょう。<p>例えばブログ記事の <code>load</code> 関数をより現実的なものにするとしたら、以下のように、サーバー上でのみ実行され、データベースからデータを取得する、というものになるでしょう。<pre class="language-js"><code class="language-js"><span class="token comment">/// file: src/routes/blog/[slug]/+page.server.js</span>
+&#x3C;div>{@html data.post.content}&#x3C;/div></code></pre><p>生成される <code>$types</code> モジュールのおかげで、完全な型安全性を確保できます。<p><code>+page.js</code> ファイルの <code>load</code> 関数はサーバーでもブラウザでも実行されます。<code>load</code> 関数を<em>常に</em>サーバーで実行させたければ (例えばプライベートな環境変数を使用していたり、データベースにアクセスする場合など)、代わりに <code>+page.server.js</code> に <code>load</code> 関数を置くとよいでしょう。<p>例えばブログ記事の <code>load</code> 関数をより現実的なものにするとしたら、以下のように、サーバー上でのみ実行され、データベースからデータを取得する、というものになるでしょう。<pre class="language-js"><code class="language-js"><span class="token comment">/// file: src/routes/blog/[slug]/+page.server.js</span>
 <span class="token comment">// @filename: ambient.d.ts</span>
 declare module <span class="token string">'$lib/server/database'</span> <span class="token punctuation">{</span>
 	<span class="token keyword module">export</span> <span class="token keyword">function</span> <span class="token function">getPost</span><span class="token punctuation">(</span><span class="token parameter"><span class="token literal-property property">slug</span><span class="token operator">:</span> string</span><span class="token punctuation">)</span><span class="token operator">:</span> <span class="token known-class-name class-name">Promise</span><span class="token operator">&#x3C;</span><span class="token punctuation">{</span> # string<span class="token punctuation">,</span> <span class="token literal-property property">content</span><span class="token operator">:</span> string <span class="token punctuation">}</span><span class="token operator">></span>
@@ -51,9 +51,8 @@ declare module <span class="token string">'$lib/server/database'</span> <span cl
 &#x3C;/script>
 
 &#x3C;main>
-	&#x3C;slot>
-		&#x3C;!-- +page.svelte is rendered here -->
-	&#x3C;/slot>
+	&#x3C;!-- +page.svelte is rendered in this &#x3C;slot> -->
+	&#x3C;slot />
 &#x3C;/main>
 
 &#x3C;aside>
@@ -213,7 +212,7 @@ declare namespace <span class="token maybe-class-name">App</span> <span class="t
 		<span class="token keyword control-flow">throw</span> <span class="token function">redirect</span><span class="token punctuation">(</span><span class="token number">307</span><span class="token punctuation">,</span> <span class="token string">'/login'</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
 	<span class="token punctuation">}</span>
 <span class="token punctuation">}</span></code></pre></section><section id="promise-unwrapping"class="level2"><h2>Promise unwrapping</h2><p>トップレベルの promise は await されるので、ウォータフォールを作ることなく、複数の promise を簡単に返すことができます:<pre class="language-js"><code class="language-js"><span class="token comment">/// file: src/routes/+page.js</span>
-<span class="token doc-comment comment">/** <span class="token keyword">@type</span> <span class="token class-name"><span class="token punctuation">{</span><span class="token keyword module">import</span><span class="token punctuation">(</span><span class="token string">'./$types'</span><span class="token punctuation">)</span><span class="token punctuation">.</span>PageServerLoad<span class="token punctuation">}</span></span> */</span>
+<span class="token doc-comment comment">/** <span class="token keyword">@type</span> <span class="token class-name"><span class="token punctuation">{</span><span class="token keyword module">import</span><span class="token punctuation">(</span><span class="token string">'./$types'</span><span class="token punctuation">)</span><span class="token punctuation">.</span>PageLoad<span class="token punctuation">}</span></span> */</span>
 <span class="token keyword module">export</span> <span class="token keyword">function</span> <span class="token function">load</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
 	<span class="token keyword control-flow">return</span> <span class="token punctuation">{</span>
 		<span class="token literal-property property">a</span><span class="token operator">:</span> <span class="token known-class-name class-name">Promise</span><span class="token punctuation">.</span><span class="token method function property-access">resolve</span><span class="token punctuation">(</span><span class="token string">'a'</span><span class="token punctuation">)</span><span class="token punctuation">,</span>
@@ -273,7 +272,7 @@ declare module <span class="token string">'$lib/server/database'</span> <span cl
 	<span class="token punctuation">}</span><span class="token punctuation">;</span>
 <span class="token punctuation">}</span></code></pre><pre class="language-svelte"><code class="language-svelte">/// file: src/routes/random-number/+page.svelte
 &#x3C;script>
-	import { invalidateAll } from '$app/navigation';
+	import { invalidate, invalidateAll } from '$app/navigation';
 
 	/** @type {import('./$types').PageData} */
 	export let data;
