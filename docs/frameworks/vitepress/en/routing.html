@@ -1,0 +1,53 @@
+<!doctype html><html lang="en"><meta charset="utf-8"><title>Routing</title><meta name="viewport"content="width=device-width,initial-scale=1"><link rel="stylesheet"href="../../../../../../../docs/themes/packages/prism-coy-theme/theme_common.css"><section id="routing"class="level1"><h1>Routing</h1><p>VitePress is built with file system based routing, which means the directory structure of the source file corresponds to the final URL. You may customize the mapping of the directory structure and URL too. Read through this page to learn everything about the VitePress routing system.<section id="basic-routing"class="level2"><h2>Basic Routing</h2><p>By default, VitePress assumes your page files are stored in project root. Here you may add markdown files with the name being the URL path. For example, when you have following directory structure:<pre class="language-text"><code class="language-text">.
+├─ guide
+│  ├─ getting-started.md
+│  └─ index.md
+├─ index.md
+└─ prologue.md</code></pre><p>Then you can access the pages by the below URL.<pre class="language-text"><code class="language-text">index.md           -> /
+prologue.md        -> /prologue.html
+guide/index.md     -> /guide/
+getting-started.md -> /guide/getting-started.html</code></pre><p>As you can see, the directory structure corresponds to the final URL, as same as hosting plain HTML from a typical web server.</section><section id="changing-the-root-directory"class="level2"><h2>Changing the Root Directory</h2><p>To change the root directory for your page files, you may pass the directory name to the <code>vitepress</code> command. For example, if you want to store your page files under <code>docs</code> directory, then you should run <code>vitepress dev docs</code> command.<pre class="language-text"><code class="language-text">.
+├─ docs
+│  ├─ getting-started.md
+│  └─ index.md
+└─ ...</code></pre><pre class="language-text"><code class="language-text">vitepress dev docs</code></pre><p>This is going to map the URL as follows.<pre class="language-text"><code class="language-text">docs/index.md           -> /
+docs/getting-started.md -> /getting-started.html</code></pre><p>You may also customize the root directory in config file via <a href="/config/app-configs#srcdir"><code>srcDir</code></a> option too. Running <code>vitepress dev</code> with the following setting acts same as running <code>vitepress dev docs</code> command.<pre class="language-ts"><code class="language-ts"><span class="token keyword module">export</span> <span class="token keyword module">default</span> <span class="token punctuation">{</span>
+  srcDir<span class="token operator">:</span> <span class="token string">'./docs'</span>
+<span class="token punctuation">}</span></code></pre></section><section id="linking-between-pages"class="level2"><h2>Linking Between Pages</h2><p>When adding links in pages, omit extension from the path and use either absolute path from the root, or relative path from the page. VitePress will handle the extension according to your configuration setup.<pre class="language-md"><code class="language-md"><span class="token comment">&#x3C;!-- Do --></span>
+<span class="token url">[<span class="token content">Getting Started</span>](<span class="token url">/guide/getting-started</span>)</span>
+<span class="token url">[<span class="token content">Getting Started</span>](<span class="token url">../guide/getting-started</span>)</span>
+
+<span class="token comment">&#x3C;!-- Don't --></span>
+<span class="token url">[<span class="token content">Getting Started</span>](<span class="token url">/guide/getting-started.md</span>)</span>
+<span class="token url">[<span class="token content">Getting Started</span>](<span class="token url">/guide/getting-started.html</span>)</span></code></pre><p>Learn more about page links and links to assets, such as link to images, at <a href="asset-handling">Asset Handling</a>.</section><section id="generate-clean-url"class="level2"><h2>Generate Clean URL</h2><p>A "Clean URL" is commonly known as URL without <code>.html</code> extension, for example, <code>example.com/path</code> instead of <code>example.com/path.html</code>.<p>By default, VitePress generates the final static page files by adding <code>.html</code> extension to each file. If you would like to have clean URL, you may structure your directory by only using <code>index.html</code> file.<pre class="language-text"><code class="language-text">.
+├─ getting-started
+│  └─ index.md
+├─ installation
+│  └─ index.md
+└─ index.md</code></pre><p>However, you may also generate a clean URL by setting up <a href="/config/app-configs#cleanurls-experimental"><code>cleanUrls</code></a> option.<pre class="language-ts"><code class="language-ts"><span class="token keyword module">export</span> <span class="token keyword module">default</span> <span class="token punctuation">{</span>
+  cleanUrls<span class="token operator">:</span> <span class="token string">'with-subfolders'</span>
+<span class="token punctuation">}</span></code></pre><p>This option has several modes you can choose. Here is the list of all modes available. The default behavior is <code>disabled</code> mode.<table><thead><tr><th align="left">Mode<th align="left">Page<th align="left">Generated Page<th align="left">URL<tbody><tr><td align="left"><code>'disabled'</code><td align="left"><code>/foo.md</code><td align="left"><code>/foo.html</code><td align="left"><code>/foo.html</code><tr><td align="left"><code>'without-subfolders'</code><td align="left"><code>/foo.md</code><td align="left"><code>/foo.html</code><td align="left"><code>/foo</code><tr><td align="left"><code>'with-subfolders'</code><td align="left"><code>/foo.md</code><td align="left"><code>/foo/index.html</code><td align="left"><code>/foo</code></table><p>::: warning Enabling this may require additional configuration on your hosting platform. For it to work, your server must serve the generated page on requesting the URL <strong>without a redirect</strong>. :::</section><section id="customize-the-mappings"class="level2"><h2>Customize the Mappings</h2><p>You may customize the mapping between directory structure and URL. It's useful when you have complex document structure. For example, let's say you have several packages and would like to place documentations along with the source files like this.<pre class="language-text"><code class="language-text">.
+├─ packages
+│  ├─ pkg-a
+│  │  └─ src
+│  │      ├─ pkg-a-code.ts
+│  │      └─ pkg-a-code.md
+│  └─ pkg-b
+│     └─ src
+│         ├─ pkg-b-code.ts
+│         └─ pkg-b-code.md</code></pre><p>And you want the VitePress pages to be generated as follows.<pre class="language-text"><code class="language-text">packages/pkg-a/src/pkg-a-code.md -> /pkg-a/pkg-a-code.md
+packages/pkg-b/src/pkg-b-code.md -> /pkg-b/pkg-b-code.md</code></pre><p>You may configure the mapping via <a href="/config/app-configs#rewrites"><code>rewrites</code></a> option like this.<pre class="language-ts"><code class="language-ts"><span class="token keyword module">export</span> <span class="token keyword module">default</span> <span class="token punctuation">{</span>
+  rewrites<span class="token operator">:</span> <span class="token punctuation">{</span>
+    <span class="token string-property property">'packages/pkg-a/src/pkg-a-code.md'</span><span class="token operator">:</span> <span class="token string">'pkg-a/pkg-a-code'</span><span class="token punctuation">,</span>
+    <span class="token string-property property">'packages/pkg-b/src/pkg-b-code.md'</span><span class="token operator">:</span> <span class="token string">'pkg-b/pkg-b-code'</span>
+  <span class="token punctuation">}</span>
+<span class="token punctuation">}</span></code></pre><p>The <code>rewrites</code> option can also have dynamic route parameters. In this example, we have fixed path <code>packages</code> and <code>src</code> which stays the same on all pages, and it might be verbose to have to list all pages in your config as you add pages. You may configure the above mapping as below and get the same result.<pre class="language-ts"><code class="language-ts"><span class="token keyword module">export</span> <span class="token keyword module">default</span> <span class="token punctuation">{</span>
+  rewrites<span class="token operator">:</span> <span class="token punctuation">{</span>
+    <span class="token string-property property">'packages/:pkg/src/:page'</span><span class="token operator">:</span> <span class="token string">':pkg/:page'</span>
+  <span class="token punctuation">}</span>
+<span class="token punctuation">}</span></code></pre><p>Route parameters are prefixed by <code>:</code> (e.g. <code>:pkg</code>). The name of the parameter is just a placeholder and can be anything.<p>In addition, you may add <code>*</code> at the end of the parameter to map all sub directories from there on.<pre class="language-ts"><code class="language-ts"><span class="token keyword module">export</span> <span class="token keyword module">default</span> <span class="token punctuation">{</span>
+  rewrites<span class="token operator">:</span> <span class="token punctuation">{</span>
+    <span class="token string-property property">'packages/:pkg/src/:page*'</span><span class="token operator">:</span> <span class="token string">':pkg/:page*'</span>
+  <span class="token punctuation">}</span>
+<span class="token punctuation">}</span></code></pre><p>The above will create mapping as below.<pre class="language-text"><code class="language-text">packages/pkg-a/src/pkg-a-code.md  -> /pkg-a/pkg-a-code
+packages/pkg-b/src/folder/file.md -> /pkg-b/folder/file</code></pre><p>::: warning You need server restart on page addition At the moment, VitePress doesn't detect page additions to the mapped directory. You need to restart your server when adding or removing files from the directory during the dev mode. Updating the already existing files gets updated as usual. :::<section id="relative-link-handling-in-page"class="level3"><h3>Relative Link Handling in Page</h3><p>Note that when enabling rewrites, <strong>relative links in the markdown are resolved relative to the final path</strong>. For example, in order to create relative link from <code>packages/pkg-a/src/pkg-a-code.md</code> to <code>packages/pkg-b/src/pkg-b-code.md</code>, you should define link as below.<pre class="language-md"><code class="language-md"><span class="token url">[<span class="token content">Link to PKG B</span>](<span class="token url">../pkg-b/pkg-b-code</span>)</span></code></pre><p><span style="float:footnote"><a href="./index.html#toc">Go to TOC</a></span></section></section></section>

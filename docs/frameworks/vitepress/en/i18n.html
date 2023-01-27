@@ -1,0 +1,53 @@
+<!doctype html><html lang="en"><meta charset="utf-8"><title>Internationalization</title><meta name="viewport"content="width=device-width,initial-scale=1"><link rel="stylesheet"href="../../../../../../../docs/themes/packages/prism-coy-theme/theme_common.css"><section id="internationalization"class="level1"><h1>Internationalization</h1><p>To use the built-in i18n features, one needs to create a directory structure as follows:<pre class="language-text"><code class="language-text">docs/
+├─ es/
+│  ├─ foo.md
+├─ fr/
+│  ├─ foo.md
+├─ foo.md</code></pre><p>Then in <code>docs/.vitepress/config.ts</code>:<pre class="language-ts"><code class="language-ts"><span class="token keyword module">import</span> <span class="token imports"><span class="token punctuation">{</span> defineConfig <span class="token punctuation">}</span></span> <span class="token keyword module">from</span> <span class="token string">'vitepress'</span>
+
+<span class="token keyword module">export</span> <span class="token keyword module">default</span> <span class="token function">defineConfig</span><span class="token punctuation">(</span><span class="token punctuation">{</span>
+  <span class="token comment">// shared properties and other top-level stuff...</span>
+
+  locales<span class="token operator">:</span> <span class="token punctuation">{</span>
+    root<span class="token operator">:</span> <span class="token punctuation">{</span>
+      label<span class="token operator">:</span> <span class="token string">'English'</span><span class="token punctuation">,</span>
+      lang<span class="token operator">:</span> <span class="token string">'en'</span>
+    <span class="token punctuation">}</span><span class="token punctuation">,</span>
+    fr<span class="token operator">:</span> <span class="token punctuation">{</span>
+      label<span class="token operator">:</span> <span class="token string">'French'</span><span class="token punctuation">,</span>
+      lang<span class="token operator">:</span> <span class="token string">'fr'</span><span class="token punctuation">,</span> <span class="token comment">// optional, will be added  as `lang` attribute on `html` tag</span>
+      link<span class="token operator">:</span> <span class="token string">'/fr/guide'</span> <span class="token comment">// default /fr/ -- shows on navbar translations menu, can be external</span>
+
+      <span class="token comment">// other locale specific properties...</span>
+    <span class="token punctuation">}</span>
+  <span class="token punctuation">}</span>
+<span class="token punctuation">}</span><span class="token punctuation">)</span></code></pre><p>The following properties can be overridden for each locale (including root):<pre class="language-ts"><code class="language-ts"><span class="token keyword">interface</span> <span class="token class-name"><span class="token maybe-class-name">LocaleSpecificConfig</span><span class="token operator">&#x3C;</span><span class="token maybe-class-name">ThemeConfig</span> <span class="token operator">=</span> <span class="token builtin">any</span><span class="token operator">></span></span> <span class="token punctuation">{</span>
+  lang<span class="token operator">?</span><span class="token operator">:</span> <span class="token builtin">string</span>
+  dir<span class="token operator">?</span><span class="token operator">:</span> <span class="token builtin">string</span>
+  title<span class="token operator">?</span><span class="token operator">:</span> <span class="token builtin">string</span>
+  titleTemplate<span class="token operator">?</span><span class="token operator">:</span> <span class="token builtin">string</span> <span class="token operator">|</span> <span class="token builtin">boolean</span>
+  description<span class="token operator">?</span><span class="token operator">:</span> <span class="token builtin">string</span>
+  head<span class="token operator">?</span><span class="token operator">:</span> <span class="token maybe-class-name">HeadConfig</span><span class="token punctuation">[</span><span class="token punctuation">]</span> <span class="token comment">// will be merged with existing head entries, duplicate meta tags are automatically removed</span>
+  themeConfig<span class="token operator">?</span><span class="token operator">:</span> <span class="token maybe-class-name">ThemeConfig</span> <span class="token comment">// will be shallow merged, common stuff can be put in top-level themeConfig entry</span>
+<span class="token punctuation">}</span></code></pre><p>Refer <a href="https://github.com/vuejs/vitepress/blob/main/types/default-theme.d.ts"><code>DefaultTheme.Config</code></a> interface for details on customizing the placeholder texts of the default theme. Don't override <code>themeConfig.algolia</code> or <code>themeConfig.carbonAds</code> at locale-level. Refer <a href="./theme-search.html#i18n.html">Algolia docs</a> for using multilingual search.<p><strong>Pro tip:</strong> Config file can be stored at <code>docs/.vitepress/config/index.ts</code> too. It might help you organize stuff by creating a configuration file per locale and then merge and export them from <code>index.ts</code>.<section id="separate-directory-for-each-locale"class="level2"><h2>Separate directory for each locale</h2><p>The following is a perfectly fine structure:<pre class="language-text"><code class="language-text">docs/
+├─ en/
+│  ├─ foo.md
+├─ es/
+│  ├─ foo.md
+├─ fr/
+   ├─ foo.md</code></pre><p>However, VitePress won't redirect <code>/</code> to <code>/en/</code> by default. You'll need to configure your server for that. For example, on Netlify, you can add a <code>docs/public/_redirects</code> file like this:<pre class="language-text"><code class="language-text">/*  /es/:splat  302  Language=es
+/*  /fr/:splat  302  Language=fr
+/*  /en/:splat  302</code></pre><p><strong>Pro tip:</strong> If using the above approach, you can use <code>nf_lang</code> cookie to persist user's language choice. A very basic way to do this is register a watcher inside the <a href="./theme-introduction.html#using-a-custom-theme.html">setup</a> function of custom theme:<pre class="language-ts"><code class="language-ts"><span class="token comment">// docs/.vitepress/theme/index.ts</span>
+<span class="token keyword module">import</span> <span class="token imports"><span class="token maybe-class-name">DefaultTheme</span></span> <span class="token keyword module">from</span> <span class="token string">'vitepress/theme'</span>
+
+<span class="token keyword module">export</span> <span class="token keyword module">default</span> <span class="token punctuation">{</span>
+  <span class="token spread operator">...</span><span class="token maybe-class-name">DefaultTheme</span><span class="token punctuation">,</span>
+  <span class="token function">setup</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token keyword">const</span> <span class="token punctuation">{</span> lang <span class="token punctuation">}</span> <span class="token operator">=</span> <span class="token function">useData</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+    <span class="token function">watchEffect</span><span class="token punctuation">(</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token arrow operator">=></span> <span class="token punctuation">{</span>
+      <span class="token keyword control-flow">if</span> <span class="token punctuation">(</span>inBrowser<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token dom variable">document</span><span class="token punctuation">.</span><span class="token property-access">cookie</span> <span class="token operator">=</span> <span class="token template-string"><span class="token template-punctuation string">`</span><span class="token string">nf_lang=</span><span class="token interpolation"><span class="token interpolation-punctuation punctuation">${</span>lang<span class="token punctuation">.</span><span class="token property-access">value</span><span class="token interpolation-punctuation punctuation">}</span></span><span class="token string">; expires=Mon, 1 Jan 2024 00:00:00 UTC; path=/</span><span class="token template-punctuation string">`</span></span>
+      <span class="token punctuation">}</span>
+    <span class="token punctuation">}</span><span class="token punctuation">)</span>
+  <span class="token punctuation">}</span>
+<span class="token punctuation">}</span></code></pre></section><section id="rtl-support-experimental"class="level2"><h2>RTL Support (Experimental)</h2><p>For RTL support, specify <code>dir: 'rtl'</code> in config and use some RTLCSS PostCSS plugin like <a href="https://github.com/MohammadYounes/rtlcss">https://github.com/MohammadYounes/rtlcss</a>, <a href="https://github.com/vkalinichev/postcss-rtl">https://github.com/vkalinichev/postcss-rtl</a> or <a href="https://github.com/elchininet/postcss-rtlcss">https://github.com/elchininet/postcss-rtlcss</a>. You'll need to configure your PostCSS plugin to use <code>:where([dir="ltr"])</code> and <code>:where([dir="rtl"])</code> as prefixes to prevent CSS specificity issues. <span style="float:footnote"><a href="./index.html#toc">Go to TOC</a></span></section></section>
