@@ -1,0 +1,16 @@
+<!doctype html><html lang="en"><meta charset="utf-8"><title>Snapshots</title><meta name="viewport"content="width=device-width,initial-scale=1"><link rel="stylesheet"href="../../../../../../../../../docs/themes/packages/prism-coy-theme/theme_common.css"><section id="snapshots"class="level1"><h1>Snapshots</h1><p>Ephemeral DOM state — like scroll positions on sidebars, the content of <code>&#x3C;input></code> elements and so on — is discarded when you navigate from one page to another.<p>For example, if the user fills out a form but clicks a link before submitting, then hits the browser's back button, the values they filled in will be lost. In cases where it's valuable to preserve that input, you can take a <em>snapshot</em> of DOM state, which can then be restored if the user navigates back.<p>To do this, export a <code>snapshot</code> object with <code>capture</code> and <code>restore</code> methods from a <code>+page.svelte</code> or <code>+layout.svelte</code>:<pre class="language-svelte"><code class="language-svelte">/// file: +page.svelte
+&#x3C;script>
+	let comment = '';
+
+	/** @type {import('./$types').Snapshot&#x3C;string>} */
+	export const snapshot = {
+		capture: () => comment,
+		restore: (value) => comment = value
+	};
+&#x3C;/script>
+
+&#x3C;form method="POST">
+	&#x3C;label for="comment">Comment&#x3C;/label>
+	&#x3C;textarea id="comment" bind:value={comment} />
+	&#x3C;button>Post comment&#x3C;/button>
+&#x3C;/form></code></pre><p>When you navigate away from this page, the <code>capture</code> function is called immediately before the page updates, and the returned value is associated with the current entry in the browser's history stack. If you navigate back, the <code>restore</code> function is called with the stored value as soon as the page is updated.<p>The data must be serializable as JSON so that it can be persisted to <code>sessionStorage</code>. This allows the state to be restored when the page is reloaded, or when the user navigates back from a different site.<blockquote><p>Avoid returning very large objects from <code>capture</code> — once captured, objects will be retained in memory for the duration of the session, and in extreme cases may be too large to persist to <code>sessionStorage</code>. <span style="float:footnote"><a href="../../index.html#toc">Go to TOC</a></span></blockquote></section>

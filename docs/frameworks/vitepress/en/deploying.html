@@ -8,15 +8,20 @@
     <span class="token property">"docs:preview"</span><span class="token operator">:</span> <span class="token string">"vitepress preview docs --port 8080"</span>
   <span class="token punctuation">}</span>
 <span class="token punctuation">}</span></code></pre><p>Now the <code>docs:preview</code> method will launch the server at <code>http://localhost:8080</code>.</ul></section><section id="netlify-vercel-aws-amplify-cloudflare-pages-render"class="level2"><h2>Netlify, Vercel, AWS Amplify, Cloudflare Pages, Render</h2><p>Set up a new project and change these settings using your dashboard:<ul><li><strong>Build Command:</strong> <code>yarn docs:build</code><li><strong>Output Directory:</strong> <code>docs/.vitepress/dist</code><li><strong>Node Version:</strong> <code>14</code> (or above, by default it usually will be 14 or 16, but on Cloudflare Pages the default is still 12, so you may need to <a href="https://developers.cloudflare.com/pages/platform/build-configuration/">change that</a>)</ul><p>::: warning Don't enable options like <em>Auto Minify</em> for HTML code. It will remove comments from output which have meaning to Vue. You may see hydration mismatch errors if they get removed. :::</section><section id="github-pages"class="level2"><h2>GitHub Pages</h2><section id="using-github-actions"class="level3"><h3>Using GitHub Actions</h3><ol><li><p>In your theme config file, <code>docs/.vitepress/config.js</code>, set the <code>base</code> property to the name of your GitHub repository. If you plan to deploy your site to <code>https://foo.github.io/bar/</code>, then you should set base to <code>'/bar/'</code>. It should always start and end with a slash.<li><p>Create a file named <code>deploy.yml</code> inside <code>.github/workflows</code> directory of your project with the following content:<pre class="language-yaml"><code class="language-yaml"><span class="token key atrule">name</span><span class="token punctuation">:</span> Deploy
-
 <span class="token key atrule">on</span><span class="token punctuation">:</span>
+  <span class="token key atrule">workflow_dispatch</span><span class="token punctuation">:</span> <span class="token punctuation">{</span><span class="token punctuation">}</span>
   <span class="token key atrule">push</span><span class="token punctuation">:</span>
     <span class="token key atrule">branches</span><span class="token punctuation">:</span>
       <span class="token punctuation">-</span> main
-
 <span class="token key atrule">jobs</span><span class="token punctuation">:</span>
   <span class="token key atrule">deploy</span><span class="token punctuation">:</span>
     <span class="token key atrule">runs-on</span><span class="token punctuation">:</span> ubuntu<span class="token punctuation">-</span>latest
+    <span class="token key atrule">permissions</span><span class="token punctuation">:</span>
+      <span class="token key atrule">pages</span><span class="token punctuation">:</span> write     
+      <span class="token key atrule">id-token</span><span class="token punctuation">:</span> write 
+    <span class="token key atrule">environment</span><span class="token punctuation">:</span>
+      <span class="token key atrule">name</span><span class="token punctuation">:</span> github<span class="token punctuation">-</span>pages
+      <span class="token key atrule">url</span><span class="token punctuation">:</span> $<span class="token punctuation">{</span><span class="token punctuation">{</span> steps.deployment.outputs.page_url <span class="token punctuation">}</span><span class="token punctuation">}</span>
     <span class="token key atrule">steps</span><span class="token punctuation">:</span>
       <span class="token punctuation">-</span> <span class="token key atrule">uses</span><span class="token punctuation">:</span> actions/checkout@v3
         <span class="token key atrule">with</span><span class="token punctuation">:</span>
@@ -26,20 +31,33 @@
           <span class="token key atrule">node-version</span><span class="token punctuation">:</span> <span class="token number">16</span>
           <span class="token key atrule">cache</span><span class="token punctuation">:</span> yarn
       <span class="token punctuation">-</span> <span class="token key atrule">run</span><span class="token punctuation">:</span> yarn install <span class="token punctuation">-</span><span class="token punctuation">-</span>frozen<span class="token punctuation">-</span>lockfile
-
       <span class="token punctuation">-</span> <span class="token key atrule">name</span><span class="token punctuation">:</span> Build
         <span class="token key atrule">run</span><span class="token punctuation">:</span> yarn docs<span class="token punctuation">:</span>build
-
-      <span class="token punctuation">-</span> <span class="token key atrule">name</span><span class="token punctuation">:</span> Deploy
-        <span class="token key atrule">uses</span><span class="token punctuation">:</span> peaceiris/actions<span class="token punctuation">-</span>gh<span class="token punctuation">-</span>pages@v3
+      <span class="token punctuation">-</span> <span class="token key atrule">uses</span><span class="token punctuation">:</span> actions/configure<span class="token punctuation">-</span>pages@v2
+      <span class="token punctuation">-</span> <span class="token key atrule">uses</span><span class="token punctuation">:</span> actions/upload<span class="token punctuation">-</span>pages<span class="token punctuation">-</span>artifact@v1
         <span class="token key atrule">with</span><span class="token punctuation">:</span>
-          <span class="token key atrule">github_token</span><span class="token punctuation">:</span> $<span class="token punctuation">{</span><span class="token punctuation">{</span> secrets.GITHUB_TOKEN <span class="token punctuation">}</span><span class="token punctuation">}</span>
-          <span class="token key atrule">publish_dir</span><span class="token punctuation">:</span> docs/.vitepress/dist
-          <span class="token comment"># cname: example.com # if wanna deploy to custom domain</span></code></pre><p>::: tip Please replace the corresponding branch name. For example, if the branch you want to build is <code>master</code>, then you should replace <code>main</code> with <code>master</code> in the above file. :::<li><p>Now commit your code and push it to the <code>main</code> branch.<li><p>Wait for actions to complete.<li><p>In your repository's Settings under Pages menu item, select <code>gh-pages</code> branch as GitHub Pages source. Now your docs will automatically deploy each time you push.</ol></section></section><section id="gitlab-pages"class="level2"><h2>GitLab Pages</h2><section id="using-gitlab-ci"class="level3"><h3>Using GitLab CI</h3><ol><li><p>Set <code>outDir</code> in <code>docs/.vitepress/config.js</code> to <code>../public</code>.<li><p>Still in your config file, <code>docs/.vitepress/config.js</code>, set the <code>base</code> property to the name of your GitLab repository. If you plan to deploy your site to <code>https://foo.gitlab.io/bar/</code>, then you should set base to <code>'/bar/'</code>. It should always start and end with a slash.<li><p>Create a file called <code>.gitlab-ci.yml</code> in the root of your project with the content below. This will build and deploy your site whenever you make changes to your content:<pre class="language-yaml"><code class="language-yaml"><span class="token key atrule">image</span><span class="token punctuation">:</span> node<span class="token punctuation">:</span><span class="token number">16</span>
+          <span class="token key atrule">path</span><span class="token punctuation">:</span> docs/.vitepress/dist
+      <span class="token punctuation">-</span> <span class="token key atrule">name</span><span class="token punctuation">:</span> Deploy
+        <span class="token key atrule">id</span><span class="token punctuation">:</span> deployment
+        <span class="token key atrule">uses</span><span class="token punctuation">:</span> actions/deploy<span class="token punctuation">-</span>pages@v1</code></pre><p>::: tip Please replace the corresponding branch name. For example, if the branch you want to build is <code>master</code>, then you should replace <code>main</code> with <code>master</code> in the above file. :::<li><p>Now commit your code and push it to the <code>main</code> branch.<li><p>Wait for actions to complete.<li><p>In your repository's Settings under Pages menu item, select <code>gh-pages</code> branch as GitHub Pages source. Now your docs will automatically deploy each time you push.</ol></section></section><section id="gitlab-pages"class="level2"><h2>GitLab Pages</h2><section id="using-gitlab-ci"class="level3"><h3>Using GitLab CI</h3><ol><li><p>Set <code>outDir</code> in <code>docs/.vitepress/config.js</code> to <code>../public</code>.<li><p>Still in your config file, <code>docs/.vitepress/config.js</code>, set the <code>base</code> property to the name of your GitLab repository. If you plan to deploy your site to <code>https://foo.gitlab.io/bar/</code>, then you should set base to <code>'/bar/'</code>. It should always start and end with a slash.<li><p>Create a file called <code>.gitlab-ci.yml</code> in the root of your project with the content below. This will build and deploy your site whenever you make changes to your content:<pre class="language-yaml"><code class="language-yaml"><span class="token key atrule">image</span><span class="token punctuation">:</span> node<span class="token punctuation">:</span><span class="token number">16</span>
 <span class="token key atrule">pages</span><span class="token punctuation">:</span>
   <span class="token key atrule">cache</span><span class="token punctuation">:</span>
     <span class="token key atrule">paths</span><span class="token punctuation">:</span>
       <span class="token punctuation">-</span> node_modules/
+  <span class="token key atrule">script</span><span class="token punctuation">:</span>
+    <span class="token punctuation">-</span> yarn install
+    <span class="token punctuation">-</span> yarn docs<span class="token punctuation">:</span>build
+  <span class="token key atrule">artifacts</span><span class="token punctuation">:</span>
+    <span class="token key atrule">paths</span><span class="token punctuation">:</span>
+      <span class="token punctuation">-</span> public
+  <span class="token key atrule">only</span><span class="token punctuation">:</span>
+    <span class="token punctuation">-</span> main</code></pre><li><p>Alternatively, if you want to use an <em>alpine</em> version of node, you have to install <code>git</code> manually. In that case, the code above modifies to this:<pre class="language-yaml"><code class="language-yaml"><span class="token key atrule">image</span><span class="token punctuation">:</span> node<span class="token punctuation">:</span>16<span class="token punctuation">-</span>alpine
+<span class="token key atrule">pages</span><span class="token punctuation">:</span>
+  <span class="token key atrule">cache</span><span class="token punctuation">:</span>
+    <span class="token key atrule">paths</span><span class="token punctuation">:</span>
+      <span class="token punctuation">-</span> node_modules/
+  <span class="token key atrule">before_script</span><span class="token punctuation">:</span>
+    <span class="token punctuation">-</span> apk add git
   <span class="token key atrule">script</span><span class="token punctuation">:</span>
     <span class="token punctuation">-</span> yarn install
     <span class="token punctuation">-</span> yarn docs<span class="token punctuation">:</span>build
@@ -58,4 +76,4 @@
   <span class="token punctuation">}</span>
 <span class="token punctuation">}</span></code></pre><li><p>After running <code>yarn docs:build</code>, run this command to deploy:<pre class="language-sh"><code class="language-sh">firebase deploy</code></pre></ol></section><section id="surge"class="level2"><h2>Surge</h2><ol><li><p>After running <code>yarn docs:build</code>, run this command to deploy:<pre class="language-sh"><code class="language-sh">npx surge docs/.vitepress/dist</code></pre></ol></section><section id="heroku"class="level2"><h2>Heroku</h2><ol><li><p>Follow documentation and guide given in <a href="https://elements.heroku.com/buildpacks/heroku/heroku-buildpack-static"><code>heroku-buildpack-static</code></a>.<li><p>Create a file called <code>static.json</code> in the root of your project with the below content:<pre class="language-json"><code class="language-json"><span class="token punctuation">{</span>
   <span class="token property">"root"</span><span class="token operator">:</span> <span class="token string">"docs/.vitepress/dist"</span>
-<span class="token punctuation">}</span></code></pre></ol></section><section id="layer0"class="level2"><h2>Layer0</h2><p>Refer <a href="https://docs.layer0.co/guides/vitepress">Creating and Deploying a VitePress App with Layer0</a>. <span style="float:footnote"><a href="./index.html#toc">Go to TOC</a></span></section></section>
+<span class="token punctuation">}</span></code></pre></ol></section><section id="edgio"class="level2"><h2>Edgio</h2><p>Refer <a href="https://docs.edg.io/guides/vitepress">Creating and Deploying a VitePress App To Edgio</a>. <span style="float:footnote"><a href="./index.html#toc">Go to TOC</a></span></section></section>

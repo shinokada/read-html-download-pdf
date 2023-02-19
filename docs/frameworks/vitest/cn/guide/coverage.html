@@ -4,7 +4,7 @@
 <span class="token keyword module">export</span> <span class="token keyword module">default</span> <span class="token function">defineConfig</span><span class="token punctuation">(</span><span class="token punctuation">{</span>
   test<span class="token operator">:</span> <span class="token punctuation">{</span>
     coverage<span class="token operator">:</span> <span class="token punctuation">{</span>
-      provider<span class="token operator">:</span> <span class="token string">'istanbul'</span> <span class="token comment">// or 'c8'</span>
+      provider<span class="token operator">:</span> <span class="token string">'istanbul'</span><span class="token punctuation">,</span> <span class="token comment">// or 'c8'</span>
     <span class="token punctuation">}</span><span class="token punctuation">,</span>
   <span class="token punctuation">}</span><span class="token punctuation">,</span>
 <span class="token punctuation">}</span><span class="token punctuation">)</span></code></pre><p>当你启动 Vitest 进程时，它会提示你自动安装相应的支持包。<p>或者，如果你更喜欢手动安装它们：<pre class="language-bash"><code class="language-bash"><span class="token comment"># For c8</span>
@@ -25,24 +25,52 @@
       reporter<span class="token operator">:</span> <span class="token punctuation">[</span><span class="token string">'text'</span><span class="token punctuation">,</span> <span class="token string">'json'</span><span class="token punctuation">,</span> <span class="token string">'html'</span><span class="token punctuation">]</span><span class="token punctuation">,</span>
     <span class="token punctuation">}</span><span class="token punctuation">,</span>
   <span class="token punctuation">}</span><span class="token punctuation">,</span>
-<span class="token punctuation">}</span><span class="token punctuation">)</span></code></pre></section><section id="自定义覆盖率提供者"class="level2"><h2>自定义覆盖率提供者</h2><p>也可以通过将对象传递给 <code>test.coverage.provider</code> 来配置你的自定义覆盖率提供者：<pre class="language-ts"><code class="language-ts"><span class="token comment">// vite.config.ts</span>
+<span class="token punctuation">}</span><span class="token punctuation">)</span></code></pre></section><section id="自定义覆盖率提供者"class="level2"><h2>自定义覆盖率提供者</h2><p>也可以通过将 <code>'custom'</code> 传递给 <code>test.coverage.provider</code> 来配置你的自定义覆盖率提供者：<pre class="language-ts"><code class="language-ts"><span class="token comment">// vite.config.ts</span>
 <span class="token keyword module">import</span> <span class="token imports"><span class="token punctuation">{</span> defineConfig <span class="token punctuation">}</span></span> <span class="token keyword module">from</span> <span class="token string">'vitest/config'</span>
-<span class="token keyword module">import</span> <span class="token imports"><span class="token maybe-class-name">CustomCoverageProvider</span></span> <span class="token keyword module">from</span> <span class="token string">'my-custom-coverage-provider'</span>
 
 <span class="token keyword module">export</span> <span class="token keyword module">default</span> <span class="token function">defineConfig</span><span class="token punctuation">(</span><span class="token punctuation">{</span>
   test<span class="token operator">:</span> <span class="token punctuation">{</span>
     coverage<span class="token operator">:</span> <span class="token punctuation">{</span>
-      provider<span class="token operator">:</span> <span class="token function"><span class="token maybe-class-name">CustomCoverageProvider</span></span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+      provider<span class="token operator">:</span> <span class="token string">'custom'</span><span class="token punctuation">,</span>
+      customProviderModule<span class="token operator">:</span> <span class="token string">'my-custom-coverage-provider'</span><span class="token punctuation">,</span>
     <span class="token punctuation">}</span><span class="token punctuation">,</span>
   <span class="token punctuation">}</span><span class="token punctuation">,</span>
-<span class="token punctuation">}</span><span class="token punctuation">)</span></code></pre><p>请参阅类型定义查看有关详细信息。</section><section id="更改默认覆盖文件夹位置"class="level2"><h2>更改默认覆盖文件夹位置</h2><p>运行覆盖率报告时，会在项目的根目录中创建一个 <code>coverage</code> 文件夹。 如果你想将它移动到不同的目录，请使用 <code>vite.config.js</code> 文件中的 <code>test.coverage.reportsDirectory</code> 属性。<pre class="language-js"><code class="language-js"><span class="token keyword module">import</span> <span class="token imports"><span class="token punctuation">{</span> defineConfig <span class="token punctuation">}</span></span> <span class="token keyword module">from</span> <span class="token string">'vite'</span>
+<span class="token punctuation">}</span><span class="token punctuation">)</span></code></pre><p>自定义覆盖率提供者需要一个 <code>customProviderModule</code> 选项，它是一个模块名称或从中加载 <code>CoverageProviderModule</code> 的路径。 它必须将实现 <code>CoverageProviderModule</code> 的对象导出为默认导出：<pre class="language-ts"><code class="language-ts"><span class="token comment">// my-custom-coverage-provider.ts</span>
+<span class="token keyword module">import</span> <span class="token keyword">type</span> <span class="token punctuation">{</span>
+  <span class="token maybe-class-name">CoverageProvider</span><span class="token punctuation">,</span>
+  <span class="token maybe-class-name">CoverageProviderModule</span><span class="token punctuation">,</span>
+  <span class="token maybe-class-name">ResolvedCoverageOptions</span><span class="token punctuation">,</span>
+  <span class="token maybe-class-name">Vitest</span><span class="token punctuation">,</span>
+<span class="token punctuation">}</span> <span class="token keyword module">from</span> <span class="token string">'vitest'</span>
+
+<span class="token keyword">const</span> <span class="token maybe-class-name">CustomCoverageProviderModule</span><span class="token operator">:</span> <span class="token maybe-class-name">CoverageProviderModule</span> <span class="token operator">=</span> <span class="token punctuation">{</span>
+  <span class="token function">getProvider</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token operator">:</span> <span class="token maybe-class-name">CoverageProvider</span> <span class="token punctuation">{</span>
+    <span class="token keyword control-flow">return</span> <span class="token keyword">new</span> <span class="token class-name"><span class="token maybe-class-name">CustomCoverageProvider</span></span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+  <span class="token punctuation">}</span><span class="token punctuation">,</span>
+
+  <span class="token comment">// Implements rest of the CoverageProviderModule ...</span>
+<span class="token punctuation">}</span>
+
+<span class="token keyword">class</span> <span class="token class-name"><span class="token maybe-class-name">CustomCoverageProvider</span></span> <span class="token keyword">implements</span> <span class="token class-name"><span class="token maybe-class-name">CoverageProvider</span></span> <span class="token punctuation">{</span>
+  name <span class="token operator">=</span> <span class="token string">'custom-coverage-provider'</span>
+  options<span class="token operator">!</span><span class="token operator">:</span> <span class="token maybe-class-name">ResolvedCoverageOptions</span>
+
+  <span class="token function">initialize</span><span class="token punctuation">(</span>ctx<span class="token operator">:</span> <span class="token maybe-class-name">Vitest</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token keyword">this</span><span class="token punctuation">.</span><span class="token property-access">options</span> <span class="token operator">=</span> ctx<span class="token punctuation">.</span><span class="token property-access">config</span><span class="token punctuation">.</span><span class="token property-access">coverage</span>
+  <span class="token punctuation">}</span>
+
+  <span class="token comment">// Implements rest of the CoverageProvider ...</span>
+<span class="token punctuation">}</span>
+
+<span class="token keyword module">export</span> <span class="token keyword module">default</span> <span class="token maybe-class-name">CustomCoverageProviderModule</span></code></pre><p>请参阅类型定义查看有关详细信息。</section><section id="更改默认覆盖文件夹位置"class="level2"><h2>更改默认覆盖文件夹位置</h2><p>运行覆盖率报告时，会在项目的根目录中创建一个 <code>coverage</code> 文件夹。 如果你想将它移动到不同的目录，请使用 <code>vite.config.js</code> 文件中的 <code>test.coverage.reportsDirectory</code> 属性。<pre class="language-js"><code class="language-js"><span class="token keyword module">import</span> <span class="token imports"><span class="token punctuation">{</span> defineConfig <span class="token punctuation">}</span></span> <span class="token keyword module">from</span> <span class="token string">'vite'</span>
 
 <span class="token keyword module">export</span> <span class="token keyword module">default</span> <span class="token function">defineConfig</span><span class="token punctuation">(</span><span class="token punctuation">{</span>
   <span class="token literal-property property">test</span><span class="token operator">:</span> <span class="token punctuation">{</span>
     <span class="token literal-property property">coverage</span><span class="token operator">:</span> <span class="token punctuation">{</span>
-      <span class="token literal-property property">reportsDirectory</span><span class="token operator">:</span> <span class="token string">'./tests/unit/coverage'</span>
-    <span class="token punctuation">}</span>
-  <span class="token punctuation">}</span>
-<span class="token punctuation">}</span><span class="token punctuation">)</span></code></pre></section><section id="ignoring-code"class="level2"><h2>Ignoring code</h2><p>两个覆盖率提供商都有自己的方法来忽略覆盖率报告中的代码。<ul><li><code>c8</code>: <a href="https://github.com/bcoe/c8#ignoring-uncovered-lines-functions-and-blocks">https://github.com/bcoe/c8#ignoring-uncovered-lines-functions-and-blocks</a><li><code>ìstanbul</code> <a href="https://github.com/istanbuljs/nyc#parsing-hints-ignoring-lines">https://github.com/istanbuljs/nyc#parsing-hints-ignoring-lines</a></ul><p>使用 Typescript 时，源代码使用 <code>esbuild</code> 进行转译，这会从源代码中删除所有注释(<a href="https://github.com/evanw/esbuild/issues/516">esbuild#516</a>)。 被视为<a href="https://esbuild.github.io/api/#legal-comments">合法注释</a>的注释。<p>对于 <code>istanbul</code> 测试提供者，你可以在忽略提示中包含 <code>@preserve</code> 关键字。 请注意，这些忽略提示现在也可能包含在最终的产品构建中。<pre class="language-diff"><code class="language-diff"><span class="token deleted-sign deleted"><span class="token prefix deleted">-</span><span class="token line">/* istanbul ignore if */
+      <span class="token literal-property property">reportsDirectory</span><span class="token operator">:</span> <span class="token string">'./tests/unit/coverage'</span><span class="token punctuation">,</span>
+    <span class="token punctuation">}</span><span class="token punctuation">,</span>
+  <span class="token punctuation">}</span><span class="token punctuation">,</span>
+<span class="token punctuation">}</span><span class="token punctuation">)</span></code></pre></section><section id="ignoring-code"class="level2"><h2>Ignoring code</h2><p>两个覆盖率提供商都有自己的方法来忽略覆盖率报告中的代码：<ul><li><a href="https://github.com/bcoe/c8#ignoring-uncovered-lines-functions-and-blocks"><code>c8</code></a><li><a href="https://github.com/istanbuljs/nyc#parsing-hints-ignoring-lines"><code>ìstanbul</code></a></ul><p>使用 Typescript 时，源代码使用 <code>esbuild</code> 进行转译，这会从源代码中删除所有注释(<a href="https://github.com/evanw/esbuild/issues/516">esbuild#516</a>)。 被视为<a href="https://esbuild.github.io/api/#legal-comments">合法注释</a>的注释。<p>对于 <code>istanbul</code> 测试提供者，你可以在忽略提示中包含 <code>@preserve</code> 关键字。 请注意，这些忽略提示现在也可能包含在最终的产品构建中。<pre class="language-diff"><code class="language-diff"><span class="token deleted-sign deleted"><span class="token prefix deleted">-</span><span class="token line">/* istanbul ignore if */
 </span></span><span class="token inserted-sign inserted"><span class="token prefix inserted">+</span><span class="token line">/* istanbul ignore if -- @preserve */
-</span></span>if (condition) {</code></pre><p>不幸的是，目前这在 <code>c8</code> 中不起作用。 <span style="float:footnote"><a href="../index.html#toc">Go to TOC</a></span></section></section>
+</span></span>if (condition) {</code></pre><p>不幸的是，目前这在 <code>c8</code> 中不起作用。你通常可以在 Typescript 使用 <code>c8 ignore</code> 注释：<pre class="language-ts"><code class="language-ts"><span class="token comment">/* c8 ignore next 3 */</span>
+<span class="token keyword control-flow">if</span> <span class="token punctuation">(</span>condition<span class="token punctuation">)</span> <span class="token punctuation">{</span></code></pre><p><span style="float:footnote"><a href="../index.html#toc">Go to TOC</a></span></section></section>

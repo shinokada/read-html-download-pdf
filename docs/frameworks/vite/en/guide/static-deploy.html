@@ -8,35 +8,57 @@ $ <span class="token function">npm</span> run preview</code></pre><p>The <code>v
   <span class="token property">"scripts"</span><span class="token operator">:</span> <span class="token punctuation">{</span>
     <span class="token property">"preview"</span><span class="token operator">:</span> <span class="token string">"vite preview --port 8080"</span>
   <span class="token punctuation">}</span>
-<span class="token punctuation">}</span></code></pre><p>Now the <code>preview</code> command will launch the server at <code>http://localhost:8080</code>.</section></section><section id="github-pages"class="level2"><h2>GitHub Pages</h2><ol><li><p>Set the correct <code>base</code> in <code>vite.config.js</code>.<p>If you are deploying to <code>https://&#x3C;USERNAME>.github.io/</code>, you can omit <code>base</code> as it defaults to <code>'/'</code>.<p>If you are deploying to <code>https://&#x3C;USERNAME>.github.io/&#x3C;REPO>/</code>, for example your repository is at <code>https://github.com/&#x3C;USERNAME>/&#x3C;REPO></code>, then set <code>base</code> to <code>'/&#x3C;REPO>/'</code>.<li><p>Inside your project, create <code>deploy.sh</code> with the following content (with highlighted lines uncommented appropriately), and run it to deploy:<pre class="language-bash{16,24,27}"><code class="language-bash{16,24,27}">#!/usr/bin/env sh
+<span class="token punctuation">}</span></code></pre><p>Now the <code>preview</code> command will launch the server at <code>http://localhost:8080</code>.</section></section><section id="github-pages"class="level2"><h2>GitHub Pages</h2><ol><li><p>Set the correct <code>base</code> in <code>vite.config.js</code>.<p>If you are deploying to <code>https://&#x3C;USERNAME>.github.io/</code>, you can omit <code>base</code> as it defaults to <code>'/'</code>.<p>If you are deploying to <code>https://&#x3C;USERNAME>.github.io/&#x3C;REPO>/</code>, for example your repository is at <code>https://github.com/&#x3C;USERNAME>/&#x3C;REPO></code>, then set <code>base</code> to <code>'/&#x3C;REPO>/'</code>.<li><p>Go to your GitHub Pages configuration in the repository settings page and choose the source of deployment as "GitHub Actions", this will lead you to create a workflow that builds and deploys your project, a sample workflow that installs dependencies and builds using npm is provided:<pre class="language-yml"><code class="language-yml"><span class="token comment"># Simple workflow for deploying static content to GitHub Pages</span>
+<span class="token key atrule">name</span><span class="token punctuation">:</span> Deploy static content to Pages
 
-# abort on errors
-set -e
+<span class="token key atrule">on</span><span class="token punctuation">:</span>
+  <span class="token comment"># Runs on pushes targeting the default branch</span>
+  <span class="token key atrule">push</span><span class="token punctuation">:</span>
+    <span class="token key atrule">branches</span><span class="token punctuation">:</span> <span class="token punctuation">[</span><span class="token string">'main'</span><span class="token punctuation">]</span>
 
-# build
-npm run build
+  <span class="token comment"># Allows you to run this workflow manually from the Actions tab</span>
+  <span class="token key atrule">workflow_dispatch</span><span class="token punctuation">:</span>
 
-# navigate into the build output directory
-cd dist
+<span class="token comment"># Sets permissions of the GITHUB_TOKEN to allow deployment to GitHub Pages</span>
+<span class="token key atrule">permissions</span><span class="token punctuation">:</span>
+  <span class="token key atrule">contents</span><span class="token punctuation">:</span> read
+  <span class="token key atrule">pages</span><span class="token punctuation">:</span> write
+  <span class="token key atrule">id-token</span><span class="token punctuation">:</span> write
 
-# place .nojekyll to bypass Jekyll processing
-echo > .nojekyll
+<span class="token comment"># Allow one concurrent deployment</span>
+<span class="token key atrule">concurrency</span><span class="token punctuation">:</span>
+  <span class="token key atrule">group</span><span class="token punctuation">:</span> <span class="token string">'pages'</span>
+  <span class="token key atrule">cancel-in-progress</span><span class="token punctuation">:</span> <span class="token boolean important">true</span>
 
-# if you are deploying to a custom domain
-# echo 'www.example.com' > CNAME
-
-git init
-git checkout -B main
-git add -A
-git commit -m 'deploy'
-
-# if you are deploying to https://&#x3C;USERNAME>.github.io
-# git push -f git@github.com:&#x3C;USERNAME>/&#x3C;USERNAME>.github.io.git main
-
-# if you are deploying to https://&#x3C;USERNAME>.github.io/&#x3C;REPO>
-# git push -f git@github.com:&#x3C;USERNAME>/&#x3C;REPO>.git main:gh-pages
-
-cd -</code></pre></ol>tip You can also run the above script in your CI setup to enable automatic deployment on each push.</section><section id="gitlab-pages-and-gitlab-ci"class="level2"><h2>GitLab Pages and GitLab CI</h2><ol><li><p>Set the correct <code>base</code> in <code>vite.config.js</code>.<p>If you are deploying to <code>https://&#x3C;USERNAME or GROUP>.gitlab.io/</code>, you can omit <code>base</code> as it defaults to <code>'/'</code>.<p>If you are deploying to <code>https://&#x3C;USERNAME or GROUP>.gitlab.io/&#x3C;REPO>/</code>, for example your repository is at <code>https://gitlab.com/&#x3C;USERNAME>/&#x3C;REPO></code>, then set <code>base</code> to <code>'/&#x3C;REPO>/'</code>.<li><p>Create a file called <code>.gitlab-ci.yml</code> in the root of your project with the content below. This will build and deploy your site whenever you make changes to your content:<pre class="language-yaml"><code class="language-yaml"><span class="token key atrule">image</span><span class="token punctuation">:</span> node<span class="token punctuation">:</span>16.5.0
+<span class="token key atrule">jobs</span><span class="token punctuation">:</span>
+  <span class="token comment"># Single deploy job since we're just deploying</span>
+  <span class="token key atrule">deploy</span><span class="token punctuation">:</span>
+    <span class="token key atrule">environment</span><span class="token punctuation">:</span>
+      <span class="token key atrule">name</span><span class="token punctuation">:</span> github<span class="token punctuation">-</span>pages
+      <span class="token key atrule">url</span><span class="token punctuation">:</span> $<span class="token punctuation">{</span><span class="token punctuation">{</span> steps.deployment.outputs.page_url <span class="token punctuation">}</span><span class="token punctuation">}</span>
+    <span class="token key atrule">runs-on</span><span class="token punctuation">:</span> ubuntu<span class="token punctuation">-</span>latest
+    <span class="token key atrule">steps</span><span class="token punctuation">:</span>
+      <span class="token punctuation">-</span> <span class="token key atrule">name</span><span class="token punctuation">:</span> Checkout
+        <span class="token key atrule">uses</span><span class="token punctuation">:</span> actions/checkout@v3
+      <span class="token punctuation">-</span> <span class="token key atrule">name</span><span class="token punctuation">:</span> Set up Node
+        <span class="token key atrule">uses</span><span class="token punctuation">:</span> actions/setup<span class="token punctuation">-</span>node@v3
+        <span class="token key atrule">with</span><span class="token punctuation">:</span>
+          <span class="token key atrule">node-version</span><span class="token punctuation">:</span> <span class="token number">18</span>
+          <span class="token key atrule">cache</span><span class="token punctuation">:</span> <span class="token string">'npm'</span>
+      <span class="token punctuation">-</span> <span class="token key atrule">name</span><span class="token punctuation">:</span> Install dependencies
+        <span class="token key atrule">run</span><span class="token punctuation">:</span> npm install
+      <span class="token punctuation">-</span> <span class="token key atrule">name</span><span class="token punctuation">:</span> Build
+        <span class="token key atrule">run</span><span class="token punctuation">:</span> npm run build
+      <span class="token punctuation">-</span> <span class="token key atrule">name</span><span class="token punctuation">:</span> Setup Pages
+        <span class="token key atrule">uses</span><span class="token punctuation">:</span> actions/configure<span class="token punctuation">-</span>pages@v3
+      <span class="token punctuation">-</span> <span class="token key atrule">name</span><span class="token punctuation">:</span> Upload artifact
+        <span class="token key atrule">uses</span><span class="token punctuation">:</span> actions/upload<span class="token punctuation">-</span>pages<span class="token punctuation">-</span>artifact@v1
+        <span class="token key atrule">with</span><span class="token punctuation">:</span>
+          <span class="token comment"># Upload dist repository</span>
+          <span class="token key atrule">path</span><span class="token punctuation">:</span> <span class="token string">'./dist'</span>
+      <span class="token punctuation">-</span> <span class="token key atrule">name</span><span class="token punctuation">:</span> Deploy to GitHub Pages
+        <span class="token key atrule">id</span><span class="token punctuation">:</span> deployment
+        <span class="token key atrule">uses</span><span class="token punctuation">:</span> actions/deploy<span class="token punctuation">-</span>pages@v1</code></pre></ol></section><section id="gitlab-pages-and-gitlab-ci"class="level2"><h2>GitLab Pages and GitLab CI</h2><ol><li><p>Set the correct <code>base</code> in <code>vite.config.js</code>.<p>If you are deploying to <code>https://&#x3C;USERNAME or GROUP>.gitlab.io/</code>, you can omit <code>base</code> as it defaults to <code>'/'</code>.<p>If you are deploying to <code>https://&#x3C;USERNAME or GROUP>.gitlab.io/&#x3C;REPO>/</code>, for example your repository is at <code>https://gitlab.com/&#x3C;USERNAME>/&#x3C;REPO></code>, then set <code>base</code> to <code>'/&#x3C;REPO>/'</code>.<li><p>Create a file called <code>.gitlab-ci.yml</code> in the root of your project with the content below. This will build and deploy your site whenever you make changes to your content:<pre class="language-yaml"><code class="language-yaml"><span class="token key atrule">image</span><span class="token punctuation">:</span> node<span class="token punctuation">:</span>16.5.0
 <span class="token key atrule">pages</span><span class="token punctuation">:</span>
   <span class="token key atrule">stage</span><span class="token punctuation">:</span> deploy
   <span class="token key atrule">cache</span><span class="token punctuation">:</span>
