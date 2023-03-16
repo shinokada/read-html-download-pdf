@@ -1,0 +1,118 @@
+<!doctype html><html lang="en"><meta charset="utf-8"><title>Using a Custom Theme</title><meta name="viewport"content="width=device-width,initial-scale=1"><link rel="stylesheet"href="../../../../../../../docs/themes/packages/prism-coy-theme/theme_common.css"><section id="using-a-custom-theme"class="level1"><h1>Using a Custom Theme</h1><section id="theme-resolving"class="level2"><h2>Theme Resolving</h2><p>You can enable a custom theme by creating a <code>.vitepress/theme/index.js</code> or <code>.vitepress/theme/index.ts</code> file (the "theme entry file"):<pre class="language-text"><code class="language-text">.
+├─ docs                # project root
+│  ├─ .vitepress
+│  │  ├─ theme
+│  │  │  └─ index.js   # theme entry
+│  │  └─ config.js     # config file
+│  └─ index.md
+└─ package.json</code></pre><p>VitePress will always use the custom theme instead of the default theme when it detects presence of a theme entry file. You can, however, <a href="./extending-default-theme.html">extend the default theme</a> to perform advanced customizations on top of it.</section><section id="theme-interface"class="level2"><h2>Theme Interface</h2><p>A VitePress custom theme is defined as an object with the following interface:<pre class="language-ts"><code class="language-ts"><span class="token keyword">interface</span> <span class="token class-name"><span class="token maybe-class-name">Theme</span></span> <span class="token punctuation">{</span>
+  <span class="token doc-comment comment">/**
+   * Root layout component for every page
+   * <span class="token keyword">@required</span>
+   */</span>
+  <span class="token maybe-class-name">Layout</span><span class="token operator">:</span> <span class="token maybe-class-name">Component</span>
+  <span class="token doc-comment comment">/**
+   * Enhance Vue app instance
+   * <span class="token keyword">@optional</span>
+   */</span>
+  enhanceApp<span class="token operator">?</span><span class="token operator">:</span> <span class="token punctuation">(</span>ctx<span class="token operator">:</span> <span class="token maybe-class-name">EnhanceAppContext</span><span class="token punctuation">)</span> <span class="token arrow operator">=></span> <span class="token maybe-class-name">Awaitable</span><span class="token operator">&#x3C;</span><span class="token keyword">void</span><span class="token operator">></span>
+  <span class="token doc-comment comment">/**
+   * Extend another theme, calling its `enhanceApp` before ours
+   * <span class="token keyword">@optional</span>
+   */</span>
+  <span class="token keyword">extends</span><span class="token operator">?</span><span class="token operator">:</span> <span class="token maybe-class-name">Theme</span>
+<span class="token punctuation">}</span>
+
+<span class="token keyword">interface</span> <span class="token class-name"><span class="token maybe-class-name">EnhanceAppContext</span></span> <span class="token punctuation">{</span>
+  app<span class="token operator">:</span> <span class="token maybe-class-name">App</span> <span class="token comment">// Vue app instance</span>
+  router<span class="token operator">:</span> <span class="token maybe-class-name">Router</span> <span class="token comment">// VitePress router instance</span>
+  siteData<span class="token operator">:</span> <span class="token maybe-class-name">Ref</span><span class="token operator">&#x3C;</span><span class="token maybe-class-name">SiteData</span><span class="token operator">></span> <span class="token comment">// Site-level metadata</span>
+<span class="token punctuation">}</span></code></pre><p>The theme entry file should export the theme as its default export:<pre class="language-js"><code class="language-js"><span class="token comment">// .vitepress/theme/index.js</span>
+
+<span class="token comment">// You can directly import Vue files in the theme entry</span>
+<span class="token comment">// VitePress is pre-configured with @vitejs/plugin-vue.</span>
+<span class="token keyword module">import</span> <span class="token imports"><span class="token maybe-class-name">Layout</span></span> <span class="token keyword module">from</span> <span class="token string">'./Layout.vue'</span>
+
+<span class="token keyword module">export</span> <span class="token keyword module">default</span> <span class="token punctuation">{</span>
+  <span class="token maybe-class-name">Layout</span><span class="token punctuation">,</span>
+  <span class="token function">enhanceApp</span><span class="token punctuation">(</span><span class="token parameter"><span class="token punctuation">{</span> app<span class="token punctuation">,</span> router<span class="token punctuation">,</span> siteData <span class="token punctuation">}</span></span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token comment">// ...</span>
+  <span class="token punctuation">}</span>
+<span class="token punctuation">}</span></code></pre><p>The default export is the only contract for a custom theme, and only the <code>Layout</code> property is required. So technically, a VitePress theme can be as simple as a single Vue component.<p>Inside your layout component, it works just like a normal Vite + Vue 3 application. Do note the theme also needs to be <a href="./ssr-compat.html">SSR-compatible</a>.</section><section id="building-a-layout"class="level2"><h2>Building a Layout</h2><p>The most basic layout component needs to contain a <a href="../reference/runtime-api#content"><code>&#x3C;Content /></code></a> component:<pre class="language-vue"><code class="language-vue">&#x3C;!-- .vitepress/theme/Layout.vue -->
+&#x3C;template>
+  &#x3C;h1>Custom Layout!&#x3C;/h1>
+
+  &#x3C;!-- this is where markdown content will be rendered -->
+  &#x3C;Content />
+&#x3C;/template></code></pre><p>The above layout simply renders every page's markdown as HTML. The first improvement we can add is to handle 404 errors:<pre class="language-vue{1-4,9-12}"><code class="language-vue{1-4,9-12}">&#x3C;script setup>
+import { useData } from 'vitepress'
+const { page } = useData()
+&#x3C;/script>
+
+&#x3C;template>
+  &#x3C;h1>Custom Layout!&#x3C;/h1>
+
+  &#x3C;div v-if="page.isNotFound">
+    Custom 404 page!
+  &#x3C;/div>
+  &#x3C;Content v-else />
+&#x3C;/template></code></pre><p>The <a href="../reference/runtime-api#usedata"><code>useData()</code></a> helper provides us with all the runtime data we need to conditionally render different layouts. One of the other data we can access is the current page's frontmatter. We can leverage this to allow the end user to control the layout in each page. For example, the user can indicate the page should use a special home page layout with:<pre class="language-md"><code class="language-md"><span class="token front-matter-block"><span class="token punctuation">---</span>
+<span class="token front-matter yaml language-yaml">layout: home</span>
+<span class="token punctuation">---</span></span></code></pre><p>And we can adjust our theme to handle this:<pre class="language-vue{3,12-14}"><code class="language-vue{3,12-14}">&#x3C;script setup>
+import { useData } from 'vitepress'
+const { page, frontmatter } = useData()
+&#x3C;/script>
+
+&#x3C;template>
+  &#x3C;h1>Custom Layout!&#x3C;/h1>
+
+  &#x3C;div v-if="page.isNotFound">
+    Custom 404 page!
+  &#x3C;/div>
+  &#x3C;div v-if="frontmatter.layout === 'home'">
+    Custom home page!
+  &#x3C;/div>
+  &#x3C;Content v-else />
+&#x3C;/template></code></pre><p>You can, of course, split the layout into more components:<pre class="language-vue{3-5,12-15}"><code class="language-vue{3-5,12-15}">&#x3C;script setup>
+import { useData } from 'vitepress'
+import NotFound from './NotFound.vue'
+import Home from './Home.vue'
+import Page from './Page.vue'
+
+const { page, frontmatter } = useData()
+&#x3C;/script>
+
+&#x3C;template>
+  &#x3C;h1>Custom Layout!&#x3C;/h1>
+
+  &#x3C;NotFound v-if="page.isNotFound" />
+  &#x3C;Home v-if="frontmatter.layout === 'home'" />
+  &#x3C;Page v-else /> &#x3C;!-- &#x3C;Page /> renders &#x3C;Content /> -->
+&#x3C;/template></code></pre><p>Consult the <a href="../reference/runtime-api">Runtime API Reference</a> for everything available in theme components. In addition, you can leverage <a href="./data-loading.html">Build-Time Data Loading</a> to generate data-driven layout - for example, a page that lists all blog posts in the current project.</section><section id="distributing-a-custom-theme"class="level2"><h2>Distributing a Custom Theme</h2><p>The easiest way to distribute a custom theme is by providing it as a <a href="https://docs.github.com/en/repositories/creating-and-managing-repositories/creating-a-template-repository">template repository on GitHub</a>.<p>If you wish to distribute the theme as an npm package, follow these steps:<ol><li><p>Export the theme object as the default export in your package entry.<li><p>If applicable, export your theme config type definition as <code>ThemeConfig</code>.<li><p>If your theme requires adjusting the VitePress config, export that config under a package sub-path (e.g. <code>my-theme/config</code>) so the user can extend it.<li><p>Document the theme config options (both via config file and frontmatter).<li><p>Provide clear instructions on how to consume your theme (see below).</ol></section><section id="consuming-a-custom-theme"class="level2"><h2>Consuming a Custom Theme</h2><p>To consume an external theme, import and re-export it from the custom theme entry:<pre class="language-js"><code class="language-js"><span class="token comment">// .vitepress/theme/index.js</span>
+<span class="token keyword module">import</span> <span class="token imports"><span class="token maybe-class-name">Theme</span></span> <span class="token keyword module">from</span> <span class="token string">'awesome-vitepress-theme'</span>
+
+<span class="token keyword module">export</span> <span class="token keyword module">default</span> <span class="token maybe-class-name">Theme</span></code></pre><p>If the theme needs to be extended:<pre class="language-js"><code class="language-js"><span class="token comment">// .vitepress/theme/index.js</span>
+<span class="token keyword module">import</span> <span class="token imports"><span class="token maybe-class-name">Theme</span></span> <span class="token keyword module">from</span> <span class="token string">'awesome-vitepress-theme'</span>
+
+<span class="token keyword module">export</span> <span class="token keyword module">default</span> <span class="token punctuation">{</span>
+  <span class="token keyword">extends</span><span class="token operator">:</span> <span class="token maybe-class-name">Theme</span><span class="token punctuation">,</span>
+  <span class="token function">enhanceApp</span><span class="token punctuation">(</span><span class="token parameter">ctx</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token comment">// ...</span>
+  <span class="token punctuation">}</span>
+<span class="token punctuation">}</span></code></pre><p>If the theme requires special VitePress config, you will need to also extend it in your own config:<pre class="language-ts"><code class="language-ts"><span class="token comment">// .vitepress/theme/config.ts</span>
+<span class="token keyword module">import</span> <span class="token imports">baseConfig</span> <span class="token keyword module">from</span> <span class="token string">'awesome-vitepress-theme/config'</span>
+
+<span class="token keyword module">export</span> <span class="token keyword module">default</span> <span class="token punctuation">{</span>
+  <span class="token comment">// extend theme base config (if needed)</span>
+  <span class="token keyword">extends</span><span class="token operator">:</span> baseConfig
+<span class="token punctuation">}</span></code></pre><p>Finally, if the theme provides types for its theme config:<pre class="language-ts"><code class="language-ts"><span class="token comment">// .vitepress/theme/config.ts</span>
+<span class="token keyword module">import</span> <span class="token imports">baseConfig</span> <span class="token keyword module">from</span> <span class="token string">'awesome-vitepress-theme/config'</span>
+<span class="token keyword module">import</span> <span class="token imports"><span class="token punctuation">{</span> defineConfigWithTheme <span class="token punctuation">}</span></span> <span class="token keyword module">from</span> <span class="token string">'vitepress'</span>
+<span class="token keyword module">import</span> <span class="token keyword">type</span> <span class="token punctuation">{</span> <span class="token maybe-class-name">ThemeConfig</span> <span class="token punctuation">}</span> <span class="token keyword module">from</span> <span class="token string">'awesome-vitepress-theme'</span>
+
+<span class="token keyword module">export</span> <span class="token keyword module">default</span> <span class="token generic-function"><span class="token function">defineConfigWithTheme</span><span class="token generic class-name"><span class="token operator">&#x3C;</span><span class="token maybe-class-name">ThemeConfig</span><span class="token operator">></span></span></span><span class="token punctuation">(</span><span class="token punctuation">{</span>
+  <span class="token keyword">extends</span><span class="token operator">:</span> baseConfig<span class="token punctuation">,</span>
+  themeConfig<span class="token operator">:</span> <span class="token punctuation">{</span>
+    <span class="token comment">// Type is `ThemeConfig`</span>
+  <span class="token punctuation">}</span>
+<span class="token punctuation">}</span><span class="token punctuation">)</span></code></pre><p><span style="float:footnote"><a href="./index.html#toc">Go to TOC</a></span></section></section>

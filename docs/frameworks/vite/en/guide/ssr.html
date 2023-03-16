@@ -25,8 +25,8 @@ async function createServer() {
     appType: 'custom'
   })
 
-  // use vite's connect instance as middleware
-  // if you use your own express router (express.Router()), you should use router.use
+  // Use vite's connect instance as middleware. If you use your own
+  // express router (express.Router()), you should use router.use
   app.use(vite.middlewares)
 
   app.use('*', async (req, res) => {
@@ -46,18 +46,18 @@ createServer()</code></pre><p>Here <code>vite</code> is an instance of <a href="
       <span class="token string">'utf-8'</span><span class="token punctuation">,</span>
     <span class="token punctuation">)</span>
 
-    <span class="token comment">// 2. Apply Vite HTML transforms. This injects the Vite HMR client, and</span>
-    <span class="token comment">//    also applies HTML transforms from Vite plugins, e.g. global preambles</span>
-    <span class="token comment">//    from @vitejs/plugin-react</span>
+    <span class="token comment">// 2. Apply Vite HTML transforms. This injects the Vite HMR client,</span>
+    <span class="token comment">//    and also applies HTML transforms from Vite plugins, e.g. global</span>
+    <span class="token comment">//    preambles from @vitejs/plugin-react</span>
     template <span class="token operator">=</span> <span class="token keyword control-flow">await</span> vite<span class="token punctuation">.</span><span class="token method function property-access">transformIndexHtml</span><span class="token punctuation">(</span>url<span class="token punctuation">,</span> template<span class="token punctuation">)</span>
 
-    <span class="token comment">// 3. Load the server entry. vite.ssrLoadModule automatically transforms</span>
-    <span class="token comment">//    your ESM source code to be usable in Node.js! There is no bundling</span>
+    <span class="token comment">// 3. Load the server entry. ssrLoadModule automatically transforms</span>
+    <span class="token comment">//    ESM source code to be usable in Node.js! There is no bundling</span>
     <span class="token comment">//    required, and provides efficient invalidation similar to HMR.</span>
     <span class="token keyword">const</span> <span class="token punctuation">{</span> render <span class="token punctuation">}</span> <span class="token operator">=</span> <span class="token keyword control-flow">await</span> vite<span class="token punctuation">.</span><span class="token method function property-access">ssrLoadModule</span><span class="token punctuation">(</span><span class="token string">'/src/entry-server.js'</span><span class="token punctuation">)</span>
 
-    <span class="token comment">// 4. render the app HTML. This assumes entry-server.js's exported `render`</span>
-    <span class="token comment">//    function calls appropriate framework SSR APIs,</span>
+    <span class="token comment">// 4. render the app HTML. This assumes entry-server.js's exported</span>
+    <span class="token comment">//     `render` function calls appropriate framework SSR APIs,</span>
     <span class="token comment">//    e.g. ReactDOMServer.renderToString()</span>
     <span class="token keyword">const</span> appHtml <span class="token operator">=</span> <span class="token keyword control-flow">await</span> <span class="token function">render</span><span class="token punctuation">(</span>url<span class="token punctuation">)</span>
 
@@ -67,8 +67,8 @@ createServer()</code></pre><p>Here <code>vite</code> is an instance of <a href="
     <span class="token comment">// 6. Send the rendered HTML back.</span>
     res<span class="token punctuation">.</span><span class="token method function property-access">status</span><span class="token punctuation">(</span><span class="token number">200</span><span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token method function property-access">set</span><span class="token punctuation">(</span><span class="token punctuation">{</span> <span class="token string-property property">'Content-Type'</span><span class="token operator">:</span> <span class="token string">'text/html'</span> <span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token method function property-access">end</span><span class="token punctuation">(</span>html<span class="token punctuation">)</span>
   <span class="token punctuation">}</span> <span class="token keyword control-flow">catch</span> <span class="token punctuation">(</span>e<span class="token punctuation">)</span> <span class="token punctuation">{</span>
-    <span class="token comment">// If an error is caught, let Vite fix the stack trace so it maps back to</span>
-    <span class="token comment">// your actual source code.</span>
+    <span class="token comment">// If an error is caught, let Vite fix the stack trace so it maps back</span>
+    <span class="token comment">// to your actual source code.</span>
     vite<span class="token punctuation">.</span><span class="token method function property-access">ssrFixStacktrace</span><span class="token punctuation">(</span>e<span class="token punctuation">)</span>
     <span class="token function">next</span><span class="token punctuation">(</span>e<span class="token punctuation">)</span>
   <span class="token punctuation">}</span>
@@ -81,7 +81,7 @@ createServer()</code></pre><p>Here <code>vite</code> is an instance of <a href="
     <span class="token property">"build:client"</span><span class="token operator">:</span> <span class="token string">"vite build --outDir dist/client"</span><span class="token punctuation">,</span>
     <span class="token property">"build:server"</span><span class="token operator">:</span> <span class="token string">"vite build --outDir dist/server --ssr src/entry-server.js"</span>
   <span class="token punctuation">}</span>
-<span class="token punctuation">}</span></code></pre><p>Note the <code>--ssr</code> flag which indicates this is an SSR build. It should also specify the SSR entry.<p>Then, in <code>server.js</code> we need to add some production specific logic by checking <code>process.env.</code><wbr><code>NODE_ENV</code>:<ul><li><p>Instead of reading the root <code>index.html</code>, use the <code>dist/client/index.html</code> as the template instead, since it contains the correct asset links to the client build.<li><p>Instead of <code>await vite.ssrLoadModule('/src/entry-server.js')</code>, use <code>import('./dist/server/entry-server.js')</code> instead (this file is the result of the SSR build).<li><p>Move the creation and all usage of the <code>vite</code> dev server behind dev-only conditional branches, then add static file serving middlewares to serve files from <code>dist/client</code>.</ul><p>Refer to the <a href="https://github.com/vitejs/vite-plugin-vue/tree/main/playground/ssr-vue">Vue</a> and <a href="https://github.com/vitejs/vite-plugin-react/tree/main/playground/ssr-react">React</a> demos for a working setup.</section><section id="generating-preload-directives"class="level2"><h2>Generating Preload Directives</h2><p><code>vite build</code> supports the <code>--ssrManifest</code> flag which will generate <code>ssr-manifest.json</code> in build output directory:<pre class="language-diff"><code class="language-diff"><span class="token deleted-sign deleted"><span class="token prefix deleted">-</span><span class="token line"> "build:client": "vite build --outDir dist/client",
+<span class="token punctuation">}</span></code></pre><p>Note the <code>--ssr</code> flag which indicates this is an SSR build. It should also specify the SSR entry.<p>Then, in <code>server.js</code> we need to add some production specific logic by checking <code>process.env.NODE_ENV</code>:<ul><li><p>Instead of reading the root <code>index.html</code>, use the <code>dist/client/index.html</code> as the template instead, since it contains the correct asset links to the client build.<li><p>Instead of <code>await vite.ssrLoadModule('/src/entry-server.js')</code>, use <code>import('./dist/server/entry-server.js')</code> instead (this file is the result of the SSR build).<li><p>Move the creation and all usage of the <code>vite</code> dev server behind dev-only conditional branches, then add static file serving middlewares to serve files from <code>dist/client</code>.</ul><p>Refer to the <a href="https://github.com/vitejs/vite-plugin-vue/tree/main/playground/ssr-vue">Vue</a> and <a href="https://github.com/vitejs/vite-plugin-react/tree/main/playground/ssr-react">React</a> demos for a working setup.</section><section id="generating-preload-directives"class="level2"><h2>Generating Preload Directives</h2><p><code>vite build</code> supports the <code>--ssrManifest</code> flag which will generate <code>ssr-manifest.json</code> in build output directory:<pre class="language-diff"><code class="language-diff"><span class="token deleted-sign deleted"><span class="token prefix deleted">-</span><span class="token line"> "build:client": "vite build --outDir dist/client",
 </span></span><span class="token inserted-sign inserted"><span class="token prefix inserted">+</span><span class="token line"> "build:client": "vite build --outDir dist/client --ssrManifest",</span></span></code></pre><p>The above script will now generate <code>dist/client/ssr-manifest.json</code> for the client build (Yes, the SSR manifest is generated from the client build because we want to map module IDs to client files). The manifest contains mappings of module IDs to their associated chunks and asset files.<p>To leverage the manifest, frameworks need to provide a way to collect the module IDs of the components that were used during a server render call.<p><code>@vitejs/plugin-vue</code> supports this out of the box and automatically registers used component module IDs on to the associated Vue SSR context:<pre class="language-js"><code class="language-js"><span class="token comment">// src/entry-server.js</span>
 <span class="token keyword">const</span> ctx <span class="token operator">=</span> <span class="token punctuation">{</span><span class="token punctuation">}</span>
 <span class="token keyword">const</span> html <span class="token operator">=</span> <span class="token keyword control-flow">await</span> vueServerRenderer<span class="token punctuation">.</span><span class="token method function property-access">renderToString</span><span class="token punctuation">(</span>app<span class="token punctuation">,</span> ctx<span class="token punctuation">)</span>

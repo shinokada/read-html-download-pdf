@@ -1,0 +1,100 @@
+<!doctype html><html lang="es"><meta charset="utf-8"><title>Configurar y ampliar el analizador sintáctico</title><meta name="viewport"content="width=device-width,initial-scale=1"><link rel="stylesheet"href="../../../../../../../../docs/themes/packages/prism-coy-theme/theme_common.css"><section id="configurar-y-ampliar-el-analizador-sintáctico"class="level1"><h1>Configurar y ampliar el analizador sintáctico</h1><p>Slidev analiza tu archivo de presentación (por ejemplo, <code>lides.md</code>) en tres pasos:<ol><li><ol><li>Se realiza un paso de "preparación": el archivo se divide en diapositivas utilizando el separador <code>---</code>, y considerando los posibles bloques frontmatter.</ol><li>Cada diapositiva se analiza con una biblioteca externa.<li>Slidev resuelve la propiedad especial frontmatter <code>src: ....</code>, que permite incluir otros archivos md.</ol><section id="analizador-de-markdown"class="level2"><h2>Analizador de Markdown</h2><p>La configuración del analizador de Markdown utilizado en el paso 2 puede hacerse <a href="custom/config-vite.html">configurando los plugins internos de Vite</a></section><section id="preparser-extensions"class="level2"><h2>Preparser Extensions</h2><blockquote><p>Available since v0.37.0</blockquote><p>:::warning Importante: al modificar la configuración del preparador, es necesario detener e iniciar slidev de nuevo (reiniciarlo podría no ser suficiente). :::<p>El preparador (paso 1 anterior) es altamente extensible y permite implementar sintaxis personalizadas para tus archivos md. Extender el preparador se considera <strong>una característica avanzada</strong> y es susceptible de romper <a href="gu%C3%ADa/editores">integraciones de editores</a> debido a cambios implícitos en la sintaxis.<p>Para personalizarlo, crea un archivo <code>./setup/preparser.ts</code> con el siguiente contenido:<pre class="language-ts"><code class="language-ts"><span class="token keyword module">import</span> <span class="token imports"><span class="token punctuation">{</span> definePreparserSetup <span class="token punctuation">}</span></span> <span class="token keyword module">from</span> <span class="token string">'@slidev/types'</span>
+
+<span class="token keyword module">export</span> <span class="token keyword module">default</span> <span class="token function">definePreparserSetup</span><span class="token punctuation">(</span><span class="token punctuation">(</span><span class="token punctuation">{</span>filepath<span class="token punctuation">,</span> headmatter<span class="token punctuation">}</span><span class="token punctuation">)</span> <span class="token arrow operator">=></span> <span class="token punctuation">{</span>
+  <span class="token keyword control-flow">return</span> <span class="token punctuation">[</span>
+    <span class="token punctuation">{</span>
+      <span class="token function">transformRawLines</span><span class="token punctuation">(</span>lines<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token keyword control-flow">for</span> <span class="token punctuation">(</span><span class="token keyword">const</span> i <span class="token keyword">in</span> lines<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+          <span class="token keyword control-flow">if</span> <span class="token punctuation">(</span>lines<span class="token punctuation">[</span>i<span class="token punctuation">]</span> <span class="token operator">===</span> <span class="token string">'@@@'</span><span class="token punctuation">)</span>
+            lines<span class="token punctuation">[</span>i<span class="token punctuation">]</span> <span class="token operator">=</span> <span class="token string">'HOLA'</span>
+        <span class="token punctuation">}</span>
+      <span class="token punctuation">}</span><span class="token punctuation">,</span>
+    <span class="token punctuation">}</span>
+  <span class="token punctuation">]</span>
+<span class="token punctuation">}</span><span class="token punctuation">)</span></code></pre><p>Este ejemplo sustituye sistemáticamente cualquier línea <code>@@@</code> por una línea con <code>HOLA</code>. Ilustra la estructura de un fichero de configuración del preparador y algunos de los principales conceptos que implica el preparador:<ul><li><code>definePreparserSetup</code> debe ser llamado con una función como parámetro.<li>La función recibe la ruta del fichero (del fichero raíz de presentación) y el headmatter (del fichero md). Puedes utilizar esta información (por ejemplo, habilitar extensiones basadas en el archivo de presentación).<li>La función debe devolver una lista de extensiones del preparador.<li>Una extensión puede contener<ul><li>una función <code>transformRawLines(lines)</code> que se ejecuta justo después de analizar la cabecera del fichero md y recibe una lista de todas las líneas (del fichero md). La función puede mutar la lista arbitrariamente.<li>una función <code>transformSlide(content, frontmatter)</code> que se ejecuta para cada diapositiva, justo después de dividir el archivo, y recibe el contenido de la diapositiva como una cadena y el frontmatter de la diapositiva como un objeto. La función puede mutar el frontmatter y debe devolver la cadena de contenido (posiblemente modificada, posiblemente <code>undefined</code> si no se han hecho modificaciones).<li>un <code>nombre</code></ul></ul></section><section id="ejemplo-de-extensiones-del-preparador"class="level2"><h2>Ejemplo de extensiones del preparador</h2><section id="caso-de-uso-1-presentación-de-nivel-superior-con-sintaxis-compacta"class="level3"><h3>Caso de uso 1: presentación de nivel superior con sintaxis compacta</h3><p>Imagina una situación en la que (parte de) la presentación muestra principalmente imágenes de portada e incluye otros archivos md. Es posible que quieras una notación compacta en la que, por ejemplo, (parte de) <code>slides.md</code> sea como esto:<pre class="language-md"><code class="language-md">
+@cover: /nice.jpg
+<span class="token title important"><span class="token punctuation">#</span> Bienvenida</span>
+@src: page1.md
+@src: page2.md
+@cover: /break.jpg
+@src: pages3-4.md
+@cover: https://source.unsplash.com/collection/94734566/1920x1080
+<span class="token title important"><span class="token punctuation">#</span> ¿Alguna pregunta?</span>
+Hasta la próxima
+</code></pre><p>Para permitir estas sintaxis <code>@src:</code> y <code>@cover:</code>, crea un archivo <code>./setup/preparser.ts</code> con el siguiente contenido:<pre class="language-ts"><code class="language-ts"><span class="token keyword module">import</span> <span class="token imports"><span class="token punctuation">{</span> definePreparserSetup <span class="token punctuation">}</span></span> <span class="token keyword module">from</span> <span class="token string">'@slidev/types'</span>
+
+<span class="token keyword module">export</span> <span class="token keyword module">default</span> <span class="token function">definePreparserSetup</span><span class="token punctuation">(</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token arrow operator">=></span> <span class="token punctuation">{</span>
+  <span class="token keyword control-flow">return</span> <span class="token punctuation">[</span>
+    <span class="token punctuation">{</span>
+      <span class="token function">transformRawLines</span><span class="token punctuation">(</span>lines<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token keyword">let</span> i <span class="token operator">=</span> <span class="token number">0</span>
+        <span class="token keyword control-flow">while</span> <span class="token punctuation">(</span>i <span class="token operator">&#x3C;</span> lines<span class="token punctuation">.</span><span class="token property-access">length</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+          <span class="token keyword">const</span> l <span class="token operator">=</span> lines<span class="token punctuation">[</span>i<span class="token punctuation">]</span>
+          <span class="token keyword control-flow">if</span> <span class="token punctuation">(</span>l<span class="token punctuation">.</span><span class="token method function property-access">match</span><span class="token punctuation">(</span><span class="token regex"><span class="token regex-delimiter">/</span><span class="token regex-source language-regex">^@cover:</span><span class="token regex-delimiter">/</span><span class="token regex-flags">i</span></span><span class="token punctuation">)</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+            lines<span class="token punctuation">.</span><span class="token method function property-access">splice</span><span class="token punctuation">(</span>i<span class="token punctuation">,</span> <span class="token number">1</span><span class="token punctuation">,</span>
+              <span class="token string">'---'</span><span class="token punctuation">,</span>
+              <span class="token string">'layout: cover'</span><span class="token punctuation">,</span>
+              <span class="token template-string"><span class="token template-punctuation string">`</span><span class="token string">background: </span><span class="token interpolation"><span class="token interpolation-punctuation punctuation">${</span>l<span class="token punctuation">.</span><span class="token method function property-access">replace</span><span class="token punctuation">(</span><span class="token regex"><span class="token regex-delimiter">/</span><span class="token regex-source language-regex">^@cover: *</span><span class="token regex-delimiter">/</span><span class="token regex-flags">i</span></span><span class="token punctuation">,</span> <span class="token string">''</span><span class="token punctuation">)</span><span class="token interpolation-punctuation punctuation">}</span></span><span class="token template-punctuation string">`</span></span><span class="token punctuation">,</span>
+              <span class="token string">'---'</span><span class="token punctuation">,</span>
+              <span class="token string">''</span><span class="token punctuation">)</span>
+            <span class="token keyword control-flow">continue</span>
+          <span class="token punctuation">}</span>
+          <span class="token keyword control-flow">if</span> <span class="token punctuation">(</span>l<span class="token punctuation">.</span><span class="token method function property-access">match</span><span class="token punctuation">(</span><span class="token regex"><span class="token regex-delimiter">/</span><span class="token regex-source language-regex">^@src:</span><span class="token regex-delimiter">/</span><span class="token regex-flags">i</span></span><span class="token punctuation">)</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+            lines<span class="token punctuation">.</span><span class="token method function property-access">splice</span><span class="token punctuation">(</span>i<span class="token punctuation">,</span> <span class="token number">1</span><span class="token punctuation">,</span>
+              <span class="token string">'---'</span><span class="token punctuation">,</span>
+              <span class="token template-string"><span class="token template-punctuation string">`</span><span class="token string">src: </span><span class="token interpolation"><span class="token interpolation-punctuation punctuation">${</span>l<span class="token punctuation">.</span><span class="token method function property-access">replace</span><span class="token punctuation">(</span><span class="token regex"><span class="token regex-delimiter">/</span><span class="token regex-source language-regex">^@src: *</span><span class="token regex-delimiter">/</span><span class="token regex-flags">i</span></span><span class="token punctuation">,</span> <span class="token string">''</span><span class="token punctuation">)</span><span class="token interpolation-punctuation punctuation">}</span></span><span class="token template-punctuation string">`</span></span><span class="token punctuation">,</span>
+              <span class="token string">'---'</span><span class="token punctuation">,</span>
+              <span class="token string">''</span><span class="token punctuation">)</span>
+            <span class="token keyword control-flow">continue</span>
+          <span class="token punctuation">}</span>
+          i<span class="token operator">++</span>
+        <span class="token punctuation">}</span>
+      <span class="token punctuation">}</span>
+    <span class="token punctuation">}</span><span class="token punctuation">,</span>
+  <span class="token punctuation">]</span>
+<span class="token punctuation">}</span><span class="token punctuation">)</span></code></pre><p>Y eso es todo.</section><section id="caso-de-uso-2-usar-frontmatter-personalizado-para-agrupar-diapositivas"class="level3"><h3>Caso de uso 2: usar frontmatter personalizado para agrupar diapositivas</h3><p>Imagina un caso en el que a menudo quieres escalar algunas de tus diapositivas pero sigues queriendo usar una variedad de diseños existentes, por lo que crear un nuevo diseño no sería adecuado.<p>Por ejemplo, podrías escribir tu <code>slides.md</code> como esto:<pre class="language-md"><code class="language-md">
+
+
+<span class="token front-matter-block"><span class="token punctuation">---</span>
+<span class="token front-matter yaml language-yaml">layout: quote
+_scale: 0.75</span>
+<span class="token punctuation">---</span></span>
+
+<span class="token title important"><span class="token punctuation">#</span> Bienvenida</span>
+
+<span class="token blockquote punctuation">></span> ¡Genial!
+
+<span class="token hr punctuation">---</span>
+<span class="token title important">_scale: 4
+<span class="token punctuation">---</span></span>
+<span class="token title important"><span class="token punctuation">#</span> Pausa</span>
+
+<span class="token hr punctuation">---</span>
+
+<span class="token title important"><span class="token punctuation">#</span> Ok</span>
+
+<span class="token hr punctuation">---</span>
+layout: center
+<span class="token title important">_scale: 2.5
+<span class="token punctuation">---</span></span>
+<span class="token title important"><span class="token punctuation">#</span> ¿Alguna pregunta?</span>
+Nos vemos
+</code></pre><p>Aquí hemos utilizado un guión bajo en <code>_scale</code> para evitar posibles conflictos con las propiedades frontmatter existentes (de hecho, el caso de <code>scale</code>, sin guión bajo podría causar problemas).<p>Para manejar esta sintaxis <code>_scale: ...</code> en el frontmatter, crea un archivo <code>./setup/preparser.ts</code> con el siguiente contenido:<pre class="language-ts"><code class="language-ts"><span class="token keyword module">import</span> <span class="token imports"><span class="token punctuation">{</span> definePreparserSetup <span class="token punctuation">}</span></span> <span class="token keyword module">from</span> <span class="token string">'@slidev/types'</span>
+
+<span class="token keyword module">export</span> <span class="token keyword module">default</span> <span class="token function">definePreparserSetup</span><span class="token punctuation">(</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token arrow operator">=></span> <span class="token punctuation">{</span>
+  <span class="token keyword control-flow">return</span> <span class="token punctuation">[</span>
+    <span class="token punctuation">{</span>
+      <span class="token function">transformSlide</span><span class="token punctuation">(</span>content<span class="token punctuation">,</span> frontmatter<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token keyword control-flow">if</span> <span class="token punctuation">(</span><span class="token string">'_scale'</span> <span class="token keyword">in</span> frontmatter<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+          <span class="token keyword control-flow">return</span> <span class="token punctuation">[</span>
+            <span class="token template-string"><span class="token template-punctuation string">`</span><span class="token string">&#x3C;Transform :scale=</span><span class="token interpolation"><span class="token interpolation-punctuation punctuation">${</span>frontmatter<span class="token punctuation">[</span><span class="token string">'_scale'</span><span class="token punctuation">]</span><span class="token interpolation-punctuation punctuation">}</span></span><span class="token string">></span><span class="token template-punctuation string">`</span></span><span class="token punctuation">,</span>
+            <span class="token string">''</span><span class="token punctuation">,</span>
+            content<span class="token punctuation">,</span>
+            <span class="token string">''</span><span class="token punctuation">,</span>
+            <span class="token string">'&#x3C;/Transform>'</span>
+          <span class="token punctuation">]</span><span class="token punctuation">.</span><span class="token method function property-access">join</span><span class="token punctuation">(</span><span class="token string">'\n'</span><span class="token punctuation">)</span>
+        <span class="token punctuation">}</span>
+      <span class="token punctuation">}</span><span class="token punctuation">,</span>
+    <span class="token punctuation">}</span><span class="token punctuation">,</span>
+  <span class="token punctuation">]</span>
+<span class="token punctuation">}</span><span class="token punctuation">)</span></code></pre><p>Y eso es todo. <span style="float:footnote"><a href="../index.html#toc">Go to TOC</a></span></section></section></section>

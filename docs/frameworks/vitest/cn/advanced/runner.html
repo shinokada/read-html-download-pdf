@@ -1,77 +1,80 @@
-<!doctype html><html lang="cn"><meta charset="utf-8"><title>Test Runner</title><meta name="viewport"content="width=device-width,initial-scale=1"><link rel="stylesheet"href="../../../../../../../../docs/themes/packages/prism-coy-theme/theme_common.css"><section id="test-runner"class="level1"><h1>Test Runner</h1><blockquote>This is advanced API. If you are just running tests, you probably don't need this. It is primarily used by library authors.</blockquote><p>You can specify a path to your test runner with the <code>runner</code> option in your configuration file. This file should have a default export with a class implementing these methods:<pre class="language-ts"><code class="language-ts"><span class="token keyword module">export</span> <span class="token keyword">interface</span> <span class="token class-name"><span class="token maybe-class-name">VitestRunner</span></span> <span class="token punctuation">{</span>
+<!doctype html><html lang="cn"><meta charset="utf-8"><title>测试运行器</title><meta name="viewport"content="width=device-width,initial-scale=1"><link rel="stylesheet"href="../../../../../../../../docs/themes/packages/prism-coy-theme/theme_common.css"><section id="测试运行器"class="level1"><h1>测试运行器</h1><blockquote>注意 这是高级 API。如果你只需要运行测试，你可能不需要这个。它主要被库的作者使用。</blockquote><p>你可以在你的配置文件中使用 runner 选项指定你的测试运行器的路径。这个文件应该有一个默认的导出，其中包含一个实现这些方法的类：<pre class="language-ts"><code class="language-ts"><span class="token keyword module">export</span> <span class="token keyword">interface</span> <span class="token class-name"><span class="token maybe-class-name">VitestRunner</span></span> <span class="token punctuation">{</span>
   <span class="token doc-comment comment">/**
-   * First thing that's getting called before actually collecting and running tests.
+   * 这是在实际收集和运行测试之前被调用的第一件事情。
    */</span>
   onBeforeCollect<span class="token operator">?</span><span class="token punctuation">(</span>paths<span class="token operator">:</span> <span class="token builtin">string</span><span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token punctuation">)</span><span class="token operator">:</span> <span class="token builtin">unknown</span>
   <span class="token doc-comment comment">/**
-   * Called after collecting tests and before "onBeforeRun".
+   * 这是在收集测试后、"onBeforeRun" 之前被调用的。
    */</span>
   onCollected<span class="token operator">?</span><span class="token punctuation">(</span>files<span class="token operator">:</span> <span class="token maybe-class-name">File</span><span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token punctuation">)</span><span class="token operator">:</span> <span class="token builtin">unknown</span>
-
   <span class="token doc-comment comment">/**
-   * Called before running a single test. Doesn't have "result" yet.
+   * 这是在运行单个测试之前被调用的，此时还没有测试结果。
    */</span>
   onBeforeRunTest<span class="token operator">?</span><span class="token punctuation">(</span>test<span class="token operator">:</span> <span class="token maybe-class-name">Test</span><span class="token punctuation">)</span><span class="token operator">:</span> <span class="token builtin">unknown</span>
   <span class="token doc-comment comment">/**
-   * Called before actually running the test function. Already has "result" with "state" and "startTime".
+   * 这是在实际运行测试函数之前被调用的。
+   * 此时已经有了带有 "state" 和 "startTime" 属性的 "result" 对象。
    */</span>
   onBeforeTryTest<span class="token operator">?</span><span class="token punctuation">(</span>test<span class="token operator">:</span> <span class="token maybe-class-name">Test</span><span class="token punctuation">,</span> retryCount<span class="token operator">:</span> <span class="token builtin">number</span><span class="token punctuation">)</span><span class="token operator">:</span> <span class="token builtin">unknown</span>
   <span class="token doc-comment comment">/**
-   * Called after result and state are set.
+   * 这是在结果和状态都被设置之后被调用的。
    */</span>
   onAfterRunTest<span class="token operator">?</span><span class="token punctuation">(</span>test<span class="token operator">:</span> <span class="token maybe-class-name">Test</span><span class="token punctuation">)</span><span class="token operator">:</span> <span class="token builtin">unknown</span>
   <span class="token doc-comment comment">/**
-   * Called right after running the test function. Doesn't have new state yet. Will not be called, if the test function throws.
+   * 这是在运行测试函数后立即被调用的。此时还没有新的状态。
+   * 如果测试函数抛出异常，将不会调用此方法。
    */</span>
   onAfterTryTest<span class="token operator">?</span><span class="token punctuation">(</span>test<span class="token operator">:</span> <span class="token maybe-class-name">Test</span><span class="token punctuation">,</span> retryCount<span class="token operator">:</span> <span class="token builtin">number</span><span class="token punctuation">)</span><span class="token operator">:</span> <span class="token builtin">unknown</span>
 
   <span class="token doc-comment comment">/**
-   * Called before running a single suite. Doesn't have "result" yet.
+   * 这是在运行单个测试套件之前被调用的，此时还没有测试结果。
    */</span>
   onBeforeRunSuite<span class="token operator">?</span><span class="token punctuation">(</span>suite<span class="token operator">:</span> <span class="token maybe-class-name">Suite</span><span class="token punctuation">)</span><span class="token operator">:</span> <span class="token builtin">unknown</span>
   <span class="token doc-comment comment">/**
-   * Called after running a single suite. Has state and result.
+   * 这是在运行单个测试套件之后被调用的，此时已经有了状态和测试结果。
    */</span>
   onAfterRunSuite<span class="token operator">?</span><span class="token punctuation">(</span>suite<span class="token operator">:</span> <span class="token maybe-class-name">Suite</span><span class="token punctuation">)</span><span class="token operator">:</span> <span class="token builtin">unknown</span>
 
   <span class="token doc-comment comment">/**
-   * If defined, will be called instead of usual Vitest suite partition and handling.
-   * "before" and "after" hooks will not be ignored.
+   * 如果定义了这个方法，它将会替代 Vitest 常规的测试套件分割和处理方式。
+   * 但 "before" 和 "after" 钩子函数仍然会被执行。
    */</span>
   runSuite<span class="token operator">?</span><span class="token punctuation">(</span>suite<span class="token operator">:</span> <span class="token maybe-class-name">Suite</span><span class="token punctuation">)</span><span class="token operator">:</span> <span class="token known-class-name class-name">Promise</span><span class="token operator">&#x3C;</span><span class="token keyword">void</span><span class="token operator">></span>
   <span class="token doc-comment comment">/**
-   * If defined, will be called instead of usual Vitest handling. Useful, if you have your custom test function.
-   * "before" and "after" hooks will not be ignored.
+   * 如果定义了这个方法，它将会替代 Vitest 常规的测试处理方式。
+   * 如果你有自定义的测试函数，这个方法就很有用。
+   * 但 "before" 和 "after" 钩子函数仍然会被执行。
    */</span>
   runTest<span class="token operator">?</span><span class="token punctuation">(</span>test<span class="token operator">:</span> <span class="token maybe-class-name">Test</span><span class="token punctuation">)</span><span class="token operator">:</span> <span class="token known-class-name class-name">Promise</span><span class="token operator">&#x3C;</span><span class="token keyword">void</span><span class="token operator">></span>
 
   <span class="token doc-comment comment">/**
-   * Called, when a task is updated. The same as "onTaskUpdate" in a reporter, but this is running in the same thread as tests.
+   * 当一个任务被更新时被调用。与报告器中的 "onTaskUpdate" 方法相同。
+   * 但该方法在同一个线程中运行，与测试运行在同一个线程中。
    */</span>
   onTaskUpdate<span class="token operator">?</span><span class="token punctuation">(</span>task<span class="token operator">:</span> <span class="token punctuation">[</span><span class="token builtin">string</span><span class="token punctuation">,</span> <span class="token maybe-class-name">TaskResult</span> <span class="token operator">|</span> <span class="token keyword nil">undefined</span><span class="token punctuation">]</span><span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token punctuation">)</span><span class="token operator">:</span> <span class="token known-class-name class-name">Promise</span><span class="token operator">&#x3C;</span><span class="token keyword">void</span><span class="token operator">></span>
 
   <span class="token doc-comment comment">/**
-   * Called before running all tests in collected paths.
+   * 这是在运行收集的所有测试之前被调用的。
    */</span>
   onBeforeRun<span class="token operator">?</span><span class="token punctuation">(</span>files<span class="token operator">:</span> <span class="token maybe-class-name">File</span><span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token punctuation">)</span><span class="token operator">:</span> <span class="token builtin">unknown</span>
   <span class="token doc-comment comment">/**
-   * Called right after running all tests in collected paths.
+   * 这是在运行收集的所有测试后立即被调用的。
    */</span>
   onAfterRun<span class="token operator">?</span><span class="token punctuation">(</span>files<span class="token operator">:</span> <span class="token maybe-class-name">File</span><span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token punctuation">)</span><span class="token operator">:</span> <span class="token builtin">unknown</span>
   <span class="token doc-comment comment">/**
-   * Called when new context for a test is defined. Useful, if you want to add custom properties to the context.
-   * If you only want to define custom context with a runner, consider using "beforeAll" in "setupFiles" instead.
+   * 当为一个测试定义新的上下文时被调用。如果你想要向上下文添加自定义属性，这个方法很有用。
+   * 如果你只想使用运行器定义自定义上下文，请考虑在 "setupFiles" 中使用 "beforeAll"。
    */</span>
   extendTestContext<span class="token operator">?</span><span class="token punctuation">(</span>context<span class="token operator">:</span> <span class="token maybe-class-name">TestContext</span><span class="token punctuation">)</span><span class="token operator">:</span> <span class="token maybe-class-name">TestContext</span>
   <span class="token doc-comment comment">/**
-   * Called, when certain files are imported. Can be called in two situations: when collecting tests and when importing setup files.
+   * 当导入某些文件时被调用。在收集测试和导入设置文件时都可能会被调用。.
    */</span>
   <span class="token function">importFile</span><span class="token punctuation">(</span>filepath<span class="token operator">:</span> <span class="token builtin">string</span><span class="token punctuation">,</span> source<span class="token operator">:</span> <span class="token maybe-class-name">VitestRunnerImportSource</span><span class="token punctuation">)</span><span class="token operator">:</span> <span class="token builtin">unknown</span>
   <span class="token doc-comment comment">/**
-   * Publicly available configuration.
+   * 公开可用的配置.
    */</span>
   config<span class="token operator">:</span> <span class="token maybe-class-name">VitestRunnerConfig</span>
-<span class="token punctuation">}</span></code></pre><p>When initiating this class, Vitest passes down Vitest config, - you should expose it as a <code>config</code> property.<blockquote>Vitest also injects an instance of `ViteNodeRunner` as `__vitest_executor` property. You can use it to process files in `importFile` method (this is default behavior of `TestRunner`` and `BenchmarkRunner`).<p><code>ViteNodeRunner</code> exposes <code>executeId</code> method, which is used to import test files in a Vite-friendly environment. Meaning, it will resolve imports and transform file content at runtime so that Node can understand it.</blockquote><blockquote>Snapshot support and some other features depend on the runner. If you don't want to lose it, you can extend your runner from `VitestTestRunner` imported from `vitest/runners`. It also exposes `BenchmarkNodeRunner`, if you want to extend benchmark functionality.</blockquote><section id="your-task-function"class="level2"><h2>Your task function</h2><p>You can extend Vitest task system with your tasks. A task is an object that is part of a suite. It is automatically added to the current suite with a <code>suite.custom</code> method:<pre class="language-js"><code class="language-js"><span class="token comment">// ./utils/custom.js</span>
+<span class="token punctuation">}</span></code></pre><p>当初始化这个类时，Vitest会传递Vitest配置，你应该将它作为一个 <code>config</code> 属性暴露出来。<blockquote>注意 Vitest 还将 `ViteNodeRunner` 实例注入为 `__vitest_executor `属性。你可以在 `importFile` 方法中使用它来处理文件（这是 `TestRunner` 和 `BenchmarkRunner` 的默认行为）。<p><code>ViteNodeRunner</code> 暴露了 <code>executeId</code> 方法，用于在适用于 Vite 的环境中导入测试文件。这意味着它将在运行时解析导入并转换文件内容，以便 Node 能够理解它。</blockquote><blockquote>提示 快照支持和其他功能是依赖于测试运行器的。如果你想保留这些功能，可以从 `vitest/runners` 导入 `VitestTestRunner` 并将你的测试运行器继承该类。它还暴露了 `BenchmarkNodeRunner`，如果你想扩展基准测试功能的话也可以继承它。</blockquote><section id="你的任务函数"class="level2"><h2>你的任务函数。</h2><p>你可以通过扩展 <code>Vitest</code> 的任务系统来添加你自己的任务。一个任务是一个对象，是套件的一部分。它会自动通过 <code>suite.custom</code> 方法添加到当前套件中：<pre class="language-js"><code class="language-js"><span class="token comment">// ./utils/custom.js</span>
 <span class="token keyword module">import</span> <span class="token imports"><span class="token punctuation">{</span> getCurrentSuite<span class="token punctuation">,</span> setFn <span class="token punctuation">}</span></span> <span class="token keyword module">from</span> <span class="token string">'vitest/suite'</span>
 <span class="token keyword module">export</span> <span class="token exports"><span class="token punctuation">{</span> describe<span class="token punctuation">,</span> beforeAll<span class="token punctuation">,</span> afterAll <span class="token punctuation">}</span></span> <span class="token keyword module">from</span> <span class="token string">'vitest'</span>
 
@@ -101,4 +104,4 @@
   <span class="token function">afterAll</span><span class="token punctuation">(</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token arrow operator">=></span> <span class="token punctuation">{</span>
     gardener<span class="token punctuation">.</span><span class="token method function property-access">goHome</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
   <span class="token punctuation">}</span><span class="token punctuation">)</span>
-<span class="token punctuation">}</span><span class="token punctuation">)</span></code></pre><pre class="language-bash"><code class="language-bash">vitest ./garden/tasks.test.js</code></pre><blockquote>If you don't have a custom runner or didn't define `runTest` method, Vitest will try to retrieve a task automatically. If you didn't add a function with `setFn`, it will fail.</blockquote><blockquote>Custom task system supports hooks and contexts. If you want to support property chaining (like, `only`, `skip`, and your custom ones), you can import `createChainable` from `vitest/suite` and wrap your function with it. You will need to call `custom` as `custom.call(this)`, if you decide to do this.</blockquote><span style="float:footnote"><a href="../index.html#toc">Go to TOC</a></span></section></section>
+<span class="token punctuation">}</span><span class="token punctuation">)</span></code></pre><pre class="language-bash"><code class="language-bash">vitest ./garden/tasks.test.js</code></pre><blockquote>注意 如果你没有定义自定义运行器，也没有定义 `runTest` 方法，Vitest 将会尝试自动获取任务。如果你没有使用 `setFn` 添加一个函数，这个过程会失败。</blockquote><blockquote>提示 自定义任务系统支持钩子和上下文。如果你想支持属性链式调用（如 `only`、`skip` 和你自己的定制属性），你可以从 `vitest/suite` 导入 `createChainable` 并用它包装你的函数。如果你决定这样做，你需要将 `custom` 作为 `custom.call(this)` 来调用。</blockquote><span style="float:footnote"><a href="../index.html#toc">Go to TOC</a></span></section></section>

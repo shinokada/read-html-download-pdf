@@ -151,44 +151,50 @@ export default {
       })
     ]
   }
-}</code></pre></section><section id="postcss"class="level2"><h2>postcss</h2><blockquote><p>Customize <a href="https://github.com/postcss/postcss-loader#usage">PostCSS Loader</a> plugins.</blockquote><ul><li><p>Type: <code>Array</code> (legacy, will override defaults), <code>Object</code> (recommended), <code>Function</code> or <code>Boolean</code><p><strong>Note:</strong> Nuxt has applied <a href="https://github.com/csstools/postcss-preset-env">PostCSS Preset Env</a>. By default it enables <a href="https://cssdb.org/">Stage 2 features</a> and <a href="https://github.com/postcss/autoprefixer">Autoprefixer</a>, you can use <code>build.postcss.preset</code> to configure it.<li><p>Default:<pre class="language-js{}[nuxt.config.js]"><code class="language-js{}[nuxt.config.js]">{
-  plugins: {
-    'postcss-import': {},
-    'postcss-url': {},
-    'postcss-preset-env': this.preset,
-    'cssnano': { preset: 'default' } // disabled in dev mode
-  },
-  order: 'presetEnvAndCssnanoLast',
-  preset: {
-    stage: 2
+}</code></pre></section><section id="postcss"class="level2"><h2>postcss</h2><blockquote><p>Customize <a href="https://github.com/postcss/postcss-loader#usage">PostCSS Loader</a> plugins.</blockquote><ul><li><p>Type: <code>Array</code> (legacy, will override defaults), <code>Object</code> (recommended), or <code>Boolean</code><p><strong>Note:</strong> Nuxt has applied <a href="https://github.com/csstools/postcss-plugins/plugin-packs/postcss-preset-env">PostCSS Preset Env</a>. By default it enables <a href="https://cssdb.org/#stage-2-allowable">Stage 2 features</a> and you can use <code>build.postcss.postcssOptions.preset</code> to configure it.<li><p>Default:<pre class="language-js{}[nuxt.config.js]"><code class="language-js{}[nuxt.config.js]">{
+  postcssOptions: {
+    plugins: {
+      'postcss-import': {},
+      'postcss-url': {},
+      'postcss-preset-env': this.preset,
+      'cssnano': { preset: 'default' } // disabled in dev mode
+    },
+    order: 'presetEnvAndCssnanoLast',
+    preset: {
+      stage: 2
+    }
   }
 }</code></pre></ul><p>Your custom plugin settings will be merged with the default plugins (unless you are using an <code>Array</code> instead of an <code>Object</code>).<pre class="language-js{}[nuxt.config.js]"><code class="language-js{}[nuxt.config.js]">export default {
   build: {
     postcss: {
-      plugins: {
-        // Disable `postcss-url`
-        'postcss-url': false,
-        // Add some plugins
-        'postcss-nested': {},
-        'postcss-responsive-type': {},
-        'postcss-hexrgba': {}
-      },
-      preset: {
-        autoprefixer: {
-          grid: true
+      postcssOptions: {
+        plugins: {
+          // Disable `postcss-url`
+          'postcss-url': false,
+          // Add some plugins
+          'postcss-nested': {},
+          'postcss-responsive-type': {},
+          'postcss-hexrgba': {}
+        },
+        preset: {
+          autoprefixer: {
+            grid: true
+          }
         }
       }
     }
   }
-}</code></pre><p>If the postcss configuration is an <code>Object</code>, <code>order</code> can be used for defining the plugin order:<ul><li>Type: <code>Array</code> (ordered plugin names), <code>String</code> (order preset name), <code>Function</code><li>Default: <code>cssnanoLast</code> (put <code>cssnano</code> in last)</ul><pre class="language-js{}[nuxt.config.js]"><code class="language-js{}[nuxt.config.js]">export default {
+}</code></pre><p>If the postcss configuration is an <code>Object</code>, <code>postcssOptions.order</code> can be used for defining the plugin order:<ul><li>Type: <code>Array</code> (ordered plugin names), <code>String</code> (order preset name), <code>Function</code><li>Default: <code>cssnanoLast</code> (put <code>cssnano</code> in last)</ul><pre class="language-js{}[nuxt.config.js]"><code class="language-js{}[nuxt.config.js]">export default {
   build: {
     postcss: {
-      // preset name
-      order: 'cssnanoLast',
-      // ordered plugin names
-      order: ['postcss-import', 'postcss-preset-env', 'cssnano']
-      // Function to calculate plugin order
-      order: (names, presets) => presets.cssnanoLast(names)
+      postcssOptions: {
+        // preset name
+        order: 'cssnanoLast',
+        // ordered plugin names
+        order: ['postcss-import', 'postcss-preset-env', 'cssnano']
+        // Function to calculate plugin order
+        order: (names, presets) => presets.cssnanoLast(names)
+      }
     }
   }
 }</code></pre><section id="postcss-plugins--nuxtjstailwindcss"class="level3"><h3>postcss plugins &#x26; @nuxtjs/tailwindcss</h3><p>If you want to apply a postcss plugin (e.g. postcss-pxtorem) on the <a href="https://github.com/nuxt-community/tailwindcss-module">@nuxtjs/tailwindcss</a> configuration, you have to change order and load tailwindcss first.<p><strong>This setup has no impact on nuxt-purgecss.</strong><pre class="language-js{}[nuxt.config.js]"><code class="language-js{}[nuxt.config.js]">import { join } from 'path'
@@ -197,10 +203,12 @@ export default {
   // ...
   build: {
     postcss: {
-      plugins: {
-        tailwindcss: join(__dirname, 'tailwind.config.js'),
-        'postcss-pxtorem': {
-          propList: ['*', '!border*']
+      postcssOptions: {
+        plugins: {
+          tailwindcss: join(__dirname, 'tailwind.config.js'),
+          'postcss-pxtorem': {
+            propList: ['*', '!border*']
+          }
         }
       }
     }

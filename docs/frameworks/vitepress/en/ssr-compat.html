@@ -1,0 +1,34 @@
+<!doctype html><html lang="en"><meta charset="utf-8"><title>SSR Compatibility</title><meta name="viewport"content="width=device-width,initial-scale=1"><meta name="outline"content="deep"><link rel="stylesheet"href="../../../../../../../docs/themes/packages/prism-coy-theme/theme_common.css"><section id="ssr-compatibility"class="level1"><h1>SSR Compatibility</h1><p>VitePress pre-renders the app in Node.js during the production build, using Vue's Server-Side Rendering (SSR) capabilities. This means all custom code in theme components are subject to SSR Compatibility.<p>The <a href="https://vuejs.org/guide/scaling-up/ssr.html">SSR section in official Vue docs</a> provides more context on what is SSR, the relationship between SSR / SSG, and common notes on writing SSR-friendly code. The rule of thumb is to only access browser / DOM APIs in <code>beforeMount</code> or <code>mounted</code> hooks of Vue components.<section id="clientonly"class="level2"><h2><code>&#x3C;ClientOnly></code></h2><p>If you are using or demoing components that are not SSR-friendly (for example, contain custom directives), you can wrap them inside the built-in <code>&#x3C;ClientOnly></code> component:<pre class="language-md"><code class="language-md"><span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;</span>ClientOnly</span><span class="token punctuation">></span></span>
+  <span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;</span>NonSSRFriendlyComponent</span> <span class="token punctuation">/></span></span>
+<span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;/</span>ClientOnly</span><span class="token punctuation">></span></span></code></pre></section><section id="libraries-that-access-browser-api-on-import"class="level2"><h2>Libraries that Access Browser API on Import</h2><p>Some components or libraries access browser APIs <strong>on import</strong>. To use code that assumes a browser environment on import, you need to dynamically import them.<section id="importing-in-mounted-hook"class="level3"><h3>Importing in Mounted Hook</h3><pre class="language-vue"><code class="language-vue">&#x3C;script setup>
+import { onMounted } from 'vue'
+
+onMounted(() => {
+  import('./lib-that-access-window-on-import').then((module) => {
+    // use code
+  })
+})
+&#x3C;/script></code></pre></section><section id="conditional-import"class="level3"><h3>Conditional Import</h3><p>You can also conditionally import a dependency using the <code>import.meta.env.SSR</code> flag (part of <a href="https://vitejs.dev/guide/env-and-mode.html#env-variables">Vite env variables</a>):<pre class="language-js"><code class="language-js"><span class="token keyword control-flow">if</span> <span class="token punctuation">(</span><span class="token operator">!</span><span class="token keyword module">import</span><span class="token punctuation">.</span><span class="token property-access">meta</span><span class="token punctuation">.</span><span class="token property-access">env</span><span class="token punctuation">.</span><span class="token constant">SSR</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  <span class="token keyword module">import</span><span class="token punctuation">(</span><span class="token string">'./lib-that-access-window-on-import'</span><span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token method function property-access">then</span><span class="token punctuation">(</span><span class="token punctuation">(</span><span class="token parameter">module</span><span class="token punctuation">)</span> <span class="token arrow operator">=></span> <span class="token punctuation">{</span>
+    <span class="token comment">// use code</span>
+  <span class="token punctuation">}</span><span class="token punctuation">)</span>
+<span class="token punctuation">}</span></code></pre><p>Since <a href="/guide/custom-theme#theme-interface"><code>Theme.enhanceApp</code></a> can be async, you can conditionally import and register Vue plugins that access browser APIs on import:<pre class="language-js"><code class="language-js"><span class="token comment">// .vitepress/theme/index.js</span>
+<span class="token keyword module">export</span> <span class="token keyword module">default</span> <span class="token punctuation">{</span>
+  <span class="token comment">// ...</span>
+  <span class="token keyword">async</span> <span class="token function">enhanceApp</span><span class="token punctuation">(</span><span class="token parameter"><span class="token punctuation">{</span> app <span class="token punctuation">}</span></span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token keyword control-flow">if</span> <span class="token punctuation">(</span><span class="token operator">!</span><span class="token keyword module">import</span><span class="token punctuation">.</span><span class="token property-access">meta</span><span class="token punctuation">.</span><span class="token property-access">env</span><span class="token punctuation">.</span><span class="token constant">SSR</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+      <span class="token keyword">const</span> plugin <span class="token operator">=</span> <span class="token keyword control-flow">await</span> <span class="token keyword module">import</span><span class="token punctuation">(</span><span class="token string">'plugin-that-access-window-on-import'</span><span class="token punctuation">)</span>
+      app<span class="token punctuation">.</span><span class="token method function property-access">use</span><span class="token punctuation">(</span>plugin<span class="token punctuation">)</span>
+    <span class="token punctuation">}</span>
+  <span class="token punctuation">}</span>
+<span class="token punctuation">}</span></code></pre></section><section id="defineclientcomponent"class="level3"><h3><code>defineClientComponent</code></h3><p>VitePress provides a convenience helper for importing Vue components that access browser APIs on import.<pre class="language-vue"><code class="language-vue">&#x3C;script setup>
+import { defineClientComponent } from 'vitepress'
+
+const ClientComp = defineClientComponent(() => {
+  return import('component-that-access-window-on-import')
+})
+&#x3C;/script>
+
+&#x3C;template>
+  &#x3C;ClientComp />
+&#x3C;/template></code></pre><p>The target component will only be imported in the mounted hook of the wrapper component. <span style="float:footnote"><a href="./index.html#toc">Go to TOC</a></span></section></section></section>
