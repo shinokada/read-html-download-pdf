@@ -211,11 +211,12 @@ declare namespace <span class="token maybe-class-name">App</span> <span class="t
 </span></span>
 <span class="token inserted-sign inserted"><span class="token prefix inserted">+</span><span class="token line">&#x3C;form method="POST" use:enhance></span></span></code></pre><blockquote><p>ええ、<code>enhance</code> action と <code>&#x3C;form action></code> をどちらも 'action' と呼んでいて、少し紛らわしいですよね。このドキュメントは action でいっぱいです。申し訳ありません。</blockquote><p>引数が無い場合、<code>use:enhance</code> は、ブラウザネイティブの動作を、フルページリロードを除いてエミュレートします。それは:<ul><li>action が送信元のページと同じ場所にある場合に限り、成功レスポンスまたは不正なレスポンスに応じて、<code>form</code> プロパティと <code>$page.form</code> と <code>$page.status</code> を更新します。例えば、<code>&#x3C;form action="/somewhere/else" ..></code> というようなフォームの場合、<code>form</code> と <code>$page</code> は更新されません。これは、ネイティブのフォーム送信では action があるページにリダイレクトされるからです。どちらにしても更新させたい場合は、<a href="#progressive-enhancement-applyaction"><code>applyAction</code></a> を使用してください<li>成功レスポンスの場合は、<code>&#x3C;form></code> 要素をリセットして <code>invalidateAll</code> で全てのデータを無効化・最新化(invalidate)します<li>リダイレクトレスポンスの場合は <code>goto</code> を呼び出します<li>エラーが発生した場合はもっとも近くにある <code>+error</code> 境界をレンダリングします<li>適切な要素に <a href="accessibility#focus-management">フォーカスをリセット</a> します</ul><p>この挙動をカスタマイズするために、form が送信される直前に実行される <code>SubmitFunction</code> 関数を提供することができます。そして (オプションで) <code>ActionResult</code> を引数に取るコールバックを返すことができます。もしコールバックを返す場合、上述のデフォルトの動作はトリガーされません。元に戻すには、<code>update</code> を呼び出してください。<pre class="language-svelte"><code class="language-svelte">&#x3C;form
 	method="POST"
-	use:enhance={({ form, data, action, cancel }) => {
+	use:enhance={({ form, data, action, cancel, submitter }) => {
 		// `form` は `&#x3C;form>` 要素です
 		// `data` はその `FormData` オブジェクトです
 		// `action` はフォームが POST される URL です
 		// `cancel()` は送信(submission)を中止します
+		// `submitter` は、フォームの送信を実行した `HTMLElement` です
 
 		return async ({ result, update }) => {
 			// `result` は `ActionResult` オブジェクトです
