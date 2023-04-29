@@ -1,0 +1,697 @@
+<!doctype html><html lang="zh-hans"><meta charset="utf-8"><title>将 Props 传递给组件</title><meta name="viewport"content="width=device-width,initial-scale=1"><link rel="stylesheet"href="../../../../themes/packages/prism-coy-theme/theme_common.css"><section class="level1"aria-labelledby="将-props-传递给组件"><h1 id="将-props-传递给组件">将 Props 传递给组件</h1><p>translators:<ul><li>SylviaZ89<li>rottenpen</ul><intro><p>React 组件使用 <em>props</em> 来互相通信。每个父组件都可以提供 props 给它的子组件，从而将一些信息传递给它。Props 可能会让你想起 HTML 属性，但你可以通过它们传递任何 JavaScript 值，包括对象、数组和函数。</p></intro><youwilllearn><ul><li>如何向组件传递 props<li>如何从组件读取 props<li>如何为 props 指定默认值<li>如何给组件传递 JSX<li>Props 如何随时间变化</ul></youwilllearn><section class="level2"aria-labelledby="熟悉的-props-familiar-props"><h2 id="熟悉的-props-familiar-props">熟悉的 props {/<em>familiar-props</em>/}</h2><p>Props 是你传递给 JSX 标签的信息。例如，<code>className</code>、<code>src</code>、<code>alt</code>、<code>width</code> 和 <code>height</code> 便是一些可以传递给 <code>&#x3C;img></code> 的 props：</p><sandpack><pre class="language-js"><code class="language-js"><span class="token keyword">function</span> <span class="token function"><span class="token maybe-class-name">Avatar</span></span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  <span class="token keyword control-flow">return</span> <span class="token punctuation">(</span>
+    <span class="token operator">&#x3C;</span>img
+      className<span class="token operator">=</span><span class="token string">"avatar"</span>
+      src<span class="token operator">=</span><span class="token string">"https://i.imgur.com/1bX5QH6.jpg"</span>
+      alt<span class="token operator">=</span><span class="token string">"Lin Lanying"</span>
+      width<span class="token operator">=</span><span class="token punctuation">{</span><span class="token number">100</span><span class="token punctuation">}</span>
+      height<span class="token operator">=</span><span class="token punctuation">{</span><span class="token number">100</span><span class="token punctuation">}</span>
+    <span class="token operator">/</span><span class="token operator">></span>
+  <span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+
+<span class="token keyword module">export</span> <span class="token keyword module">default</span> <span class="token keyword">function</span> <span class="token function"><span class="token maybe-class-name">Profile</span></span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  <span class="token keyword control-flow">return</span> <span class="token punctuation">(</span>
+    <span class="token operator">&#x3C;</span><span class="token maybe-class-name">Avatar</span> <span class="token operator">/</span><span class="token operator">></span>
+  <span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span></code></pre><pre class="language-css"><code class="language-css"><span class="token selector">body</span> <span class="token punctuation">{</span> <span class="token property">min-height</span><span class="token punctuation">:</span> <span class="token number">120</span><span class="token unit">px</span><span class="token punctuation">;</span> <span class="token punctuation">}</span>
+<span class="token selector"><span class="token class">.avatar</span></span> <span class="token punctuation">{</span> <span class="token property">margin</span><span class="token punctuation">:</span> <span class="token number">20</span><span class="token unit">px</span><span class="token punctuation">;</span> <span class="token property">border-radius</span><span class="token punctuation">:</span> <span class="token number">50</span><span class="token unit">%</span><span class="token punctuation">;</span> <span class="token punctuation">}</span></code></pre></sandpack><p>你可以传递给 <code>&#x3C;img></code> 标签的 props 是预定义的（ReactDOM 符合 <a href="https://www.w3.org/TR/html52/semantics-embedded-content.html#the-img-element">HTML 标准</a>）。但是你可以将任何 props 传递给 <em>你自己的</em> 组件，例如 <code>&#x3C;Avatar></code> ，以便自定义它们。 就像这样！</section><section class="level2"aria-labelledby="向组件传递-props-passing-props-to-a-component"><h2 id="向组件传递-props-passing-props-to-a-component">向组件传递 props {/<em>passing-props-to-a-component</em>/}</h2><p>在这段代码中， <code>Profile</code> 组件没有向它的子组件 <code>Avatar</code> 传递任何 props ：<pre class="language-js"><code class="language-js"><span class="token keyword module">export</span> <span class="token keyword module">default</span> <span class="token keyword">function</span> <span class="token function"><span class="token maybe-class-name">Profile</span></span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  <span class="token keyword control-flow">return</span> <span class="token punctuation">(</span>
+    <span class="token operator">&#x3C;</span><span class="token maybe-class-name">Avatar</span> <span class="token operator">/</span><span class="token operator">></span>
+  <span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span></code></pre><p>你可以分两步给 <code>Avatar</code> 一些 props。<section class="level3"aria-labelledby="步骤-1-将-props-传递给子组件-step-1-pass-props-to-the-child-component"><h3 id="步骤-1-将-props-传递给子组件-step-1-pass-props-to-the-child-component">步骤 1: 将 props 传递给子组件 {/<em>step-1-pass-props-to-the-child-component</em>/}</h3><p>首先，将一些 props 传递给 <code>Avatar</code>。例如，让我们传递两个 props：<code>person</code>（一个对象）和 <code>size</code>（一个数字）：<pre class="language-js"><code class="language-js"><span class="token keyword module">export</span> <span class="token keyword module">default</span> <span class="token keyword">function</span> <span class="token function"><span class="token maybe-class-name">Profile</span></span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  <span class="token keyword control-flow">return</span> <span class="token punctuation">(</span>
+    <span class="token operator">&#x3C;</span><span class="token maybe-class-name">Avatar</span>
+      person<span class="token operator">=</span><span class="token punctuation">{</span><span class="token punctuation">{</span> <span class="token literal-property property">name</span><span class="token operator">:</span> <span class="token string">'Lin Lanying'</span><span class="token punctuation">,</span> <span class="token literal-property property">imageId</span><span class="token operator">:</span> <span class="token string">'1bX5QH6'</span> <span class="token punctuation">}</span><span class="token punctuation">}</span>
+      size<span class="token operator">=</span><span class="token punctuation">{</span><span class="token number">100</span><span class="token punctuation">}</span>
+    <span class="token operator">/</span><span class="token operator">></span>
+  <span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span></code></pre><note><p>如果 <code>person=</code> 后面的双花括号让你感到困惑，请记住，在 JSX 花括号中，<a href="/learn/javascript-in-jsx-with-curly-braces#using-double-curlies-css-and-other-objects-in-jsx">它们只是一个对象</a>。</p></note><p>现在，你可以在 <code>Avatar</code> 组件中读取这些 props 了。</section><section class="level3"aria-labelledby="步骤-2-在子组件中读取-props-step-2-read-props-inside-the-child-component"><h3 id="步骤-2-在子组件中读取-props-step-2-read-props-inside-the-child-component">步骤 2: 在子组件中读取 props {/<em>step-2-read-props-inside-the-child-component</em>/}</h3><p>你可以通过在 <code>function Avatar</code> 之后直接列出它们的名字 <code>person, size</code> 来读取这些 props。这些 props 在 <code>({</code> 和 <code>})</code> 之间，并由逗号分隔。这样，你可以在 <code>Avatar</code> 的代码中使用它们，就像使用变量一样。<pre class="language-js"><code class="language-js"><span class="token keyword">function</span> <span class="token function"><span class="token maybe-class-name">Avatar</span></span><span class="token punctuation">(</span><span class="token parameter"><span class="token punctuation">{</span> person<span class="token punctuation">,</span> size <span class="token punctuation">}</span></span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  <span class="token comment">// 在这里 person 和 size 是可访问的</span>
+<span class="token punctuation">}</span></code></pre><p>向使用 <code>person</code> 和 <code>size</code> props 渲染的 <code>Avatar</code> 添加一些逻辑，你就完成了。<p>现在你可以配置 <code>Avatar</code> ，通过不同的 props，使它能以多种不同的方式进行渲染。尝试变换值吧！</p><sandpack><pre class="language-js"><code class="language-js"><span class="token keyword module">import</span> <span class="token imports"><span class="token punctuation">{</span> getImageUrl <span class="token punctuation">}</span></span> <span class="token keyword module">from</span> <span class="token string">'./utils.js'</span><span class="token punctuation">;</span>
+
+<span class="token keyword">function</span> <span class="token function"><span class="token maybe-class-name">Avatar</span></span><span class="token punctuation">(</span><span class="token parameter"><span class="token punctuation">{</span> person<span class="token punctuation">,</span> size <span class="token punctuation">}</span></span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  <span class="token keyword control-flow">return</span> <span class="token punctuation">(</span>
+    <span class="token operator">&#x3C;</span>img
+      className<span class="token operator">=</span><span class="token string">"avatar"</span>
+      src<span class="token operator">=</span><span class="token punctuation">{</span><span class="token function">getImageUrl</span><span class="token punctuation">(</span>person<span class="token punctuation">)</span><span class="token punctuation">}</span>
+      alt<span class="token operator">=</span><span class="token punctuation">{</span>person<span class="token punctuation">.</span><span class="token property-access">name</span><span class="token punctuation">}</span>
+      width<span class="token operator">=</span><span class="token punctuation">{</span>size<span class="token punctuation">}</span>
+      height<span class="token operator">=</span><span class="token punctuation">{</span>size<span class="token punctuation">}</span>
+    <span class="token operator">/</span><span class="token operator">></span>
+  <span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+
+<span class="token keyword module">export</span> <span class="token keyword module">default</span> <span class="token keyword">function</span> <span class="token function"><span class="token maybe-class-name">Profile</span></span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  <span class="token keyword control-flow">return</span> <span class="token punctuation">(</span>
+    <span class="token operator">&#x3C;</span>div<span class="token operator">></span>
+      <span class="token operator">&#x3C;</span><span class="token maybe-class-name">Avatar</span>
+        size<span class="token operator">=</span><span class="token punctuation">{</span><span class="token number">100</span><span class="token punctuation">}</span>
+        person<span class="token operator">=</span><span class="token punctuation">{</span><span class="token punctuation">{</span> 
+          <span class="token literal-property property">name</span><span class="token operator">:</span> <span class="token string">'Katsuko Saruhashi'</span><span class="token punctuation">,</span> 
+          <span class="token literal-property property">imageId</span><span class="token operator">:</span> <span class="token string">'YfeOqp2'</span>
+        <span class="token punctuation">}</span><span class="token punctuation">}</span>
+      <span class="token operator">/</span><span class="token operator">></span>
+      <span class="token operator">&#x3C;</span><span class="token maybe-class-name">Avatar</span>
+        size<span class="token operator">=</span><span class="token punctuation">{</span><span class="token number">80</span><span class="token punctuation">}</span>
+        person<span class="token operator">=</span><span class="token punctuation">{</span><span class="token punctuation">{</span>
+          <span class="token literal-property property">name</span><span class="token operator">:</span> <span class="token string">'Aklilu Lemma'</span><span class="token punctuation">,</span> 
+          <span class="token literal-property property">imageId</span><span class="token operator">:</span> <span class="token string">'OKS67lh'</span>
+        <span class="token punctuation">}</span><span class="token punctuation">}</span>
+      <span class="token operator">/</span><span class="token operator">></span>
+      <span class="token operator">&#x3C;</span><span class="token maybe-class-name">Avatar</span>
+        size<span class="token operator">=</span><span class="token punctuation">{</span><span class="token number">50</span><span class="token punctuation">}</span>
+        person<span class="token operator">=</span><span class="token punctuation">{</span><span class="token punctuation">{</span> 
+          <span class="token literal-property property">name</span><span class="token operator">:</span> <span class="token string">'Lin Lanying'</span><span class="token punctuation">,</span>
+          <span class="token literal-property property">imageId</span><span class="token operator">:</span> <span class="token string">'1bX5QH6'</span>
+        <span class="token punctuation">}</span><span class="token punctuation">}</span>
+      <span class="token operator">/</span><span class="token operator">></span>
+    <span class="token operator">&#x3C;</span><span class="token operator">/</span>div<span class="token operator">></span>
+  <span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span></code></pre><pre class="language-js"><code class="language-js"><span class="token keyword module">export</span> <span class="token keyword">function</span> <span class="token function">getImageUrl</span><span class="token punctuation">(</span>person<span class="token punctuation">,</span> size <span class="token operator">=</span> <span class="token string">'s'</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  <span class="token keyword control-flow">return</span> <span class="token punctuation">(</span>
+    <span class="token string">'https://i.imgur.com/'</span> <span class="token operator">+</span>
+    person<span class="token punctuation">.</span><span class="token property-access">imageId</span> <span class="token operator">+</span>
+    size <span class="token operator">+</span>
+    <span class="token string">'.jpg'</span>
+  <span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span></code></pre><pre class="language-css"><code class="language-css"><span class="token selector">body</span> <span class="token punctuation">{</span> <span class="token property">min-height</span><span class="token punctuation">:</span> <span class="token number">120</span><span class="token unit">px</span><span class="token punctuation">;</span> <span class="token punctuation">}</span>
+<span class="token selector"><span class="token class">.avatar</span></span> <span class="token punctuation">{</span> <span class="token property">margin</span><span class="token punctuation">:</span> <span class="token number">10</span><span class="token unit">px</span><span class="token punctuation">;</span> <span class="token property">border-radius</span><span class="token punctuation">:</span> <span class="token number">50</span><span class="token unit">%</span><span class="token punctuation">;</span> <span class="token punctuation">}</span></code></pre></sandpack><p>Props 使你独立思考父组件和子组件。 例如，你可以改变 <code>Profile</code> 中的 <code>person</code> 或 <code>size</code> props，而无需考虑 <code>Avatar</code> 如何使用它们。 同样，你可以改变 <code>Avatar</code> 使用这些 props 的方式，不必考虑 <code>Profile</code>。<p>你可以将 props 想象成可以调整的“旋钮”。它们的作用与函数的参数相同 —— 事实上，props <em>正是</em> 组件的唯一参数！ React 组件函数接受一个参数，一个 <code>props</code> 对象：<pre class="language-js"><code class="language-js"><span class="token keyword">function</span> <span class="token function"><span class="token maybe-class-name">Avatar</span></span><span class="token punctuation">(</span><span class="token parameter">props</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  <span class="token keyword">let</span> person <span class="token operator">=</span> props<span class="token punctuation">.</span><span class="token property-access">person</span><span class="token punctuation">;</span>
+  <span class="token keyword">let</span> size <span class="token operator">=</span> props<span class="token punctuation">.</span><span class="token property-access">size</span><span class="token punctuation">;</span>
+  <span class="token comment">// ...</span>
+<span class="token punctuation">}</span></code></pre><p>通常你不需要整个 <code>props</code> 对象，所以可以将它解构为单独的 props。</p><pitfall><p>在声明 props 时， <strong>不要忘记 <code>(</code> 和 <code>)</code> 之间的一对花括号 <code>{</code> 和 <code>}</code></strong> ：<pre class="language-js"><code class="language-js"><span class="token keyword">function</span> <span class="token function"><span class="token maybe-class-name">Avatar</span></span><span class="token punctuation">(</span><span class="token parameter"><span class="token punctuation">{</span> person<span class="token punctuation">,</span> size <span class="token punctuation">}</span></span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  <span class="token comment">// ...</span>
+<span class="token punctuation">}</span></code></pre><p>这种语法被称为 <a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Operators/Destructuring_assignment#Unpacking_fields_from_objects_passed_as_a_function_parameter">“解构”</a>，等价于于从函数参数中读取属性：<pre class="language-js"><code class="language-js"><span class="token keyword">function</span> <span class="token function"><span class="token maybe-class-name">Avatar</span></span><span class="token punctuation">(</span><span class="token parameter">props</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  <span class="token keyword">let</span> person <span class="token operator">=</span> props<span class="token punctuation">.</span><span class="token property-access">person</span><span class="token punctuation">;</span>
+  <span class="token keyword">let</span> size <span class="token operator">=</span> props<span class="token punctuation">.</span><span class="token property-access">size</span><span class="token punctuation">;</span>
+  <span class="token comment">// ...</span>
+<span class="token punctuation">}</span></code></pre></pitfall></section></section><section class="level2"aria-labelledby="给-prop-指定一个默认值-specifying-a-default-value-for-a-prop"><h2 id="给-prop-指定一个默认值-specifying-a-default-value-for-a-prop">给 prop 指定一个默认值 {/<em>specifying-a-default-value-for-a-prop</em>/}</h2><p>如果你想在没有指定值的情况下给 prop 一个默认值，你可以通过在参数后面写 <code>=</code> 和默认值来进行解构：<pre class="language-js"><code class="language-js"><span class="token keyword">function</span> <span class="token function"><span class="token maybe-class-name">Avatar</span></span><span class="token punctuation">(</span><span class="token parameter"><span class="token punctuation">{</span> person<span class="token punctuation">,</span> size <span class="token operator">=</span> <span class="token number">100</span> <span class="token punctuation">}</span></span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  <span class="token comment">// ...</span>
+<span class="token punctuation">}</span></code></pre><p>现在， 如果 <code>&#x3C;Avatar person={...} /></code> 渲染时没有 <code>size</code> prop， <code>size</code> 将被赋值为 <code>100</code>。<p>默认值仅在缺少 <code>size</code> prop 或 <code>size={undefined}</code> 时生效。 但是如果你传递了 <code>size={null}</code> 或 <code>size={0}</code>，默认值将 <strong>不</strong> 被使用。</section><section class="level2"aria-labelledby="使用-jsx-展开语法传递-props-forwarding-props-with-the-jsx-spread-syntax"><h2 id="使用-jsx-展开语法传递-props-forwarding-props-with-the-jsx-spread-syntax">使用 JSX 展开语法传递 props {/<em>forwarding-props-with-the-jsx-spread-syntax</em>/}</h2><p>有时候，传递 props 会变得非常重复：<pre class="language-js"><code class="language-js"><span class="token keyword">function</span> <span class="token function"><span class="token maybe-class-name">Profile</span></span><span class="token punctuation">(</span><span class="token parameter"><span class="token punctuation">{</span> person<span class="token punctuation">,</span> size<span class="token punctuation">,</span> isSepia<span class="token punctuation">,</span> thickBorder <span class="token punctuation">}</span></span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  <span class="token keyword control-flow">return</span> <span class="token punctuation">(</span>
+    <span class="token operator">&#x3C;</span>div className<span class="token operator">=</span><span class="token string">"card"</span><span class="token operator">></span>
+      <span class="token operator">&#x3C;</span><span class="token maybe-class-name">Avatar</span>
+        person<span class="token operator">=</span><span class="token punctuation">{</span>person<span class="token punctuation">}</span>
+        size<span class="token operator">=</span><span class="token punctuation">{</span>size<span class="token punctuation">}</span>
+        isSepia<span class="token operator">=</span><span class="token punctuation">{</span>isSepia<span class="token punctuation">}</span>
+        thickBorder<span class="token operator">=</span><span class="token punctuation">{</span>thickBorder<span class="token punctuation">}</span>
+      <span class="token operator">/</span><span class="token operator">></span>
+    <span class="token operator">&#x3C;</span><span class="token operator">/</span>div<span class="token operator">></span>
+  <span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span></code></pre><p>重复代码没有错（它可以更清晰）。但有时你可能会重视简洁。一些组件将它们所有的 props 转发给子组件，正如 <code>Profile</code> 转给 <code>Avatar</code> 那样。因为它们不直接使用它们任何 props，所以使用更简洁的“展开”语法是有意义的：<pre class="language-js"><code class="language-js"><span class="token keyword">function</span> <span class="token function"><span class="token maybe-class-name">Profile</span></span><span class="token punctuation">(</span><span class="token parameter">props</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  <span class="token keyword control-flow">return</span> <span class="token punctuation">(</span>
+    <span class="token operator">&#x3C;</span>div className<span class="token operator">=</span><span class="token string">"card"</span><span class="token operator">></span>
+      <span class="token operator">&#x3C;</span><span class="token maybe-class-name">Avatar</span> <span class="token punctuation">{</span><span class="token spread operator">...</span>props<span class="token punctuation">}</span> <span class="token operator">/</span><span class="token operator">></span>
+    <span class="token operator">&#x3C;</span><span class="token operator">/</span>div<span class="token operator">></span>
+  <span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span></code></pre><p>这会将 <code>Profile</code> 的所有 props 转发到 <code>Avatar</code>，而不列出每个名字。<p><strong>请克制地使用展开语法。</strong> 如果你在所有其他组件中都使用它，那就有问题了。 通常，它表示你应该拆分组件，并将子组件作为 JSX 传递。 接下来会详细介绍！</section><section class="level2"aria-labelledby="将-jsx-作为子组件传递-passing-jsx-as-children"><h2 id="将-jsx-作为子组件传递-passing-jsx-as-children">将 JSX 作为子组件传递 {/<em>passing-jsx-as-children</em>/}</h2><p>嵌套浏览器内置标签是很常见的：<pre class="language-js"><code class="language-js"><span class="token operator">&#x3C;</span>div<span class="token operator">></span>
+  <span class="token operator">&#x3C;</span>img <span class="token operator">/</span><span class="token operator">></span>
+<span class="token operator">&#x3C;</span><span class="token operator">/</span>div<span class="token operator">></span></code></pre><p>有时你会希望以相同的方式嵌套自己的组件：<pre class="language-js"><code class="language-js"><span class="token operator">&#x3C;</span><span class="token maybe-class-name">Card</span><span class="token operator">></span>
+  <span class="token operator">&#x3C;</span><span class="token maybe-class-name">Avatar</span> <span class="token operator">/</span><span class="token operator">></span>
+<span class="token operator">&#x3C;</span><span class="token operator">/</span><span class="token maybe-class-name">Card</span><span class="token operator">></span></code></pre><p>当您将内容嵌套在 JSX 标签中时，父组件将在名为 <code>children</code> 的 prop 中接收到该内容。例如，下面的 <code>Card</code> 组件将接收一个被设为 <code>&#x3C;Avatar /></code> 的 <code>children</code> prop 并将其包裹在 div 中渲染：</p><sandpack><pre class="language-js"><code class="language-js"><span class="token keyword module">import</span> <span class="token imports"><span class="token maybe-class-name">Avatar</span></span> <span class="token keyword module">from</span> <span class="token string">'./Avatar.js'</span><span class="token punctuation">;</span>
+
+<span class="token keyword">function</span> <span class="token function"><span class="token maybe-class-name">Card</span></span><span class="token punctuation">(</span><span class="token parameter"><span class="token punctuation">{</span> children <span class="token punctuation">}</span></span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  <span class="token keyword control-flow">return</span> <span class="token punctuation">(</span>
+    <span class="token operator">&#x3C;</span>div className<span class="token operator">=</span><span class="token string">"card"</span><span class="token operator">></span>
+      <span class="token punctuation">{</span>children<span class="token punctuation">}</span>
+    <span class="token operator">&#x3C;</span><span class="token operator">/</span>div<span class="token operator">></span>
+  <span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+
+<span class="token keyword module">export</span> <span class="token keyword module">default</span> <span class="token keyword">function</span> <span class="token function"><span class="token maybe-class-name">Profile</span></span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  <span class="token keyword control-flow">return</span> <span class="token punctuation">(</span>
+    <span class="token operator">&#x3C;</span><span class="token maybe-class-name">Card</span><span class="token operator">></span>
+      <span class="token operator">&#x3C;</span><span class="token maybe-class-name">Avatar</span>
+        size<span class="token operator">=</span><span class="token punctuation">{</span><span class="token number">100</span><span class="token punctuation">}</span>
+        person<span class="token operator">=</span><span class="token punctuation">{</span><span class="token punctuation">{</span> 
+          <span class="token literal-property property">name</span><span class="token operator">:</span> <span class="token string">'Katsuko Saruhashi'</span><span class="token punctuation">,</span>
+          <span class="token literal-property property">imageId</span><span class="token operator">:</span> <span class="token string">'YfeOqp2'</span>
+        <span class="token punctuation">}</span><span class="token punctuation">}</span>
+      <span class="token operator">/</span><span class="token operator">></span>
+    <span class="token operator">&#x3C;</span><span class="token operator">/</span><span class="token maybe-class-name">Card</span><span class="token operator">></span>
+  <span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span></code></pre><pre class="language-js"><code class="language-js"><span class="token keyword module">import</span> <span class="token imports"><span class="token punctuation">{</span> getImageUrl <span class="token punctuation">}</span></span> <span class="token keyword module">from</span> <span class="token string">'./utils.js'</span><span class="token punctuation">;</span>
+
+<span class="token keyword module">export</span> <span class="token keyword module">default</span> <span class="token keyword">function</span> <span class="token function"><span class="token maybe-class-name">Avatar</span></span><span class="token punctuation">(</span><span class="token parameter"><span class="token punctuation">{</span> person<span class="token punctuation">,</span> size <span class="token punctuation">}</span></span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  <span class="token keyword control-flow">return</span> <span class="token punctuation">(</span>
+    <span class="token operator">&#x3C;</span>img
+      className<span class="token operator">=</span><span class="token string">"avatar"</span>
+      src<span class="token operator">=</span><span class="token punctuation">{</span><span class="token function">getImageUrl</span><span class="token punctuation">(</span>person<span class="token punctuation">)</span><span class="token punctuation">}</span>
+      alt<span class="token operator">=</span><span class="token punctuation">{</span>person<span class="token punctuation">.</span><span class="token property-access">name</span><span class="token punctuation">}</span>
+      width<span class="token operator">=</span><span class="token punctuation">{</span>size<span class="token punctuation">}</span>
+      height<span class="token operator">=</span><span class="token punctuation">{</span>size<span class="token punctuation">}</span>
+    <span class="token operator">/</span><span class="token operator">></span>
+  <span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span></code></pre><pre class="language-js"><code class="language-js"><span class="token keyword module">export</span> <span class="token keyword">function</span> <span class="token function">getImageUrl</span><span class="token punctuation">(</span>person<span class="token punctuation">,</span> size <span class="token operator">=</span> <span class="token string">'s'</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  <span class="token keyword control-flow">return</span> <span class="token punctuation">(</span>
+    <span class="token string">'https://i.imgur.com/'</span> <span class="token operator">+</span>
+    person<span class="token punctuation">.</span><span class="token property-access">imageId</span> <span class="token operator">+</span>
+    size <span class="token operator">+</span>
+    <span class="token string">'.jpg'</span>
+  <span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span></code></pre><pre class="language-css"><code class="language-css"><span class="token selector"><span class="token class">.card</span></span> <span class="token punctuation">{</span>
+  <span class="token property">width</span><span class="token punctuation">:</span> fit-content<span class="token punctuation">;</span>
+  <span class="token property">margin</span><span class="token punctuation">:</span> <span class="token number">5</span><span class="token unit">px</span><span class="token punctuation">;</span>
+  <span class="token property">padding</span><span class="token punctuation">:</span> <span class="token number">5</span><span class="token unit">px</span><span class="token punctuation">;</span>
+  <span class="token property">font-size</span><span class="token punctuation">:</span> <span class="token number">20</span><span class="token unit">px</span><span class="token punctuation">;</span>
+  <span class="token property">text-align</span><span class="token punctuation">:</span> center<span class="token punctuation">;</span>
+  <span class="token property">border</span><span class="token punctuation">:</span> <span class="token number">1</span><span class="token unit">px</span> solid <span class="token hexcode color">#aaa</span><span class="token punctuation">;</span>
+  <span class="token property">border-radius</span><span class="token punctuation">:</span> <span class="token number">20</span><span class="token unit">px</span><span class="token punctuation">;</span>
+  <span class="token property">background</span><span class="token punctuation">:</span> <span class="token hexcode color">#fff</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+<span class="token selector"><span class="token class">.avatar</span></span> <span class="token punctuation">{</span>
+  <span class="token property">margin</span><span class="token punctuation">:</span> <span class="token number">20</span><span class="token unit">px</span><span class="token punctuation">;</span>
+  <span class="token property">border-radius</span><span class="token punctuation">:</span> <span class="token number">50</span><span class="token unit">%</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span></code></pre></sandpack><p>尝试用一些文本替换 <code>&#x3C;Card></code> 中的 <code>&#x3C;Avatar></code>，看看 <code>Card</code> 组件如何包裹任意嵌套内容。它不必“知道”其中渲染的内容。你会在很多地方看到这种灵活的模式。<p>可以将带有 <code>children</code> prop 的组件看作有一个“洞”，可以由其父组件使用任意 JSX 来“填充”。你会经常使用 <code>children</code> prop 来进行视觉包装：面板、网格等等。<p>&#x3C;Illustration src./docs/illustrations/i_children-prop.png" alt='A puzzle-like Card tile with a slot for "children" pieces like text and Avatar' /></section><section class="level2"aria-labelledby="props-如何随时间变化-how-props-change-over-time"><h2 id="props-如何随时间变化-how-props-change-over-time">Props 如何随时间变化 {/<em>how-props-change-over-time</em>/}</h2><p>下面的 <code>Clock</code> 组件从其父组件接收两个 props：<code>color</code> 和 <code>time</code>。（父组件的代码被省略，因为它使用 <a href="/learn/state-a-components-memory">state</a>，我们暂时不会深入研究。）<p>尝试在下面的选择框中更改颜色：</p><sandpack><pre class="language-js"><code class="language-js"><span class="token keyword module">export</span> <span class="token keyword module">default</span> <span class="token keyword">function</span> <span class="token function"><span class="token maybe-class-name">Clock</span></span><span class="token punctuation">(</span><span class="token parameter"><span class="token punctuation">{</span> color<span class="token punctuation">,</span> time <span class="token punctuation">}</span></span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  <span class="token keyword control-flow">return</span> <span class="token punctuation">(</span>
+    <span class="token operator">&#x3C;</span>h1 style<span class="token operator">=</span><span class="token punctuation">{</span><span class="token punctuation">{</span> <span class="token literal-property property">color</span><span class="token operator">:</span> color <span class="token punctuation">}</span><span class="token punctuation">}</span><span class="token operator">></span>
+      <span class="token punctuation">{</span>time<span class="token punctuation">}</span>
+    <span class="token operator">&#x3C;</span><span class="token operator">/</span>h1<span class="token operator">></span>
+  <span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span></code></pre><pre class="language-js"><code class="language-js"><span class="token keyword module">import</span> <span class="token imports"><span class="token punctuation">{</span> useState<span class="token punctuation">,</span> useEffect <span class="token punctuation">}</span></span> <span class="token keyword module">from</span> <span class="token string">'react'</span><span class="token punctuation">;</span>
+<span class="token keyword module">import</span> <span class="token imports"><span class="token maybe-class-name">Clock</span></span> <span class="token keyword module">from</span> <span class="token string">'./Clock.js'</span><span class="token punctuation">;</span>
+
+<span class="token keyword">function</span> <span class="token function">useTime</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  <span class="token keyword">const</span> <span class="token punctuation">[</span>time<span class="token punctuation">,</span> setTime<span class="token punctuation">]</span> <span class="token operator">=</span> <span class="token function">useState</span><span class="token punctuation">(</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token arrow operator">=></span> <span class="token keyword">new</span> <span class="token class-name">Date</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token function">useEffect</span><span class="token punctuation">(</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token arrow operator">=></span> <span class="token punctuation">{</span>
+    <span class="token keyword">const</span> id <span class="token operator">=</span> <span class="token function">setInterval</span><span class="token punctuation">(</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token arrow operator">=></span> <span class="token punctuation">{</span>
+      <span class="token function">setTime</span><span class="token punctuation">(</span><span class="token keyword">new</span> <span class="token class-name">Date</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span><span class="token punctuation">,</span> <span class="token number">1000</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token keyword control-flow">return</span> <span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token arrow operator">=></span> <span class="token function">clearInterval</span><span class="token punctuation">(</span>id<span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token punctuation">}</span><span class="token punctuation">,</span> <span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token keyword control-flow">return</span> time<span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+
+<span class="token keyword module">export</span> <span class="token keyword module">default</span> <span class="token keyword">function</span> <span class="token function"><span class="token maybe-class-name">App</span></span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  <span class="token keyword">const</span> time <span class="token operator">=</span> <span class="token function">useTime</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token keyword">const</span> <span class="token punctuation">[</span>color<span class="token punctuation">,</span> setColor<span class="token punctuation">]</span> <span class="token operator">=</span> <span class="token function">useState</span><span class="token punctuation">(</span><span class="token string">'lightcoral'</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token keyword control-flow">return</span> <span class="token punctuation">(</span>
+    <span class="token operator">&#x3C;</span>div<span class="token operator">></span>
+      <span class="token operator">&#x3C;</span>p<span class="token operator">></span>
+        <span class="token literal-property property">选择一个颜色</span><span class="token operator">:</span><span class="token punctuation">{</span><span class="token string">' '</span><span class="token punctuation">}</span>
+        <span class="token operator">&#x3C;</span>select value<span class="token operator">=</span><span class="token punctuation">{</span>color<span class="token punctuation">}</span> onChange<span class="token operator">=</span><span class="token punctuation">{</span><span class="token parameter">e</span> <span class="token arrow operator">=></span> <span class="token function">setColor</span><span class="token punctuation">(</span>e<span class="token punctuation">.</span><span class="token property-access">target</span><span class="token punctuation">.</span><span class="token property-access">value</span><span class="token punctuation">)</span><span class="token punctuation">}</span><span class="token operator">></span>
+          <span class="token operator">&#x3C;</span>option value<span class="token operator">=</span><span class="token string">"lightcoral"</span><span class="token operator">></span>浅珊瑚色<span class="token operator">&#x3C;</span><span class="token operator">/</span>option<span class="token operator">></span>
+          <span class="token operator">&#x3C;</span>option value<span class="token operator">=</span><span class="token string">"midnightblue"</span><span class="token operator">></span>午夜蓝<span class="token operator">&#x3C;</span><span class="token operator">/</span>option<span class="token operator">></span>
+          <span class="token operator">&#x3C;</span>option value<span class="token operator">=</span><span class="token string">"rebeccapurple"</span><span class="token operator">></span>丽贝卡紫<span class="token operator">&#x3C;</span><span class="token operator">/</span>option<span class="token operator">></span>
+        <span class="token operator">&#x3C;</span><span class="token operator">/</span>select<span class="token operator">></span>
+      <span class="token operator">&#x3C;</span><span class="token operator">/</span>p<span class="token operator">></span>
+      <span class="token operator">&#x3C;</span><span class="token maybe-class-name">Clock</span> color<span class="token operator">=</span><span class="token punctuation">{</span>color<span class="token punctuation">}</span> time<span class="token operator">=</span><span class="token punctuation">{</span>time<span class="token punctuation">.</span><span class="token method function property-access">toLocaleTimeString</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">}</span> <span class="token operator">/</span><span class="token operator">></span>
+    <span class="token operator">&#x3C;</span><span class="token operator">/</span>div<span class="token operator">></span>
+  <span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span></code></pre></sandpack><p>这个例子说明，<strong>一个组件可能会随着时间的推移收到不同的 props。</strong> Props 并不总是静态的！在这里，<code>time</code> prop 每秒都在变化。当你选择另一种颜色时，<code>color</code> prop 也改变了。Props 反映了组件在任何时间点的数据，并不仅仅是在开始时。<p>然而，props 是 <a href="https://en.wikipedia.org/wiki/Immutable_object">不可变的</a>（一个计算机科学术语，意思是“不可改变”）。当一个组件需要改变它的 props（例如，响应用户交互或新数据）时，它不得不“请求”它的父组件传递 <em>不同的 props</em> —— 一个新对象！它的旧 props 将被丢弃，最终 JavaScript 引擎将回收它们占用的内存。<p><strong>不要尝试“更改 props”。</strong> 当你需要响应用户输入（例如更改所选颜色）时，你可以“设置 state”，你可以在 <a href="/learn/state-a-components-memory">State: 一个组件的内存</a> 中继续了解。</p><recap><ul><li>要传递 props，请将它们添加到 JSX，就像使用 HTML 属性一样。<li>要读取 props，请使用 <code>function Avatar({ person, size })</code> 解构语法。<li>你可以指定一个默认值，如 <code>size = 100</code>，用于缺少值或值为 <code>undefined</code> 的 props 。<li>你可以使用 <code>&#x3C;Avatar {...props} /></code> JSX 展开语法转发所有 props，但不要过度使用它！<li>像 <code>&#x3C;Card>&#x3C;Avatar />&#x3C;/Card></code> 这样的嵌套 JSX，将被视为 <code>Card</code> 组件的 <code>children</code> prop。<li>Props 是只读的时间快照：每次渲染都会收到新版本的 props。<li>你不能改变 props。当你需要交互性时，你可以设置 state。</ul></recap><challenges><section class="level4"aria-labelledby="提取一个组件-extract-a-component"><h4 id="提取一个组件-extract-a-component">提取一个组件 {/<em>extract-a-component</em>/}</h4><p>这个 <code>Gallery</code> 组件包含两份个人资料，其中有一些非常相似的标签。从中提取一个 <code>Profile</code> 组件以减少重复。你需要选择要传递哪些 props。</p><sandpack><pre class="language-js"><code class="language-js"><span class="token keyword module">import</span> <span class="token imports"><span class="token punctuation">{</span> getImageUrl <span class="token punctuation">}</span></span> <span class="token keyword module">from</span> <span class="token string">'./utils.js'</span><span class="token punctuation">;</span>
+
+<span class="token keyword module">export</span> <span class="token keyword module">default</span> <span class="token keyword">function</span> <span class="token function"><span class="token maybe-class-name">Gallery</span></span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  <span class="token keyword control-flow">return</span> <span class="token punctuation">(</span>
+    <span class="token operator">&#x3C;</span>div<span class="token operator">></span>
+      <span class="token operator">&#x3C;</span>h1<span class="token operator">></span><span class="token maybe-class-name">Notable</span> <span class="token maybe-class-name">Scientists</span><span class="token operator">&#x3C;</span><span class="token operator">/</span>h1<span class="token operator">></span>
+      <span class="token operator">&#x3C;</span>section className<span class="token operator">=</span><span class="token string">"profile"</span><span class="token operator">></span>
+        <span class="token operator">&#x3C;</span>h2<span class="token operator">></span><span class="token maybe-class-name">Maria</span> <span class="token maybe-class-name">Skłodowska</span><span class="token operator">-</span><span class="token maybe-class-name">Curie</span><span class="token operator">&#x3C;</span><span class="token operator">/</span>h2<span class="token operator">></span>
+        <span class="token operator">&#x3C;</span>img
+          className<span class="token operator">=</span><span class="token string">"avatar"</span>
+          src<span class="token operator">=</span><span class="token punctuation">{</span><span class="token function">getImageUrl</span><span class="token punctuation">(</span><span class="token string">'szV5sdG'</span><span class="token punctuation">)</span><span class="token punctuation">}</span>
+          alt<span class="token operator">=</span><span class="token string">"Maria Skłodowska-Curie"</span>
+          width<span class="token operator">=</span><span class="token punctuation">{</span><span class="token number">70</span><span class="token punctuation">}</span>
+          height<span class="token operator">=</span><span class="token punctuation">{</span><span class="token number">70</span><span class="token punctuation">}</span>
+        <span class="token operator">/</span><span class="token operator">></span>
+        <span class="token operator">&#x3C;</span>ul<span class="token operator">></span>
+          <span class="token operator">&#x3C;</span>li<span class="token operator">></span>
+            <span class="token operator">&#x3C;</span>b<span class="token operator">></span><span class="token maybe-class-name">Profession</span><span class="token operator">:</span> <span class="token operator">&#x3C;</span><span class="token operator">/</span>b<span class="token operator">></span> 
+            physicist and chemist
+          <span class="token operator">&#x3C;</span><span class="token operator">/</span>li<span class="token operator">></span>
+          <span class="token operator">&#x3C;</span>li<span class="token operator">></span>
+            <span class="token operator">&#x3C;</span>b<span class="token operator">></span><span class="token maybe-class-name">Awards</span><span class="token operator">:</span> <span class="token number">4</span> <span class="token operator">&#x3C;</span><span class="token operator">/</span>b<span class="token operator">></span> 
+            <span class="token punctuation">(</span><span class="token maybe-class-name">Nobel</span> <span class="token maybe-class-name">Prize</span> <span class="token keyword">in</span> <span class="token maybe-class-name">Physics</span><span class="token punctuation">,</span> <span class="token maybe-class-name">Nobel</span> <span class="token maybe-class-name">Prize</span> <span class="token keyword">in</span> <span class="token maybe-class-name">Chemistry</span><span class="token punctuation">,</span> <span class="token maybe-class-name">Davy</span> <span class="token maybe-class-name">Medal</span><span class="token punctuation">,</span> <span class="token maybe-class-name">Matteucci</span> <span class="token maybe-class-name">Medal</span><span class="token punctuation">)</span>
+          <span class="token operator">&#x3C;</span><span class="token operator">/</span>li<span class="token operator">></span>
+          <span class="token operator">&#x3C;</span>li<span class="token operator">></span>
+            <span class="token operator">&#x3C;</span>b<span class="token operator">></span><span class="token maybe-class-name">Discovered</span><span class="token operator">:</span> <span class="token operator">&#x3C;</span><span class="token operator">/</span>b<span class="token operator">></span>
+            <span class="token function">polonium</span> <span class="token punctuation">(</span>element<span class="token punctuation">)</span>
+          <span class="token operator">&#x3C;</span><span class="token operator">/</span>li<span class="token operator">></span>
+        <span class="token operator">&#x3C;</span><span class="token operator">/</span>ul<span class="token operator">></span>
+      <span class="token operator">&#x3C;</span><span class="token operator">/</span>section<span class="token operator">></span>
+      <span class="token operator">&#x3C;</span>section className<span class="token operator">=</span><span class="token string">"profile"</span><span class="token operator">></span>
+        <span class="token operator">&#x3C;</span>h2<span class="token operator">></span><span class="token maybe-class-name">Katsuko</span> <span class="token maybe-class-name">Saruhashi</span><span class="token operator">&#x3C;</span><span class="token operator">/</span>h2<span class="token operator">></span>
+        <span class="token operator">&#x3C;</span>img
+          className<span class="token operator">=</span><span class="token string">"avatar"</span>
+          src<span class="token operator">=</span><span class="token punctuation">{</span><span class="token function">getImageUrl</span><span class="token punctuation">(</span><span class="token string">'YfeOqp2'</span><span class="token punctuation">)</span><span class="token punctuation">}</span>
+          alt<span class="token operator">=</span><span class="token string">"Katsuko Saruhashi"</span>
+          width<span class="token operator">=</span><span class="token punctuation">{</span><span class="token number">70</span><span class="token punctuation">}</span>
+          height<span class="token operator">=</span><span class="token punctuation">{</span><span class="token number">70</span><span class="token punctuation">}</span>
+        <span class="token operator">/</span><span class="token operator">></span>
+        <span class="token operator">&#x3C;</span>ul<span class="token operator">></span>
+          <span class="token operator">&#x3C;</span>li<span class="token operator">></span>
+            <span class="token operator">&#x3C;</span>b<span class="token operator">></span><span class="token maybe-class-name">Profession</span><span class="token operator">:</span> <span class="token operator">&#x3C;</span><span class="token operator">/</span>b<span class="token operator">></span> 
+            geochemist
+          <span class="token operator">&#x3C;</span><span class="token operator">/</span>li<span class="token operator">></span>
+          <span class="token operator">&#x3C;</span>li<span class="token operator">></span>
+            <span class="token operator">&#x3C;</span>b<span class="token operator">></span><span class="token maybe-class-name">Awards</span><span class="token operator">:</span> <span class="token number">2</span> <span class="token operator">&#x3C;</span><span class="token operator">/</span>b<span class="token operator">></span> 
+            <span class="token punctuation">(</span><span class="token maybe-class-name">Miyake</span> <span class="token maybe-class-name">Prize</span> <span class="token keyword control-flow">for</span> geochemistry<span class="token punctuation">,</span> <span class="token maybe-class-name">Tanaka</span> <span class="token maybe-class-name">Prize</span><span class="token punctuation">)</span>
+          <span class="token operator">&#x3C;</span><span class="token operator">/</span>li<span class="token operator">></span>
+          <span class="token operator">&#x3C;</span>li<span class="token operator">></span>
+            <span class="token operator">&#x3C;</span>b<span class="token operator">></span><span class="token maybe-class-name">Discovered</span><span class="token operator">:</span> <span class="token operator">&#x3C;</span><span class="token operator">/</span>b<span class="token operator">></span>
+            a method <span class="token keyword control-flow">for</span> measuring carbon dioxide <span class="token keyword">in</span> seawater
+          <span class="token operator">&#x3C;</span><span class="token operator">/</span>li<span class="token operator">></span>
+        <span class="token operator">&#x3C;</span><span class="token operator">/</span>ul<span class="token operator">></span>
+      <span class="token operator">&#x3C;</span><span class="token operator">/</span>section<span class="token operator">></span>
+    <span class="token operator">&#x3C;</span><span class="token operator">/</span>div<span class="token operator">></span>
+  <span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span></code></pre><pre class="language-js"><code class="language-js"><span class="token keyword module">export</span> <span class="token keyword">function</span> <span class="token function">getImageUrl</span><span class="token punctuation">(</span>imageId<span class="token punctuation">,</span> size <span class="token operator">=</span> <span class="token string">'s'</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  <span class="token keyword control-flow">return</span> <span class="token punctuation">(</span>
+    <span class="token string">'https://i.imgur.com/'</span> <span class="token operator">+</span>
+    imageId <span class="token operator">+</span>
+    size <span class="token operator">+</span>
+    <span class="token string">'.jpg'</span>
+  <span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span></code></pre><pre class="language-css"><code class="language-css"><span class="token selector"><span class="token class">.avatar</span></span> <span class="token punctuation">{</span> <span class="token property">margin</span><span class="token punctuation">:</span> <span class="token number">5</span><span class="token unit">px</span><span class="token punctuation">;</span> <span class="token property">border-radius</span><span class="token punctuation">:</span> <span class="token number">50</span><span class="token unit">%</span><span class="token punctuation">;</span> <span class="token property">min-height</span><span class="token punctuation">:</span> <span class="token number">70</span><span class="token unit">px</span><span class="token punctuation">;</span> <span class="token punctuation">}</span>
+<span class="token selector"><span class="token class">.profile</span></span> <span class="token punctuation">{</span>
+  <span class="token property">border</span><span class="token punctuation">:</span> <span class="token number">1</span><span class="token unit">px</span> solid <span class="token hexcode color">#aaa</span><span class="token punctuation">;</span>
+  <span class="token property">border-radius</span><span class="token punctuation">:</span> <span class="token number">6</span><span class="token unit">px</span><span class="token punctuation">;</span>
+  <span class="token property">margin-top</span><span class="token punctuation">:</span> <span class="token number">20</span><span class="token unit">px</span><span class="token punctuation">;</span>
+  <span class="token property">padding</span><span class="token punctuation">:</span> <span class="token number">10</span><span class="token unit">px</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+<span class="token selector">h1<span class="token punctuation">,</span> h2</span> <span class="token punctuation">{</span> <span class="token property">margin</span><span class="token punctuation">:</span> <span class="token number">5</span><span class="token unit">px</span><span class="token punctuation">;</span> <span class="token punctuation">}</span>
+<span class="token selector">h1</span> <span class="token punctuation">{</span> <span class="token property">margin-bottom</span><span class="token punctuation">:</span> <span class="token number">10</span><span class="token unit">px</span><span class="token punctuation">;</span> <span class="token punctuation">}</span>
+<span class="token selector">ul</span> <span class="token punctuation">{</span> <span class="token property">padding</span><span class="token punctuation">:</span> <span class="token number">0</span><span class="token unit">px</span> <span class="token number">10</span><span class="token unit">px</span> <span class="token number">0</span><span class="token unit">px</span> <span class="token number">20</span><span class="token unit">px</span><span class="token punctuation">;</span> <span class="token punctuation">}</span>
+<span class="token selector">li</span> <span class="token punctuation">{</span> <span class="token property">margin</span><span class="token punctuation">:</span> <span class="token number">5</span><span class="token unit">px</span><span class="token punctuation">;</span> <span class="token punctuation">}</span></code></pre></sandpack><hint><p>首先提取其中一位科学家的标签。然后在第二个例子中找到不匹配的部分，用 props 配置它们。</p></hint><solution><p>在这个解决方案中，<code>Profile</code> 组件接受多个 props：<code>imageId</code>（字符串）、<code>name</code>（字符串）、<code>profession</code>（字符串）、<code>awards</code>（字符串数组）、<code>discovery</code>（字符串）和 <code>imageSize</code>（数字）。<p>请注意，<code>imageSize</code> prop 有一个默认值，这就是为什么我们不将它传递给组件。</p><sandpack><pre class="language-js"><code class="language-js"><span class="token keyword module">import</span> <span class="token imports"><span class="token punctuation">{</span> getImageUrl <span class="token punctuation">}</span></span> <span class="token keyword module">from</span> <span class="token string">'./utils.js'</span><span class="token punctuation">;</span>
+
+<span class="token keyword">function</span> <span class="token function"><span class="token maybe-class-name">Profile</span></span><span class="token punctuation">(</span><span class="token parameter"><span class="token punctuation">{</span>
+  imageId<span class="token punctuation">,</span>
+  name<span class="token punctuation">,</span>
+  profession<span class="token punctuation">,</span>
+  awards<span class="token punctuation">,</span>
+  discovery<span class="token punctuation">,</span>
+  imageSize <span class="token operator">=</span> <span class="token number">70</span>
+<span class="token punctuation">}</span></span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  <span class="token keyword control-flow">return</span> <span class="token punctuation">(</span>
+    <span class="token operator">&#x3C;</span>section className<span class="token operator">=</span><span class="token string">"profile"</span><span class="token operator">></span>
+      <span class="token operator">&#x3C;</span>h2<span class="token operator">></span><span class="token punctuation">{</span>name<span class="token punctuation">}</span><span class="token operator">&#x3C;</span><span class="token operator">/</span>h2<span class="token operator">></span>
+      <span class="token operator">&#x3C;</span>img
+        className<span class="token operator">=</span><span class="token string">"avatar"</span>
+        src<span class="token operator">=</span><span class="token punctuation">{</span><span class="token function">getImageUrl</span><span class="token punctuation">(</span>imageId<span class="token punctuation">)</span><span class="token punctuation">}</span>
+        alt<span class="token operator">=</span><span class="token punctuation">{</span>name<span class="token punctuation">}</span>
+        width<span class="token operator">=</span><span class="token punctuation">{</span>imageSize<span class="token punctuation">}</span>
+        height<span class="token operator">=</span><span class="token punctuation">{</span>imageSize<span class="token punctuation">}</span>
+      <span class="token operator">/</span><span class="token operator">></span>
+      <span class="token operator">&#x3C;</span>ul<span class="token operator">></span>
+        <span class="token operator">&#x3C;</span>li<span class="token operator">></span><span class="token operator">&#x3C;</span>b<span class="token operator">></span><span class="token maybe-class-name">Profession</span><span class="token operator">:</span><span class="token operator">&#x3C;</span><span class="token operator">/</span>b<span class="token operator">></span> <span class="token punctuation">{</span>profession<span class="token punctuation">}</span><span class="token operator">&#x3C;</span><span class="token operator">/</span>li<span class="token operator">></span>
+        <span class="token operator">&#x3C;</span>li<span class="token operator">></span>
+          <span class="token operator">&#x3C;</span>b<span class="token operator">></span><span class="token maybe-class-name">Awards</span><span class="token operator">:</span> <span class="token punctuation">{</span>awards<span class="token punctuation">.</span><span class="token property-access">length</span><span class="token punctuation">}</span> <span class="token operator">&#x3C;</span><span class="token operator">/</span>b<span class="token operator">></span>
+          <span class="token punctuation">(</span><span class="token punctuation">{</span>awards<span class="token punctuation">.</span><span class="token method function property-access">join</span><span class="token punctuation">(</span><span class="token string">', '</span><span class="token punctuation">)</span><span class="token punctuation">}</span><span class="token punctuation">)</span>
+        <span class="token operator">&#x3C;</span><span class="token operator">/</span>li<span class="token operator">></span>
+        <span class="token operator">&#x3C;</span>li<span class="token operator">></span>
+          <span class="token operator">&#x3C;</span>b<span class="token operator">></span><span class="token maybe-class-name">Discovered</span><span class="token operator">:</span> <span class="token operator">&#x3C;</span><span class="token operator">/</span>b<span class="token operator">></span>
+          <span class="token punctuation">{</span>discovery<span class="token punctuation">}</span>
+        <span class="token operator">&#x3C;</span><span class="token operator">/</span>li<span class="token operator">></span>
+      <span class="token operator">&#x3C;</span><span class="token operator">/</span>ul<span class="token operator">></span>
+    <span class="token operator">&#x3C;</span><span class="token operator">/</span>section<span class="token operator">></span>
+  <span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+
+<span class="token keyword module">export</span> <span class="token keyword module">default</span> <span class="token keyword">function</span> <span class="token function"><span class="token maybe-class-name">Gallery</span></span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  <span class="token keyword control-flow">return</span> <span class="token punctuation">(</span>
+    <span class="token operator">&#x3C;</span>div<span class="token operator">></span>
+      <span class="token operator">&#x3C;</span>h1<span class="token operator">></span><span class="token maybe-class-name">Notable</span> <span class="token maybe-class-name">Scientists</span><span class="token operator">&#x3C;</span><span class="token operator">/</span>h1<span class="token operator">></span>
+      <span class="token operator">&#x3C;</span><span class="token maybe-class-name">Profile</span>
+        imageId<span class="token operator">=</span><span class="token string">"szV5sdG"</span>
+        name<span class="token operator">=</span><span class="token string">"Maria Skłodowska-Curie"</span>
+        profession<span class="token operator">=</span><span class="token string">"physicist and chemist"</span>
+        discovery<span class="token operator">=</span><span class="token string">"polonium (chemical element)"</span>
+        awards<span class="token operator">=</span><span class="token punctuation">{</span><span class="token punctuation">[</span>
+          <span class="token string">'Nobel Prize in Physics'</span><span class="token punctuation">,</span>
+          <span class="token string">'Nobel Prize in Chemistry'</span><span class="token punctuation">,</span>
+          <span class="token string">'Davy Medal'</span><span class="token punctuation">,</span>
+          <span class="token string">'Matteucci Medal'</span>
+        <span class="token punctuation">]</span><span class="token punctuation">}</span>
+      <span class="token operator">/</span><span class="token operator">></span>
+      <span class="token operator">&#x3C;</span><span class="token maybe-class-name">Profile</span>
+        imageId<span class="token operator">=</span><span class="token string">'YfeOqp2'</span>
+        name<span class="token operator">=</span><span class="token string">'Katsuko Saruhashi'</span>
+        profession<span class="token operator">=</span><span class="token string">'geochemist'</span>
+        discovery<span class="token operator">=</span><span class="token string">"a method for measuring carbon dioxide in seawater"</span>
+        awards<span class="token operator">=</span><span class="token punctuation">{</span><span class="token punctuation">[</span>
+          <span class="token string">'Miyake Prize for geochemistry'</span><span class="token punctuation">,</span>
+          <span class="token string">'Tanaka Prize'</span>
+        <span class="token punctuation">]</span><span class="token punctuation">}</span>
+      <span class="token operator">/</span><span class="token operator">></span>
+    <span class="token operator">&#x3C;</span><span class="token operator">/</span>div<span class="token operator">></span>
+  <span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span></code></pre><pre class="language-js"><code class="language-js"><span class="token keyword module">export</span> <span class="token keyword">function</span> <span class="token function">getImageUrl</span><span class="token punctuation">(</span>imageId<span class="token punctuation">,</span> size <span class="token operator">=</span> <span class="token string">'s'</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  <span class="token keyword control-flow">return</span> <span class="token punctuation">(</span>
+    <span class="token string">'https://i.imgur.com/'</span> <span class="token operator">+</span>
+    imageId <span class="token operator">+</span>
+    size <span class="token operator">+</span>
+    <span class="token string">'.jpg'</span>
+  <span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span></code></pre><pre class="language-css"><code class="language-css"><span class="token selector"><span class="token class">.avatar</span></span> <span class="token punctuation">{</span> <span class="token property">margin</span><span class="token punctuation">:</span> <span class="token number">5</span><span class="token unit">px</span><span class="token punctuation">;</span> <span class="token property">border-radius</span><span class="token punctuation">:</span> <span class="token number">50</span><span class="token unit">%</span><span class="token punctuation">;</span> <span class="token property">min-height</span><span class="token punctuation">:</span> <span class="token number">70</span><span class="token unit">px</span><span class="token punctuation">;</span> <span class="token punctuation">}</span>
+<span class="token selector"><span class="token class">.profile</span></span> <span class="token punctuation">{</span>
+  <span class="token property">border</span><span class="token punctuation">:</span> <span class="token number">1</span><span class="token unit">px</span> solid <span class="token hexcode color">#aaa</span><span class="token punctuation">;</span>
+  <span class="token property">border-radius</span><span class="token punctuation">:</span> <span class="token number">6</span><span class="token unit">px</span><span class="token punctuation">;</span>
+  <span class="token property">margin-top</span><span class="token punctuation">:</span> <span class="token number">20</span><span class="token unit">px</span><span class="token punctuation">;</span>
+  <span class="token property">padding</span><span class="token punctuation">:</span> <span class="token number">10</span><span class="token unit">px</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+<span class="token selector">h1<span class="token punctuation">,</span> h2</span> <span class="token punctuation">{</span> <span class="token property">margin</span><span class="token punctuation">:</span> <span class="token number">5</span><span class="token unit">px</span><span class="token punctuation">;</span> <span class="token punctuation">}</span>
+<span class="token selector">h1</span> <span class="token punctuation">{</span> <span class="token property">margin-bottom</span><span class="token punctuation">:</span> <span class="token number">10</span><span class="token unit">px</span><span class="token punctuation">;</span> <span class="token punctuation">}</span>
+<span class="token selector">ul</span> <span class="token punctuation">{</span> <span class="token property">padding</span><span class="token punctuation">:</span> <span class="token number">0</span><span class="token unit">px</span> <span class="token number">10</span><span class="token unit">px</span> <span class="token number">0</span><span class="token unit">px</span> <span class="token number">20</span><span class="token unit">px</span><span class="token punctuation">;</span> <span class="token punctuation">}</span>
+<span class="token selector">li</span> <span class="token punctuation">{</span> <span class="token property">margin</span><span class="token punctuation">:</span> <span class="token number">5</span><span class="token unit">px</span><span class="token punctuation">;</span> <span class="token punctuation">}</span></code></pre></sandpack><p>请注意，如果 <code>awards</code> 是一个数组，则不需要单独的 <code>awardCount</code> prop。 你可以用 <code>awards.length</code> 来统计奖励的数量。请记住，props 可以接受任何值，也包括数组！<p>另一种解决方案与本页前面的示例更相似，是将一个人的所有信息组合到一个对象中，并将该对象作为一个 prop 传递：</p><sandpack><pre class="language-js"><code class="language-js"><span class="token keyword module">import</span> <span class="token imports"><span class="token punctuation">{</span> getImageUrl <span class="token punctuation">}</span></span> <span class="token keyword module">from</span> <span class="token string">'./utils.js'</span><span class="token punctuation">;</span>
+
+<span class="token keyword">function</span> <span class="token function"><span class="token maybe-class-name">Profile</span></span><span class="token punctuation">(</span><span class="token parameter"><span class="token punctuation">{</span> person<span class="token punctuation">,</span> imageSize <span class="token operator">=</span> <span class="token number">70</span> <span class="token punctuation">}</span></span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  <span class="token keyword">const</span> imageSrc <span class="token operator">=</span> <span class="token function">getImageUrl</span><span class="token punctuation">(</span>person<span class="token punctuation">)</span>
+
+  <span class="token keyword control-flow">return</span> <span class="token punctuation">(</span>
+    <span class="token operator">&#x3C;</span>section className<span class="token operator">=</span><span class="token string">"profile"</span><span class="token operator">></span>
+      <span class="token operator">&#x3C;</span>h2<span class="token operator">></span><span class="token punctuation">{</span>person<span class="token punctuation">.</span><span class="token property-access">name</span><span class="token punctuation">}</span><span class="token operator">&#x3C;</span><span class="token operator">/</span>h2<span class="token operator">></span>
+      <span class="token operator">&#x3C;</span>img
+        className<span class="token operator">=</span><span class="token string">"avatar"</span>
+        src<span class="token operator">=</span><span class="token punctuation">{</span>imageSrc<span class="token punctuation">}</span>
+        alt<span class="token operator">=</span><span class="token punctuation">{</span>person<span class="token punctuation">.</span><span class="token property-access">name</span><span class="token punctuation">}</span>
+        width<span class="token operator">=</span><span class="token punctuation">{</span>imageSize<span class="token punctuation">}</span>
+        height<span class="token operator">=</span><span class="token punctuation">{</span>imageSize<span class="token punctuation">}</span>
+      <span class="token operator">/</span><span class="token operator">></span>
+      <span class="token operator">&#x3C;</span>ul<span class="token operator">></span>
+        <span class="token operator">&#x3C;</span>li<span class="token operator">></span>
+          <span class="token operator">&#x3C;</span>b<span class="token operator">></span><span class="token maybe-class-name">Profession</span><span class="token operator">:</span><span class="token operator">&#x3C;</span><span class="token operator">/</span>b<span class="token operator">></span> <span class="token punctuation">{</span>person<span class="token punctuation">.</span><span class="token property-access">profession</span><span class="token punctuation">}</span>
+        <span class="token operator">&#x3C;</span><span class="token operator">/</span>li<span class="token operator">></span>
+        <span class="token operator">&#x3C;</span>li<span class="token operator">></span>
+          <span class="token operator">&#x3C;</span>b<span class="token operator">></span><span class="token maybe-class-name">Awards</span><span class="token operator">:</span> <span class="token punctuation">{</span>person<span class="token punctuation">.</span><span class="token property-access">awards</span><span class="token punctuation">.</span><span class="token property-access">length</span><span class="token punctuation">}</span> <span class="token operator">&#x3C;</span><span class="token operator">/</span>b<span class="token operator">></span>
+          <span class="token punctuation">(</span><span class="token punctuation">{</span>person<span class="token punctuation">.</span><span class="token property-access">awards</span><span class="token punctuation">.</span><span class="token method function property-access">join</span><span class="token punctuation">(</span><span class="token string">', '</span><span class="token punctuation">)</span><span class="token punctuation">}</span><span class="token punctuation">)</span>
+        <span class="token operator">&#x3C;</span><span class="token operator">/</span>li<span class="token operator">></span>
+        <span class="token operator">&#x3C;</span>li<span class="token operator">></span>
+          <span class="token operator">&#x3C;</span>b<span class="token operator">></span><span class="token maybe-class-name">Discovered</span><span class="token operator">:</span> <span class="token operator">&#x3C;</span><span class="token operator">/</span>b<span class="token operator">></span>
+          <span class="token punctuation">{</span>person<span class="token punctuation">.</span><span class="token property-access">discovery</span><span class="token punctuation">}</span>
+        <span class="token operator">&#x3C;</span><span class="token operator">/</span>li<span class="token operator">></span>
+      <span class="token operator">&#x3C;</span><span class="token operator">/</span>ul<span class="token operator">></span>
+    <span class="token operator">&#x3C;</span><span class="token operator">/</span>section<span class="token operator">></span>
+  <span class="token punctuation">)</span>
+<span class="token punctuation">}</span>
+
+<span class="token keyword module">export</span> <span class="token keyword module">default</span> <span class="token keyword">function</span> <span class="token function"><span class="token maybe-class-name">Gallery</span></span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  <span class="token keyword control-flow">return</span> <span class="token punctuation">(</span>
+    <span class="token operator">&#x3C;</span>div<span class="token operator">></span>
+      <span class="token operator">&#x3C;</span>h1<span class="token operator">></span><span class="token maybe-class-name">Notable</span> <span class="token maybe-class-name">Scientists</span><span class="token operator">&#x3C;</span><span class="token operator">/</span>h1<span class="token operator">></span>
+      <span class="token operator">&#x3C;</span><span class="token maybe-class-name">Profile</span> person<span class="token operator">=</span><span class="token punctuation">{</span><span class="token punctuation">{</span>
+        <span class="token literal-property property">imageId</span><span class="token operator">:</span> <span class="token string">'szV5sdG'</span><span class="token punctuation">,</span>
+        <span class="token literal-property property">name</span><span class="token operator">:</span> <span class="token string">'Maria Skłodowska-Curie'</span><span class="token punctuation">,</span>
+        <span class="token literal-property property">profession</span><span class="token operator">:</span> <span class="token string">'physicist and chemist'</span><span class="token punctuation">,</span>
+        <span class="token literal-property property">discovery</span><span class="token operator">:</span> <span class="token string">'polonium (chemical element)'</span><span class="token punctuation">,</span>
+        <span class="token literal-property property">awards</span><span class="token operator">:</span> <span class="token punctuation">[</span>
+          <span class="token string">'Nobel Prize in Physics'</span><span class="token punctuation">,</span>
+          <span class="token string">'Nobel Prize in Chemistry'</span><span class="token punctuation">,</span>
+          <span class="token string">'Davy Medal'</span><span class="token punctuation">,</span>
+          <span class="token string">'Matteucci Medal'</span>
+        <span class="token punctuation">]</span><span class="token punctuation">,</span>
+      <span class="token punctuation">}</span><span class="token punctuation">}</span> <span class="token operator">/</span><span class="token operator">></span>
+      <span class="token operator">&#x3C;</span><span class="token maybe-class-name">Profile</span> person<span class="token operator">=</span><span class="token punctuation">{</span><span class="token punctuation">{</span>
+        <span class="token literal-property property">imageId</span><span class="token operator">:</span> <span class="token string">'YfeOqp2'</span><span class="token punctuation">,</span>
+        <span class="token literal-property property">name</span><span class="token operator">:</span> <span class="token string">'Katsuko Saruhashi'</span><span class="token punctuation">,</span>
+        <span class="token literal-property property">profession</span><span class="token operator">:</span> <span class="token string">'geochemist'</span><span class="token punctuation">,</span>
+        <span class="token literal-property property">discovery</span><span class="token operator">:</span> <span class="token string">'a method for measuring carbon dioxide in seawater'</span><span class="token punctuation">,</span>
+        <span class="token literal-property property">awards</span><span class="token operator">:</span> <span class="token punctuation">[</span>
+          <span class="token string">'Miyake Prize for geochemistry'</span><span class="token punctuation">,</span>
+          <span class="token string">'Tanaka Prize'</span>
+        <span class="token punctuation">]</span><span class="token punctuation">,</span>
+      <span class="token punctuation">}</span><span class="token punctuation">}</span> <span class="token operator">/</span><span class="token operator">></span>
+    <span class="token operator">&#x3C;</span><span class="token operator">/</span>div<span class="token operator">></span>
+  <span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span></code></pre><pre class="language-js"><code class="language-js"><span class="token keyword module">export</span> <span class="token keyword">function</span> <span class="token function">getImageUrl</span><span class="token punctuation">(</span>person<span class="token punctuation">,</span> size <span class="token operator">=</span> <span class="token string">'s'</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  <span class="token keyword control-flow">return</span> <span class="token punctuation">(</span>
+    <span class="token string">'https://i.imgur.com/'</span> <span class="token operator">+</span>
+    person<span class="token punctuation">.</span><span class="token property-access">imageId</span> <span class="token operator">+</span>
+    size <span class="token operator">+</span>
+    <span class="token string">'.jpg'</span>
+  <span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span></code></pre><pre class="language-css"><code class="language-css"><span class="token selector"><span class="token class">.avatar</span></span> <span class="token punctuation">{</span> <span class="token property">margin</span><span class="token punctuation">:</span> <span class="token number">5</span><span class="token unit">px</span><span class="token punctuation">;</span> <span class="token property">border-radius</span><span class="token punctuation">:</span> <span class="token number">50</span><span class="token unit">%</span><span class="token punctuation">;</span> <span class="token property">min-height</span><span class="token punctuation">:</span> <span class="token number">70</span><span class="token unit">px</span><span class="token punctuation">;</span> <span class="token punctuation">}</span>
+<span class="token selector"><span class="token class">.profile</span></span> <span class="token punctuation">{</span>
+  <span class="token property">border</span><span class="token punctuation">:</span> <span class="token number">1</span><span class="token unit">px</span> solid <span class="token hexcode color">#aaa</span><span class="token punctuation">;</span>
+  <span class="token property">border-radius</span><span class="token punctuation">:</span> <span class="token number">6</span><span class="token unit">px</span><span class="token punctuation">;</span>
+  <span class="token property">margin-top</span><span class="token punctuation">:</span> <span class="token number">20</span><span class="token unit">px</span><span class="token punctuation">;</span>
+  <span class="token property">padding</span><span class="token punctuation">:</span> <span class="token number">10</span><span class="token unit">px</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+<span class="token selector">h1<span class="token punctuation">,</span> h2</span> <span class="token punctuation">{</span> <span class="token property">margin</span><span class="token punctuation">:</span> <span class="token number">5</span><span class="token unit">px</span><span class="token punctuation">;</span> <span class="token punctuation">}</span>
+<span class="token selector">h1</span> <span class="token punctuation">{</span> <span class="token property">margin-bottom</span><span class="token punctuation">:</span> <span class="token number">10</span><span class="token unit">px</span><span class="token punctuation">;</span> <span class="token punctuation">}</span>
+<span class="token selector">ul</span> <span class="token punctuation">{</span> <span class="token property">padding</span><span class="token punctuation">:</span> <span class="token number">0</span><span class="token unit">px</span> <span class="token number">10</span><span class="token unit">px</span> <span class="token number">0</span><span class="token unit">px</span> <span class="token number">20</span><span class="token unit">px</span><span class="token punctuation">;</span> <span class="token punctuation">}</span>
+<span class="token selector">li</span> <span class="token punctuation">{</span> <span class="token property">margin</span><span class="token punctuation">:</span> <span class="token number">5</span><span class="token unit">px</span><span class="token punctuation">;</span> <span class="token punctuation">}</span></code></pre></sandpack><p>尽管因为在你描述组件特性时用的是 JavaScript 对象而非 JSX 的属性，使得语法看起来略有不同，但这些示例大多都是等效的，你可以选择任意一种方法</p></solution></section><section class="level4"aria-labelledby="根据-props-调整图像大小-adjust-the-image-size-based-on-a-prop"><h4 id="根据-props-调整图像大小-adjust-the-image-size-based-on-a-prop">根据 props 调整图像大小 {/<em>adjust-the-image-size-based-on-a-prop</em>/}</h4><p>在这个例子中，<code>Avatar</code> 接收一个数字 <code>size</code> prop，它决定了 <code>&#x3C;img></code> 的宽度和高度。在此示例中，<code>size</code> prop 设为 <code>40</code>。但是，如果你在新选项卡中打开图像，你会注意到图像本身更大（<code>160</code> 像素）。实际图像大小由你请求的缩略图大小决定。<p>更改 <code>Avatar</code> 组件，根据 <code>size</code> prop 请求最接近的图像尺寸。具体来说，如果 <code>size</code> 小于 <code>90</code>，则将 <code>'s'</code>（“small”）而不是 <code>'b'</code>（“big”）传给 <code>getImageUrl</code> 函数。通过渲染不同 <code>size</code> prop 值的头像并在新选项卡中打开图像，来验证你的更改是否有效。</p><sandpack><pre class="language-js"><code class="language-js"><span class="token keyword module">import</span> <span class="token imports"><span class="token punctuation">{</span> getImageUrl <span class="token punctuation">}</span></span> <span class="token keyword module">from</span> <span class="token string">'./utils.js'</span><span class="token punctuation">;</span>
+
+<span class="token keyword">function</span> <span class="token function"><span class="token maybe-class-name">Avatar</span></span><span class="token punctuation">(</span><span class="token parameter"><span class="token punctuation">{</span> person<span class="token punctuation">,</span> size <span class="token punctuation">}</span></span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  <span class="token keyword control-flow">return</span> <span class="token punctuation">(</span>
+    <span class="token operator">&#x3C;</span>img
+      className<span class="token operator">=</span><span class="token string">"avatar"</span>
+      src<span class="token operator">=</span><span class="token punctuation">{</span><span class="token function">getImageUrl</span><span class="token punctuation">(</span>person<span class="token punctuation">,</span> <span class="token string">'b'</span><span class="token punctuation">)</span><span class="token punctuation">}</span>
+      alt<span class="token operator">=</span><span class="token punctuation">{</span>person<span class="token punctuation">.</span><span class="token property-access">name</span><span class="token punctuation">}</span>
+      width<span class="token operator">=</span><span class="token punctuation">{</span>size<span class="token punctuation">}</span>
+      height<span class="token operator">=</span><span class="token punctuation">{</span>size<span class="token punctuation">}</span>
+    <span class="token operator">/</span><span class="token operator">></span>
+  <span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+
+<span class="token keyword module">export</span> <span class="token keyword module">default</span> <span class="token keyword">function</span> <span class="token function"><span class="token maybe-class-name">Profile</span></span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  <span class="token keyword control-flow">return</span> <span class="token punctuation">(</span>
+    <span class="token operator">&#x3C;</span><span class="token maybe-class-name">Avatar</span>
+      size<span class="token operator">=</span><span class="token punctuation">{</span><span class="token number">40</span><span class="token punctuation">}</span>
+      person<span class="token operator">=</span><span class="token punctuation">{</span><span class="token punctuation">{</span> 
+        <span class="token literal-property property">name</span><span class="token operator">:</span> <span class="token string">'Gregorio Y. Zara'</span><span class="token punctuation">,</span> 
+        <span class="token literal-property property">imageId</span><span class="token operator">:</span> <span class="token string">'7vQD0fP'</span>
+      <span class="token punctuation">}</span><span class="token punctuation">}</span>
+    <span class="token operator">/</span><span class="token operator">></span>
+  <span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span></code></pre><pre class="language-js"><code class="language-js"><span class="token keyword module">export</span> <span class="token keyword">function</span> <span class="token function">getImageUrl</span><span class="token punctuation">(</span><span class="token parameter">person<span class="token punctuation">,</span> size</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  <span class="token keyword control-flow">return</span> <span class="token punctuation">(</span>
+    <span class="token string">'https://i.imgur.com/'</span> <span class="token operator">+</span>
+    person<span class="token punctuation">.</span><span class="token property-access">imageId</span> <span class="token operator">+</span>
+    size <span class="token operator">+</span>
+    <span class="token string">'.jpg'</span>
+  <span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span></code></pre><pre class="language-css"><code class="language-css"><span class="token selector"><span class="token class">.avatar</span></span> <span class="token punctuation">{</span> <span class="token property">margin</span><span class="token punctuation">:</span> <span class="token number">20</span><span class="token unit">px</span><span class="token punctuation">;</span> <span class="token property">border-radius</span><span class="token punctuation">:</span> <span class="token number">50</span><span class="token unit">%</span><span class="token punctuation">;</span> <span class="token punctuation">}</span></code></pre></sandpack><solution><p>你可以这样做：</p><sandpack><pre class="language-js"><code class="language-js"><span class="token keyword module">import</span> <span class="token imports"><span class="token punctuation">{</span> getImageUrl <span class="token punctuation">}</span></span> <span class="token keyword module">from</span> <span class="token string">'./utils.js'</span><span class="token punctuation">;</span>
+
+<span class="token keyword">function</span> <span class="token function"><span class="token maybe-class-name">Avatar</span></span><span class="token punctuation">(</span><span class="token parameter"><span class="token punctuation">{</span> person<span class="token punctuation">,</span> size <span class="token punctuation">}</span></span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  <span class="token keyword">let</span> thumbnailSize <span class="token operator">=</span> <span class="token string">'s'</span><span class="token punctuation">;</span>
+  <span class="token keyword control-flow">if</span> <span class="token punctuation">(</span>size <span class="token operator">></span> <span class="token number">90</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    thumbnailSize <span class="token operator">=</span> <span class="token string">'b'</span><span class="token punctuation">;</span>
+  <span class="token punctuation">}</span>
+  <span class="token keyword control-flow">return</span> <span class="token punctuation">(</span>
+    <span class="token operator">&#x3C;</span>img
+      className<span class="token operator">=</span><span class="token string">"avatar"</span>
+      src<span class="token operator">=</span><span class="token punctuation">{</span><span class="token function">getImageUrl</span><span class="token punctuation">(</span>person<span class="token punctuation">,</span> thumbnailSize<span class="token punctuation">)</span><span class="token punctuation">}</span>
+      alt<span class="token operator">=</span><span class="token punctuation">{</span>person<span class="token punctuation">.</span><span class="token property-access">name</span><span class="token punctuation">}</span>
+      width<span class="token operator">=</span><span class="token punctuation">{</span>size<span class="token punctuation">}</span>
+      height<span class="token operator">=</span><span class="token punctuation">{</span>size<span class="token punctuation">}</span>
+    <span class="token operator">/</span><span class="token operator">></span>
+  <span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+
+<span class="token keyword module">export</span> <span class="token keyword module">default</span> <span class="token keyword">function</span> <span class="token function"><span class="token maybe-class-name">Profile</span></span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  <span class="token keyword control-flow">return</span> <span class="token punctuation">(</span>
+    <span class="token operator">&#x3C;</span><span class="token operator">></span>
+      <span class="token operator">&#x3C;</span><span class="token maybe-class-name">Avatar</span>
+        size<span class="token operator">=</span><span class="token punctuation">{</span><span class="token number">40</span><span class="token punctuation">}</span>
+        person<span class="token operator">=</span><span class="token punctuation">{</span><span class="token punctuation">{</span> 
+          <span class="token literal-property property">name</span><span class="token operator">:</span> <span class="token string">'Gregorio Y. Zara'</span><span class="token punctuation">,</span> 
+          <span class="token literal-property property">imageId</span><span class="token operator">:</span> <span class="token string">'7vQD0fP'</span>
+        <span class="token punctuation">}</span><span class="token punctuation">}</span>
+      <span class="token operator">/</span><span class="token operator">></span>
+      <span class="token operator">&#x3C;</span><span class="token maybe-class-name">Avatar</span>
+        size<span class="token operator">=</span><span class="token punctuation">{</span><span class="token number">120</span><span class="token punctuation">}</span>
+        person<span class="token operator">=</span><span class="token punctuation">{</span><span class="token punctuation">{</span> 
+          <span class="token literal-property property">name</span><span class="token operator">:</span> <span class="token string">'Gregorio Y. Zara'</span><span class="token punctuation">,</span> 
+          <span class="token literal-property property">imageId</span><span class="token operator">:</span> <span class="token string">'7vQD0fP'</span>
+        <span class="token punctuation">}</span><span class="token punctuation">}</span>
+      <span class="token operator">/</span><span class="token operator">></span>
+    <span class="token operator">&#x3C;</span><span class="token operator">/</span><span class="token operator">></span>
+  <span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span></code></pre><pre class="language-js"><code class="language-js"><span class="token keyword module">export</span> <span class="token keyword">function</span> <span class="token function">getImageUrl</span><span class="token punctuation">(</span><span class="token parameter">person<span class="token punctuation">,</span> size</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  <span class="token keyword control-flow">return</span> <span class="token punctuation">(</span>
+    <span class="token string">'https://i.imgur.com/'</span> <span class="token operator">+</span>
+    person<span class="token punctuation">.</span><span class="token property-access">imageId</span> <span class="token operator">+</span>
+    size <span class="token operator">+</span>
+    <span class="token string">'.jpg'</span>
+  <span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span></code></pre><pre class="language-css"><code class="language-css"><span class="token selector"><span class="token class">.avatar</span></span> <span class="token punctuation">{</span> <span class="token property">margin</span><span class="token punctuation">:</span> <span class="token number">20</span><span class="token unit">px</span><span class="token punctuation">;</span> <span class="token property">border-radius</span><span class="token punctuation">:</span> <span class="token number">50</span><span class="token unit">%</span><span class="token punctuation">;</span> <span class="token punctuation">}</span></code></pre></sandpack><p>你还可以通过考虑 <a href="https://developer.mozilla.org/en-US/docs/Web/API/Window/devicePixelRatio"><code>window.devicePixelRatio</code></a> 来为高 DPI 屏幕显示更清晰的图像：</p><sandpack><pre class="language-js"><code class="language-js"><span class="token keyword module">import</span> <span class="token imports"><span class="token punctuation">{</span> getImageUrl <span class="token punctuation">}</span></span> <span class="token keyword module">from</span> <span class="token string">'./utils.js'</span><span class="token punctuation">;</span>
+
+<span class="token keyword">const</span> ratio <span class="token operator">=</span> <span class="token dom variable">window</span><span class="token punctuation">.</span><span class="token property-access">devicePixelRatio</span><span class="token punctuation">;</span>
+
+<span class="token keyword">function</span> <span class="token function"><span class="token maybe-class-name">Avatar</span></span><span class="token punctuation">(</span><span class="token parameter"><span class="token punctuation">{</span> person<span class="token punctuation">,</span> size <span class="token punctuation">}</span></span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  <span class="token keyword">let</span> thumbnailSize <span class="token operator">=</span> <span class="token string">'s'</span><span class="token punctuation">;</span>
+  <span class="token keyword control-flow">if</span> <span class="token punctuation">(</span>size <span class="token operator">*</span> ratio <span class="token operator">></span> <span class="token number">90</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    thumbnailSize <span class="token operator">=</span> <span class="token string">'b'</span><span class="token punctuation">;</span>
+  <span class="token punctuation">}</span>
+  <span class="token keyword control-flow">return</span> <span class="token punctuation">(</span>
+    <span class="token operator">&#x3C;</span>img
+      className<span class="token operator">=</span><span class="token string">"avatar"</span>
+      src<span class="token operator">=</span><span class="token punctuation">{</span><span class="token function">getImageUrl</span><span class="token punctuation">(</span>person<span class="token punctuation">,</span> thumbnailSize<span class="token punctuation">)</span><span class="token punctuation">}</span>
+      alt<span class="token operator">=</span><span class="token punctuation">{</span>person<span class="token punctuation">.</span><span class="token property-access">name</span><span class="token punctuation">}</span>
+      width<span class="token operator">=</span><span class="token punctuation">{</span>size<span class="token punctuation">}</span>
+      height<span class="token operator">=</span><span class="token punctuation">{</span>size<span class="token punctuation">}</span>
+    <span class="token operator">/</span><span class="token operator">></span>
+  <span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+
+<span class="token keyword module">export</span> <span class="token keyword module">default</span> <span class="token keyword">function</span> <span class="token function"><span class="token maybe-class-name">Profile</span></span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  <span class="token keyword control-flow">return</span> <span class="token punctuation">(</span>
+    <span class="token operator">&#x3C;</span><span class="token operator">></span>
+      <span class="token operator">&#x3C;</span><span class="token maybe-class-name">Avatar</span>
+        size<span class="token operator">=</span><span class="token punctuation">{</span><span class="token number">40</span><span class="token punctuation">}</span>
+        person<span class="token operator">=</span><span class="token punctuation">{</span><span class="token punctuation">{</span> 
+          <span class="token literal-property property">name</span><span class="token operator">:</span> <span class="token string">'Gregorio Y. Zara'</span><span class="token punctuation">,</span> 
+          <span class="token literal-property property">imageId</span><span class="token operator">:</span> <span class="token string">'7vQD0fP'</span>
+        <span class="token punctuation">}</span><span class="token punctuation">}</span>
+      <span class="token operator">/</span><span class="token operator">></span>
+      <span class="token operator">&#x3C;</span><span class="token maybe-class-name">Avatar</span>
+        size<span class="token operator">=</span><span class="token punctuation">{</span><span class="token number">70</span><span class="token punctuation">}</span>
+        person<span class="token operator">=</span><span class="token punctuation">{</span><span class="token punctuation">{</span> 
+          <span class="token literal-property property">name</span><span class="token operator">:</span> <span class="token string">'Gregorio Y. Zara'</span><span class="token punctuation">,</span> 
+          <span class="token literal-property property">imageId</span><span class="token operator">:</span> <span class="token string">'7vQD0fP'</span>
+        <span class="token punctuation">}</span><span class="token punctuation">}</span>
+      <span class="token operator">/</span><span class="token operator">></span>
+      <span class="token operator">&#x3C;</span><span class="token maybe-class-name">Avatar</span>
+        size<span class="token operator">=</span><span class="token punctuation">{</span><span class="token number">120</span><span class="token punctuation">}</span>
+        person<span class="token operator">=</span><span class="token punctuation">{</span><span class="token punctuation">{</span> 
+          <span class="token literal-property property">name</span><span class="token operator">:</span> <span class="token string">'Gregorio Y. Zara'</span><span class="token punctuation">,</span> 
+          <span class="token literal-property property">imageId</span><span class="token operator">:</span> <span class="token string">'7vQD0fP'</span>
+        <span class="token punctuation">}</span><span class="token punctuation">}</span>
+      <span class="token operator">/</span><span class="token operator">></span>
+    <span class="token operator">&#x3C;</span><span class="token operator">/</span><span class="token operator">></span>
+  <span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span></code></pre><pre class="language-js"><code class="language-js"><span class="token keyword module">export</span> <span class="token keyword">function</span> <span class="token function">getImageUrl</span><span class="token punctuation">(</span><span class="token parameter">person<span class="token punctuation">,</span> size</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  <span class="token keyword control-flow">return</span> <span class="token punctuation">(</span>
+    <span class="token string">'https://i.imgur.com/'</span> <span class="token operator">+</span>
+    person<span class="token punctuation">.</span><span class="token property-access">imageId</span> <span class="token operator">+</span>
+    size <span class="token operator">+</span>
+    <span class="token string">'.jpg'</span>
+  <span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span></code></pre><pre class="language-css"><code class="language-css"><span class="token selector"><span class="token class">.avatar</span></span> <span class="token punctuation">{</span> <span class="token property">margin</span><span class="token punctuation">:</span> <span class="token number">20</span><span class="token unit">px</span><span class="token punctuation">;</span> <span class="token property">border-radius</span><span class="token punctuation">:</span> <span class="token number">50</span><span class="token unit">%</span><span class="token punctuation">;</span> <span class="token punctuation">}</span></code></pre></sandpack><p>Props 可以让你将这样的逻辑封装在 <code>Avatar</code> 组件中（并在需要时进行更改），以便每个人都可以使用 <code>&#x3C;Avatar></code> 组件，而不必考虑如何请求和调整图像大小。</p></solution></section><section class="level4"aria-labelledby="在-children-prop-中传递-jsx-代码-passing-jsx-in-a-children-prop"><h4 id="在-children-prop-中传递-jsx-代码-passing-jsx-in-a-children-prop">在 <code>children</code> prop 中传递 JSX 代码 {/<em>passing-jsx-in-a-children-prop</em>/}</h4><p>从下面的代码中提取一个 <code>Card</code> 组件，并使用 <code>children</code> prop 将不同的 JSX 传递给它：</p><sandpack><pre class="language-js"><code class="language-js"><span class="token keyword module">export</span> <span class="token keyword module">default</span> <span class="token keyword">function</span> <span class="token function"><span class="token maybe-class-name">Profile</span></span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  <span class="token keyword control-flow">return</span> <span class="token punctuation">(</span>
+    <span class="token operator">&#x3C;</span>div<span class="token operator">></span>
+      <span class="token operator">&#x3C;</span>div className<span class="token operator">=</span><span class="token string">"card"</span><span class="token operator">></span>
+        <span class="token operator">&#x3C;</span>div className<span class="token operator">=</span><span class="token string">"card-content"</span><span class="token operator">></span>
+          <span class="token operator">&#x3C;</span>h1<span class="token operator">></span><span class="token maybe-class-name">Photo</span><span class="token operator">&#x3C;</span><span class="token operator">/</span>h1<span class="token operator">></span>
+          <span class="token operator">&#x3C;</span>img
+            className<span class="token operator">=</span><span class="token string">"avatar"</span>
+            src<span class="token operator">=</span><span class="token string">"https://i.imgur.com/OKS67lhm.jpg"</span>
+            alt<span class="token operator">=</span><span class="token string">"Aklilu Lemma"</span>
+            width<span class="token operator">=</span><span class="token punctuation">{</span><span class="token number">70</span><span class="token punctuation">}</span>
+            height<span class="token operator">=</span><span class="token punctuation">{</span><span class="token number">70</span><span class="token punctuation">}</span>
+          <span class="token operator">/</span><span class="token operator">></span>
+        <span class="token operator">&#x3C;</span><span class="token operator">/</span>div<span class="token operator">></span>
+      <span class="token operator">&#x3C;</span><span class="token operator">/</span>div<span class="token operator">></span>
+      <span class="token operator">&#x3C;</span>div className<span class="token operator">=</span><span class="token string">"card"</span><span class="token operator">></span>
+        <span class="token operator">&#x3C;</span>div className<span class="token operator">=</span><span class="token string">"card-content"</span><span class="token operator">></span>
+          <span class="token operator">&#x3C;</span>h1<span class="token operator">></span><span class="token maybe-class-name">About</span><span class="token operator">&#x3C;</span><span class="token operator">/</span>h1<span class="token operator">></span>
+          <span class="token operator">&#x3C;</span>p<span class="token operator">></span><span class="token maybe-class-name">Aklilu</span> <span class="token maybe-class-name">Lemma</span> was a distinguished <span class="token maybe-class-name">Ethiopian</span> scientist who discovered a natural treatment to schistosomiasis<span class="token punctuation">.</span><span class="token operator">&#x3C;</span><span class="token operator">/</span>p<span class="token operator">></span>
+        <span class="token operator">&#x3C;</span><span class="token operator">/</span>div<span class="token operator">></span>
+      <span class="token operator">&#x3C;</span><span class="token operator">/</span>div<span class="token operator">></span>
+    <span class="token operator">&#x3C;</span><span class="token operator">/</span>div<span class="token operator">></span>
+  <span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span></code></pre><pre class="language-css"><code class="language-css"><span class="token selector"><span class="token class">.card</span></span> <span class="token punctuation">{</span>
+  <span class="token property">width</span><span class="token punctuation">:</span> fit-content<span class="token punctuation">;</span>
+  <span class="token property">margin</span><span class="token punctuation">:</span> <span class="token number">20</span><span class="token unit">px</span><span class="token punctuation">;</span>
+  <span class="token property">padding</span><span class="token punctuation">:</span> <span class="token number">20</span><span class="token unit">px</span><span class="token punctuation">;</span>
+  <span class="token property">border</span><span class="token punctuation">:</span> <span class="token number">1</span><span class="token unit">px</span> solid <span class="token hexcode color">#aaa</span><span class="token punctuation">;</span>
+  <span class="token property">border-radius</span><span class="token punctuation">:</span> <span class="token number">20</span><span class="token unit">px</span><span class="token punctuation">;</span>
+  <span class="token property">background</span><span class="token punctuation">:</span> <span class="token hexcode color">#fff</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+<span class="token selector"><span class="token class">.card-content</span></span> <span class="token punctuation">{</span>
+  <span class="token property">text-align</span><span class="token punctuation">:</span> center<span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+<span class="token selector"><span class="token class">.avatar</span></span> <span class="token punctuation">{</span>
+  <span class="token property">margin</span><span class="token punctuation">:</span> <span class="token number">10</span><span class="token unit">px</span><span class="token punctuation">;</span>
+  <span class="token property">border-radius</span><span class="token punctuation">:</span> <span class="token number">50</span><span class="token unit">%</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+<span class="token selector">h1</span> <span class="token punctuation">{</span>
+  <span class="token property">margin</span><span class="token punctuation">:</span> <span class="token number">5</span><span class="token unit">px</span><span class="token punctuation">;</span>
+  <span class="token property">padding</span><span class="token punctuation">:</span> <span class="token number">0</span><span class="token punctuation">;</span>
+  <span class="token property">font-size</span><span class="token punctuation">:</span> <span class="token number">24</span><span class="token unit">px</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span></code></pre></sandpack><hint><p>放入组件标签内的任何 JSX 都将作为 <code>children</code> prop 传递给该组件。</p></hint><solution><p>这是你可以在两个地方使用 <code>Card</code> 组件的方法：</p><sandpack><pre class="language-js"><code class="language-js"><span class="token keyword">function</span> <span class="token function"><span class="token maybe-class-name">Card</span></span><span class="token punctuation">(</span><span class="token parameter"><span class="token punctuation">{</span> children <span class="token punctuation">}</span></span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  <span class="token keyword control-flow">return</span> <span class="token punctuation">(</span>
+    <span class="token operator">&#x3C;</span>div className<span class="token operator">=</span><span class="token string">"card"</span><span class="token operator">></span>
+      <span class="token operator">&#x3C;</span>div className<span class="token operator">=</span><span class="token string">"card-content"</span><span class="token operator">></span>
+        <span class="token punctuation">{</span>children<span class="token punctuation">}</span>
+      <span class="token operator">&#x3C;</span><span class="token operator">/</span>div<span class="token operator">></span>
+    <span class="token operator">&#x3C;</span><span class="token operator">/</span>div<span class="token operator">></span>
+  <span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+
+<span class="token keyword module">export</span> <span class="token keyword module">default</span> <span class="token keyword">function</span> <span class="token function"><span class="token maybe-class-name">Profile</span></span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  <span class="token keyword control-flow">return</span> <span class="token punctuation">(</span>
+    <span class="token operator">&#x3C;</span>div<span class="token operator">></span>
+      <span class="token operator">&#x3C;</span><span class="token maybe-class-name">Card</span><span class="token operator">></span>
+        <span class="token operator">&#x3C;</span>h1<span class="token operator">></span><span class="token maybe-class-name">Photo</span><span class="token operator">&#x3C;</span><span class="token operator">/</span>h1<span class="token operator">></span>
+        <span class="token operator">&#x3C;</span>img
+          className<span class="token operator">=</span><span class="token string">"avatar"</span>
+          src<span class="token operator">=</span><span class="token string">"https://i.imgur.com/OKS67lhm.jpg"</span>
+          alt<span class="token operator">=</span><span class="token string">"Aklilu Lemma"</span>
+          width<span class="token operator">=</span><span class="token punctuation">{</span><span class="token number">100</span><span class="token punctuation">}</span>
+          height<span class="token operator">=</span><span class="token punctuation">{</span><span class="token number">100</span><span class="token punctuation">}</span>
+        <span class="token operator">/</span><span class="token operator">></span>
+      <span class="token operator">&#x3C;</span><span class="token operator">/</span><span class="token maybe-class-name">Card</span><span class="token operator">></span>
+      <span class="token operator">&#x3C;</span><span class="token maybe-class-name">Card</span><span class="token operator">></span>
+        <span class="token operator">&#x3C;</span>h1<span class="token operator">></span><span class="token maybe-class-name">About</span><span class="token operator">&#x3C;</span><span class="token operator">/</span>h1<span class="token operator">></span>
+        <span class="token operator">&#x3C;</span>p<span class="token operator">></span><span class="token maybe-class-name">Aklilu</span> <span class="token maybe-class-name">Lemma</span> was a distinguished <span class="token maybe-class-name">Ethiopian</span> scientist who discovered a natural treatment to schistosomiasis<span class="token punctuation">.</span><span class="token operator">&#x3C;</span><span class="token operator">/</span>p<span class="token operator">></span>
+      <span class="token operator">&#x3C;</span><span class="token operator">/</span><span class="token maybe-class-name">Card</span><span class="token operator">></span>
+    <span class="token operator">&#x3C;</span><span class="token operator">/</span>div<span class="token operator">></span>
+  <span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span></code></pre><pre class="language-css"><code class="language-css"><span class="token selector"><span class="token class">.card</span></span> <span class="token punctuation">{</span>
+  <span class="token property">width</span><span class="token punctuation">:</span> fit-content<span class="token punctuation">;</span>
+  <span class="token property">margin</span><span class="token punctuation">:</span> <span class="token number">20</span><span class="token unit">px</span><span class="token punctuation">;</span>
+  <span class="token property">padding</span><span class="token punctuation">:</span> <span class="token number">20</span><span class="token unit">px</span><span class="token punctuation">;</span>
+  <span class="token property">border</span><span class="token punctuation">:</span> <span class="token number">1</span><span class="token unit">px</span> solid <span class="token hexcode color">#aaa</span><span class="token punctuation">;</span>
+  <span class="token property">border-radius</span><span class="token punctuation">:</span> <span class="token number">20</span><span class="token unit">px</span><span class="token punctuation">;</span>
+  <span class="token property">background</span><span class="token punctuation">:</span> <span class="token hexcode color">#fff</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+<span class="token selector"><span class="token class">.card-content</span></span> <span class="token punctuation">{</span>
+  <span class="token property">text-align</span><span class="token punctuation">:</span> center<span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+<span class="token selector"><span class="token class">.avatar</span></span> <span class="token punctuation">{</span>
+  <span class="token property">margin</span><span class="token punctuation">:</span> <span class="token number">10</span><span class="token unit">px</span><span class="token punctuation">;</span>
+  <span class="token property">border-radius</span><span class="token punctuation">:</span> <span class="token number">50</span><span class="token unit">%</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+<span class="token selector">h1</span> <span class="token punctuation">{</span>
+  <span class="token property">margin</span><span class="token punctuation">:</span> <span class="token number">5</span><span class="token unit">px</span><span class="token punctuation">;</span>
+  <span class="token property">padding</span><span class="token punctuation">:</span> <span class="token number">0</span><span class="token punctuation">;</span>
+  <span class="token property">font-size</span><span class="token punctuation">:</span> <span class="token number">24</span><span class="token unit">px</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span></code></pre></sandpack><p>如果你希望每个 <code>Card</code> 都有一个标题，你还可以将 <code>title</code> 设为一个单独的 prop：</p><sandpack><pre class="language-js"><code class="language-js"><span class="token keyword">function</span> <span class="token function"><span class="token maybe-class-name">Card</span></span><span class="token punctuation">(</span><span class="token parameter"><span class="token punctuation">{</span> children<span class="token punctuation">,</span> title <span class="token punctuation">}</span></span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  <span class="token keyword control-flow">return</span> <span class="token punctuation">(</span>
+    <span class="token operator">&#x3C;</span>div className<span class="token operator">=</span><span class="token string">"card"</span><span class="token operator">></span>
+      <span class="token operator">&#x3C;</span>div className<span class="token operator">=</span><span class="token string">"card-content"</span><span class="token operator">></span>
+        <span class="token operator">&#x3C;</span>h1<span class="token operator">></span><span class="token punctuation">{</span>title<span class="token punctuation">}</span><span class="token operator">&#x3C;</span><span class="token operator">/</span>h1<span class="token operator">></span>
+        <span class="token punctuation">{</span>children<span class="token punctuation">}</span>
+      <span class="token operator">&#x3C;</span><span class="token operator">/</span>div<span class="token operator">></span>
+    <span class="token operator">&#x3C;</span><span class="token operator">/</span>div<span class="token operator">></span>
+  <span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+
+<span class="token keyword module">export</span> <span class="token keyword module">default</span> <span class="token keyword">function</span> <span class="token function"><span class="token maybe-class-name">Profile</span></span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  <span class="token keyword control-flow">return</span> <span class="token punctuation">(</span>
+    <span class="token operator">&#x3C;</span>div<span class="token operator">></span>
+      <span class="token operator">&#x3C;</span><span class="token maybe-class-name">Card</span> title<span class="token operator">=</span><span class="token string">"Photo"</span><span class="token operator">></span>
+        <span class="token operator">&#x3C;</span>img
+          className<span class="token operator">=</span><span class="token string">"avatar"</span>
+          src<span class="token operator">=</span><span class="token string">"https://i.imgur.com/OKS67lhm.jpg"</span>
+          alt<span class="token operator">=</span><span class="token string">"Aklilu Lemma"</span>
+          width<span class="token operator">=</span><span class="token punctuation">{</span><span class="token number">100</span><span class="token punctuation">}</span>
+          height<span class="token operator">=</span><span class="token punctuation">{</span><span class="token number">100</span><span class="token punctuation">}</span>
+        <span class="token operator">/</span><span class="token operator">></span>
+      <span class="token operator">&#x3C;</span><span class="token operator">/</span><span class="token maybe-class-name">Card</span><span class="token operator">></span>
+      <span class="token operator">&#x3C;</span><span class="token maybe-class-name">Card</span> title<span class="token operator">=</span><span class="token string">"About"</span><span class="token operator">></span>
+        <span class="token operator">&#x3C;</span>p<span class="token operator">></span><span class="token maybe-class-name">Aklilu</span> <span class="token maybe-class-name">Lemma</span> was a distinguished <span class="token maybe-class-name">Ethiopian</span> scientist who discovered a natural treatment to schistosomiasis<span class="token punctuation">.</span><span class="token operator">&#x3C;</span><span class="token operator">/</span>p<span class="token operator">></span>
+      <span class="token operator">&#x3C;</span><span class="token operator">/</span><span class="token maybe-class-name">Card</span><span class="token operator">></span>
+    <span class="token operator">&#x3C;</span><span class="token operator">/</span>div<span class="token operator">></span>
+  <span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span></code></pre><pre class="language-css"><code class="language-css"><span class="token selector"><span class="token class">.card</span></span> <span class="token punctuation">{</span>
+  <span class="token property">width</span><span class="token punctuation">:</span> fit-content<span class="token punctuation">;</span>
+  <span class="token property">margin</span><span class="token punctuation">:</span> <span class="token number">20</span><span class="token unit">px</span><span class="token punctuation">;</span>
+  <span class="token property">padding</span><span class="token punctuation">:</span> <span class="token number">20</span><span class="token unit">px</span><span class="token punctuation">;</span>
+  <span class="token property">border</span><span class="token punctuation">:</span> <span class="token number">1</span><span class="token unit">px</span> solid <span class="token hexcode color">#aaa</span><span class="token punctuation">;</span>
+  <span class="token property">border-radius</span><span class="token punctuation">:</span> <span class="token number">20</span><span class="token unit">px</span><span class="token punctuation">;</span>
+  <span class="token property">background</span><span class="token punctuation">:</span> <span class="token hexcode color">#fff</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+<span class="token selector"><span class="token class">.card-content</span></span> <span class="token punctuation">{</span>
+  <span class="token property">text-align</span><span class="token punctuation">:</span> center<span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+<span class="token selector"><span class="token class">.avatar</span></span> <span class="token punctuation">{</span>
+  <span class="token property">margin</span><span class="token punctuation">:</span> <span class="token number">10</span><span class="token unit">px</span><span class="token punctuation">;</span>
+  <span class="token property">border-radius</span><span class="token punctuation">:</span> <span class="token number">50</span><span class="token unit">%</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+<span class="token selector">h1</span> <span class="token punctuation">{</span>
+  <span class="token property">margin</span><span class="token punctuation">:</span> <span class="token number">5</span><span class="token unit">px</span><span class="token punctuation">;</span>
+  <span class="token property">padding</span><span class="token punctuation">:</span> <span class="token number">0</span><span class="token punctuation">;</span>
+  <span class="token property">font-size</span><span class="token punctuation">:</span> <span class="token number">24</span><span class="token unit">px</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span></code></pre></sandpack></solution><span style="float:footnote"><a href="../index.html#toc">Go to TOC</a></span></section></challenges></section></section>

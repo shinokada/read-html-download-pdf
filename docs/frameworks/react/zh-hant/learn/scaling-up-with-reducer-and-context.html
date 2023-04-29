@@ -1,0 +1,1033 @@
+<!doctype html><html lang="zh-hant"><meta charset="utf-8"><title>Scaling Up with Reducer and Context</title><meta name="viewport"content="width=device-width,initial-scale=1"><link rel="stylesheet"href="../../../../themes/packages/prism-coy-theme/theme_common.css"><section class="level1"aria-labelledby="scaling-up-with-reducer-and-context"><h1 id="scaling-up-with-reducer-and-context">Scaling Up with Reducer and Context</h1><intro><p>Reducers let you consolidate a component's state update logic. Context lets you pass information deep down to other components. You can combine reducers and context together to manage state of a complex screen.</p></intro><youwilllearn><ul><li>How to combine a reducer with context<li>How to avoid passing state and dispatch through props<li>How to keep context and state logic in a separate file</ul></youwilllearn><section class="level2"aria-labelledby="combining-a-reducer-with-context-combining-a-reducer-with-context"><h2 id="combining-a-reducer-with-context-combining-a-reducer-with-context">Combining a reducer with context {/<em>combining-a-reducer-with-context</em>/}</h2><p>In this example from <a href="/learn/extracting-state-logic-into-a-reducer">the introduction to reducers</a>, the state is managed by a reducer. The reducer function contains all of the state update logic and is declared at the bottom of this file:</p><sandpack><pre class="language-js"><code class="language-js"><span class="token keyword module">import</span> <span class="token imports"><span class="token punctuation">{</span> useReducer <span class="token punctuation">}</span></span> <span class="token keyword module">from</span> <span class="token string">'react'</span><span class="token punctuation">;</span>
+<span class="token keyword module">import</span> <span class="token imports"><span class="token maybe-class-name">AddTask</span></span> <span class="token keyword module">from</span> <span class="token string">'./AddTask.js'</span><span class="token punctuation">;</span>
+<span class="token keyword module">import</span> <span class="token imports"><span class="token maybe-class-name">TaskList</span></span> <span class="token keyword module">from</span> <span class="token string">'./TaskList.js'</span><span class="token punctuation">;</span>
+
+<span class="token keyword module">export</span> <span class="token keyword module">default</span> <span class="token keyword">function</span> <span class="token function"><span class="token maybe-class-name">TaskApp</span></span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  <span class="token keyword">const</span> <span class="token punctuation">[</span>tasks<span class="token punctuation">,</span> dispatch<span class="token punctuation">]</span> <span class="token operator">=</span> <span class="token function">useReducer</span><span class="token punctuation">(</span>
+    tasksReducer<span class="token punctuation">,</span>
+    initialTasks
+  <span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+  <span class="token keyword">function</span> <span class="token function">handleAddTask</span><span class="token punctuation">(</span><span class="token parameter">text</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token function">dispatch</span><span class="token punctuation">(</span><span class="token punctuation">{</span>
+      <span class="token literal-property property">type</span><span class="token operator">:</span> <span class="token string">'added'</span><span class="token punctuation">,</span>
+      <span class="token literal-property property">text</span><span class="token operator">:</span> text<span class="token punctuation">,</span>
+    <span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token punctuation">}</span>
+
+  <span class="token keyword">function</span> <span class="token function">handleChangeTask</span><span class="token punctuation">(</span><span class="token parameter">task</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token function">dispatch</span><span class="token punctuation">(</span><span class="token punctuation">{</span>
+      <span class="token literal-property property">type</span><span class="token operator">:</span> <span class="token string">'changed'</span><span class="token punctuation">,</span>
+      <span class="token literal-property property">task</span><span class="token operator">:</span> task
+    <span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token punctuation">}</span>
+
+  <span class="token keyword">function</span> <span class="token function">handleDeleteTask</span><span class="token punctuation">(</span><span class="token parameter">taskId</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token function">dispatch</span><span class="token punctuation">(</span><span class="token punctuation">{</span>
+      <span class="token literal-property property">type</span><span class="token operator">:</span> <span class="token string">'deleted'</span><span class="token punctuation">,</span>
+    <span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token punctuation">}</span>
+
+  <span class="token keyword control-flow">return</span> <span class="token punctuation">(</span>
+    <span class="token operator">&#x3C;</span><span class="token operator">></span>
+      <span class="token operator">&#x3C;</span>h1<span class="token operator">></span><span class="token maybe-class-name">Day</span> off <span class="token keyword">in</span> <span class="token maybe-class-name">Kyoto</span><span class="token operator">&#x3C;</span><span class="token operator">/</span>h1<span class="token operator">></span>
+      <span class="token operator">&#x3C;</span><span class="token maybe-class-name">AddTask</span>
+        onAddTask<span class="token operator">=</span><span class="token punctuation">{</span>handleAddTask<span class="token punctuation">}</span>
+      <span class="token operator">/</span><span class="token operator">></span>
+      <span class="token operator">&#x3C;</span><span class="token maybe-class-name">TaskList</span>
+        tasks<span class="token operator">=</span><span class="token punctuation">{</span>tasks<span class="token punctuation">}</span>
+        onChangeTask<span class="token operator">=</span><span class="token punctuation">{</span>handleChangeTask<span class="token punctuation">}</span>
+        onDeleteTask<span class="token operator">=</span><span class="token punctuation">{</span>handleDeleteTask<span class="token punctuation">}</span>
+      <span class="token operator">/</span><span class="token operator">></span>
+    <span class="token operator">&#x3C;</span><span class="token operator">/</span><span class="token operator">></span>
+  <span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+
+<span class="token keyword">function</span> <span class="token function">tasksReducer</span><span class="token punctuation">(</span><span class="token parameter">tasks<span class="token punctuation">,</span> action</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  <span class="token keyword control-flow">switch</span> <span class="token punctuation">(</span>action<span class="token punctuation">.</span><span class="token property-access">type</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token keyword">case</span> <span class="token string">'added'</span><span class="token operator">:</span> <span class="token punctuation">{</span>
+      <span class="token keyword control-flow">return</span> <span class="token punctuation">[</span><span class="token spread operator">...</span>tasks<span class="token punctuation">,</span> <span class="token punctuation">{</span>
+        <span class="token literal-property property">text</span><span class="token operator">:</span> action<span class="token punctuation">.</span><span class="token property-access">text</span><span class="token punctuation">,</span>
+        <span class="token literal-property property">done</span><span class="token operator">:</span> <span class="token boolean">false</span>
+      <span class="token punctuation">}</span><span class="token punctuation">]</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+    <span class="token keyword">case</span> <span class="token string">'changed'</span><span class="token operator">:</span> <span class="token punctuation">{</span>
+      <span class="token keyword control-flow">return</span> tasks<span class="token punctuation">.</span><span class="token method function property-access">map</span><span class="token punctuation">(</span><span class="token parameter">t</span> <span class="token arrow operator">=></span> <span class="token punctuation">{</span>
+        <span class="token keyword control-flow">if</span> <span class="token punctuation">(</span>t<span class="token punctuation">.</span><span class="token property-access">id</span> <span class="token operator">===</span> action<span class="token punctuation">.</span><span class="token property-access">task</span><span class="token punctuation">.</span><span class="token property-access">id</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+          <span class="token keyword control-flow">return</span> action<span class="token punctuation">.</span><span class="token property-access">task</span><span class="token punctuation">;</span>
+        <span class="token punctuation">}</span> <span class="token keyword control-flow">else</span> <span class="token punctuation">{</span>
+          <span class="token keyword control-flow">return</span> t<span class="token punctuation">;</span>
+        <span class="token punctuation">}</span>
+      <span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+    <span class="token keyword">case</span> <span class="token string">'deleted'</span><span class="token operator">:</span> <span class="token punctuation">{</span>
+      <span class="token keyword control-flow">return</span> tasks<span class="token punctuation">.</span><span class="token method function property-access">filter</span><span class="token punctuation">(</span><span class="token parameter">t</span> <span class="token arrow operator">=></span> t<span class="token punctuation">.</span><span class="token property-access">id</span> <span class="token operator">!==</span> action<span class="token punctuation">.</span><span class="token property-access">id</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+    <span class="token keyword module">default</span><span class="token operator">:</span> <span class="token punctuation">{</span>
+      <span class="token keyword control-flow">throw</span> <span class="token known-class-name class-name">Error</span><span class="token punctuation">(</span><span class="token string">'Unknown action: '</span> <span class="token operator">+</span> action<span class="token punctuation">.</span><span class="token property-access">type</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+  <span class="token punctuation">}</span>
+<span class="token punctuation">}</span>
+
+<span class="token keyword">let</span> nextId <span class="token operator">=</span> <span class="token number">3</span><span class="token punctuation">;</span>
+<span class="token keyword">const</span> initialTasks <span class="token operator">=</span> <span class="token punctuation">[</span>
+<span class="token punctuation">]</span><span class="token punctuation">;</span></code></pre><pre class="language-js"><code class="language-js"><span class="token keyword module">import</span> <span class="token imports"><span class="token punctuation">{</span> useState <span class="token punctuation">}</span></span> <span class="token keyword module">from</span> <span class="token string">'react'</span><span class="token punctuation">;</span>
+
+<span class="token keyword module">export</span> <span class="token keyword module">default</span> <span class="token keyword">function</span> <span class="token function"><span class="token maybe-class-name">AddTask</span></span><span class="token punctuation">(</span><span class="token parameter"><span class="token punctuation">{</span> onAddTask <span class="token punctuation">}</span></span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  <span class="token keyword">const</span> <span class="token punctuation">[</span>text<span class="token punctuation">,</span> setText<span class="token punctuation">]</span> <span class="token operator">=</span> <span class="token function">useState</span><span class="token punctuation">(</span><span class="token string">''</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token keyword control-flow">return</span> <span class="token punctuation">(</span>
+    <span class="token operator">&#x3C;</span><span class="token operator">></span>
+      <span class="token operator">&#x3C;</span>input
+        placeholder<span class="token operator">=</span><span class="token string">"Add task"</span>
+        value<span class="token operator">=</span><span class="token punctuation">{</span>text<span class="token punctuation">}</span>
+        onChange<span class="token operator">=</span><span class="token punctuation">{</span><span class="token parameter">e</span> <span class="token arrow operator">=></span> <span class="token function">setText</span><span class="token punctuation">(</span>e<span class="token punctuation">.</span><span class="token property-access">target</span><span class="token punctuation">.</span><span class="token property-access">value</span><span class="token punctuation">)</span><span class="token punctuation">}</span>
+      <span class="token operator">/</span><span class="token operator">></span>
+      <span class="token operator">&#x3C;</span>button onClick<span class="token operator">=</span><span class="token punctuation">{</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token arrow operator">=></span> <span class="token punctuation">{</span>
+        <span class="token function">setText</span><span class="token punctuation">(</span><span class="token string">''</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token function">onAddTask</span><span class="token punctuation">(</span>text<span class="token punctuation">)</span><span class="token punctuation">;</span>
+      <span class="token punctuation">}</span><span class="token punctuation">}</span><span class="token operator">></span><span class="token maybe-class-name">Add</span><span class="token operator">&#x3C;</span><span class="token operator">/</span>button<span class="token operator">></span>
+    <span class="token operator">&#x3C;</span><span class="token operator">/</span><span class="token operator">></span>
+  <span class="token punctuation">)</span>
+<span class="token punctuation">}</span></code></pre><pre class="language-js"><code class="language-js"><span class="token keyword module">import</span> <span class="token imports"><span class="token punctuation">{</span> useState <span class="token punctuation">}</span></span> <span class="token keyword module">from</span> <span class="token string">'react'</span><span class="token punctuation">;</span>
+
+<span class="token keyword module">export</span> <span class="token keyword module">default</span> <span class="token keyword">function</span> <span class="token function"><span class="token maybe-class-name">TaskList</span></span><span class="token punctuation">(</span><span class="token parameter"><span class="token punctuation">{</span>
+  tasks<span class="token punctuation">,</span>
+  onChangeTask<span class="token punctuation">,</span>
+  onDeleteTask
+<span class="token punctuation">}</span></span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  <span class="token keyword control-flow">return</span> <span class="token punctuation">(</span>
+    <span class="token operator">&#x3C;</span>ul<span class="token operator">></span>
+      <span class="token punctuation">{</span>tasks<span class="token punctuation">.</span><span class="token method function property-access">map</span><span class="token punctuation">(</span><span class="token parameter">task</span> <span class="token arrow operator">=></span> <span class="token punctuation">(</span>
+        <span class="token operator">&#x3C;</span>li key<span class="token operator">=</span><span class="token punctuation">{</span>task<span class="token punctuation">.</span><span class="token property-access">id</span><span class="token punctuation">}</span><span class="token operator">></span>
+          <span class="token operator">&#x3C;</span><span class="token maybe-class-name">Task</span>
+            task<span class="token operator">=</span><span class="token punctuation">{</span>task<span class="token punctuation">}</span>
+            onChange<span class="token operator">=</span><span class="token punctuation">{</span>onChangeTask<span class="token punctuation">}</span>
+            onDelete<span class="token operator">=</span><span class="token punctuation">{</span>onDeleteTask<span class="token punctuation">}</span>
+          <span class="token operator">/</span><span class="token operator">></span>
+        <span class="token operator">&#x3C;</span><span class="token operator">/</span>li<span class="token operator">></span>
+      <span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">}</span>
+    <span class="token operator">&#x3C;</span><span class="token operator">/</span>ul<span class="token operator">></span>
+  <span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+
+<span class="token keyword">function</span> <span class="token function"><span class="token maybe-class-name">Task</span></span><span class="token punctuation">(</span><span class="token parameter"><span class="token punctuation">{</span> task<span class="token punctuation">,</span> onChange<span class="token punctuation">,</span> onDelete <span class="token punctuation">}</span></span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  <span class="token keyword">const</span> <span class="token punctuation">[</span>isEditing<span class="token punctuation">,</span> setIsEditing<span class="token punctuation">]</span> <span class="token operator">=</span> <span class="token function">useState</span><span class="token punctuation">(</span><span class="token boolean">false</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token keyword">let</span> taskContent<span class="token punctuation">;</span>
+  <span class="token keyword control-flow">if</span> <span class="token punctuation">(</span>isEditing<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    taskContent <span class="token operator">=</span> <span class="token punctuation">(</span>
+      <span class="token operator">&#x3C;</span><span class="token operator">></span>
+        <span class="token operator">&#x3C;</span>input
+          value<span class="token operator">=</span><span class="token punctuation">{</span>task<span class="token punctuation">.</span><span class="token property-access">text</span><span class="token punctuation">}</span>
+          onChange<span class="token operator">=</span><span class="token punctuation">{</span><span class="token parameter">e</span> <span class="token arrow operator">=></span> <span class="token punctuation">{</span>
+            <span class="token function">onChange</span><span class="token punctuation">(</span><span class="token punctuation">{</span>
+              <span class="token spread operator">...</span>task<span class="token punctuation">,</span>
+              <span class="token literal-property property">text</span><span class="token operator">:</span> e<span class="token punctuation">.</span><span class="token property-access">target</span><span class="token punctuation">.</span><span class="token property-access">value</span>
+            <span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+          <span class="token punctuation">}</span><span class="token punctuation">}</span> <span class="token operator">/</span><span class="token operator">></span>
+        <span class="token operator">&#x3C;</span>button onClick<span class="token operator">=</span><span class="token punctuation">{</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token arrow operator">=></span> <span class="token function">setIsEditing</span><span class="token punctuation">(</span><span class="token boolean">false</span><span class="token punctuation">)</span><span class="token punctuation">}</span><span class="token operator">></span>
+          <span class="token maybe-class-name">Save</span>
+        <span class="token operator">&#x3C;</span><span class="token operator">/</span>button<span class="token operator">></span>
+      <span class="token operator">&#x3C;</span><span class="token operator">/</span><span class="token operator">></span>
+    <span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token punctuation">}</span> <span class="token keyword control-flow">else</span> <span class="token punctuation">{</span>
+    taskContent <span class="token operator">=</span> <span class="token punctuation">(</span>
+      <span class="token operator">&#x3C;</span><span class="token operator">></span>
+        <span class="token punctuation">{</span>task<span class="token punctuation">.</span><span class="token property-access">text</span><span class="token punctuation">}</span>
+        <span class="token operator">&#x3C;</span>button onClick<span class="token operator">=</span><span class="token punctuation">{</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token arrow operator">=></span> <span class="token function">setIsEditing</span><span class="token punctuation">(</span><span class="token boolean">true</span><span class="token punctuation">)</span><span class="token punctuation">}</span><span class="token operator">></span>
+          <span class="token maybe-class-name">Edit</span>
+        <span class="token operator">&#x3C;</span><span class="token operator">/</span>button<span class="token operator">></span>
+      <span class="token operator">&#x3C;</span><span class="token operator">/</span><span class="token operator">></span>
+    <span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token punctuation">}</span>
+  <span class="token keyword control-flow">return</span> <span class="token punctuation">(</span>
+    <span class="token operator">&#x3C;</span>label<span class="token operator">></span>
+      <span class="token operator">&#x3C;</span>input
+        type<span class="token operator">=</span><span class="token string">"checkbox"</span>
+        checked<span class="token operator">=</span><span class="token punctuation">{</span>task<span class="token punctuation">.</span><span class="token property-access">done</span><span class="token punctuation">}</span>
+        onChange<span class="token operator">=</span><span class="token punctuation">{</span><span class="token parameter">e</span> <span class="token arrow operator">=></span> <span class="token punctuation">{</span>
+          <span class="token function">onChange</span><span class="token punctuation">(</span><span class="token punctuation">{</span>
+            <span class="token spread operator">...</span>task<span class="token punctuation">,</span>
+            <span class="token literal-property property">done</span><span class="token operator">:</span> e<span class="token punctuation">.</span><span class="token property-access">target</span><span class="token punctuation">.</span><span class="token property-access">checked</span>
+          <span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token punctuation">}</span><span class="token punctuation">}</span>
+      <span class="token operator">/</span><span class="token operator">></span>
+      <span class="token punctuation">{</span>taskContent<span class="token punctuation">}</span>
+      <span class="token operator">&#x3C;</span>button onClick<span class="token operator">=</span><span class="token punctuation">{</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token arrow operator">=></span> <span class="token function">onDelete</span><span class="token punctuation">(</span>task<span class="token punctuation">.</span><span class="token property-access">id</span><span class="token punctuation">)</span><span class="token punctuation">}</span><span class="token operator">></span>
+        <span class="token maybe-class-name">Delete</span>
+      <span class="token operator">&#x3C;</span><span class="token operator">/</span>button<span class="token operator">></span>
+    <span class="token operator">&#x3C;</span><span class="token operator">/</span>label<span class="token operator">></span>
+  <span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span></code></pre><pre class="language-css"><code class="language-css"><span class="token selector">button</span> <span class="token punctuation">{</span> <span class="token property">margin</span><span class="token punctuation">:</span> <span class="token number">5</span><span class="token unit">px</span><span class="token punctuation">;</span> <span class="token punctuation">}</span>
+<span class="token selector">li</span> <span class="token punctuation">{</span> <span class="token property">list-style-type</span><span class="token punctuation">:</span> none<span class="token punctuation">;</span> <span class="token punctuation">}</span>
+<span class="token selector">ul<span class="token punctuation">,</span> li</span> <span class="token punctuation">{</span> <span class="token property">margin</span><span class="token punctuation">:</span> <span class="token number">0</span><span class="token punctuation">;</span> <span class="token property">padding</span><span class="token punctuation">:</span> <span class="token number">0</span><span class="token punctuation">;</span> <span class="token punctuation">}</span></code></pre></sandpack><p>A reducer helps keep the event handlers short and concise. However, as your app grows, you might run into another difficulty. <strong>Currently, the <code>tasks</code> state and the <code>dispatch</code> function are only available in the top-level <code>TaskApp</code> component.</strong> To let other components read the list of tasks or change it, you have to explicitly <a href="/learn/passing-props-to-a-component">pass down</a> the current state and the event handlers that change it as props.<p>For example, <code>TaskApp</code> passes a list of tasks and the event handlers to <code>TaskList</code>:<pre class="language-js"><code class="language-js"><span class="token operator">&#x3C;</span><span class="token maybe-class-name">TaskList</span>
+  tasks<span class="token operator">=</span><span class="token punctuation">{</span>tasks<span class="token punctuation">}</span>
+  onChangeTask<span class="token operator">=</span><span class="token punctuation">{</span>handleChangeTask<span class="token punctuation">}</span>
+  onDeleteTask<span class="token operator">=</span><span class="token punctuation">{</span>handleDeleteTask<span class="token punctuation">}</span>
+<span class="token operator">/</span><span class="token operator">></span></code></pre><p>And <code>TaskList</code> passes the event handlers to <code>Task</code>:<pre class="language-js"><code class="language-js"><span class="token operator">&#x3C;</span><span class="token maybe-class-name">Task</span>
+  task<span class="token operator">=</span><span class="token punctuation">{</span>task<span class="token punctuation">}</span>
+  onChange<span class="token operator">=</span><span class="token punctuation">{</span>onChangeTask<span class="token punctuation">}</span>
+  onDelete<span class="token operator">=</span><span class="token punctuation">{</span>onDeleteTask<span class="token punctuation">}</span>
+<span class="token operator">/</span><span class="token operator">></span></code></pre><p>In a small example like this, this works well, but if you have tens or hundreds of components in the middle, passing down all state and functions can be quite frustrating!<p>This is why, as an alternative to passing them through props, you might want to put both the <code>tasks</code> state and the <code>dispatch</code> function <a href="/learn/passing-data-deeply-with-context">into context.</a> <strong>This way, any component below <code>TaskApp</code> in the tree can read the tasks and dispatch actions without the repetitive "prop drilling".</strong><p>Here is how you can combine a reducer with context:<ol><li><strong>Create</strong> the context.<li><strong>Put</strong> state and dispatch into context.<li><strong>Use</strong> context anywhere in the tree.</ol><section class="level3"aria-labelledby="step-1-create-the-context-step-1-create-the-context"><h3 id="step-1-create-the-context-step-1-create-the-context">Step 1: Create the context {/<em>step-1-create-the-context</em>/}</h3><p>The <code>useReducer</code> Hook returns the current <code>tasks</code> and the <code>dispatch</code> function that lets you update them:<pre class="language-js"><code class="language-js"><span class="token keyword">const</span> <span class="token punctuation">[</span>tasks<span class="token punctuation">,</span> dispatch<span class="token punctuation">]</span> <span class="token operator">=</span> <span class="token function">useReducer</span><span class="token punctuation">(</span>tasksReducer<span class="token punctuation">,</span> initialTasks<span class="token punctuation">)</span><span class="token punctuation">;</span></code></pre><p>To pass them down the tree, you will <a href="/learn/passing-data-deeply-with-context#step-2-use-the-context">create</a> two separate contexts:<ul><li><code>TasksContext</code> provides the current list of tasks.<li><code>TasksDispatchContext</code> provides the function that lets components dispatch actions.</ul><p>Export them from a separate file so that you can later import them from other files:</p><sandpack><pre class="language-js"><code class="language-js"><span class="token keyword module">import</span> <span class="token imports"><span class="token punctuation">{</span> useReducer <span class="token punctuation">}</span></span> <span class="token keyword module">from</span> <span class="token string">'react'</span><span class="token punctuation">;</span>
+<span class="token keyword module">import</span> <span class="token imports"><span class="token maybe-class-name">AddTask</span></span> <span class="token keyword module">from</span> <span class="token string">'./AddTask.js'</span><span class="token punctuation">;</span>
+<span class="token keyword module">import</span> <span class="token imports"><span class="token maybe-class-name">TaskList</span></span> <span class="token keyword module">from</span> <span class="token string">'./TaskList.js'</span><span class="token punctuation">;</span>
+
+<span class="token keyword module">export</span> <span class="token keyword module">default</span> <span class="token keyword">function</span> <span class="token function"><span class="token maybe-class-name">TaskApp</span></span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  <span class="token keyword">const</span> <span class="token punctuation">[</span>tasks<span class="token punctuation">,</span> dispatch<span class="token punctuation">]</span> <span class="token operator">=</span> <span class="token function">useReducer</span><span class="token punctuation">(</span>
+    tasksReducer<span class="token punctuation">,</span>
+    initialTasks
+  <span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+  <span class="token keyword">function</span> <span class="token function">handleAddTask</span><span class="token punctuation">(</span><span class="token parameter">text</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token function">dispatch</span><span class="token punctuation">(</span><span class="token punctuation">{</span>
+      <span class="token literal-property property">type</span><span class="token operator">:</span> <span class="token string">'added'</span><span class="token punctuation">,</span>
+      <span class="token literal-property property">text</span><span class="token operator">:</span> text<span class="token punctuation">,</span>
+    <span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token punctuation">}</span>
+
+  <span class="token keyword">function</span> <span class="token function">handleChangeTask</span><span class="token punctuation">(</span><span class="token parameter">task</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token function">dispatch</span><span class="token punctuation">(</span><span class="token punctuation">{</span>
+      <span class="token literal-property property">type</span><span class="token operator">:</span> <span class="token string">'changed'</span><span class="token punctuation">,</span>
+      <span class="token literal-property property">task</span><span class="token operator">:</span> task
+    <span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token punctuation">}</span>
+
+  <span class="token keyword">function</span> <span class="token function">handleDeleteTask</span><span class="token punctuation">(</span><span class="token parameter">taskId</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token function">dispatch</span><span class="token punctuation">(</span><span class="token punctuation">{</span>
+      <span class="token literal-property property">type</span><span class="token operator">:</span> <span class="token string">'deleted'</span><span class="token punctuation">,</span>
+    <span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token punctuation">}</span>
+
+  <span class="token keyword control-flow">return</span> <span class="token punctuation">(</span>
+    <span class="token operator">&#x3C;</span><span class="token operator">></span>
+      <span class="token operator">&#x3C;</span>h1<span class="token operator">></span><span class="token maybe-class-name">Day</span> off <span class="token keyword">in</span> <span class="token maybe-class-name">Kyoto</span><span class="token operator">&#x3C;</span><span class="token operator">/</span>h1<span class="token operator">></span>
+      <span class="token operator">&#x3C;</span><span class="token maybe-class-name">AddTask</span>
+        onAddTask<span class="token operator">=</span><span class="token punctuation">{</span>handleAddTask<span class="token punctuation">}</span>
+      <span class="token operator">/</span><span class="token operator">></span>
+      <span class="token operator">&#x3C;</span><span class="token maybe-class-name">TaskList</span>
+        tasks<span class="token operator">=</span><span class="token punctuation">{</span>tasks<span class="token punctuation">}</span>
+        onChangeTask<span class="token operator">=</span><span class="token punctuation">{</span>handleChangeTask<span class="token punctuation">}</span>
+        onDeleteTask<span class="token operator">=</span><span class="token punctuation">{</span>handleDeleteTask<span class="token punctuation">}</span>
+      <span class="token operator">/</span><span class="token operator">></span>
+    <span class="token operator">&#x3C;</span><span class="token operator">/</span><span class="token operator">></span>
+  <span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+
+<span class="token keyword">function</span> <span class="token function">tasksReducer</span><span class="token punctuation">(</span><span class="token parameter">tasks<span class="token punctuation">,</span> action</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  <span class="token keyword control-flow">switch</span> <span class="token punctuation">(</span>action<span class="token punctuation">.</span><span class="token property-access">type</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token keyword">case</span> <span class="token string">'added'</span><span class="token operator">:</span> <span class="token punctuation">{</span>
+      <span class="token keyword control-flow">return</span> <span class="token punctuation">[</span><span class="token spread operator">...</span>tasks<span class="token punctuation">,</span> <span class="token punctuation">{</span>
+        <span class="token literal-property property">text</span><span class="token operator">:</span> action<span class="token punctuation">.</span><span class="token property-access">text</span><span class="token punctuation">,</span>
+        <span class="token literal-property property">done</span><span class="token operator">:</span> <span class="token boolean">false</span>
+      <span class="token punctuation">}</span><span class="token punctuation">]</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+    <span class="token keyword">case</span> <span class="token string">'changed'</span><span class="token operator">:</span> <span class="token punctuation">{</span>
+      <span class="token keyword control-flow">return</span> tasks<span class="token punctuation">.</span><span class="token method function property-access">map</span><span class="token punctuation">(</span><span class="token parameter">t</span> <span class="token arrow operator">=></span> <span class="token punctuation">{</span>
+        <span class="token keyword control-flow">if</span> <span class="token punctuation">(</span>t<span class="token punctuation">.</span><span class="token property-access">id</span> <span class="token operator">===</span> action<span class="token punctuation">.</span><span class="token property-access">task</span><span class="token punctuation">.</span><span class="token property-access">id</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+          <span class="token keyword control-flow">return</span> action<span class="token punctuation">.</span><span class="token property-access">task</span><span class="token punctuation">;</span>
+        <span class="token punctuation">}</span> <span class="token keyword control-flow">else</span> <span class="token punctuation">{</span>
+          <span class="token keyword control-flow">return</span> t<span class="token punctuation">;</span>
+        <span class="token punctuation">}</span>
+      <span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+    <span class="token keyword">case</span> <span class="token string">'deleted'</span><span class="token operator">:</span> <span class="token punctuation">{</span>
+      <span class="token keyword control-flow">return</span> tasks<span class="token punctuation">.</span><span class="token method function property-access">filter</span><span class="token punctuation">(</span><span class="token parameter">t</span> <span class="token arrow operator">=></span> t<span class="token punctuation">.</span><span class="token property-access">id</span> <span class="token operator">!==</span> action<span class="token punctuation">.</span><span class="token property-access">id</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+    <span class="token keyword module">default</span><span class="token operator">:</span> <span class="token punctuation">{</span>
+      <span class="token keyword control-flow">throw</span> <span class="token known-class-name class-name">Error</span><span class="token punctuation">(</span><span class="token string">'Unknown action: '</span> <span class="token operator">+</span> action<span class="token punctuation">.</span><span class="token property-access">type</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+  <span class="token punctuation">}</span>
+<span class="token punctuation">}</span>
+
+<span class="token keyword">let</span> nextId <span class="token operator">=</span> <span class="token number">3</span><span class="token punctuation">;</span>
+<span class="token keyword">const</span> initialTasks <span class="token operator">=</span> <span class="token punctuation">[</span>
+<span class="token punctuation">]</span><span class="token punctuation">;</span></code></pre><pre class="language-js"><code class="language-js"><span class="token keyword module">import</span> <span class="token imports"><span class="token punctuation">{</span> createContext <span class="token punctuation">}</span></span> <span class="token keyword module">from</span> <span class="token string">'react'</span><span class="token punctuation">;</span>
+
+<span class="token keyword module">export</span> <span class="token keyword">const</span> <span class="token maybe-class-name">TasksContext</span> <span class="token operator">=</span> <span class="token function">createContext</span><span class="token punctuation">(</span><span class="token keyword null nil">null</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token keyword module">export</span> <span class="token keyword">const</span> <span class="token maybe-class-name">TasksDispatchContext</span> <span class="token operator">=</span> <span class="token function">createContext</span><span class="token punctuation">(</span><span class="token keyword null nil">null</span><span class="token punctuation">)</span><span class="token punctuation">;</span></code></pre><pre class="language-js"><code class="language-js"><span class="token keyword module">import</span> <span class="token imports"><span class="token punctuation">{</span> useState <span class="token punctuation">}</span></span> <span class="token keyword module">from</span> <span class="token string">'react'</span><span class="token punctuation">;</span>
+
+<span class="token keyword module">export</span> <span class="token keyword module">default</span> <span class="token keyword">function</span> <span class="token function"><span class="token maybe-class-name">AddTask</span></span><span class="token punctuation">(</span><span class="token parameter"><span class="token punctuation">{</span> onAddTask <span class="token punctuation">}</span></span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  <span class="token keyword">const</span> <span class="token punctuation">[</span>text<span class="token punctuation">,</span> setText<span class="token punctuation">]</span> <span class="token operator">=</span> <span class="token function">useState</span><span class="token punctuation">(</span><span class="token string">''</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token keyword control-flow">return</span> <span class="token punctuation">(</span>
+    <span class="token operator">&#x3C;</span><span class="token operator">></span>
+      <span class="token operator">&#x3C;</span>input
+        placeholder<span class="token operator">=</span><span class="token string">"Add task"</span>
+        value<span class="token operator">=</span><span class="token punctuation">{</span>text<span class="token punctuation">}</span>
+        onChange<span class="token operator">=</span><span class="token punctuation">{</span><span class="token parameter">e</span> <span class="token arrow operator">=></span> <span class="token function">setText</span><span class="token punctuation">(</span>e<span class="token punctuation">.</span><span class="token property-access">target</span><span class="token punctuation">.</span><span class="token property-access">value</span><span class="token punctuation">)</span><span class="token punctuation">}</span>
+      <span class="token operator">/</span><span class="token operator">></span>
+      <span class="token operator">&#x3C;</span>button onClick<span class="token operator">=</span><span class="token punctuation">{</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token arrow operator">=></span> <span class="token punctuation">{</span>
+        <span class="token function">setText</span><span class="token punctuation">(</span><span class="token string">''</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token function">onAddTask</span><span class="token punctuation">(</span>text<span class="token punctuation">)</span><span class="token punctuation">;</span>
+      <span class="token punctuation">}</span><span class="token punctuation">}</span><span class="token operator">></span><span class="token maybe-class-name">Add</span><span class="token operator">&#x3C;</span><span class="token operator">/</span>button<span class="token operator">></span>
+    <span class="token operator">&#x3C;</span><span class="token operator">/</span><span class="token operator">></span>
+  <span class="token punctuation">)</span>
+<span class="token punctuation">}</span></code></pre><pre class="language-js"><code class="language-js"><span class="token keyword module">import</span> <span class="token imports"><span class="token punctuation">{</span> useState <span class="token punctuation">}</span></span> <span class="token keyword module">from</span> <span class="token string">'react'</span><span class="token punctuation">;</span>
+
+<span class="token keyword module">export</span> <span class="token keyword module">default</span> <span class="token keyword">function</span> <span class="token function"><span class="token maybe-class-name">TaskList</span></span><span class="token punctuation">(</span><span class="token parameter"><span class="token punctuation">{</span>
+  tasks<span class="token punctuation">,</span>
+  onChangeTask<span class="token punctuation">,</span>
+  onDeleteTask
+<span class="token punctuation">}</span></span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  <span class="token keyword control-flow">return</span> <span class="token punctuation">(</span>
+    <span class="token operator">&#x3C;</span>ul<span class="token operator">></span>
+      <span class="token punctuation">{</span>tasks<span class="token punctuation">.</span><span class="token method function property-access">map</span><span class="token punctuation">(</span><span class="token parameter">task</span> <span class="token arrow operator">=></span> <span class="token punctuation">(</span>
+        <span class="token operator">&#x3C;</span>li key<span class="token operator">=</span><span class="token punctuation">{</span>task<span class="token punctuation">.</span><span class="token property-access">id</span><span class="token punctuation">}</span><span class="token operator">></span>
+          <span class="token operator">&#x3C;</span><span class="token maybe-class-name">Task</span>
+            task<span class="token operator">=</span><span class="token punctuation">{</span>task<span class="token punctuation">}</span>
+            onChange<span class="token operator">=</span><span class="token punctuation">{</span>onChangeTask<span class="token punctuation">}</span>
+            onDelete<span class="token operator">=</span><span class="token punctuation">{</span>onDeleteTask<span class="token punctuation">}</span>
+          <span class="token operator">/</span><span class="token operator">></span>
+        <span class="token operator">&#x3C;</span><span class="token operator">/</span>li<span class="token operator">></span>
+      <span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">}</span>
+    <span class="token operator">&#x3C;</span><span class="token operator">/</span>ul<span class="token operator">></span>
+  <span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+
+<span class="token keyword">function</span> <span class="token function"><span class="token maybe-class-name">Task</span></span><span class="token punctuation">(</span><span class="token parameter"><span class="token punctuation">{</span> task<span class="token punctuation">,</span> onChange<span class="token punctuation">,</span> onDelete <span class="token punctuation">}</span></span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  <span class="token keyword">const</span> <span class="token punctuation">[</span>isEditing<span class="token punctuation">,</span> setIsEditing<span class="token punctuation">]</span> <span class="token operator">=</span> <span class="token function">useState</span><span class="token punctuation">(</span><span class="token boolean">false</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token keyword">let</span> taskContent<span class="token punctuation">;</span>
+  <span class="token keyword control-flow">if</span> <span class="token punctuation">(</span>isEditing<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    taskContent <span class="token operator">=</span> <span class="token punctuation">(</span>
+      <span class="token operator">&#x3C;</span><span class="token operator">></span>
+        <span class="token operator">&#x3C;</span>input
+          value<span class="token operator">=</span><span class="token punctuation">{</span>task<span class="token punctuation">.</span><span class="token property-access">text</span><span class="token punctuation">}</span>
+          onChange<span class="token operator">=</span><span class="token punctuation">{</span><span class="token parameter">e</span> <span class="token arrow operator">=></span> <span class="token punctuation">{</span>
+            <span class="token function">onChange</span><span class="token punctuation">(</span><span class="token punctuation">{</span>
+              <span class="token spread operator">...</span>task<span class="token punctuation">,</span>
+              <span class="token literal-property property">text</span><span class="token operator">:</span> e<span class="token punctuation">.</span><span class="token property-access">target</span><span class="token punctuation">.</span><span class="token property-access">value</span>
+            <span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+          <span class="token punctuation">}</span><span class="token punctuation">}</span> <span class="token operator">/</span><span class="token operator">></span>
+        <span class="token operator">&#x3C;</span>button onClick<span class="token operator">=</span><span class="token punctuation">{</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token arrow operator">=></span> <span class="token function">setIsEditing</span><span class="token punctuation">(</span><span class="token boolean">false</span><span class="token punctuation">)</span><span class="token punctuation">}</span><span class="token operator">></span>
+          <span class="token maybe-class-name">Save</span>
+        <span class="token operator">&#x3C;</span><span class="token operator">/</span>button<span class="token operator">></span>
+      <span class="token operator">&#x3C;</span><span class="token operator">/</span><span class="token operator">></span>
+    <span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token punctuation">}</span> <span class="token keyword control-flow">else</span> <span class="token punctuation">{</span>
+    taskContent <span class="token operator">=</span> <span class="token punctuation">(</span>
+      <span class="token operator">&#x3C;</span><span class="token operator">></span>
+        <span class="token punctuation">{</span>task<span class="token punctuation">.</span><span class="token property-access">text</span><span class="token punctuation">}</span>
+        <span class="token operator">&#x3C;</span>button onClick<span class="token operator">=</span><span class="token punctuation">{</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token arrow operator">=></span> <span class="token function">setIsEditing</span><span class="token punctuation">(</span><span class="token boolean">true</span><span class="token punctuation">)</span><span class="token punctuation">}</span><span class="token operator">></span>
+          <span class="token maybe-class-name">Edit</span>
+        <span class="token operator">&#x3C;</span><span class="token operator">/</span>button<span class="token operator">></span>
+      <span class="token operator">&#x3C;</span><span class="token operator">/</span><span class="token operator">></span>
+    <span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token punctuation">}</span>
+  <span class="token keyword control-flow">return</span> <span class="token punctuation">(</span>
+    <span class="token operator">&#x3C;</span>label<span class="token operator">></span>
+      <span class="token operator">&#x3C;</span>input
+        type<span class="token operator">=</span><span class="token string">"checkbox"</span>
+        checked<span class="token operator">=</span><span class="token punctuation">{</span>task<span class="token punctuation">.</span><span class="token property-access">done</span><span class="token punctuation">}</span>
+        onChange<span class="token operator">=</span><span class="token punctuation">{</span><span class="token parameter">e</span> <span class="token arrow operator">=></span> <span class="token punctuation">{</span>
+          <span class="token function">onChange</span><span class="token punctuation">(</span><span class="token punctuation">{</span>
+            <span class="token spread operator">...</span>task<span class="token punctuation">,</span>
+            <span class="token literal-property property">done</span><span class="token operator">:</span> e<span class="token punctuation">.</span><span class="token property-access">target</span><span class="token punctuation">.</span><span class="token property-access">checked</span>
+          <span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token punctuation">}</span><span class="token punctuation">}</span>
+      <span class="token operator">/</span><span class="token operator">></span>
+      <span class="token punctuation">{</span>taskContent<span class="token punctuation">}</span>
+      <span class="token operator">&#x3C;</span>button onClick<span class="token operator">=</span><span class="token punctuation">{</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token arrow operator">=></span> <span class="token function">onDelete</span><span class="token punctuation">(</span>task<span class="token punctuation">.</span><span class="token property-access">id</span><span class="token punctuation">)</span><span class="token punctuation">}</span><span class="token operator">></span>
+        <span class="token maybe-class-name">Delete</span>
+      <span class="token operator">&#x3C;</span><span class="token operator">/</span>button<span class="token operator">></span>
+    <span class="token operator">&#x3C;</span><span class="token operator">/</span>label<span class="token operator">></span>
+  <span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span></code></pre><pre class="language-css"><code class="language-css"><span class="token selector">button</span> <span class="token punctuation">{</span> <span class="token property">margin</span><span class="token punctuation">:</span> <span class="token number">5</span><span class="token unit">px</span><span class="token punctuation">;</span> <span class="token punctuation">}</span>
+<span class="token selector">li</span> <span class="token punctuation">{</span> <span class="token property">list-style-type</span><span class="token punctuation">:</span> none<span class="token punctuation">;</span> <span class="token punctuation">}</span>
+<span class="token selector">ul<span class="token punctuation">,</span> li</span> <span class="token punctuation">{</span> <span class="token property">margin</span><span class="token punctuation">:</span> <span class="token number">0</span><span class="token punctuation">;</span> <span class="token property">padding</span><span class="token punctuation">:</span> <span class="token number">0</span><span class="token punctuation">;</span> <span class="token punctuation">}</span></code></pre></sandpack><p>Here, you're passing <code>null</code> as the default value to both contexts. The actual values will be provided by the <code>TaskApp</code> component.</section><section class="level3"aria-labelledby="step-2-put-state-and-dispatch-into-context-step-2-put-state-and-dispatch-into-context"><h3 id="step-2-put-state-and-dispatch-into-context-step-2-put-state-and-dispatch-into-context">Step 2: Put state and dispatch into context {/<em>step-2-put-state-and-dispatch-into-context</em>/}</h3><p>Now you can import both contexts in your <code>TaskApp</code> component. Take the <code>tasks</code> and <code>dispatch</code> returned by <code>useReducer()</code> and <a href="/learn/passing-data-deeply-with-context#step-3-provide-the-context">provide them</a> to the entire tree below:<pre class="language-js"><code class="language-js"><span class="token keyword module">import</span> <span class="token imports"><span class="token punctuation">{</span> <span class="token maybe-class-name">TasksContext</span><span class="token punctuation">,</span> <span class="token maybe-class-name">TasksDispatchContext</span> <span class="token punctuation">}</span></span> <span class="token keyword module">from</span> <span class="token string">'./TasksContext.js'</span><span class="token punctuation">;</span>
+
+<span class="token keyword module">export</span> <span class="token keyword module">default</span> <span class="token keyword">function</span> <span class="token function"><span class="token maybe-class-name">TaskApp</span></span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  <span class="token keyword">const</span> <span class="token punctuation">[</span>tasks<span class="token punctuation">,</span> dispatch<span class="token punctuation">]</span> <span class="token operator">=</span> <span class="token function">useReducer</span><span class="token punctuation">(</span>tasksReducer<span class="token punctuation">,</span> initialTasks<span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token comment">// ...</span>
+  <span class="token keyword control-flow">return</span> <span class="token punctuation">(</span>
+    <span class="token operator">&#x3C;</span><span class="token maybe-class-name">TasksContext</span><span class="token punctuation">.</span><span class="token property-access"><span class="token maybe-class-name">Provider</span></span> value<span class="token operator">=</span><span class="token punctuation">{</span>tasks<span class="token punctuation">}</span><span class="token operator">></span>
+      <span class="token operator">&#x3C;</span><span class="token maybe-class-name">TasksDispatchContext</span><span class="token punctuation">.</span><span class="token property-access"><span class="token maybe-class-name">Provider</span></span> value<span class="token operator">=</span><span class="token punctuation">{</span>dispatch<span class="token punctuation">}</span><span class="token operator">></span>
+        <span class="token spread operator">...</span>
+      <span class="token operator">&#x3C;</span><span class="token operator">/</span><span class="token maybe-class-name">TasksDispatchContext</span><span class="token punctuation">.</span><span class="token property-access"><span class="token maybe-class-name">Provider</span></span><span class="token operator">></span>
+    <span class="token operator">&#x3C;</span><span class="token operator">/</span><span class="token maybe-class-name">TasksContext</span><span class="token punctuation">.</span><span class="token property-access"><span class="token maybe-class-name">Provider</span></span><span class="token operator">></span>
+  <span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span></code></pre><p>For now, you pass the information both via props and in context:</p><sandpack><pre class="language-js"><code class="language-js"><span class="token keyword module">import</span> <span class="token imports"><span class="token punctuation">{</span> useReducer <span class="token punctuation">}</span></span> <span class="token keyword module">from</span> <span class="token string">'react'</span><span class="token punctuation">;</span>
+<span class="token keyword module">import</span> <span class="token imports"><span class="token maybe-class-name">AddTask</span></span> <span class="token keyword module">from</span> <span class="token string">'./AddTask.js'</span><span class="token punctuation">;</span>
+<span class="token keyword module">import</span> <span class="token imports"><span class="token maybe-class-name">TaskList</span></span> <span class="token keyword module">from</span> <span class="token string">'./TaskList.js'</span><span class="token punctuation">;</span>
+<span class="token keyword module">import</span> <span class="token imports"><span class="token punctuation">{</span> <span class="token maybe-class-name">TasksContext</span><span class="token punctuation">,</span> <span class="token maybe-class-name">TasksDispatchContext</span> <span class="token punctuation">}</span></span> <span class="token keyword module">from</span> <span class="token string">'./TasksContext.js'</span><span class="token punctuation">;</span>
+
+<span class="token keyword module">export</span> <span class="token keyword module">default</span> <span class="token keyword">function</span> <span class="token function"><span class="token maybe-class-name">TaskApp</span></span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  <span class="token keyword">const</span> <span class="token punctuation">[</span>tasks<span class="token punctuation">,</span> dispatch<span class="token punctuation">]</span> <span class="token operator">=</span> <span class="token function">useReducer</span><span class="token punctuation">(</span>
+    tasksReducer<span class="token punctuation">,</span>
+    initialTasks
+  <span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+  <span class="token keyword">function</span> <span class="token function">handleAddTask</span><span class="token punctuation">(</span><span class="token parameter">text</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token function">dispatch</span><span class="token punctuation">(</span><span class="token punctuation">{</span>
+      <span class="token literal-property property">type</span><span class="token operator">:</span> <span class="token string">'added'</span><span class="token punctuation">,</span>
+      <span class="token literal-property property">text</span><span class="token operator">:</span> text<span class="token punctuation">,</span>
+    <span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token punctuation">}</span>
+
+  <span class="token keyword">function</span> <span class="token function">handleChangeTask</span><span class="token punctuation">(</span><span class="token parameter">task</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token function">dispatch</span><span class="token punctuation">(</span><span class="token punctuation">{</span>
+      <span class="token literal-property property">type</span><span class="token operator">:</span> <span class="token string">'changed'</span><span class="token punctuation">,</span>
+      <span class="token literal-property property">task</span><span class="token operator">:</span> task
+    <span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token punctuation">}</span>
+
+  <span class="token keyword">function</span> <span class="token function">handleDeleteTask</span><span class="token punctuation">(</span><span class="token parameter">taskId</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token function">dispatch</span><span class="token punctuation">(</span><span class="token punctuation">{</span>
+      <span class="token literal-property property">type</span><span class="token operator">:</span> <span class="token string">'deleted'</span><span class="token punctuation">,</span>
+    <span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token punctuation">}</span>
+
+  <span class="token keyword control-flow">return</span> <span class="token punctuation">(</span>
+    <span class="token operator">&#x3C;</span><span class="token maybe-class-name">TasksContext</span><span class="token punctuation">.</span><span class="token property-access"><span class="token maybe-class-name">Provider</span></span> value<span class="token operator">=</span><span class="token punctuation">{</span>tasks<span class="token punctuation">}</span><span class="token operator">></span>
+      <span class="token operator">&#x3C;</span><span class="token maybe-class-name">TasksDispatchContext</span><span class="token punctuation">.</span><span class="token property-access"><span class="token maybe-class-name">Provider</span></span> value<span class="token operator">=</span><span class="token punctuation">{</span>dispatch<span class="token punctuation">}</span><span class="token operator">></span>
+        <span class="token operator">&#x3C;</span>h1<span class="token operator">></span><span class="token maybe-class-name">Day</span> off <span class="token keyword">in</span> <span class="token maybe-class-name">Kyoto</span><span class="token operator">&#x3C;</span><span class="token operator">/</span>h1<span class="token operator">></span>
+        <span class="token operator">&#x3C;</span><span class="token maybe-class-name">AddTask</span>
+          onAddTask<span class="token operator">=</span><span class="token punctuation">{</span>handleAddTask<span class="token punctuation">}</span>
+        <span class="token operator">/</span><span class="token operator">></span>
+        <span class="token operator">&#x3C;</span><span class="token maybe-class-name">TaskList</span>
+          tasks<span class="token operator">=</span><span class="token punctuation">{</span>tasks<span class="token punctuation">}</span>
+          onChangeTask<span class="token operator">=</span><span class="token punctuation">{</span>handleChangeTask<span class="token punctuation">}</span>
+          onDeleteTask<span class="token operator">=</span><span class="token punctuation">{</span>handleDeleteTask<span class="token punctuation">}</span>
+        <span class="token operator">/</span><span class="token operator">></span>
+      <span class="token operator">&#x3C;</span><span class="token operator">/</span><span class="token maybe-class-name">TasksDispatchContext</span><span class="token punctuation">.</span><span class="token property-access"><span class="token maybe-class-name">Provider</span></span><span class="token operator">></span>
+    <span class="token operator">&#x3C;</span><span class="token operator">/</span><span class="token maybe-class-name">TasksContext</span><span class="token punctuation">.</span><span class="token property-access"><span class="token maybe-class-name">Provider</span></span><span class="token operator">></span>
+  <span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+
+<span class="token keyword">function</span> <span class="token function">tasksReducer</span><span class="token punctuation">(</span><span class="token parameter">tasks<span class="token punctuation">,</span> action</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  <span class="token keyword control-flow">switch</span> <span class="token punctuation">(</span>action<span class="token punctuation">.</span><span class="token property-access">type</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token keyword">case</span> <span class="token string">'added'</span><span class="token operator">:</span> <span class="token punctuation">{</span>
+      <span class="token keyword control-flow">return</span> <span class="token punctuation">[</span><span class="token spread operator">...</span>tasks<span class="token punctuation">,</span> <span class="token punctuation">{</span>
+        <span class="token literal-property property">text</span><span class="token operator">:</span> action<span class="token punctuation">.</span><span class="token property-access">text</span><span class="token punctuation">,</span>
+        <span class="token literal-property property">done</span><span class="token operator">:</span> <span class="token boolean">false</span>
+      <span class="token punctuation">}</span><span class="token punctuation">]</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+    <span class="token keyword">case</span> <span class="token string">'changed'</span><span class="token operator">:</span> <span class="token punctuation">{</span>
+      <span class="token keyword control-flow">return</span> tasks<span class="token punctuation">.</span><span class="token method function property-access">map</span><span class="token punctuation">(</span><span class="token parameter">t</span> <span class="token arrow operator">=></span> <span class="token punctuation">{</span>
+        <span class="token keyword control-flow">if</span> <span class="token punctuation">(</span>t<span class="token punctuation">.</span><span class="token property-access">id</span> <span class="token operator">===</span> action<span class="token punctuation">.</span><span class="token property-access">task</span><span class="token punctuation">.</span><span class="token property-access">id</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+          <span class="token keyword control-flow">return</span> action<span class="token punctuation">.</span><span class="token property-access">task</span><span class="token punctuation">;</span>
+        <span class="token punctuation">}</span> <span class="token keyword control-flow">else</span> <span class="token punctuation">{</span>
+          <span class="token keyword control-flow">return</span> t<span class="token punctuation">;</span>
+        <span class="token punctuation">}</span>
+      <span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+    <span class="token keyword">case</span> <span class="token string">'deleted'</span><span class="token operator">:</span> <span class="token punctuation">{</span>
+      <span class="token keyword control-flow">return</span> tasks<span class="token punctuation">.</span><span class="token method function property-access">filter</span><span class="token punctuation">(</span><span class="token parameter">t</span> <span class="token arrow operator">=></span> t<span class="token punctuation">.</span><span class="token property-access">id</span> <span class="token operator">!==</span> action<span class="token punctuation">.</span><span class="token property-access">id</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+    <span class="token keyword module">default</span><span class="token operator">:</span> <span class="token punctuation">{</span>
+      <span class="token keyword control-flow">throw</span> <span class="token known-class-name class-name">Error</span><span class="token punctuation">(</span><span class="token string">'Unknown action: '</span> <span class="token operator">+</span> action<span class="token punctuation">.</span><span class="token property-access">type</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+  <span class="token punctuation">}</span>
+<span class="token punctuation">}</span>
+
+<span class="token keyword">let</span> nextId <span class="token operator">=</span> <span class="token number">3</span><span class="token punctuation">;</span>
+<span class="token keyword">const</span> initialTasks <span class="token operator">=</span> <span class="token punctuation">[</span>
+<span class="token punctuation">]</span><span class="token punctuation">;</span></code></pre><pre class="language-js"><code class="language-js"><span class="token keyword module">import</span> <span class="token imports"><span class="token punctuation">{</span> createContext <span class="token punctuation">}</span></span> <span class="token keyword module">from</span> <span class="token string">'react'</span><span class="token punctuation">;</span>
+
+<span class="token keyword module">export</span> <span class="token keyword">const</span> <span class="token maybe-class-name">TasksContext</span> <span class="token operator">=</span> <span class="token function">createContext</span><span class="token punctuation">(</span><span class="token keyword null nil">null</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token keyword module">export</span> <span class="token keyword">const</span> <span class="token maybe-class-name">TasksDispatchContext</span> <span class="token operator">=</span> <span class="token function">createContext</span><span class="token punctuation">(</span><span class="token keyword null nil">null</span><span class="token punctuation">)</span><span class="token punctuation">;</span></code></pre><pre class="language-js"><code class="language-js"><span class="token keyword module">import</span> <span class="token imports"><span class="token punctuation">{</span> useState <span class="token punctuation">}</span></span> <span class="token keyword module">from</span> <span class="token string">'react'</span><span class="token punctuation">;</span>
+
+<span class="token keyword module">export</span> <span class="token keyword module">default</span> <span class="token keyword">function</span> <span class="token function"><span class="token maybe-class-name">AddTask</span></span><span class="token punctuation">(</span><span class="token parameter"><span class="token punctuation">{</span> onAddTask <span class="token punctuation">}</span></span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  <span class="token keyword">const</span> <span class="token punctuation">[</span>text<span class="token punctuation">,</span> setText<span class="token punctuation">]</span> <span class="token operator">=</span> <span class="token function">useState</span><span class="token punctuation">(</span><span class="token string">''</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token keyword control-flow">return</span> <span class="token punctuation">(</span>
+    <span class="token operator">&#x3C;</span><span class="token operator">></span>
+      <span class="token operator">&#x3C;</span>input
+        placeholder<span class="token operator">=</span><span class="token string">"Add task"</span>
+        value<span class="token operator">=</span><span class="token punctuation">{</span>text<span class="token punctuation">}</span>
+        onChange<span class="token operator">=</span><span class="token punctuation">{</span><span class="token parameter">e</span> <span class="token arrow operator">=></span> <span class="token function">setText</span><span class="token punctuation">(</span>e<span class="token punctuation">.</span><span class="token property-access">target</span><span class="token punctuation">.</span><span class="token property-access">value</span><span class="token punctuation">)</span><span class="token punctuation">}</span>
+      <span class="token operator">/</span><span class="token operator">></span>
+      <span class="token operator">&#x3C;</span>button onClick<span class="token operator">=</span><span class="token punctuation">{</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token arrow operator">=></span> <span class="token punctuation">{</span>
+        <span class="token function">setText</span><span class="token punctuation">(</span><span class="token string">''</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token function">onAddTask</span><span class="token punctuation">(</span>text<span class="token punctuation">)</span><span class="token punctuation">;</span>
+      <span class="token punctuation">}</span><span class="token punctuation">}</span><span class="token operator">></span><span class="token maybe-class-name">Add</span><span class="token operator">&#x3C;</span><span class="token operator">/</span>button<span class="token operator">></span>
+    <span class="token operator">&#x3C;</span><span class="token operator">/</span><span class="token operator">></span>
+  <span class="token punctuation">)</span>
+<span class="token punctuation">}</span></code></pre><pre class="language-js"><code class="language-js"><span class="token keyword module">import</span> <span class="token imports"><span class="token punctuation">{</span> useState <span class="token punctuation">}</span></span> <span class="token keyword module">from</span> <span class="token string">'react'</span><span class="token punctuation">;</span>
+
+<span class="token keyword module">export</span> <span class="token keyword module">default</span> <span class="token keyword">function</span> <span class="token function"><span class="token maybe-class-name">TaskList</span></span><span class="token punctuation">(</span><span class="token parameter"><span class="token punctuation">{</span>
+  tasks<span class="token punctuation">,</span>
+  onChangeTask<span class="token punctuation">,</span>
+  onDeleteTask
+<span class="token punctuation">}</span></span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  <span class="token keyword control-flow">return</span> <span class="token punctuation">(</span>
+    <span class="token operator">&#x3C;</span>ul<span class="token operator">></span>
+      <span class="token punctuation">{</span>tasks<span class="token punctuation">.</span><span class="token method function property-access">map</span><span class="token punctuation">(</span><span class="token parameter">task</span> <span class="token arrow operator">=></span> <span class="token punctuation">(</span>
+        <span class="token operator">&#x3C;</span>li key<span class="token operator">=</span><span class="token punctuation">{</span>task<span class="token punctuation">.</span><span class="token property-access">id</span><span class="token punctuation">}</span><span class="token operator">></span>
+          <span class="token operator">&#x3C;</span><span class="token maybe-class-name">Task</span>
+            task<span class="token operator">=</span><span class="token punctuation">{</span>task<span class="token punctuation">}</span>
+            onChange<span class="token operator">=</span><span class="token punctuation">{</span>onChangeTask<span class="token punctuation">}</span>
+            onDelete<span class="token operator">=</span><span class="token punctuation">{</span>onDeleteTask<span class="token punctuation">}</span>
+          <span class="token operator">/</span><span class="token operator">></span>
+        <span class="token operator">&#x3C;</span><span class="token operator">/</span>li<span class="token operator">></span>
+      <span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">}</span>
+    <span class="token operator">&#x3C;</span><span class="token operator">/</span>ul<span class="token operator">></span>
+  <span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+
+<span class="token keyword">function</span> <span class="token function"><span class="token maybe-class-name">Task</span></span><span class="token punctuation">(</span><span class="token parameter"><span class="token punctuation">{</span> task<span class="token punctuation">,</span> onChange<span class="token punctuation">,</span> onDelete <span class="token punctuation">}</span></span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  <span class="token keyword">const</span> <span class="token punctuation">[</span>isEditing<span class="token punctuation">,</span> setIsEditing<span class="token punctuation">]</span> <span class="token operator">=</span> <span class="token function">useState</span><span class="token punctuation">(</span><span class="token boolean">false</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token keyword">let</span> taskContent<span class="token punctuation">;</span>
+  <span class="token keyword control-flow">if</span> <span class="token punctuation">(</span>isEditing<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    taskContent <span class="token operator">=</span> <span class="token punctuation">(</span>
+      <span class="token operator">&#x3C;</span><span class="token operator">></span>
+        <span class="token operator">&#x3C;</span>input
+          value<span class="token operator">=</span><span class="token punctuation">{</span>task<span class="token punctuation">.</span><span class="token property-access">text</span><span class="token punctuation">}</span>
+          onChange<span class="token operator">=</span><span class="token punctuation">{</span><span class="token parameter">e</span> <span class="token arrow operator">=></span> <span class="token punctuation">{</span>
+            <span class="token function">onChange</span><span class="token punctuation">(</span><span class="token punctuation">{</span>
+              <span class="token spread operator">...</span>task<span class="token punctuation">,</span>
+              <span class="token literal-property property">text</span><span class="token operator">:</span> e<span class="token punctuation">.</span><span class="token property-access">target</span><span class="token punctuation">.</span><span class="token property-access">value</span>
+            <span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+          <span class="token punctuation">}</span><span class="token punctuation">}</span> <span class="token operator">/</span><span class="token operator">></span>
+        <span class="token operator">&#x3C;</span>button onClick<span class="token operator">=</span><span class="token punctuation">{</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token arrow operator">=></span> <span class="token function">setIsEditing</span><span class="token punctuation">(</span><span class="token boolean">false</span><span class="token punctuation">)</span><span class="token punctuation">}</span><span class="token operator">></span>
+          <span class="token maybe-class-name">Save</span>
+        <span class="token operator">&#x3C;</span><span class="token operator">/</span>button<span class="token operator">></span>
+      <span class="token operator">&#x3C;</span><span class="token operator">/</span><span class="token operator">></span>
+    <span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token punctuation">}</span> <span class="token keyword control-flow">else</span> <span class="token punctuation">{</span>
+    taskContent <span class="token operator">=</span> <span class="token punctuation">(</span>
+      <span class="token operator">&#x3C;</span><span class="token operator">></span>
+        <span class="token punctuation">{</span>task<span class="token punctuation">.</span><span class="token property-access">text</span><span class="token punctuation">}</span>
+        <span class="token operator">&#x3C;</span>button onClick<span class="token operator">=</span><span class="token punctuation">{</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token arrow operator">=></span> <span class="token function">setIsEditing</span><span class="token punctuation">(</span><span class="token boolean">true</span><span class="token punctuation">)</span><span class="token punctuation">}</span><span class="token operator">></span>
+          <span class="token maybe-class-name">Edit</span>
+        <span class="token operator">&#x3C;</span><span class="token operator">/</span>button<span class="token operator">></span>
+      <span class="token operator">&#x3C;</span><span class="token operator">/</span><span class="token operator">></span>
+    <span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token punctuation">}</span>
+  <span class="token keyword control-flow">return</span> <span class="token punctuation">(</span>
+    <span class="token operator">&#x3C;</span>label<span class="token operator">></span>
+      <span class="token operator">&#x3C;</span>input
+        type<span class="token operator">=</span><span class="token string">"checkbox"</span>
+        checked<span class="token operator">=</span><span class="token punctuation">{</span>task<span class="token punctuation">.</span><span class="token property-access">done</span><span class="token punctuation">}</span>
+        onChange<span class="token operator">=</span><span class="token punctuation">{</span><span class="token parameter">e</span> <span class="token arrow operator">=></span> <span class="token punctuation">{</span>
+          <span class="token function">onChange</span><span class="token punctuation">(</span><span class="token punctuation">{</span>
+            <span class="token spread operator">...</span>task<span class="token punctuation">,</span>
+            <span class="token literal-property property">done</span><span class="token operator">:</span> e<span class="token punctuation">.</span><span class="token property-access">target</span><span class="token punctuation">.</span><span class="token property-access">checked</span>
+          <span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token punctuation">}</span><span class="token punctuation">}</span>
+      <span class="token operator">/</span><span class="token operator">></span>
+      <span class="token punctuation">{</span>taskContent<span class="token punctuation">}</span>
+      <span class="token operator">&#x3C;</span>button onClick<span class="token operator">=</span><span class="token punctuation">{</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token arrow operator">=></span> <span class="token function">onDelete</span><span class="token punctuation">(</span>task<span class="token punctuation">.</span><span class="token property-access">id</span><span class="token punctuation">)</span><span class="token punctuation">}</span><span class="token operator">></span>
+        <span class="token maybe-class-name">Delete</span>
+      <span class="token operator">&#x3C;</span><span class="token operator">/</span>button<span class="token operator">></span>
+    <span class="token operator">&#x3C;</span><span class="token operator">/</span>label<span class="token operator">></span>
+  <span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span></code></pre><pre class="language-css"><code class="language-css"><span class="token selector">button</span> <span class="token punctuation">{</span> <span class="token property">margin</span><span class="token punctuation">:</span> <span class="token number">5</span><span class="token unit">px</span><span class="token punctuation">;</span> <span class="token punctuation">}</span>
+<span class="token selector">li</span> <span class="token punctuation">{</span> <span class="token property">list-style-type</span><span class="token punctuation">:</span> none<span class="token punctuation">;</span> <span class="token punctuation">}</span>
+<span class="token selector">ul<span class="token punctuation">,</span> li</span> <span class="token punctuation">{</span> <span class="token property">margin</span><span class="token punctuation">:</span> <span class="token number">0</span><span class="token punctuation">;</span> <span class="token property">padding</span><span class="token punctuation">:</span> <span class="token number">0</span><span class="token punctuation">;</span> <span class="token punctuation">}</span></code></pre></sandpack><p>In the next step, you will remove prop passing.</section><section class="level3"aria-labelledby="step-3-use-context-anywhere-in-the-tree-step-3-use-context-anywhere-in-the-tree"><h3 id="step-3-use-context-anywhere-in-the-tree-step-3-use-context-anywhere-in-the-tree">Step 3: Use context anywhere in the tree {/<em>step-3-use-context-anywhere-in-the-tree</em>/}</h3><p>Now you don't need to pass the list of tasks or the event handlers down the tree:<pre class="language-js"><code class="language-js"><span class="token operator">&#x3C;</span><span class="token maybe-class-name">TasksContext</span><span class="token punctuation">.</span><span class="token property-access"><span class="token maybe-class-name">Provider</span></span> value<span class="token operator">=</span><span class="token punctuation">{</span>tasks<span class="token punctuation">}</span><span class="token operator">></span>
+  <span class="token operator">&#x3C;</span><span class="token maybe-class-name">TasksDispatchContext</span><span class="token punctuation">.</span><span class="token property-access"><span class="token maybe-class-name">Provider</span></span> value<span class="token operator">=</span><span class="token punctuation">{</span>dispatch<span class="token punctuation">}</span><span class="token operator">></span>
+    <span class="token operator">&#x3C;</span>h1<span class="token operator">></span><span class="token maybe-class-name">Day</span> off <span class="token keyword">in</span> <span class="token maybe-class-name">Kyoto</span><span class="token operator">&#x3C;</span><span class="token operator">/</span>h1<span class="token operator">></span>
+    <span class="token operator">&#x3C;</span><span class="token maybe-class-name">AddTask</span> <span class="token operator">/</span><span class="token operator">></span>
+    <span class="token operator">&#x3C;</span><span class="token maybe-class-name">TaskList</span> <span class="token operator">/</span><span class="token operator">></span>
+  <span class="token operator">&#x3C;</span><span class="token operator">/</span><span class="token maybe-class-name">TasksDispatchContext</span><span class="token punctuation">.</span><span class="token property-access"><span class="token maybe-class-name">Provider</span></span><span class="token operator">></span>
+<span class="token operator">&#x3C;</span><span class="token operator">/</span><span class="token maybe-class-name">TasksContext</span><span class="token punctuation">.</span><span class="token property-access"><span class="token maybe-class-name">Provider</span></span><span class="token operator">></span></code></pre><p>Instead, any component that needs the task list can read it from the <code>TaskContext</code>:<pre class="language-js"><code class="language-js"><span class="token keyword module">export</span> <span class="token keyword module">default</span> <span class="token keyword">function</span> <span class="token function"><span class="token maybe-class-name">TaskList</span></span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  <span class="token keyword">const</span> tasks <span class="token operator">=</span> <span class="token function">useContext</span><span class="token punctuation">(</span><span class="token maybe-class-name">TasksContext</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token comment">// ...</span></code></pre><p>To update the task list, any component can read the <code>dispatch</code> function from context and call it:<pre class="language-js"><code class="language-js"><span class="token keyword module">export</span> <span class="token keyword module">default</span> <span class="token keyword">function</span> <span class="token function"><span class="token maybe-class-name">AddTask</span></span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  <span class="token keyword">const</span> <span class="token punctuation">[</span>text<span class="token punctuation">,</span> setText<span class="token punctuation">]</span> <span class="token operator">=</span> <span class="token function">useState</span><span class="token punctuation">(</span><span class="token string">''</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token keyword">const</span> dispatch <span class="token operator">=</span> <span class="token function">useContext</span><span class="token punctuation">(</span><span class="token maybe-class-name">TasksDispatchContext</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token comment">// ...</span>
+  <span class="token keyword control-flow">return</span> <span class="token punctuation">(</span>
+    <span class="token comment">// ...</span>
+    <span class="token operator">&#x3C;</span>button onClick<span class="token operator">=</span><span class="token punctuation">{</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token arrow operator">=></span> <span class="token punctuation">{</span>
+      <span class="token function">setText</span><span class="token punctuation">(</span><span class="token string">''</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+      <span class="token function">dispatch</span><span class="token punctuation">(</span><span class="token punctuation">{</span>
+        <span class="token literal-property property">type</span><span class="token operator">:</span> <span class="token string">'added'</span><span class="token punctuation">,</span>
+        <span class="token literal-property property">text</span><span class="token operator">:</span> text<span class="token punctuation">,</span>
+      <span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span><span class="token punctuation">}</span><span class="token operator">></span><span class="token maybe-class-name">Add</span><span class="token operator">&#x3C;</span><span class="token operator">/</span>button<span class="token operator">></span>
+    <span class="token comment">// ...</span></code></pre><p><strong>The <code>TaskApp</code> component does not pass any event handlers down, and the <code>TaskList</code> does not pass any event handlers to the <code>Task</code> component either.</strong> Each component reads the context that it needs:</p><sandpack><pre class="language-js"><code class="language-js"><span class="token keyword module">import</span> <span class="token imports"><span class="token punctuation">{</span> useReducer <span class="token punctuation">}</span></span> <span class="token keyword module">from</span> <span class="token string">'react'</span><span class="token punctuation">;</span>
+<span class="token keyword module">import</span> <span class="token imports"><span class="token maybe-class-name">AddTask</span></span> <span class="token keyword module">from</span> <span class="token string">'./AddTask.js'</span><span class="token punctuation">;</span>
+<span class="token keyword module">import</span> <span class="token imports"><span class="token maybe-class-name">TaskList</span></span> <span class="token keyword module">from</span> <span class="token string">'./TaskList.js'</span><span class="token punctuation">;</span>
+<span class="token keyword module">import</span> <span class="token imports"><span class="token punctuation">{</span> <span class="token maybe-class-name">TasksContext</span><span class="token punctuation">,</span> <span class="token maybe-class-name">TasksDispatchContext</span> <span class="token punctuation">}</span></span> <span class="token keyword module">from</span> <span class="token string">'./TasksContext.js'</span><span class="token punctuation">;</span>
+
+<span class="token keyword module">export</span> <span class="token keyword module">default</span> <span class="token keyword">function</span> <span class="token function"><span class="token maybe-class-name">TaskApp</span></span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  <span class="token keyword">const</span> <span class="token punctuation">[</span>tasks<span class="token punctuation">,</span> dispatch<span class="token punctuation">]</span> <span class="token operator">=</span> <span class="token function">useReducer</span><span class="token punctuation">(</span>
+    tasksReducer<span class="token punctuation">,</span>
+    initialTasks
+  <span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+  <span class="token keyword control-flow">return</span> <span class="token punctuation">(</span>
+    <span class="token operator">&#x3C;</span><span class="token maybe-class-name">TasksContext</span><span class="token punctuation">.</span><span class="token property-access"><span class="token maybe-class-name">Provider</span></span> value<span class="token operator">=</span><span class="token punctuation">{</span>tasks<span class="token punctuation">}</span><span class="token operator">></span>
+      <span class="token operator">&#x3C;</span><span class="token maybe-class-name">TasksDispatchContext</span><span class="token punctuation">.</span><span class="token property-access"><span class="token maybe-class-name">Provider</span></span> value<span class="token operator">=</span><span class="token punctuation">{</span>dispatch<span class="token punctuation">}</span><span class="token operator">></span>
+        <span class="token operator">&#x3C;</span>h1<span class="token operator">></span><span class="token maybe-class-name">Day</span> off <span class="token keyword">in</span> <span class="token maybe-class-name">Kyoto</span><span class="token operator">&#x3C;</span><span class="token operator">/</span>h1<span class="token operator">></span>
+        <span class="token operator">&#x3C;</span><span class="token maybe-class-name">AddTask</span> <span class="token operator">/</span><span class="token operator">></span>
+        <span class="token operator">&#x3C;</span><span class="token maybe-class-name">TaskList</span> <span class="token operator">/</span><span class="token operator">></span>
+      <span class="token operator">&#x3C;</span><span class="token operator">/</span><span class="token maybe-class-name">TasksDispatchContext</span><span class="token punctuation">.</span><span class="token property-access"><span class="token maybe-class-name">Provider</span></span><span class="token operator">></span>
+    <span class="token operator">&#x3C;</span><span class="token operator">/</span><span class="token maybe-class-name">TasksContext</span><span class="token punctuation">.</span><span class="token property-access"><span class="token maybe-class-name">Provider</span></span><span class="token operator">></span>
+  <span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+
+<span class="token keyword">function</span> <span class="token function">tasksReducer</span><span class="token punctuation">(</span><span class="token parameter">tasks<span class="token punctuation">,</span> action</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  <span class="token keyword control-flow">switch</span> <span class="token punctuation">(</span>action<span class="token punctuation">.</span><span class="token property-access">type</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token keyword">case</span> <span class="token string">'added'</span><span class="token operator">:</span> <span class="token punctuation">{</span>
+      <span class="token keyword control-flow">return</span> <span class="token punctuation">[</span><span class="token spread operator">...</span>tasks<span class="token punctuation">,</span> <span class="token punctuation">{</span>
+        <span class="token literal-property property">text</span><span class="token operator">:</span> action<span class="token punctuation">.</span><span class="token property-access">text</span><span class="token punctuation">,</span>
+        <span class="token literal-property property">done</span><span class="token operator">:</span> <span class="token boolean">false</span>
+      <span class="token punctuation">}</span><span class="token punctuation">]</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+    <span class="token keyword">case</span> <span class="token string">'changed'</span><span class="token operator">:</span> <span class="token punctuation">{</span>
+      <span class="token keyword control-flow">return</span> tasks<span class="token punctuation">.</span><span class="token method function property-access">map</span><span class="token punctuation">(</span><span class="token parameter">t</span> <span class="token arrow operator">=></span> <span class="token punctuation">{</span>
+        <span class="token keyword control-flow">if</span> <span class="token punctuation">(</span>t<span class="token punctuation">.</span><span class="token property-access">id</span> <span class="token operator">===</span> action<span class="token punctuation">.</span><span class="token property-access">task</span><span class="token punctuation">.</span><span class="token property-access">id</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+          <span class="token keyword control-flow">return</span> action<span class="token punctuation">.</span><span class="token property-access">task</span><span class="token punctuation">;</span>
+        <span class="token punctuation">}</span> <span class="token keyword control-flow">else</span> <span class="token punctuation">{</span>
+          <span class="token keyword control-flow">return</span> t<span class="token punctuation">;</span>
+        <span class="token punctuation">}</span>
+      <span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+    <span class="token keyword">case</span> <span class="token string">'deleted'</span><span class="token operator">:</span> <span class="token punctuation">{</span>
+      <span class="token keyword control-flow">return</span> tasks<span class="token punctuation">.</span><span class="token method function property-access">filter</span><span class="token punctuation">(</span><span class="token parameter">t</span> <span class="token arrow operator">=></span> t<span class="token punctuation">.</span><span class="token property-access">id</span> <span class="token operator">!==</span> action<span class="token punctuation">.</span><span class="token property-access">id</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+    <span class="token keyword module">default</span><span class="token operator">:</span> <span class="token punctuation">{</span>
+      <span class="token keyword control-flow">throw</span> <span class="token known-class-name class-name">Error</span><span class="token punctuation">(</span><span class="token string">'Unknown action: '</span> <span class="token operator">+</span> action<span class="token punctuation">.</span><span class="token property-access">type</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+  <span class="token punctuation">}</span>
+<span class="token punctuation">}</span>
+
+<span class="token keyword">const</span> initialTasks <span class="token operator">=</span> <span class="token punctuation">[</span>
+<span class="token punctuation">]</span><span class="token punctuation">;</span></code></pre><pre class="language-js"><code class="language-js"><span class="token keyword module">import</span> <span class="token imports"><span class="token punctuation">{</span> createContext <span class="token punctuation">}</span></span> <span class="token keyword module">from</span> <span class="token string">'react'</span><span class="token punctuation">;</span>
+
+<span class="token keyword module">export</span> <span class="token keyword">const</span> <span class="token maybe-class-name">TasksContext</span> <span class="token operator">=</span> <span class="token function">createContext</span><span class="token punctuation">(</span><span class="token keyword null nil">null</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token keyword module">export</span> <span class="token keyword">const</span> <span class="token maybe-class-name">TasksDispatchContext</span> <span class="token operator">=</span> <span class="token function">createContext</span><span class="token punctuation">(</span><span class="token keyword null nil">null</span><span class="token punctuation">)</span><span class="token punctuation">;</span></code></pre><pre class="language-js"><code class="language-js"><span class="token keyword module">import</span> <span class="token imports"><span class="token punctuation">{</span> useState<span class="token punctuation">,</span> useContext <span class="token punctuation">}</span></span> <span class="token keyword module">from</span> <span class="token string">'react'</span><span class="token punctuation">;</span>
+<span class="token keyword module">import</span> <span class="token imports"><span class="token punctuation">{</span> <span class="token maybe-class-name">TasksDispatchContext</span> <span class="token punctuation">}</span></span> <span class="token keyword module">from</span> <span class="token string">'./TasksContext.js'</span><span class="token punctuation">;</span>
+
+<span class="token keyword module">export</span> <span class="token keyword module">default</span> <span class="token keyword">function</span> <span class="token function"><span class="token maybe-class-name">AddTask</span></span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  <span class="token keyword">const</span> <span class="token punctuation">[</span>text<span class="token punctuation">,</span> setText<span class="token punctuation">]</span> <span class="token operator">=</span> <span class="token function">useState</span><span class="token punctuation">(</span><span class="token string">''</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token keyword">const</span> dispatch <span class="token operator">=</span> <span class="token function">useContext</span><span class="token punctuation">(</span><span class="token maybe-class-name">TasksDispatchContext</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token keyword control-flow">return</span> <span class="token punctuation">(</span>
+    <span class="token operator">&#x3C;</span><span class="token operator">></span>
+      <span class="token operator">&#x3C;</span>input
+        placeholder<span class="token operator">=</span><span class="token string">"Add task"</span>
+        value<span class="token operator">=</span><span class="token punctuation">{</span>text<span class="token punctuation">}</span>
+        onChange<span class="token operator">=</span><span class="token punctuation">{</span><span class="token parameter">e</span> <span class="token arrow operator">=></span> <span class="token function">setText</span><span class="token punctuation">(</span>e<span class="token punctuation">.</span><span class="token property-access">target</span><span class="token punctuation">.</span><span class="token property-access">value</span><span class="token punctuation">)</span><span class="token punctuation">}</span>
+      <span class="token operator">/</span><span class="token operator">></span>
+      <span class="token operator">&#x3C;</span>button onClick<span class="token operator">=</span><span class="token punctuation">{</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token arrow operator">=></span> <span class="token punctuation">{</span>
+        <span class="token function">setText</span><span class="token punctuation">(</span><span class="token string">''</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token function">dispatch</span><span class="token punctuation">(</span><span class="token punctuation">{</span>
+          <span class="token literal-property property">type</span><span class="token operator">:</span> <span class="token string">'added'</span><span class="token punctuation">,</span>
+          <span class="token literal-property property">text</span><span class="token operator">:</span> text<span class="token punctuation">,</span>
+        <span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">;</span> 
+      <span class="token punctuation">}</span><span class="token punctuation">}</span><span class="token operator">></span><span class="token maybe-class-name">Add</span><span class="token operator">&#x3C;</span><span class="token operator">/</span>button<span class="token operator">></span>
+    <span class="token operator">&#x3C;</span><span class="token operator">/</span><span class="token operator">></span>
+  <span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+
+<span class="token keyword">let</span> nextId <span class="token operator">=</span> <span class="token number">3</span><span class="token punctuation">;</span></code></pre><pre class="language-js"><code class="language-js"><span class="token keyword module">import</span> <span class="token imports"><span class="token punctuation">{</span> useState<span class="token punctuation">,</span> useContext <span class="token punctuation">}</span></span> <span class="token keyword module">from</span> <span class="token string">'react'</span><span class="token punctuation">;</span>
+<span class="token keyword module">import</span> <span class="token imports"><span class="token punctuation">{</span> <span class="token maybe-class-name">TasksContext</span><span class="token punctuation">,</span> <span class="token maybe-class-name">TasksDispatchContext</span> <span class="token punctuation">}</span></span> <span class="token keyword module">from</span> <span class="token string">'./TasksContext.js'</span><span class="token punctuation">;</span>
+
+<span class="token keyword module">export</span> <span class="token keyword module">default</span> <span class="token keyword">function</span> <span class="token function"><span class="token maybe-class-name">TaskList</span></span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  <span class="token keyword">const</span> tasks <span class="token operator">=</span> <span class="token function">useContext</span><span class="token punctuation">(</span><span class="token maybe-class-name">TasksContext</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token keyword control-flow">return</span> <span class="token punctuation">(</span>
+    <span class="token operator">&#x3C;</span>ul<span class="token operator">></span>
+      <span class="token punctuation">{</span>tasks<span class="token punctuation">.</span><span class="token method function property-access">map</span><span class="token punctuation">(</span><span class="token parameter">task</span> <span class="token arrow operator">=></span> <span class="token punctuation">(</span>
+        <span class="token operator">&#x3C;</span>li key<span class="token operator">=</span><span class="token punctuation">{</span>task<span class="token punctuation">.</span><span class="token property-access">id</span><span class="token punctuation">}</span><span class="token operator">></span>
+          <span class="token operator">&#x3C;</span><span class="token maybe-class-name">Task</span> task<span class="token operator">=</span><span class="token punctuation">{</span>task<span class="token punctuation">}</span> <span class="token operator">/</span><span class="token operator">></span>
+        <span class="token operator">&#x3C;</span><span class="token operator">/</span>li<span class="token operator">></span>
+      <span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">}</span>
+    <span class="token operator">&#x3C;</span><span class="token operator">/</span>ul<span class="token operator">></span>
+  <span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+
+<span class="token keyword">function</span> <span class="token function"><span class="token maybe-class-name">Task</span></span><span class="token punctuation">(</span><span class="token parameter"><span class="token punctuation">{</span> task <span class="token punctuation">}</span></span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  <span class="token keyword">const</span> <span class="token punctuation">[</span>isEditing<span class="token punctuation">,</span> setIsEditing<span class="token punctuation">]</span> <span class="token operator">=</span> <span class="token function">useState</span><span class="token punctuation">(</span><span class="token boolean">false</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token keyword">const</span> dispatch <span class="token operator">=</span> <span class="token function">useContext</span><span class="token punctuation">(</span><span class="token maybe-class-name">TasksDispatchContext</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token keyword">let</span> taskContent<span class="token punctuation">;</span>
+  <span class="token keyword control-flow">if</span> <span class="token punctuation">(</span>isEditing<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    taskContent <span class="token operator">=</span> <span class="token punctuation">(</span>
+      <span class="token operator">&#x3C;</span><span class="token operator">></span>
+        <span class="token operator">&#x3C;</span>input
+          value<span class="token operator">=</span><span class="token punctuation">{</span>task<span class="token punctuation">.</span><span class="token property-access">text</span><span class="token punctuation">}</span>
+          onChange<span class="token operator">=</span><span class="token punctuation">{</span><span class="token parameter">e</span> <span class="token arrow operator">=></span> <span class="token punctuation">{</span>
+            <span class="token function">dispatch</span><span class="token punctuation">(</span><span class="token punctuation">{</span>
+              <span class="token literal-property property">type</span><span class="token operator">:</span> <span class="token string">'changed'</span><span class="token punctuation">,</span>
+              <span class="token literal-property property">task</span><span class="token operator">:</span> <span class="token punctuation">{</span>
+                <span class="token spread operator">...</span>task<span class="token punctuation">,</span>
+                <span class="token literal-property property">text</span><span class="token operator">:</span> e<span class="token punctuation">.</span><span class="token property-access">target</span><span class="token punctuation">.</span><span class="token property-access">value</span>
+              <span class="token punctuation">}</span>
+            <span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+          <span class="token punctuation">}</span><span class="token punctuation">}</span> <span class="token operator">/</span><span class="token operator">></span>
+        <span class="token operator">&#x3C;</span>button onClick<span class="token operator">=</span><span class="token punctuation">{</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token arrow operator">=></span> <span class="token function">setIsEditing</span><span class="token punctuation">(</span><span class="token boolean">false</span><span class="token punctuation">)</span><span class="token punctuation">}</span><span class="token operator">></span>
+          <span class="token maybe-class-name">Save</span>
+        <span class="token operator">&#x3C;</span><span class="token operator">/</span>button<span class="token operator">></span>
+      <span class="token operator">&#x3C;</span><span class="token operator">/</span><span class="token operator">></span>
+    <span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token punctuation">}</span> <span class="token keyword control-flow">else</span> <span class="token punctuation">{</span>
+    taskContent <span class="token operator">=</span> <span class="token punctuation">(</span>
+      <span class="token operator">&#x3C;</span><span class="token operator">></span>
+        <span class="token punctuation">{</span>task<span class="token punctuation">.</span><span class="token property-access">text</span><span class="token punctuation">}</span>
+        <span class="token operator">&#x3C;</span>button onClick<span class="token operator">=</span><span class="token punctuation">{</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token arrow operator">=></span> <span class="token function">setIsEditing</span><span class="token punctuation">(</span><span class="token boolean">true</span><span class="token punctuation">)</span><span class="token punctuation">}</span><span class="token operator">></span>
+          <span class="token maybe-class-name">Edit</span>
+        <span class="token operator">&#x3C;</span><span class="token operator">/</span>button<span class="token operator">></span>
+      <span class="token operator">&#x3C;</span><span class="token operator">/</span><span class="token operator">></span>
+    <span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token punctuation">}</span>
+  <span class="token keyword control-flow">return</span> <span class="token punctuation">(</span>
+    <span class="token operator">&#x3C;</span>label<span class="token operator">></span>
+      <span class="token operator">&#x3C;</span>input
+        type<span class="token operator">=</span><span class="token string">"checkbox"</span>
+        checked<span class="token operator">=</span><span class="token punctuation">{</span>task<span class="token punctuation">.</span><span class="token property-access">done</span><span class="token punctuation">}</span>
+        onChange<span class="token operator">=</span><span class="token punctuation">{</span><span class="token parameter">e</span> <span class="token arrow operator">=></span> <span class="token punctuation">{</span>
+          <span class="token function">dispatch</span><span class="token punctuation">(</span><span class="token punctuation">{</span>
+            <span class="token literal-property property">type</span><span class="token operator">:</span> <span class="token string">'changed'</span><span class="token punctuation">,</span>
+            <span class="token literal-property property">task</span><span class="token operator">:</span> <span class="token punctuation">{</span>
+              <span class="token spread operator">...</span>task<span class="token punctuation">,</span>
+              <span class="token literal-property property">done</span><span class="token operator">:</span> e<span class="token punctuation">.</span><span class="token property-access">target</span><span class="token punctuation">.</span><span class="token property-access">checked</span>
+            <span class="token punctuation">}</span>
+          <span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token punctuation">}</span><span class="token punctuation">}</span>
+      <span class="token operator">/</span><span class="token operator">></span>
+      <span class="token punctuation">{</span>taskContent<span class="token punctuation">}</span>
+      <span class="token operator">&#x3C;</span>button onClick<span class="token operator">=</span><span class="token punctuation">{</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token arrow operator">=></span> <span class="token punctuation">{</span>
+        <span class="token function">dispatch</span><span class="token punctuation">(</span><span class="token punctuation">{</span>
+          <span class="token literal-property property">type</span><span class="token operator">:</span> <span class="token string">'deleted'</span><span class="token punctuation">,</span>
+        <span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+      <span class="token punctuation">}</span><span class="token punctuation">}</span><span class="token operator">></span>
+        <span class="token maybe-class-name">Delete</span>
+      <span class="token operator">&#x3C;</span><span class="token operator">/</span>button<span class="token operator">></span>
+    <span class="token operator">&#x3C;</span><span class="token operator">/</span>label<span class="token operator">></span>
+  <span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span></code></pre><pre class="language-css"><code class="language-css"><span class="token selector">button</span> <span class="token punctuation">{</span> <span class="token property">margin</span><span class="token punctuation">:</span> <span class="token number">5</span><span class="token unit">px</span><span class="token punctuation">;</span> <span class="token punctuation">}</span>
+<span class="token selector">li</span> <span class="token punctuation">{</span> <span class="token property">list-style-type</span><span class="token punctuation">:</span> none<span class="token punctuation">;</span> <span class="token punctuation">}</span>
+<span class="token selector">ul<span class="token punctuation">,</span> li</span> <span class="token punctuation">{</span> <span class="token property">margin</span><span class="token punctuation">:</span> <span class="token number">0</span><span class="token punctuation">;</span> <span class="token property">padding</span><span class="token punctuation">:</span> <span class="token number">0</span><span class="token punctuation">;</span> <span class="token punctuation">}</span></code></pre></sandpack><p><strong>The state still "lives" in the top-level <code>TaskApp</code> component, managed with <code>useReducer</code>.</strong> But its <code>tasks</code> and <code>dispatch</code> are now available to every component below in the tree by importing and using these contexts.</section></section><section class="level2"aria-labelledby="moving-all-wiring-into-a-single-file-moving-all-wiring-into-a-single-file"><h2 id="moving-all-wiring-into-a-single-file-moving-all-wiring-into-a-single-file">Moving all wiring into a single file {/<em>moving-all-wiring-into-a-single-file</em>/}</h2><p>You don't have to do this, but you could further declutter the components by moving both reducer and context into a single file. Currently, <code>TasksContext.js</code> contains only two context declarations:<pre class="language-js"><code class="language-js"><span class="token keyword module">import</span> <span class="token imports"><span class="token punctuation">{</span> createContext <span class="token punctuation">}</span></span> <span class="token keyword module">from</span> <span class="token string">'react'</span><span class="token punctuation">;</span>
+
+<span class="token keyword module">export</span> <span class="token keyword">const</span> <span class="token maybe-class-name">TasksContext</span> <span class="token operator">=</span> <span class="token function">createContext</span><span class="token punctuation">(</span><span class="token keyword null nil">null</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token keyword module">export</span> <span class="token keyword">const</span> <span class="token maybe-class-name">TasksDispatchContext</span> <span class="token operator">=</span> <span class="token function">createContext</span><span class="token punctuation">(</span><span class="token keyword null nil">null</span><span class="token punctuation">)</span><span class="token punctuation">;</span></code></pre><p>This file is about to get crowded! You'll move the reducer into that same file. Then you'll declare a new <code>TasksProvider</code> component in the same file. This component will tie all the pieces together:<ol><li>It will manage the state with a reducer.<li>It will provide both contexts to components below.<li>It will <a href="/learn/passing-props-to-a-component#passing-jsx-as-children">take <code>children</code> as a prop</a> so you can pass JSX to it.</ol><pre class="language-js"><code class="language-js"><span class="token keyword module">export</span> <span class="token keyword">function</span> <span class="token function"><span class="token maybe-class-name">TasksProvider</span></span><span class="token punctuation">(</span><span class="token parameter"><span class="token punctuation">{</span> children <span class="token punctuation">}</span></span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  <span class="token keyword">const</span> <span class="token punctuation">[</span>tasks<span class="token punctuation">,</span> dispatch<span class="token punctuation">]</span> <span class="token operator">=</span> <span class="token function">useReducer</span><span class="token punctuation">(</span>tasksReducer<span class="token punctuation">,</span> initialTasks<span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+  <span class="token keyword control-flow">return</span> <span class="token punctuation">(</span>
+    <span class="token operator">&#x3C;</span><span class="token maybe-class-name">TasksContext</span><span class="token punctuation">.</span><span class="token property-access"><span class="token maybe-class-name">Provider</span></span> value<span class="token operator">=</span><span class="token punctuation">{</span>tasks<span class="token punctuation">}</span><span class="token operator">></span>
+      <span class="token operator">&#x3C;</span><span class="token maybe-class-name">TasksDispatchContext</span><span class="token punctuation">.</span><span class="token property-access"><span class="token maybe-class-name">Provider</span></span> value<span class="token operator">=</span><span class="token punctuation">{</span>dispatch<span class="token punctuation">}</span><span class="token operator">></span>
+        <span class="token punctuation">{</span>children<span class="token punctuation">}</span>
+      <span class="token operator">&#x3C;</span><span class="token operator">/</span><span class="token maybe-class-name">TasksDispatchContext</span><span class="token punctuation">.</span><span class="token property-access"><span class="token maybe-class-name">Provider</span></span><span class="token operator">></span>
+    <span class="token operator">&#x3C;</span><span class="token operator">/</span><span class="token maybe-class-name">TasksContext</span><span class="token punctuation">.</span><span class="token property-access"><span class="token maybe-class-name">Provider</span></span><span class="token operator">></span>
+  <span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span></code></pre><p><strong>This removes all the complexity and wiring from your <code>TaskApp</code> component:</strong></p><sandpack><pre class="language-js"><code class="language-js"><span class="token keyword module">import</span> <span class="token imports"><span class="token maybe-class-name">AddTask</span></span> <span class="token keyword module">from</span> <span class="token string">'./AddTask.js'</span><span class="token punctuation">;</span>
+<span class="token keyword module">import</span> <span class="token imports"><span class="token maybe-class-name">TaskList</span></span> <span class="token keyword module">from</span> <span class="token string">'./TaskList.js'</span><span class="token punctuation">;</span>
+<span class="token keyword module">import</span> <span class="token imports"><span class="token punctuation">{</span> <span class="token maybe-class-name">TasksProvider</span> <span class="token punctuation">}</span></span> <span class="token keyword module">from</span> <span class="token string">'./TasksContext.js'</span><span class="token punctuation">;</span>
+
+<span class="token keyword module">export</span> <span class="token keyword module">default</span> <span class="token keyword">function</span> <span class="token function"><span class="token maybe-class-name">TaskApp</span></span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  <span class="token keyword control-flow">return</span> <span class="token punctuation">(</span>
+    <span class="token operator">&#x3C;</span><span class="token maybe-class-name">TasksProvider</span><span class="token operator">></span>
+      <span class="token operator">&#x3C;</span>h1<span class="token operator">></span><span class="token maybe-class-name">Day</span> off <span class="token keyword">in</span> <span class="token maybe-class-name">Kyoto</span><span class="token operator">&#x3C;</span><span class="token operator">/</span>h1<span class="token operator">></span>
+      <span class="token operator">&#x3C;</span><span class="token maybe-class-name">AddTask</span> <span class="token operator">/</span><span class="token operator">></span>
+      <span class="token operator">&#x3C;</span><span class="token maybe-class-name">TaskList</span> <span class="token operator">/</span><span class="token operator">></span>
+    <span class="token operator">&#x3C;</span><span class="token operator">/</span><span class="token maybe-class-name">TasksProvider</span><span class="token operator">></span>
+  <span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span></code></pre><pre class="language-js"><code class="language-js"><span class="token keyword module">import</span> <span class="token imports"><span class="token punctuation">{</span> createContext<span class="token punctuation">,</span> useReducer <span class="token punctuation">}</span></span> <span class="token keyword module">from</span> <span class="token string">'react'</span><span class="token punctuation">;</span>
+
+<span class="token keyword module">export</span> <span class="token keyword">const</span> <span class="token maybe-class-name">TasksContext</span> <span class="token operator">=</span> <span class="token function">createContext</span><span class="token punctuation">(</span><span class="token keyword null nil">null</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token keyword module">export</span> <span class="token keyword">const</span> <span class="token maybe-class-name">TasksDispatchContext</span> <span class="token operator">=</span> <span class="token function">createContext</span><span class="token punctuation">(</span><span class="token keyword null nil">null</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+<span class="token keyword module">export</span> <span class="token keyword">function</span> <span class="token function"><span class="token maybe-class-name">TasksProvider</span></span><span class="token punctuation">(</span><span class="token parameter"><span class="token punctuation">{</span> children <span class="token punctuation">}</span></span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  <span class="token keyword">const</span> <span class="token punctuation">[</span>tasks<span class="token punctuation">,</span> dispatch<span class="token punctuation">]</span> <span class="token operator">=</span> <span class="token function">useReducer</span><span class="token punctuation">(</span>
+    tasksReducer<span class="token punctuation">,</span>
+    initialTasks
+  <span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+  <span class="token keyword control-flow">return</span> <span class="token punctuation">(</span>
+    <span class="token operator">&#x3C;</span><span class="token maybe-class-name">TasksContext</span><span class="token punctuation">.</span><span class="token property-access"><span class="token maybe-class-name">Provider</span></span> value<span class="token operator">=</span><span class="token punctuation">{</span>tasks<span class="token punctuation">}</span><span class="token operator">></span>
+      <span class="token operator">&#x3C;</span><span class="token maybe-class-name">TasksDispatchContext</span><span class="token punctuation">.</span><span class="token property-access"><span class="token maybe-class-name">Provider</span></span> value<span class="token operator">=</span><span class="token punctuation">{</span>dispatch<span class="token punctuation">}</span><span class="token operator">></span>
+        <span class="token punctuation">{</span>children<span class="token punctuation">}</span>
+      <span class="token operator">&#x3C;</span><span class="token operator">/</span><span class="token maybe-class-name">TasksDispatchContext</span><span class="token punctuation">.</span><span class="token property-access"><span class="token maybe-class-name">Provider</span></span><span class="token operator">></span>
+    <span class="token operator">&#x3C;</span><span class="token operator">/</span><span class="token maybe-class-name">TasksContext</span><span class="token punctuation">.</span><span class="token property-access"><span class="token maybe-class-name">Provider</span></span><span class="token operator">></span>
+  <span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+
+<span class="token keyword">function</span> <span class="token function">tasksReducer</span><span class="token punctuation">(</span><span class="token parameter">tasks<span class="token punctuation">,</span> action</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  <span class="token keyword control-flow">switch</span> <span class="token punctuation">(</span>action<span class="token punctuation">.</span><span class="token property-access">type</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token keyword">case</span> <span class="token string">'added'</span><span class="token operator">:</span> <span class="token punctuation">{</span>
+      <span class="token keyword control-flow">return</span> <span class="token punctuation">[</span><span class="token spread operator">...</span>tasks<span class="token punctuation">,</span> <span class="token punctuation">{</span>
+        <span class="token literal-property property">text</span><span class="token operator">:</span> action<span class="token punctuation">.</span><span class="token property-access">text</span><span class="token punctuation">,</span>
+        <span class="token literal-property property">done</span><span class="token operator">:</span> <span class="token boolean">false</span>
+      <span class="token punctuation">}</span><span class="token punctuation">]</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+    <span class="token keyword">case</span> <span class="token string">'changed'</span><span class="token operator">:</span> <span class="token punctuation">{</span>
+      <span class="token keyword control-flow">return</span> tasks<span class="token punctuation">.</span><span class="token method function property-access">map</span><span class="token punctuation">(</span><span class="token parameter">t</span> <span class="token arrow operator">=></span> <span class="token punctuation">{</span>
+        <span class="token keyword control-flow">if</span> <span class="token punctuation">(</span>t<span class="token punctuation">.</span><span class="token property-access">id</span> <span class="token operator">===</span> action<span class="token punctuation">.</span><span class="token property-access">task</span><span class="token punctuation">.</span><span class="token property-access">id</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+          <span class="token keyword control-flow">return</span> action<span class="token punctuation">.</span><span class="token property-access">task</span><span class="token punctuation">;</span>
+        <span class="token punctuation">}</span> <span class="token keyword control-flow">else</span> <span class="token punctuation">{</span>
+          <span class="token keyword control-flow">return</span> t<span class="token punctuation">;</span>
+        <span class="token punctuation">}</span>
+      <span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+    <span class="token keyword">case</span> <span class="token string">'deleted'</span><span class="token operator">:</span> <span class="token punctuation">{</span>
+      <span class="token keyword control-flow">return</span> tasks<span class="token punctuation">.</span><span class="token method function property-access">filter</span><span class="token punctuation">(</span><span class="token parameter">t</span> <span class="token arrow operator">=></span> t<span class="token punctuation">.</span><span class="token property-access">id</span> <span class="token operator">!==</span> action<span class="token punctuation">.</span><span class="token property-access">id</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+    <span class="token keyword module">default</span><span class="token operator">:</span> <span class="token punctuation">{</span>
+      <span class="token keyword control-flow">throw</span> <span class="token known-class-name class-name">Error</span><span class="token punctuation">(</span><span class="token string">'Unknown action: '</span> <span class="token operator">+</span> action<span class="token punctuation">.</span><span class="token property-access">type</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+  <span class="token punctuation">}</span>
+<span class="token punctuation">}</span>
+
+<span class="token keyword">const</span> initialTasks <span class="token operator">=</span> <span class="token punctuation">[</span>
+<span class="token punctuation">]</span><span class="token punctuation">;</span></code></pre><pre class="language-js"><code class="language-js"><span class="token keyword module">import</span> <span class="token imports"><span class="token punctuation">{</span> useState<span class="token punctuation">,</span> useContext <span class="token punctuation">}</span></span> <span class="token keyword module">from</span> <span class="token string">'react'</span><span class="token punctuation">;</span>
+<span class="token keyword module">import</span> <span class="token imports"><span class="token punctuation">{</span> <span class="token maybe-class-name">TasksDispatchContext</span> <span class="token punctuation">}</span></span> <span class="token keyword module">from</span> <span class="token string">'./TasksContext.js'</span><span class="token punctuation">;</span>
+
+<span class="token keyword module">export</span> <span class="token keyword module">default</span> <span class="token keyword">function</span> <span class="token function"><span class="token maybe-class-name">AddTask</span></span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  <span class="token keyword">const</span> <span class="token punctuation">[</span>text<span class="token punctuation">,</span> setText<span class="token punctuation">]</span> <span class="token operator">=</span> <span class="token function">useState</span><span class="token punctuation">(</span><span class="token string">''</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token keyword">const</span> dispatch <span class="token operator">=</span> <span class="token function">useContext</span><span class="token punctuation">(</span><span class="token maybe-class-name">TasksDispatchContext</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token keyword control-flow">return</span> <span class="token punctuation">(</span>
+    <span class="token operator">&#x3C;</span><span class="token operator">></span>
+      <span class="token operator">&#x3C;</span>input
+        placeholder<span class="token operator">=</span><span class="token string">"Add task"</span>
+        value<span class="token operator">=</span><span class="token punctuation">{</span>text<span class="token punctuation">}</span>
+        onChange<span class="token operator">=</span><span class="token punctuation">{</span><span class="token parameter">e</span> <span class="token arrow operator">=></span> <span class="token function">setText</span><span class="token punctuation">(</span>e<span class="token punctuation">.</span><span class="token property-access">target</span><span class="token punctuation">.</span><span class="token property-access">value</span><span class="token punctuation">)</span><span class="token punctuation">}</span>
+      <span class="token operator">/</span><span class="token operator">></span>
+      <span class="token operator">&#x3C;</span>button onClick<span class="token operator">=</span><span class="token punctuation">{</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token arrow operator">=></span> <span class="token punctuation">{</span>
+        <span class="token function">setText</span><span class="token punctuation">(</span><span class="token string">''</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token function">dispatch</span><span class="token punctuation">(</span><span class="token punctuation">{</span>
+          <span class="token literal-property property">type</span><span class="token operator">:</span> <span class="token string">'added'</span><span class="token punctuation">,</span>
+          <span class="token literal-property property">text</span><span class="token operator">:</span> text<span class="token punctuation">,</span>
+        <span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">;</span> 
+      <span class="token punctuation">}</span><span class="token punctuation">}</span><span class="token operator">></span><span class="token maybe-class-name">Add</span><span class="token operator">&#x3C;</span><span class="token operator">/</span>button<span class="token operator">></span>
+    <span class="token operator">&#x3C;</span><span class="token operator">/</span><span class="token operator">></span>
+  <span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+
+<span class="token keyword">let</span> nextId <span class="token operator">=</span> <span class="token number">3</span><span class="token punctuation">;</span></code></pre><pre class="language-js"><code class="language-js"><span class="token keyword module">import</span> <span class="token imports"><span class="token punctuation">{</span> useState<span class="token punctuation">,</span> useContext <span class="token punctuation">}</span></span> <span class="token keyword module">from</span> <span class="token string">'react'</span><span class="token punctuation">;</span>
+<span class="token keyword module">import</span> <span class="token imports"><span class="token punctuation">{</span> <span class="token maybe-class-name">TasksContext</span><span class="token punctuation">,</span> <span class="token maybe-class-name">TasksDispatchContext</span> <span class="token punctuation">}</span></span> <span class="token keyword module">from</span> <span class="token string">'./TasksContext.js'</span><span class="token punctuation">;</span>
+
+<span class="token keyword module">export</span> <span class="token keyword module">default</span> <span class="token keyword">function</span> <span class="token function"><span class="token maybe-class-name">TaskList</span></span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  <span class="token keyword">const</span> tasks <span class="token operator">=</span> <span class="token function">useContext</span><span class="token punctuation">(</span><span class="token maybe-class-name">TasksContext</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token keyword control-flow">return</span> <span class="token punctuation">(</span>
+    <span class="token operator">&#x3C;</span>ul<span class="token operator">></span>
+      <span class="token punctuation">{</span>tasks<span class="token punctuation">.</span><span class="token method function property-access">map</span><span class="token punctuation">(</span><span class="token parameter">task</span> <span class="token arrow operator">=></span> <span class="token punctuation">(</span>
+        <span class="token operator">&#x3C;</span>li key<span class="token operator">=</span><span class="token punctuation">{</span>task<span class="token punctuation">.</span><span class="token property-access">id</span><span class="token punctuation">}</span><span class="token operator">></span>
+          <span class="token operator">&#x3C;</span><span class="token maybe-class-name">Task</span> task<span class="token operator">=</span><span class="token punctuation">{</span>task<span class="token punctuation">}</span> <span class="token operator">/</span><span class="token operator">></span>
+        <span class="token operator">&#x3C;</span><span class="token operator">/</span>li<span class="token operator">></span>
+      <span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">}</span>
+    <span class="token operator">&#x3C;</span><span class="token operator">/</span>ul<span class="token operator">></span>
+  <span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+
+<span class="token keyword">function</span> <span class="token function"><span class="token maybe-class-name">Task</span></span><span class="token punctuation">(</span><span class="token parameter"><span class="token punctuation">{</span> task <span class="token punctuation">}</span></span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  <span class="token keyword">const</span> <span class="token punctuation">[</span>isEditing<span class="token punctuation">,</span> setIsEditing<span class="token punctuation">]</span> <span class="token operator">=</span> <span class="token function">useState</span><span class="token punctuation">(</span><span class="token boolean">false</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token keyword">const</span> dispatch <span class="token operator">=</span> <span class="token function">useContext</span><span class="token punctuation">(</span><span class="token maybe-class-name">TasksDispatchContext</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token keyword">let</span> taskContent<span class="token punctuation">;</span>
+  <span class="token keyword control-flow">if</span> <span class="token punctuation">(</span>isEditing<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    taskContent <span class="token operator">=</span> <span class="token punctuation">(</span>
+      <span class="token operator">&#x3C;</span><span class="token operator">></span>
+        <span class="token operator">&#x3C;</span>input
+          value<span class="token operator">=</span><span class="token punctuation">{</span>task<span class="token punctuation">.</span><span class="token property-access">text</span><span class="token punctuation">}</span>
+          onChange<span class="token operator">=</span><span class="token punctuation">{</span><span class="token parameter">e</span> <span class="token arrow operator">=></span> <span class="token punctuation">{</span>
+            <span class="token function">dispatch</span><span class="token punctuation">(</span><span class="token punctuation">{</span>
+              <span class="token literal-property property">type</span><span class="token operator">:</span> <span class="token string">'changed'</span><span class="token punctuation">,</span>
+              <span class="token literal-property property">task</span><span class="token operator">:</span> <span class="token punctuation">{</span>
+                <span class="token spread operator">...</span>task<span class="token punctuation">,</span>
+                <span class="token literal-property property">text</span><span class="token operator">:</span> e<span class="token punctuation">.</span><span class="token property-access">target</span><span class="token punctuation">.</span><span class="token property-access">value</span>
+              <span class="token punctuation">}</span>
+            <span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+          <span class="token punctuation">}</span><span class="token punctuation">}</span> <span class="token operator">/</span><span class="token operator">></span>
+        <span class="token operator">&#x3C;</span>button onClick<span class="token operator">=</span><span class="token punctuation">{</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token arrow operator">=></span> <span class="token function">setIsEditing</span><span class="token punctuation">(</span><span class="token boolean">false</span><span class="token punctuation">)</span><span class="token punctuation">}</span><span class="token operator">></span>
+          <span class="token maybe-class-name">Save</span>
+        <span class="token operator">&#x3C;</span><span class="token operator">/</span>button<span class="token operator">></span>
+      <span class="token operator">&#x3C;</span><span class="token operator">/</span><span class="token operator">></span>
+    <span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token punctuation">}</span> <span class="token keyword control-flow">else</span> <span class="token punctuation">{</span>
+    taskContent <span class="token operator">=</span> <span class="token punctuation">(</span>
+      <span class="token operator">&#x3C;</span><span class="token operator">></span>
+        <span class="token punctuation">{</span>task<span class="token punctuation">.</span><span class="token property-access">text</span><span class="token punctuation">}</span>
+        <span class="token operator">&#x3C;</span>button onClick<span class="token operator">=</span><span class="token punctuation">{</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token arrow operator">=></span> <span class="token function">setIsEditing</span><span class="token punctuation">(</span><span class="token boolean">true</span><span class="token punctuation">)</span><span class="token punctuation">}</span><span class="token operator">></span>
+          <span class="token maybe-class-name">Edit</span>
+        <span class="token operator">&#x3C;</span><span class="token operator">/</span>button<span class="token operator">></span>
+      <span class="token operator">&#x3C;</span><span class="token operator">/</span><span class="token operator">></span>
+    <span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token punctuation">}</span>
+  <span class="token keyword control-flow">return</span> <span class="token punctuation">(</span>
+    <span class="token operator">&#x3C;</span>label<span class="token operator">></span>
+      <span class="token operator">&#x3C;</span>input
+        type<span class="token operator">=</span><span class="token string">"checkbox"</span>
+        checked<span class="token operator">=</span><span class="token punctuation">{</span>task<span class="token punctuation">.</span><span class="token property-access">done</span><span class="token punctuation">}</span>
+        onChange<span class="token operator">=</span><span class="token punctuation">{</span><span class="token parameter">e</span> <span class="token arrow operator">=></span> <span class="token punctuation">{</span>
+          <span class="token function">dispatch</span><span class="token punctuation">(</span><span class="token punctuation">{</span>
+            <span class="token literal-property property">type</span><span class="token operator">:</span> <span class="token string">'changed'</span><span class="token punctuation">,</span>
+            <span class="token literal-property property">task</span><span class="token operator">:</span> <span class="token punctuation">{</span>
+              <span class="token spread operator">...</span>task<span class="token punctuation">,</span>
+              <span class="token literal-property property">done</span><span class="token operator">:</span> e<span class="token punctuation">.</span><span class="token property-access">target</span><span class="token punctuation">.</span><span class="token property-access">checked</span>
+            <span class="token punctuation">}</span>
+          <span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token punctuation">}</span><span class="token punctuation">}</span>
+      <span class="token operator">/</span><span class="token operator">></span>
+      <span class="token punctuation">{</span>taskContent<span class="token punctuation">}</span>
+      <span class="token operator">&#x3C;</span>button onClick<span class="token operator">=</span><span class="token punctuation">{</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token arrow operator">=></span> <span class="token punctuation">{</span>
+        <span class="token function">dispatch</span><span class="token punctuation">(</span><span class="token punctuation">{</span>
+          <span class="token literal-property property">type</span><span class="token operator">:</span> <span class="token string">'deleted'</span><span class="token punctuation">,</span>
+        <span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+      <span class="token punctuation">}</span><span class="token punctuation">}</span><span class="token operator">></span>
+        <span class="token maybe-class-name">Delete</span>
+      <span class="token operator">&#x3C;</span><span class="token operator">/</span>button<span class="token operator">></span>
+    <span class="token operator">&#x3C;</span><span class="token operator">/</span>label<span class="token operator">></span>
+  <span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span></code></pre><pre class="language-css"><code class="language-css"><span class="token selector">button</span> <span class="token punctuation">{</span> <span class="token property">margin</span><span class="token punctuation">:</span> <span class="token number">5</span><span class="token unit">px</span><span class="token punctuation">;</span> <span class="token punctuation">}</span>
+<span class="token selector">li</span> <span class="token punctuation">{</span> <span class="token property">list-style-type</span><span class="token punctuation">:</span> none<span class="token punctuation">;</span> <span class="token punctuation">}</span>
+<span class="token selector">ul<span class="token punctuation">,</span> li</span> <span class="token punctuation">{</span> <span class="token property">margin</span><span class="token punctuation">:</span> <span class="token number">0</span><span class="token punctuation">;</span> <span class="token property">padding</span><span class="token punctuation">:</span> <span class="token number">0</span><span class="token punctuation">;</span> <span class="token punctuation">}</span></code></pre></sandpack><p>You can also export functions that <em>use</em> the context from <code>TasksContext.js</code>:<pre class="language-js"><code class="language-js"><span class="token keyword module">export</span> <span class="token keyword">function</span> <span class="token function">useTasks</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  <span class="token keyword control-flow">return</span> <span class="token function">useContext</span><span class="token punctuation">(</span><span class="token maybe-class-name">TasksContext</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+
+<span class="token keyword module">export</span> <span class="token keyword">function</span> <span class="token function">useTasksDispatch</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  <span class="token keyword control-flow">return</span> <span class="token function">useContext</span><span class="token punctuation">(</span><span class="token maybe-class-name">TasksDispatchContext</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span></code></pre><p>When a component needs to read context, it can do it through these functions:<pre class="language-js"><code class="language-js"><span class="token keyword">const</span> tasks <span class="token operator">=</span> <span class="token function">useTasks</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token keyword">const</span> dispatch <span class="token operator">=</span> <span class="token function">useTasksDispatch</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span></code></pre><p>This doesn't change the behavior in any way, but it lets you later split these contexts further or add some logic to these functions. <strong>Now all of the context and reducer wiring is in <code>TasksContext.js</code>. This keeps the components clean and uncluttered, focused on what they display rather than where they get the data:</strong></p><sandpack><pre class="language-js"><code class="language-js"><span class="token keyword module">import</span> <span class="token imports"><span class="token maybe-class-name">AddTask</span></span> <span class="token keyword module">from</span> <span class="token string">'./AddTask.js'</span><span class="token punctuation">;</span>
+<span class="token keyword module">import</span> <span class="token imports"><span class="token maybe-class-name">TaskList</span></span> <span class="token keyword module">from</span> <span class="token string">'./TaskList.js'</span><span class="token punctuation">;</span>
+<span class="token keyword module">import</span> <span class="token imports"><span class="token punctuation">{</span> <span class="token maybe-class-name">TasksProvider</span> <span class="token punctuation">}</span></span> <span class="token keyword module">from</span> <span class="token string">'./TasksContext.js'</span><span class="token punctuation">;</span>
+
+<span class="token keyword module">export</span> <span class="token keyword module">default</span> <span class="token keyword">function</span> <span class="token function"><span class="token maybe-class-name">TaskApp</span></span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  <span class="token keyword control-flow">return</span> <span class="token punctuation">(</span>
+    <span class="token operator">&#x3C;</span><span class="token maybe-class-name">TasksProvider</span><span class="token operator">></span>
+      <span class="token operator">&#x3C;</span>h1<span class="token operator">></span><span class="token maybe-class-name">Day</span> off <span class="token keyword">in</span> <span class="token maybe-class-name">Kyoto</span><span class="token operator">&#x3C;</span><span class="token operator">/</span>h1<span class="token operator">></span>
+      <span class="token operator">&#x3C;</span><span class="token maybe-class-name">AddTask</span> <span class="token operator">/</span><span class="token operator">></span>
+      <span class="token operator">&#x3C;</span><span class="token maybe-class-name">TaskList</span> <span class="token operator">/</span><span class="token operator">></span>
+    <span class="token operator">&#x3C;</span><span class="token operator">/</span><span class="token maybe-class-name">TasksProvider</span><span class="token operator">></span>
+  <span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span></code></pre><pre class="language-js"><code class="language-js"><span class="token keyword module">import</span> <span class="token imports"><span class="token punctuation">{</span> createContext<span class="token punctuation">,</span> useContext<span class="token punctuation">,</span> useReducer <span class="token punctuation">}</span></span> <span class="token keyword module">from</span> <span class="token string">'react'</span><span class="token punctuation">;</span>
+
+<span class="token keyword">const</span> <span class="token maybe-class-name">TasksContext</span> <span class="token operator">=</span> <span class="token function">createContext</span><span class="token punctuation">(</span><span class="token keyword null nil">null</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+<span class="token keyword">const</span> <span class="token maybe-class-name">TasksDispatchContext</span> <span class="token operator">=</span> <span class="token function">createContext</span><span class="token punctuation">(</span><span class="token keyword null nil">null</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+<span class="token keyword module">export</span> <span class="token keyword">function</span> <span class="token function"><span class="token maybe-class-name">TasksProvider</span></span><span class="token punctuation">(</span><span class="token parameter"><span class="token punctuation">{</span> children <span class="token punctuation">}</span></span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  <span class="token keyword">const</span> <span class="token punctuation">[</span>tasks<span class="token punctuation">,</span> dispatch<span class="token punctuation">]</span> <span class="token operator">=</span> <span class="token function">useReducer</span><span class="token punctuation">(</span>
+    tasksReducer<span class="token punctuation">,</span>
+    initialTasks
+  <span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+  <span class="token keyword control-flow">return</span> <span class="token punctuation">(</span>
+    <span class="token operator">&#x3C;</span><span class="token maybe-class-name">TasksContext</span><span class="token punctuation">.</span><span class="token property-access"><span class="token maybe-class-name">Provider</span></span> value<span class="token operator">=</span><span class="token punctuation">{</span>tasks<span class="token punctuation">}</span><span class="token operator">></span>
+      <span class="token operator">&#x3C;</span><span class="token maybe-class-name">TasksDispatchContext</span><span class="token punctuation">.</span><span class="token property-access"><span class="token maybe-class-name">Provider</span></span> value<span class="token operator">=</span><span class="token punctuation">{</span>dispatch<span class="token punctuation">}</span><span class="token operator">></span>
+        <span class="token punctuation">{</span>children<span class="token punctuation">}</span>
+      <span class="token operator">&#x3C;</span><span class="token operator">/</span><span class="token maybe-class-name">TasksDispatchContext</span><span class="token punctuation">.</span><span class="token property-access"><span class="token maybe-class-name">Provider</span></span><span class="token operator">></span>
+    <span class="token operator">&#x3C;</span><span class="token operator">/</span><span class="token maybe-class-name">TasksContext</span><span class="token punctuation">.</span><span class="token property-access"><span class="token maybe-class-name">Provider</span></span><span class="token operator">></span>
+  <span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+
+<span class="token keyword module">export</span> <span class="token keyword">function</span> <span class="token function">useTasks</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  <span class="token keyword control-flow">return</span> <span class="token function">useContext</span><span class="token punctuation">(</span><span class="token maybe-class-name">TasksContext</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+
+<span class="token keyword module">export</span> <span class="token keyword">function</span> <span class="token function">useTasksDispatch</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  <span class="token keyword control-flow">return</span> <span class="token function">useContext</span><span class="token punctuation">(</span><span class="token maybe-class-name">TasksDispatchContext</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+
+<span class="token keyword">function</span> <span class="token function">tasksReducer</span><span class="token punctuation">(</span><span class="token parameter">tasks<span class="token punctuation">,</span> action</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  <span class="token keyword control-flow">switch</span> <span class="token punctuation">(</span>action<span class="token punctuation">.</span><span class="token property-access">type</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token keyword">case</span> <span class="token string">'added'</span><span class="token operator">:</span> <span class="token punctuation">{</span>
+      <span class="token keyword control-flow">return</span> <span class="token punctuation">[</span><span class="token spread operator">...</span>tasks<span class="token punctuation">,</span> <span class="token punctuation">{</span>
+        <span class="token literal-property property">text</span><span class="token operator">:</span> action<span class="token punctuation">.</span><span class="token property-access">text</span><span class="token punctuation">,</span>
+        <span class="token literal-property property">done</span><span class="token operator">:</span> <span class="token boolean">false</span>
+      <span class="token punctuation">}</span><span class="token punctuation">]</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+    <span class="token keyword">case</span> <span class="token string">'changed'</span><span class="token operator">:</span> <span class="token punctuation">{</span>
+      <span class="token keyword control-flow">return</span> tasks<span class="token punctuation">.</span><span class="token method function property-access">map</span><span class="token punctuation">(</span><span class="token parameter">t</span> <span class="token arrow operator">=></span> <span class="token punctuation">{</span>
+        <span class="token keyword control-flow">if</span> <span class="token punctuation">(</span>t<span class="token punctuation">.</span><span class="token property-access">id</span> <span class="token operator">===</span> action<span class="token punctuation">.</span><span class="token property-access">task</span><span class="token punctuation">.</span><span class="token property-access">id</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+          <span class="token keyword control-flow">return</span> action<span class="token punctuation">.</span><span class="token property-access">task</span><span class="token punctuation">;</span>
+        <span class="token punctuation">}</span> <span class="token keyword control-flow">else</span> <span class="token punctuation">{</span>
+          <span class="token keyword control-flow">return</span> t<span class="token punctuation">;</span>
+        <span class="token punctuation">}</span>
+      <span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+    <span class="token keyword">case</span> <span class="token string">'deleted'</span><span class="token operator">:</span> <span class="token punctuation">{</span>
+      <span class="token keyword control-flow">return</span> tasks<span class="token punctuation">.</span><span class="token method function property-access">filter</span><span class="token punctuation">(</span><span class="token parameter">t</span> <span class="token arrow operator">=></span> t<span class="token punctuation">.</span><span class="token property-access">id</span> <span class="token operator">!==</span> action<span class="token punctuation">.</span><span class="token property-access">id</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+    <span class="token keyword module">default</span><span class="token operator">:</span> <span class="token punctuation">{</span>
+      <span class="token keyword control-flow">throw</span> <span class="token known-class-name class-name">Error</span><span class="token punctuation">(</span><span class="token string">'Unknown action: '</span> <span class="token operator">+</span> action<span class="token punctuation">.</span><span class="token property-access">type</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+  <span class="token punctuation">}</span>
+<span class="token punctuation">}</span>
+
+<span class="token keyword">const</span> initialTasks <span class="token operator">=</span> <span class="token punctuation">[</span>
+<span class="token punctuation">]</span><span class="token punctuation">;</span></code></pre><pre class="language-js"><code class="language-js"><span class="token keyword module">import</span> <span class="token imports"><span class="token punctuation">{</span> useState <span class="token punctuation">}</span></span> <span class="token keyword module">from</span> <span class="token string">'react'</span><span class="token punctuation">;</span>
+<span class="token keyword module">import</span> <span class="token imports"><span class="token punctuation">{</span> useTasksDispatch <span class="token punctuation">}</span></span> <span class="token keyword module">from</span> <span class="token string">'./TasksContext.js'</span><span class="token punctuation">;</span>
+
+<span class="token keyword module">export</span> <span class="token keyword module">default</span> <span class="token keyword">function</span> <span class="token function"><span class="token maybe-class-name">AddTask</span></span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  <span class="token keyword">const</span> <span class="token punctuation">[</span>text<span class="token punctuation">,</span> setText<span class="token punctuation">]</span> <span class="token operator">=</span> <span class="token function">useState</span><span class="token punctuation">(</span><span class="token string">''</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token keyword">const</span> dispatch <span class="token operator">=</span> <span class="token function">useTasksDispatch</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token keyword control-flow">return</span> <span class="token punctuation">(</span>
+    <span class="token operator">&#x3C;</span><span class="token operator">></span>
+      <span class="token operator">&#x3C;</span>input
+        placeholder<span class="token operator">=</span><span class="token string">"Add task"</span>
+        value<span class="token operator">=</span><span class="token punctuation">{</span>text<span class="token punctuation">}</span>
+        onChange<span class="token operator">=</span><span class="token punctuation">{</span><span class="token parameter">e</span> <span class="token arrow operator">=></span> <span class="token function">setText</span><span class="token punctuation">(</span>e<span class="token punctuation">.</span><span class="token property-access">target</span><span class="token punctuation">.</span><span class="token property-access">value</span><span class="token punctuation">)</span><span class="token punctuation">}</span>
+      <span class="token operator">/</span><span class="token operator">></span>
+      <span class="token operator">&#x3C;</span>button onClick<span class="token operator">=</span><span class="token punctuation">{</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token arrow operator">=></span> <span class="token punctuation">{</span>
+        <span class="token function">setText</span><span class="token punctuation">(</span><span class="token string">''</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token function">dispatch</span><span class="token punctuation">(</span><span class="token punctuation">{</span>
+          <span class="token literal-property property">type</span><span class="token operator">:</span> <span class="token string">'added'</span><span class="token punctuation">,</span>
+          <span class="token literal-property property">text</span><span class="token operator">:</span> text<span class="token punctuation">,</span>
+        <span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">;</span> 
+      <span class="token punctuation">}</span><span class="token punctuation">}</span><span class="token operator">></span><span class="token maybe-class-name">Add</span><span class="token operator">&#x3C;</span><span class="token operator">/</span>button<span class="token operator">></span>
+    <span class="token operator">&#x3C;</span><span class="token operator">/</span><span class="token operator">></span>
+  <span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+
+<span class="token keyword">let</span> nextId <span class="token operator">=</span> <span class="token number">3</span><span class="token punctuation">;</span></code></pre><pre class="language-js"><code class="language-js"><span class="token keyword module">import</span> <span class="token imports"><span class="token punctuation">{</span> useState <span class="token punctuation">}</span></span> <span class="token keyword module">from</span> <span class="token string">'react'</span><span class="token punctuation">;</span>
+<span class="token keyword module">import</span> <span class="token imports"><span class="token punctuation">{</span> useTasks<span class="token punctuation">,</span> useTasksDispatch <span class="token punctuation">}</span></span> <span class="token keyword module">from</span> <span class="token string">'./TasksContext.js'</span><span class="token punctuation">;</span>
+
+<span class="token keyword module">export</span> <span class="token keyword module">default</span> <span class="token keyword">function</span> <span class="token function"><span class="token maybe-class-name">TaskList</span></span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  <span class="token keyword">const</span> tasks <span class="token operator">=</span> <span class="token function">useTasks</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token keyword control-flow">return</span> <span class="token punctuation">(</span>
+    <span class="token operator">&#x3C;</span>ul<span class="token operator">></span>
+      <span class="token punctuation">{</span>tasks<span class="token punctuation">.</span><span class="token method function property-access">map</span><span class="token punctuation">(</span><span class="token parameter">task</span> <span class="token arrow operator">=></span> <span class="token punctuation">(</span>
+        <span class="token operator">&#x3C;</span>li key<span class="token operator">=</span><span class="token punctuation">{</span>task<span class="token punctuation">.</span><span class="token property-access">id</span><span class="token punctuation">}</span><span class="token operator">></span>
+          <span class="token operator">&#x3C;</span><span class="token maybe-class-name">Task</span> task<span class="token operator">=</span><span class="token punctuation">{</span>task<span class="token punctuation">}</span> <span class="token operator">/</span><span class="token operator">></span>
+        <span class="token operator">&#x3C;</span><span class="token operator">/</span>li<span class="token operator">></span>
+      <span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">}</span>
+    <span class="token operator">&#x3C;</span><span class="token operator">/</span>ul<span class="token operator">></span>
+  <span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+
+<span class="token keyword">function</span> <span class="token function"><span class="token maybe-class-name">Task</span></span><span class="token punctuation">(</span><span class="token parameter"><span class="token punctuation">{</span> task <span class="token punctuation">}</span></span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  <span class="token keyword">const</span> <span class="token punctuation">[</span>isEditing<span class="token punctuation">,</span> setIsEditing<span class="token punctuation">]</span> <span class="token operator">=</span> <span class="token function">useState</span><span class="token punctuation">(</span><span class="token boolean">false</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token keyword">const</span> dispatch <span class="token operator">=</span> <span class="token function">useTasksDispatch</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token keyword">let</span> taskContent<span class="token punctuation">;</span>
+  <span class="token keyword control-flow">if</span> <span class="token punctuation">(</span>isEditing<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    taskContent <span class="token operator">=</span> <span class="token punctuation">(</span>
+      <span class="token operator">&#x3C;</span><span class="token operator">></span>
+        <span class="token operator">&#x3C;</span>input
+          value<span class="token operator">=</span><span class="token punctuation">{</span>task<span class="token punctuation">.</span><span class="token property-access">text</span><span class="token punctuation">}</span>
+          onChange<span class="token operator">=</span><span class="token punctuation">{</span><span class="token parameter">e</span> <span class="token arrow operator">=></span> <span class="token punctuation">{</span>
+            <span class="token function">dispatch</span><span class="token punctuation">(</span><span class="token punctuation">{</span>
+              <span class="token literal-property property">type</span><span class="token operator">:</span> <span class="token string">'changed'</span><span class="token punctuation">,</span>
+              <span class="token literal-property property">task</span><span class="token operator">:</span> <span class="token punctuation">{</span>
+                <span class="token spread operator">...</span>task<span class="token punctuation">,</span>
+                <span class="token literal-property property">text</span><span class="token operator">:</span> e<span class="token punctuation">.</span><span class="token property-access">target</span><span class="token punctuation">.</span><span class="token property-access">value</span>
+              <span class="token punctuation">}</span>
+            <span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+          <span class="token punctuation">}</span><span class="token punctuation">}</span> <span class="token operator">/</span><span class="token operator">></span>
+        <span class="token operator">&#x3C;</span>button onClick<span class="token operator">=</span><span class="token punctuation">{</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token arrow operator">=></span> <span class="token function">setIsEditing</span><span class="token punctuation">(</span><span class="token boolean">false</span><span class="token punctuation">)</span><span class="token punctuation">}</span><span class="token operator">></span>
+          <span class="token maybe-class-name">Save</span>
+        <span class="token operator">&#x3C;</span><span class="token operator">/</span>button<span class="token operator">></span>
+      <span class="token operator">&#x3C;</span><span class="token operator">/</span><span class="token operator">></span>
+    <span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token punctuation">}</span> <span class="token keyword control-flow">else</span> <span class="token punctuation">{</span>
+    taskContent <span class="token operator">=</span> <span class="token punctuation">(</span>
+      <span class="token operator">&#x3C;</span><span class="token operator">></span>
+        <span class="token punctuation">{</span>task<span class="token punctuation">.</span><span class="token property-access">text</span><span class="token punctuation">}</span>
+        <span class="token operator">&#x3C;</span>button onClick<span class="token operator">=</span><span class="token punctuation">{</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token arrow operator">=></span> <span class="token function">setIsEditing</span><span class="token punctuation">(</span><span class="token boolean">true</span><span class="token punctuation">)</span><span class="token punctuation">}</span><span class="token operator">></span>
+          <span class="token maybe-class-name">Edit</span>
+        <span class="token operator">&#x3C;</span><span class="token operator">/</span>button<span class="token operator">></span>
+      <span class="token operator">&#x3C;</span><span class="token operator">/</span><span class="token operator">></span>
+    <span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token punctuation">}</span>
+  <span class="token keyword control-flow">return</span> <span class="token punctuation">(</span>
+    <span class="token operator">&#x3C;</span>label<span class="token operator">></span>
+      <span class="token operator">&#x3C;</span>input
+        type<span class="token operator">=</span><span class="token string">"checkbox"</span>
+        checked<span class="token operator">=</span><span class="token punctuation">{</span>task<span class="token punctuation">.</span><span class="token property-access">done</span><span class="token punctuation">}</span>
+        onChange<span class="token operator">=</span><span class="token punctuation">{</span><span class="token parameter">e</span> <span class="token arrow operator">=></span> <span class="token punctuation">{</span>
+          <span class="token function">dispatch</span><span class="token punctuation">(</span><span class="token punctuation">{</span>
+            <span class="token literal-property property">type</span><span class="token operator">:</span> <span class="token string">'changed'</span><span class="token punctuation">,</span>
+            <span class="token literal-property property">task</span><span class="token operator">:</span> <span class="token punctuation">{</span>
+              <span class="token spread operator">...</span>task<span class="token punctuation">,</span>
+              <span class="token literal-property property">done</span><span class="token operator">:</span> e<span class="token punctuation">.</span><span class="token property-access">target</span><span class="token punctuation">.</span><span class="token property-access">checked</span>
+            <span class="token punctuation">}</span>
+          <span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token punctuation">}</span><span class="token punctuation">}</span>
+      <span class="token operator">/</span><span class="token operator">></span>
+      <span class="token punctuation">{</span>taskContent<span class="token punctuation">}</span>
+      <span class="token operator">&#x3C;</span>button onClick<span class="token operator">=</span><span class="token punctuation">{</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token arrow operator">=></span> <span class="token punctuation">{</span>
+        <span class="token function">dispatch</span><span class="token punctuation">(</span><span class="token punctuation">{</span>
+          <span class="token literal-property property">type</span><span class="token operator">:</span> <span class="token string">'deleted'</span><span class="token punctuation">,</span>
+        <span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+      <span class="token punctuation">}</span><span class="token punctuation">}</span><span class="token operator">></span>
+        <span class="token maybe-class-name">Delete</span>
+      <span class="token operator">&#x3C;</span><span class="token operator">/</span>button<span class="token operator">></span>
+    <span class="token operator">&#x3C;</span><span class="token operator">/</span>label<span class="token operator">></span>
+  <span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span></code></pre><pre class="language-css"><code class="language-css"><span class="token selector">button</span> <span class="token punctuation">{</span> <span class="token property">margin</span><span class="token punctuation">:</span> <span class="token number">5</span><span class="token unit">px</span><span class="token punctuation">;</span> <span class="token punctuation">}</span>
+<span class="token selector">li</span> <span class="token punctuation">{</span> <span class="token property">list-style-type</span><span class="token punctuation">:</span> none<span class="token punctuation">;</span> <span class="token punctuation">}</span>
+<span class="token selector">ul<span class="token punctuation">,</span> li</span> <span class="token punctuation">{</span> <span class="token property">margin</span><span class="token punctuation">:</span> <span class="token number">0</span><span class="token punctuation">;</span> <span class="token property">padding</span><span class="token punctuation">:</span> <span class="token number">0</span><span class="token punctuation">;</span> <span class="token punctuation">}</span></code></pre></sandpack><p>You can think of <code>TasksProvider</code> as a part of the screen that knows how to deal with tasks, <code>useTasks</code> as a way to read them, and <code>useTasksDispatch</code> as a way to update them from any component below in the tree.</p><note><p>Functions like <code>useTasks</code> and <code>useTasksDispatch</code> are called <em><a href="/learn/reusing-logic-with-custom-hooks">Custom Hooks.</a></em> Your function is considered a custom Hook if its name starts with <code>use</code>. This lets you use other Hooks, like <code>useContext</code>, inside it.</p></note><p>As your app grows, you may have many context-reducer pairs like this. This is a powerful way to scale your app and <a href="/learn/sharing-state-between-components">lift state up</a> without too much work whenever you want to access the data deep in the tree.</p><recap><ul><li>You can combine reducer with context to let any component read and update state above it.<li>To provide state and the dispatch function to components below:<ol><li>Create two contexts (for state and for dispatch functions).<li>Provide both contexts from the component that uses the reducer.<li>Use either context from components that need to read them.</ol><li>You can further declutter the components by moving all wiring into one file.<ul><li>You can export a component like <code>TasksProvider</code> that provides context.<li>You can also export custom Hooks like <code>useTasks</code> and <code>useTasksDispatch</code> to read it.</ul><li>You can have many context-reducer pairs like this in your app.</ul></recap><p><span style="float:footnote"><a href="../index.html#toc">Go to TOC</a></span></section></section>

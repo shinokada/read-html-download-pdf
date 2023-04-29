@@ -1,0 +1,65 @@
+<!doctype html><html lang="pl"><meta charset="utf-8"><title>Rules of Hooks</title><meta name="viewport"content="width=device-width,initial-scale=1"><link rel="stylesheet"href="../../../../themes/packages/prism-coy-theme/theme_common.css"><section class="level1"aria-labelledby="rules-of-hooks"><h1 id="rules-of-hooks">Rules of Hooks</h1><p>Jesteś tu najprawdopodobniej z powodu błędu:</p><consoleblock level="error"><p>Hooks can only be called inside the body of a function component.</p></consoleblock><p>Zwykle pojawia się on z trzech powodów:<ol><li>Używasz <strong>różnych wersji</strong> bibliotek React i React DOM.<li><strong>Łamiesz <a href="./hooks-rules.html">Zasady korzystania z hooków</a></strong>.<li>Masz <strong>więcej niż jedną kopię Reacta</strong> w danej aplikacji.</ol><p>Przyjrzyjmy się bliżej każdemu z tych przypadków.<section class="level2"aria-labelledby="łamanie-zasad-korzystania-z-hooków-breaking-the-rules-of-hooks"><h2 id="łamanie-zasad-korzystania-z-hooków-breaking-the-rules-of-hooks">Łamanie zasad korzystania z hooków {/<em>breaking-the-rules-of-hooks</em>/}</h2><p>Hooki można wywoływać <strong>tylko w komponentach funkcyjnych</strong>:<ul><li>✅ Wywołuj je na głównym poziomie ciała komponentu funkcyjnego.<li>✅ Wywołuj je na głównym poziomie ciała <a href="./hooks-custom.html">własnego hooka</a>.</ul><p><strong>Więcej na ten temat dowiesz się w rozdziale pt. <a href="./hooks-rules.html">Zasady korzystania z hooków</a>.</strong><pre class="language-js{2-3,8-9}"><code class="language-js{2-3,8-9}">function Counter() {
+  // ✅ Dobrze: główny poziom komponentu funkcyjnego
+  const [count, setCount] = useState(0);
+  // ...
+}
+
+function useWindowWidth() {
+  // ✅ Dobrze: główny poziom własnego hooka
+  const [width, setWidth] = useState(window.innerWidth);
+  // ...
+}</code></pre><p>Dla jasności, hooków <strong>nie</strong> można wywoływać w żaden inny sposób:<ul><li>🔴 Nie wywołuj hooków w komponentach klasowych.<li>🔴 Nie wywołuj hooków w procedurach obsługi zdarzeń.<li>🔴 Nie wywołuj hooków w funkcjach przekazywanych do <code>useMemo</code>, <code>useReducer</code> lub <code>useEffect</code>.</ul><p>Jeśli złamiesz te zasady, otrzymasz powyższy błąd.<pre class="language-js{3-4,11-12,20-21}"><code class="language-js{3-4,11-12,20-21}">function Bad({ cond }) {
+  if (cond) {
+    // 🔴 Bad: inside a condition (to fix, move it outside!)
+    const theme = useContext(ThemeContext);
+  }
+  // ...
+}
+
+function Bad() {
+  for (let i = 0; i &#x3C; 10; i++) {
+    // 🔴 Bad: inside a loop (to fix, move it outside!)
+    const theme = useContext(ThemeContext);
+  }
+  // ...
+}
+
+function Bad({ cond }) {
+  if (cond) {
+    return;
+  }
+  // 🔴 Bad: after a conditional return (to fix, move it before the return!)
+  const theme = useContext(ThemeContext);
+  // ...
+}
+
+function Bad() {
+  function handleClick() {
+    // 🔴 Źle: wewnątrz procedury obsługi zdarzeń (wystarczy przenieść na zewnątrz!)
+    const theme = useContext(ThemeContext);
+  }
+  // ...
+}
+
+function Bad() {
+  const style = useMemo(() => {
+    // 🔴 Źle: wewnątrz useMemo (wystarczy przenieść na zewnątrz!)
+    const theme = useContext(ThemeContext);
+    return createStyle(theme);
+  });
+  // ...
+}
+
+class Bad extends React.Component {
+  render() {
+    // 🔴 Źle: w komponencie klasowym (to fix, write a function component instead of a class!)
+    useEffect(() => {})
+    // ...
+  }
+}</code></pre><p>Z pomocą <a href="https://www.npmjs.com/package/eslint-plugin-react-hooks">wtyczki <code>eslint-plugin-react-hooks</code></a> możesz wyłapać te błędy w trakcie pisania kodu.</p><note><p><a href="./hooks-custom.html">Własne hooki</a> <em>mogą</em> wywoływać inne hooki (taki jest ich cel). Dzieje się tak dlatego, że własne hooki także mogą być wywoływane jedynie wewnątrz komponentów funkcyjnych.</p></note></section><section class="level2"aria-labelledby="niepasujące-wersje-reacta-i-react-dom-mismatching-versions-of-react-and-react-dom"><h2 id="niepasujące-wersje-reacta-i-react-dom-mismatching-versions-of-react-and-react-dom">Niepasujące wersje Reacta i React DOM {/<em>mismatching-versions-of-react-and-react-dom</em>/}</h2><p>Być może używasz paczki <code>react-dom</code> (&#x3C; 16.8.0) lub <code>react-native</code> (&#x3C; 0.59), która jeszcze nie obsługuje hooków. Uruchom polecenie <code>npm ls react-dom</code> lub <code>npm ls react-native</code> w katalogu z aplikacją, aby sprawdzić numer używanej wersji. Jeśli ponadto na liście zobaczysz co najmniej dwa takie same wpisy, może to być przyczyną kolejnych problemów (o czym piszemy poniżej).</section><section class="level2"aria-labelledby="duplikaty-biblioteki-react-duplicate-react"><h2 id="duplikaty-biblioteki-react-duplicate-react">Duplikaty biblioteki React {/<em>duplicate-react</em>/}</h2><p>Aby hooki mogły działać, paczka <code>react</code> importowana w twojej aplikacji musi wskazywać na tę samą paczkę <code>react</code> importowaną przez <code>react-dom</code>.<p>Jeśli te importy wskazują na dwa różne obiekty, zobaczysz powyższe ostrzeżenie. Może się to zdarzyć, gdy <strong>przypadkiem w projekcie znajdą się dwie kopie</strong> paczki <code>react</code>.<p>Jeśli używasz Node'a do zarządzania paczkami, możesz to sprawdzić, uruchamiając w folderze projektu polecenie:</p><terminalblock><p>npm ls react</p></terminalblock><p>Jeżeli na zwróconej liście zobaczysz więcej niż jednego Reacta, musisz znaleźć przyczynę i naprawić drzewo zależności projektu. Być może któraś z używanych przez ciebie paczek zamiast deklarować <code>react</code> jako "peer dependency", deklaruje ją jako "dependency". Dopóki ta paczka nie zostanie naprawiona, możesz obejść problem korzystając z <a href="https://yarnpkg.com/lang/en/docs/selective-version-resolutions/">Yarn resolutions</a>.<p>W zdiagnozowaniu problemu może pomóc dodanie paru logów do aplikacji i zrestartowanie serwera deweloperskiego:<pre class="language-js"><code class="language-js"><span class="token comment">// Dodaj w node_modules/react-dom/index.js</span>
+<span class="token dom variable">window</span><span class="token punctuation">.</span><span class="token property-access"><span class="token maybe-class-name">React1</span></span> <span class="token operator">=</span> <span class="token function">require</span><span class="token punctuation">(</span><span class="token string">'react'</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+<span class="token comment">// Dodaj w pliku z komponentem</span>
+<span class="token function">require</span><span class="token punctuation">(</span><span class="token string">'react-dom'</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token dom variable">window</span><span class="token punctuation">.</span><span class="token property-access"><span class="token maybe-class-name">React2</span></span> <span class="token operator">=</span> <span class="token function">require</span><span class="token punctuation">(</span><span class="token string">'react'</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token console class-name">console</span><span class="token punctuation">.</span><span class="token method function property-access">log</span><span class="token punctuation">(</span><span class="token dom variable">window</span><span class="token punctuation">.</span><span class="token property-access"><span class="token maybe-class-name">React1</span></span> <span class="token operator">===</span> <span class="token dom variable">window</span><span class="token punctuation">.</span><span class="token property-access"><span class="token maybe-class-name">React2</span></span><span class="token punctuation">)</span><span class="token punctuation">;</span></code></pre><p>Jeśli w konsoli pojawi się <code>false</code>, to najprawdopodobniej używasz dwóch różnych paczek Reacta i musisz dowiedzieć się, jaka jest tego przyczyna. W <a href="https://github.com/facebook/react/issues/13991">tym zgłoszonym problemie</a> opisano niektóre z najczęstszych przyczyn tego problemu.<p>Inną przyczyną może być użycie polecenia <code>npm link</code> lub podobnego. W takim przypadku twój bundler (ang. <em>narzędzie pakujące</em>) może "widzieć" dwa Reacty - jeden w folderze aplikacji i jeden w folderze z bibliotekami. Zakładając, że foldery <code>myapp</code> i <code>mylib</code> znajdują się na tym samym poziomie, pomóc może uruchomienie polecenia <code>npm link ../myapp/node_modules/react</code> z folderu <code>mylib</code>. Powinno to zmusić bibliotekę do używania kopii Reacta należącej do aplikacji.</p><note><p>Z założenia React pozwala na używanie kilku niezależnych kopii biblioteki na jednej stronie (np. gdy korzystają z niej zarówno aplikacja, jak i zewnętrzny widget). Problem występuje tylko wtedy, gdy wywołanie <code>require('react')</code> wskazuje co innego dla komponentu, a co innego renderującej go kopii biblioteki <code>react-dom</code>.</p></note></section><section class="level2"aria-labelledby="inne-przypadki-other-causes"><h2 id="inne-przypadki-other-causes">Inne przypadki {/<em>other-causes</em>/}</h2><p>Jeśli nie pomogło żadne z powyższych rozwiązań, napisz komentarz w <a href="https://github.com/facebook/react/issues/13991">tym wątku</a>, a spróbujemy ci pomóc. Postaraj się przygotować prosty przykład ilustrujący problem - możliwe, że znajdziesz rozwiązanie w trakcie opisywania problemu. <span style="float:footnote"><a href="../index.html#toc">Go to TOC</a></span></section></section>

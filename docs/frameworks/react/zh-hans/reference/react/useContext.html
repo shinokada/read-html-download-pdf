@@ -1,0 +1,1018 @@
+<!doctype html><html lang="zh-hans"><meta charset="utf-8"><title>useContext</title><meta name="viewport"content="width=device-width,initial-scale=1"><link rel="stylesheet"href="../../../../../themes/packages/prism-coy-theme/theme_common.css"><section class="level1"aria-labelledby="usecontext"><h1 id="usecontext">useContext</h1><intro><p><code>useContext</code> 是一个 React Hook，可以让你读取和订阅组件中的 <a href="/learn/passing-data-deeply-with-context">context</a>。<pre class="language-js"><code class="language-js"><span class="token keyword">const</span> value <span class="token operator">=</span> <span class="token function">useContext</span><span class="token punctuation">(</span><span class="token maybe-class-name">SomeContext</span><span class="token punctuation">)</span></code></pre></intro><inlinetoc><section class="level2"aria-labelledby="参考-reference"><h2 id="参考-reference">参考 {/<em>reference</em>/}</h2><section class="level3"aria-labelledby="usecontextsomecontext-usecontext"><h3 id="usecontextsomecontext-usecontext"><code>useContext(SomeContext)</code> {/<em>usecontext</em>/}</h3><p>在组件的顶层调用 <code>useContext</code> 来读取和订阅 <a href="/learn/passing-data-deeply-with-context">context</a>。<pre class="language-js"><code class="language-js"><span class="token keyword module">import</span> <span class="token imports"><span class="token punctuation">{</span> useContext <span class="token punctuation">}</span></span> <span class="token keyword module">from</span> <span class="token string">'react'</span><span class="token punctuation">;</span>
+
+<span class="token keyword">function</span> <span class="token function"><span class="token maybe-class-name">MyComponent</span></span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  <span class="token keyword">const</span> theme <span class="token operator">=</span> <span class="token function">useContext</span><span class="token punctuation">(</span><span class="token maybe-class-name">ThemeContext</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token comment">// ...</span></code></pre><p><a href="#usage">请看下方更多示例。</a><section class="level4"aria-labelledby="参数-parameters"><h4 id="参数-parameters">参数 {/<em>parameters</em>/}</h4><ul><li><code>SomeContext</code>：先前用 <a href="/reference/react/createContext"><code>createContext</code></a> 创建的 context。context 本身不包含信息，它只代表你可以提供或从组件中读取的信息类型。</ul></section><section class="level4"aria-labelledby="返回值-returns"><h4 id="返回值-returns">返回值 {/<em>returns</em>/}</h4><p><code>useContext</code> 为调用组件返回 context 的值。它被确定为传递给树中调用组件上方最近的 <code>SomeContext.Provider</code> 的 <code>value</code>。如果没有这样的 provider，那么返回值将会是为创建该 context 传递给 <a href="/reference/react/createContext"><code>createContext</code></a> 的 <code>defaultValue</code>。返回的值始终是最新的。如果 context 发生变化，React 会自动重新渲染读取 context 的组件。</section><section class="level4"aria-labelledby="注意事项-caveats"><h4 id="注意事项-caveats">注意事项 {/<em>caveats</em>/}</h4><ul><li>组件中的 <code>useContext()</code> 调用不受 <strong>同一</strong> 组件返回的 provider 的影响。相应的 <code>&#x3C;Context.Provider></code> 需要位于调用 <code>useContext()</code> 的组件 <strong>之上</strong>。<li>从 provider 接收到不同的 <code>value</code> 开始，React 自动重新渲染使用了该特定 context 的所有子级。先前的值和新的值会使用 <a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object/is"><code>Object.is</code></a> 来做比较。使用 <a href="/reference/react/memo"><code>memo</code></a> 来跳过重新渲染并不妨碍子级接收到新的 context 值。<li>如果您的构建系统在输出中产生重复的模块（可能发生在符号链接中），这可能会破坏 context。通过 context 传递数据只有在用于传递 context 的 <code>SomeContext</code> 和用于读取数据的 <code>SomeContext</code> 是完全相同的对象时才有效，这是由 <code>===</code> 比较决定的。</ul></section></section></section><section class="level2"aria-labelledby="用法-usage"><h2 id="用法-usage">用法 {/<em>usage</em>/}</h2><section class="level3"aria-labelledby="向组件树深层传递数据-passing-data-deeply-into-the-tree"><h3 id="向组件树深层传递数据-passing-data-deeply-into-the-tree">向组件树深层传递数据 {/<em>passing-data-deeply-into-the-tree</em>/}</h3><p>在组件的最顶级调用 <code>useContext</code> 来读取和订阅 <a href="/learn/passing-data-deeply-with-context">context</a>。<pre class="language-js"><code class="language-js"><span class="token keyword module">import</span> <span class="token imports"><span class="token punctuation">{</span> useContext <span class="token punctuation">}</span></span> <span class="token keyword module">from</span> <span class="token string">'react'</span><span class="token punctuation">;</span>
+
+<span class="token keyword">function</span> <span class="token function"><span class="token maybe-class-name">Button</span></span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  <span class="token keyword">const</span> theme <span class="token operator">=</span> <span class="token function">useContext</span><span class="token punctuation">(</span><span class="token maybe-class-name">ThemeContext</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token comment">// ... </span></code></pre><p><code>useContext</code> 返回你向<codestep step="{1}">context</codestep>传递的<codestep step="{2}">context value</codestep>。为了确定 context 值，React 搜索组件树，为这个特定的 context <strong>向上查找最近的</strong> context provider。<p>若要将 context 传递给 <code>Button</code>，请将其或其父组件之一包装到相应的 context provider：<pre class="language-js"><code class="language-js"><span class="token keyword">function</span> <span class="token function"><span class="token maybe-class-name">MyPage</span></span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  <span class="token keyword control-flow">return</span> <span class="token punctuation">(</span>
+    <span class="token operator">&#x3C;</span><span class="token maybe-class-name">ThemeContext</span><span class="token punctuation">.</span><span class="token property-access"><span class="token maybe-class-name">Provider</span></span> value<span class="token operator">=</span><span class="token string">"dark"</span><span class="token operator">></span>
+      <span class="token operator">&#x3C;</span><span class="token maybe-class-name">Form</span> <span class="token operator">/</span><span class="token operator">></span>
+    <span class="token operator">&#x3C;</span><span class="token operator">/</span><span class="token maybe-class-name">ThemeContext</span><span class="token punctuation">.</span><span class="token property-access"><span class="token maybe-class-name">Provider</span></span><span class="token operator">></span>
+  <span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+
+<span class="token keyword">function</span> <span class="token function"><span class="token maybe-class-name">Form</span></span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  <span class="token comment">// ... 在内部渲染 buttons ...</span>
+<span class="token punctuation">}</span></code></pre><p>provider 和 <code>Button</code> 之间有多少层组件并不重要。当 <code>Form</code> 中的任何位置的 <code>Button</code> 调用 <code>useContext(ThemeContext)</code> 时，它都将接收 <code>"dark"</code> 作为值。</p><pitfall><p><code>useContext()</code> 总是在调用它的组件 <strong>上面</strong> 寻找最近的 provider。它向上搜索， <strong>不考虑</strong> 调用 <code>useContext()</code> 的组件中的 provider。</p></pitfall><sandpack><pre class="language-js"><code class="language-js"><span class="token keyword module">import</span> <span class="token imports"><span class="token punctuation">{</span> createContext<span class="token punctuation">,</span> useContext <span class="token punctuation">}</span></span> <span class="token keyword module">from</span> <span class="token string">'react'</span><span class="token punctuation">;</span>
+
+<span class="token keyword">const</span> <span class="token maybe-class-name">ThemeContext</span> <span class="token operator">=</span> <span class="token function">createContext</span><span class="token punctuation">(</span><span class="token keyword null nil">null</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+<span class="token keyword module">export</span> <span class="token keyword module">default</span> <span class="token keyword">function</span> <span class="token function"><span class="token maybe-class-name">MyApp</span></span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  <span class="token keyword control-flow">return</span> <span class="token punctuation">(</span>
+    <span class="token operator">&#x3C;</span><span class="token maybe-class-name">ThemeContext</span><span class="token punctuation">.</span><span class="token property-access"><span class="token maybe-class-name">Provider</span></span> value<span class="token operator">=</span><span class="token string">"dark"</span><span class="token operator">></span>
+      <span class="token operator">&#x3C;</span><span class="token maybe-class-name">Form</span> <span class="token operator">/</span><span class="token operator">></span>
+    <span class="token operator">&#x3C;</span><span class="token operator">/</span><span class="token maybe-class-name">ThemeContext</span><span class="token punctuation">.</span><span class="token property-access"><span class="token maybe-class-name">Provider</span></span><span class="token operator">></span>
+  <span class="token punctuation">)</span>
+<span class="token punctuation">}</span>
+
+<span class="token keyword">function</span> <span class="token function"><span class="token maybe-class-name">Form</span></span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  <span class="token keyword control-flow">return</span> <span class="token punctuation">(</span>
+    <span class="token operator">&#x3C;</span><span class="token maybe-class-name">Panel</span> title<span class="token operator">=</span><span class="token string">"Welcome"</span><span class="token operator">></span>
+      <span class="token operator">&#x3C;</span><span class="token maybe-class-name">Button</span><span class="token operator">></span><span class="token maybe-class-name">Sign</span> up<span class="token operator">&#x3C;</span><span class="token operator">/</span><span class="token maybe-class-name">Button</span><span class="token operator">></span>
+      <span class="token operator">&#x3C;</span><span class="token maybe-class-name">Button</span><span class="token operator">></span><span class="token maybe-class-name">Log</span> <span class="token keyword">in</span><span class="token operator">&#x3C;</span><span class="token operator">/</span><span class="token maybe-class-name">Button</span><span class="token operator">></span>
+    <span class="token operator">&#x3C;</span><span class="token operator">/</span><span class="token maybe-class-name">Panel</span><span class="token operator">></span>
+  <span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+
+<span class="token keyword">function</span> <span class="token function"><span class="token maybe-class-name">Panel</span></span><span class="token punctuation">(</span><span class="token parameter"><span class="token punctuation">{</span> title<span class="token punctuation">,</span> children <span class="token punctuation">}</span></span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  <span class="token keyword">const</span> theme <span class="token operator">=</span> <span class="token function">useContext</span><span class="token punctuation">(</span><span class="token maybe-class-name">ThemeContext</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token keyword">const</span> className <span class="token operator">=</span> <span class="token string">'panel-'</span> <span class="token operator">+</span> theme<span class="token punctuation">;</span>
+  <span class="token keyword control-flow">return</span> <span class="token punctuation">(</span>
+    <span class="token operator">&#x3C;</span>section className<span class="token operator">=</span><span class="token punctuation">{</span>className<span class="token punctuation">}</span><span class="token operator">></span>
+      <span class="token operator">&#x3C;</span>h1<span class="token operator">></span><span class="token punctuation">{</span>title<span class="token punctuation">}</span><span class="token operator">&#x3C;</span><span class="token operator">/</span>h1<span class="token operator">></span>
+      <span class="token punctuation">{</span>children<span class="token punctuation">}</span>
+    <span class="token operator">&#x3C;</span><span class="token operator">/</span>section<span class="token operator">></span>
+  <span class="token punctuation">)</span>
+<span class="token punctuation">}</span>
+
+<span class="token keyword">function</span> <span class="token function"><span class="token maybe-class-name">Button</span></span><span class="token punctuation">(</span><span class="token parameter"><span class="token punctuation">{</span> children <span class="token punctuation">}</span></span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  <span class="token keyword">const</span> theme <span class="token operator">=</span> <span class="token function">useContext</span><span class="token punctuation">(</span><span class="token maybe-class-name">ThemeContext</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token keyword">const</span> className <span class="token operator">=</span> <span class="token string">'button-'</span> <span class="token operator">+</span> theme<span class="token punctuation">;</span>
+  <span class="token keyword control-flow">return</span> <span class="token punctuation">(</span>
+    <span class="token operator">&#x3C;</span>button className<span class="token operator">=</span><span class="token punctuation">{</span>className<span class="token punctuation">}</span><span class="token operator">></span>
+      <span class="token punctuation">{</span>children<span class="token punctuation">}</span>
+    <span class="token operator">&#x3C;</span><span class="token operator">/</span>button<span class="token operator">></span>
+  <span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span></code></pre><pre class="language-css"><code class="language-css"><span class="token selector"><span class="token class">.panel-light</span><span class="token punctuation">,</span>
+<span class="token class">.panel-dark</span></span> <span class="token punctuation">{</span>
+  <span class="token property">border</span><span class="token punctuation">:</span> <span class="token number">1</span><span class="token unit">px</span> solid <span class="token color">black</span><span class="token punctuation">;</span>
+  <span class="token property">border-radius</span><span class="token punctuation">:</span> <span class="token number">4</span><span class="token unit">px</span><span class="token punctuation">;</span>
+  <span class="token property">padding</span><span class="token punctuation">:</span> <span class="token number">20</span><span class="token unit">px</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+<span class="token selector"><span class="token class">.panel-light</span></span> <span class="token punctuation">{</span>
+  <span class="token property">color</span><span class="token punctuation">:</span> <span class="token hexcode color">#222</span><span class="token punctuation">;</span>
+  <span class="token property">background</span><span class="token punctuation">:</span> <span class="token hexcode color">#fff</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+
+<span class="token selector"><span class="token class">.panel-dark</span></span> <span class="token punctuation">{</span>
+  <span class="token property">color</span><span class="token punctuation">:</span> <span class="token hexcode color">#fff</span><span class="token punctuation">;</span>
+  <span class="token property">background</span><span class="token punctuation">:</span> <span class="token color"><span class="token function">rgb</span><span class="token punctuation">(</span><span class="token number">23</span><span class="token punctuation">,</span> <span class="token number">32</span><span class="token punctuation">,</span> <span class="token number">42</span><span class="token punctuation">)</span></span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+
+<span class="token selector"><span class="token class">.button-light</span><span class="token punctuation">,</span>
+<span class="token class">.button-dark</span></span> <span class="token punctuation">{</span>
+  <span class="token property">border</span><span class="token punctuation">:</span> <span class="token number">1</span><span class="token unit">px</span> solid <span class="token hexcode color">#777</span><span class="token punctuation">;</span>
+  <span class="token property">padding</span><span class="token punctuation">:</span> <span class="token number">5</span><span class="token unit">px</span><span class="token punctuation">;</span>
+  <span class="token property">margin-right</span><span class="token punctuation">:</span> <span class="token number">10</span><span class="token unit">px</span><span class="token punctuation">;</span>
+  <span class="token property">margin-top</span><span class="token punctuation">:</span> <span class="token number">10</span><span class="token unit">px</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+
+<span class="token selector"><span class="token class">.button-dark</span></span> <span class="token punctuation">{</span>
+  <span class="token property">background</span><span class="token punctuation">:</span> <span class="token hexcode color">#222</span><span class="token punctuation">;</span>
+  <span class="token property">color</span><span class="token punctuation">:</span> <span class="token hexcode color">#fff</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+
+<span class="token selector"><span class="token class">.button-light</span></span> <span class="token punctuation">{</span>
+  <span class="token property">background</span><span class="token punctuation">:</span> <span class="token hexcode color">#fff</span><span class="token punctuation">;</span>
+  <span class="token property">color</span><span class="token punctuation">:</span> <span class="token hexcode color">#222</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span></code></pre></sandpack></section><section class="level3"aria-labelledby="通过-context-更新传递的数据-updating-data-passed-via-context"><h3 id="通过-context-更新传递的数据-updating-data-passed-via-context">通过 context 更新传递的数据 {/<em>updating-data-passed-via-context</em>/}</h3><p>通常，你会希望 context 随着时间的推移而改变。要更新 context，请将其与 <a href="/reference/react/useState">state</a> 结合。在父组件中声明一个状态变量，并将当前状态作为<codestep step="{2}">context value</codestep>传递给 provider。<pre class="language-js"><code class="language-js"><span class="token keyword">function</span> <span class="token function"><span class="token maybe-class-name">MyPage</span></span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  <span class="token keyword">const</span> <span class="token punctuation">[</span>theme<span class="token punctuation">,</span> setTheme<span class="token punctuation">]</span> <span class="token operator">=</span> <span class="token function">useState</span><span class="token punctuation">(</span><span class="token string">'dark'</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token keyword control-flow">return</span> <span class="token punctuation">(</span>
+    <span class="token operator">&#x3C;</span><span class="token maybe-class-name">ThemeContext</span><span class="token punctuation">.</span><span class="token property-access"><span class="token maybe-class-name">Provider</span></span> value<span class="token operator">=</span><span class="token punctuation">{</span>theme<span class="token punctuation">}</span><span class="token operator">></span>
+      <span class="token operator">&#x3C;</span><span class="token maybe-class-name">Form</span> <span class="token operator">/</span><span class="token operator">></span>
+      <span class="token operator">&#x3C;</span><span class="token maybe-class-name">Button</span> onClick<span class="token operator">=</span><span class="token punctuation">{</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token arrow operator">=></span> <span class="token punctuation">{</span>
+        <span class="token function">setTheme</span><span class="token punctuation">(</span><span class="token string">'light'</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+      <span class="token punctuation">}</span><span class="token punctuation">}</span><span class="token operator">></span>
+       <span class="token maybe-class-name">Switch</span> to light theme
+      <span class="token operator">&#x3C;</span><span class="token operator">/</span><span class="token maybe-class-name">Button</span><span class="token operator">></span>
+    <span class="token operator">&#x3C;</span><span class="token operator">/</span><span class="token maybe-class-name">ThemeContext</span><span class="token punctuation">.</span><span class="token property-access"><span class="token maybe-class-name">Provider</span></span><span class="token operator">></span>
+  <span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span></code></pre><p>现在 provider 中的任何一个 <code>Button</code> 都会接收到当前的 <code>theme</code> 值。如果调用 <code>setTheme</code> 来更新传递给 provider 的 <code>theme</code> 值，则所有 <code>Button</code> 组件都将使用新的值 <code>'light'</code> 来重新渲染。</p><recipes titletext="更新 context 的例子"titleid="examples-basic"><section class="level4"aria-labelledby="通过-context-来更新数据-updating-a-value-via-context"><h4 id="通过-context-来更新数据-updating-a-value-via-context">通过 context 来更新数据 {/<em>updating-a-value-via-context</em>/}</h4><p>在这个示例中，<code>MyApp</code> 组件包含一个状态变量，然后该变量被传递给 <code>ThemeContext</code> provider。选中“Dark mode”复选框更新状态。更改提供的值将重新渲染使用该 context 的所有组件。</p><sandpack><pre class="language-js"><code class="language-js"><span class="token keyword module">import</span> <span class="token imports"><span class="token punctuation">{</span> createContext<span class="token punctuation">,</span> useContext<span class="token punctuation">,</span> useState <span class="token punctuation">}</span></span> <span class="token keyword module">from</span> <span class="token string">'react'</span><span class="token punctuation">;</span>
+
+<span class="token keyword">const</span> <span class="token maybe-class-name">ThemeContext</span> <span class="token operator">=</span> <span class="token function">createContext</span><span class="token punctuation">(</span><span class="token keyword null nil">null</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+<span class="token keyword module">export</span> <span class="token keyword module">default</span> <span class="token keyword">function</span> <span class="token function"><span class="token maybe-class-name">MyApp</span></span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  <span class="token keyword">const</span> <span class="token punctuation">[</span>theme<span class="token punctuation">,</span> setTheme<span class="token punctuation">]</span> <span class="token operator">=</span> <span class="token function">useState</span><span class="token punctuation">(</span><span class="token string">'light'</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token keyword control-flow">return</span> <span class="token punctuation">(</span>
+    <span class="token operator">&#x3C;</span><span class="token maybe-class-name">ThemeContext</span><span class="token punctuation">.</span><span class="token property-access"><span class="token maybe-class-name">Provider</span></span> value<span class="token operator">=</span><span class="token punctuation">{</span>theme<span class="token punctuation">}</span><span class="token operator">></span>
+      <span class="token operator">&#x3C;</span><span class="token maybe-class-name">Form</span> <span class="token operator">/</span><span class="token operator">></span>
+      <span class="token operator">&#x3C;</span>label<span class="token operator">></span>
+        <span class="token operator">&#x3C;</span>input
+          type<span class="token operator">=</span><span class="token string">"checkbox"</span>
+          checked<span class="token operator">=</span><span class="token punctuation">{</span>theme <span class="token operator">===</span> <span class="token string">'dark'</span><span class="token punctuation">}</span>
+          onChange<span class="token operator">=</span><span class="token punctuation">{</span><span class="token punctuation">(</span><span class="token parameter">e</span><span class="token punctuation">)</span> <span class="token arrow operator">=></span> <span class="token punctuation">{</span>
+            <span class="token function">setTheme</span><span class="token punctuation">(</span>e<span class="token punctuation">.</span><span class="token property-access">target</span><span class="token punctuation">.</span><span class="token property-access">checked</span> <span class="token operator">?</span> <span class="token string">'dark'</span> <span class="token operator">:</span> <span class="token string">'light'</span><span class="token punctuation">)</span>
+          <span class="token punctuation">}</span><span class="token punctuation">}</span>
+        <span class="token operator">/</span><span class="token operator">></span>
+        <span class="token maybe-class-name">Use</span> dark mode
+      <span class="token operator">&#x3C;</span><span class="token operator">/</span>label<span class="token operator">></span>
+    <span class="token operator">&#x3C;</span><span class="token operator">/</span><span class="token maybe-class-name">ThemeContext</span><span class="token punctuation">.</span><span class="token property-access"><span class="token maybe-class-name">Provider</span></span><span class="token operator">></span>
+  <span class="token punctuation">)</span>
+<span class="token punctuation">}</span>
+
+<span class="token keyword">function</span> <span class="token function"><span class="token maybe-class-name">Form</span></span><span class="token punctuation">(</span><span class="token parameter"><span class="token punctuation">{</span> children <span class="token punctuation">}</span></span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  <span class="token keyword control-flow">return</span> <span class="token punctuation">(</span>
+    <span class="token operator">&#x3C;</span><span class="token maybe-class-name">Panel</span> title<span class="token operator">=</span><span class="token string">"Welcome"</span><span class="token operator">></span>
+      <span class="token operator">&#x3C;</span><span class="token maybe-class-name">Button</span><span class="token operator">></span><span class="token maybe-class-name">Sign</span> up<span class="token operator">&#x3C;</span><span class="token operator">/</span><span class="token maybe-class-name">Button</span><span class="token operator">></span>
+      <span class="token operator">&#x3C;</span><span class="token maybe-class-name">Button</span><span class="token operator">></span><span class="token maybe-class-name">Log</span> <span class="token keyword">in</span><span class="token operator">&#x3C;</span><span class="token operator">/</span><span class="token maybe-class-name">Button</span><span class="token operator">></span>
+    <span class="token operator">&#x3C;</span><span class="token operator">/</span><span class="token maybe-class-name">Panel</span><span class="token operator">></span>
+  <span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+
+<span class="token keyword">function</span> <span class="token function"><span class="token maybe-class-name">Panel</span></span><span class="token punctuation">(</span><span class="token parameter"><span class="token punctuation">{</span> title<span class="token punctuation">,</span> children <span class="token punctuation">}</span></span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  <span class="token keyword">const</span> theme <span class="token operator">=</span> <span class="token function">useContext</span><span class="token punctuation">(</span><span class="token maybe-class-name">ThemeContext</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token keyword">const</span> className <span class="token operator">=</span> <span class="token string">'panel-'</span> <span class="token operator">+</span> theme<span class="token punctuation">;</span>
+  <span class="token keyword control-flow">return</span> <span class="token punctuation">(</span>
+    <span class="token operator">&#x3C;</span>section className<span class="token operator">=</span><span class="token punctuation">{</span>className<span class="token punctuation">}</span><span class="token operator">></span>
+      <span class="token operator">&#x3C;</span>h1<span class="token operator">></span><span class="token punctuation">{</span>title<span class="token punctuation">}</span><span class="token operator">&#x3C;</span><span class="token operator">/</span>h1<span class="token operator">></span>
+      <span class="token punctuation">{</span>children<span class="token punctuation">}</span>
+    <span class="token operator">&#x3C;</span><span class="token operator">/</span>section<span class="token operator">></span>
+  <span class="token punctuation">)</span>
+<span class="token punctuation">}</span>
+
+<span class="token keyword">function</span> <span class="token function"><span class="token maybe-class-name">Button</span></span><span class="token punctuation">(</span><span class="token parameter"><span class="token punctuation">{</span> children <span class="token punctuation">}</span></span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  <span class="token keyword">const</span> theme <span class="token operator">=</span> <span class="token function">useContext</span><span class="token punctuation">(</span><span class="token maybe-class-name">ThemeContext</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token keyword">const</span> className <span class="token operator">=</span> <span class="token string">'button-'</span> <span class="token operator">+</span> theme<span class="token punctuation">;</span>
+  <span class="token keyword control-flow">return</span> <span class="token punctuation">(</span>
+    <span class="token operator">&#x3C;</span>button className<span class="token operator">=</span><span class="token punctuation">{</span>className<span class="token punctuation">}</span><span class="token operator">></span>
+      <span class="token punctuation">{</span>children<span class="token punctuation">}</span>
+    <span class="token operator">&#x3C;</span><span class="token operator">/</span>button<span class="token operator">></span>
+  <span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span></code></pre><pre class="language-css"><code class="language-css"><span class="token selector"><span class="token class">.panel-light</span><span class="token punctuation">,</span>
+<span class="token class">.panel-dark</span></span> <span class="token punctuation">{</span>
+  <span class="token property">border</span><span class="token punctuation">:</span> <span class="token number">1</span><span class="token unit">px</span> solid <span class="token color">black</span><span class="token punctuation">;</span>
+  <span class="token property">border-radius</span><span class="token punctuation">:</span> <span class="token number">4</span><span class="token unit">px</span><span class="token punctuation">;</span>
+  <span class="token property">padding</span><span class="token punctuation">:</span> <span class="token number">20</span><span class="token unit">px</span><span class="token punctuation">;</span>
+  <span class="token property">margin-bottom</span><span class="token punctuation">:</span> <span class="token number">10</span><span class="token unit">px</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+<span class="token selector"><span class="token class">.panel-light</span></span> <span class="token punctuation">{</span>
+  <span class="token property">color</span><span class="token punctuation">:</span> <span class="token hexcode color">#222</span><span class="token punctuation">;</span>
+  <span class="token property">background</span><span class="token punctuation">:</span> <span class="token hexcode color">#fff</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+
+<span class="token selector"><span class="token class">.panel-dark</span></span> <span class="token punctuation">{</span>
+  <span class="token property">color</span><span class="token punctuation">:</span> <span class="token hexcode color">#fff</span><span class="token punctuation">;</span>
+  <span class="token property">background</span><span class="token punctuation">:</span> <span class="token color"><span class="token function">rgb</span><span class="token punctuation">(</span><span class="token number">23</span><span class="token punctuation">,</span> <span class="token number">32</span><span class="token punctuation">,</span> <span class="token number">42</span><span class="token punctuation">)</span></span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+
+<span class="token selector"><span class="token class">.button-light</span><span class="token punctuation">,</span>
+<span class="token class">.button-dark</span></span> <span class="token punctuation">{</span>
+  <span class="token property">border</span><span class="token punctuation">:</span> <span class="token number">1</span><span class="token unit">px</span> solid <span class="token hexcode color">#777</span><span class="token punctuation">;</span>
+  <span class="token property">padding</span><span class="token punctuation">:</span> <span class="token number">5</span><span class="token unit">px</span><span class="token punctuation">;</span>
+  <span class="token property">margin-right</span><span class="token punctuation">:</span> <span class="token number">10</span><span class="token unit">px</span><span class="token punctuation">;</span>
+  <span class="token property">margin-top</span><span class="token punctuation">:</span> <span class="token number">10</span><span class="token unit">px</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+
+<span class="token selector"><span class="token class">.button-dark</span></span> <span class="token punctuation">{</span>
+  <span class="token property">background</span><span class="token punctuation">:</span> <span class="token hexcode color">#222</span><span class="token punctuation">;</span>
+  <span class="token property">color</span><span class="token punctuation">:</span> <span class="token hexcode color">#fff</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+
+<span class="token selector"><span class="token class">.button-light</span></span> <span class="token punctuation">{</span>
+  <span class="token property">background</span><span class="token punctuation">:</span> <span class="token hexcode color">#fff</span><span class="token punctuation">;</span>
+  <span class="token property">color</span><span class="token punctuation">:</span> <span class="token hexcode color">#222</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span></code></pre></sandpack><p>注意，<code>value="dark"</code> 传递 <code>"dark"</code> 字符串，但 <code>value={theme}</code> 传递带有 <a href="/learn/javascript-in-jsx-with-curly-braces">JSX 花括号</a> 的 JavaScript <code>theme</code> 变量的值。花括号还允许传递非字符串的 context 值。</p><solution></solution></section><section class="level4"aria-labelledby="通过-context-更新对象-updating-an-object-via-context"><h4 id="通过-context-更新对象-updating-an-object-via-context">通过 context 更新对象 {/<em>updating-an-object-via-context</em>/}</h4><p>在这个例子中，有一个 <code>currentUser</code> 状态变量，它包含一个对象。将 <code>{ currentUser, setCurrentUser }</code> 组合成一个对象，并通过 context 在 <code>value={}</code> 中向下传递。这允许下面的任何组件，如 <code>LoginButton</code>，同时读取 <code>currentUser</code> 和 <code>setCurrentUser</code>，然后在需要时调用 <code>setCurrentUser</code>。</p><sandpack><pre class="language-js"><code class="language-js"><span class="token keyword module">import</span> <span class="token imports"><span class="token punctuation">{</span> createContext<span class="token punctuation">,</span> useContext<span class="token punctuation">,</span> useState <span class="token punctuation">}</span></span> <span class="token keyword module">from</span> <span class="token string">'react'</span><span class="token punctuation">;</span>
+
+<span class="token keyword">const</span> <span class="token maybe-class-name">CurrentUserContext</span> <span class="token operator">=</span> <span class="token function">createContext</span><span class="token punctuation">(</span><span class="token keyword null nil">null</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+<span class="token keyword module">export</span> <span class="token keyword module">default</span> <span class="token keyword">function</span> <span class="token function"><span class="token maybe-class-name">MyApp</span></span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  <span class="token keyword">const</span> <span class="token punctuation">[</span>currentUser<span class="token punctuation">,</span> setCurrentUser<span class="token punctuation">]</span> <span class="token operator">=</span> <span class="token function">useState</span><span class="token punctuation">(</span><span class="token keyword null nil">null</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token keyword control-flow">return</span> <span class="token punctuation">(</span>
+    <span class="token operator">&#x3C;</span><span class="token maybe-class-name">CurrentUserContext</span><span class="token punctuation">.</span><span class="token property-access"><span class="token maybe-class-name">Provider</span></span>
+      value<span class="token operator">=</span><span class="token punctuation">{</span><span class="token punctuation">{</span>
+        currentUser<span class="token punctuation">,</span>
+        setCurrentUser
+      <span class="token punctuation">}</span><span class="token punctuation">}</span>
+    <span class="token operator">></span>
+      <span class="token operator">&#x3C;</span><span class="token maybe-class-name">Form</span> <span class="token operator">/</span><span class="token operator">></span>
+    <span class="token operator">&#x3C;</span><span class="token operator">/</span><span class="token maybe-class-name">CurrentUserContext</span><span class="token punctuation">.</span><span class="token property-access"><span class="token maybe-class-name">Provider</span></span><span class="token operator">></span>
+  <span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+
+<span class="token keyword">function</span> <span class="token function"><span class="token maybe-class-name">Form</span></span><span class="token punctuation">(</span><span class="token parameter"><span class="token punctuation">{</span> children <span class="token punctuation">}</span></span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  <span class="token keyword control-flow">return</span> <span class="token punctuation">(</span>
+    <span class="token operator">&#x3C;</span><span class="token maybe-class-name">Panel</span> title<span class="token operator">=</span><span class="token string">"Welcome"</span><span class="token operator">></span>
+      <span class="token operator">&#x3C;</span><span class="token maybe-class-name">LoginButton</span> <span class="token operator">/</span><span class="token operator">></span>
+    <span class="token operator">&#x3C;</span><span class="token operator">/</span><span class="token maybe-class-name">Panel</span><span class="token operator">></span>
+  <span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+
+<span class="token keyword">function</span> <span class="token function"><span class="token maybe-class-name">LoginButton</span></span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  <span class="token keyword">const</span> <span class="token punctuation">{</span>
+    currentUser<span class="token punctuation">,</span>
+    setCurrentUser
+  <span class="token punctuation">}</span> <span class="token operator">=</span> <span class="token function">useContext</span><span class="token punctuation">(</span><span class="token maybe-class-name">CurrentUserContext</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+  <span class="token keyword control-flow">if</span> <span class="token punctuation">(</span>currentUser <span class="token operator">!==</span> <span class="token keyword null nil">null</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token keyword control-flow">return</span> <span class="token operator">&#x3C;</span>p<span class="token operator">></span><span class="token maybe-class-name">You</span> logged <span class="token keyword">in</span> <span class="token keyword module">as</span> <span class="token punctuation">{</span>currentUser<span class="token punctuation">.</span><span class="token property-access">name</span><span class="token punctuation">}</span><span class="token punctuation">.</span><span class="token operator">&#x3C;</span><span class="token operator">/</span>p<span class="token operator">></span><span class="token punctuation">;</span>
+  <span class="token punctuation">}</span>
+
+  <span class="token keyword control-flow">return</span> <span class="token punctuation">(</span>
+    <span class="token operator">&#x3C;</span><span class="token maybe-class-name">Button</span> onClick<span class="token operator">=</span><span class="token punctuation">{</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token arrow operator">=></span> <span class="token punctuation">{</span>
+      <span class="token function">setCurrentUser</span><span class="token punctuation">(</span><span class="token punctuation">{</span> <span class="token literal-property property">name</span><span class="token operator">:</span> <span class="token string">'Advika'</span> <span class="token punctuation">}</span><span class="token punctuation">)</span>
+    <span class="token punctuation">}</span><span class="token punctuation">}</span><span class="token operator">></span><span class="token maybe-class-name">Log</span> <span class="token keyword">in</span> <span class="token keyword module">as</span> <span class="token maybe-class-name">Advika</span><span class="token operator">&#x3C;</span><span class="token operator">/</span><span class="token maybe-class-name">Button</span><span class="token operator">></span>
+  <span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+
+<span class="token keyword">function</span> <span class="token function"><span class="token maybe-class-name">Panel</span></span><span class="token punctuation">(</span><span class="token parameter"><span class="token punctuation">{</span> title<span class="token punctuation">,</span> children <span class="token punctuation">}</span></span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  <span class="token keyword control-flow">return</span> <span class="token punctuation">(</span>
+    <span class="token operator">&#x3C;</span>section className<span class="token operator">=</span><span class="token string">"panel"</span><span class="token operator">></span>
+      <span class="token operator">&#x3C;</span>h1<span class="token operator">></span><span class="token punctuation">{</span>title<span class="token punctuation">}</span><span class="token operator">&#x3C;</span><span class="token operator">/</span>h1<span class="token operator">></span>
+      <span class="token punctuation">{</span>children<span class="token punctuation">}</span>
+    <span class="token operator">&#x3C;</span><span class="token operator">/</span>section<span class="token operator">></span>
+  <span class="token punctuation">)</span>
+<span class="token punctuation">}</span>
+
+<span class="token keyword">function</span> <span class="token function"><span class="token maybe-class-name">Button</span></span><span class="token punctuation">(</span><span class="token parameter"><span class="token punctuation">{</span> children<span class="token punctuation">,</span> onClick <span class="token punctuation">}</span></span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  <span class="token keyword control-flow">return</span> <span class="token punctuation">(</span>
+    <span class="token operator">&#x3C;</span>button className<span class="token operator">=</span><span class="token string">"button"</span> onClick<span class="token operator">=</span><span class="token punctuation">{</span>onClick<span class="token punctuation">}</span><span class="token operator">></span>
+      <span class="token punctuation">{</span>children<span class="token punctuation">}</span>
+    <span class="token operator">&#x3C;</span><span class="token operator">/</span>button<span class="token operator">></span>
+  <span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span></code></pre><pre class="language-css"><code class="language-css"><span class="token selector">label</span> <span class="token punctuation">{</span>
+  <span class="token property">display</span><span class="token punctuation">:</span> block<span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+
+<span class="token selector"><span class="token class">.panel</span></span> <span class="token punctuation">{</span>
+  <span class="token property">border</span><span class="token punctuation">:</span> <span class="token number">1</span><span class="token unit">px</span> solid <span class="token color">black</span><span class="token punctuation">;</span>
+  <span class="token property">border-radius</span><span class="token punctuation">:</span> <span class="token number">4</span><span class="token unit">px</span><span class="token punctuation">;</span>
+  <span class="token property">padding</span><span class="token punctuation">:</span> <span class="token number">20</span><span class="token unit">px</span><span class="token punctuation">;</span>
+  <span class="token property">margin-bottom</span><span class="token punctuation">:</span> <span class="token number">10</span><span class="token unit">px</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+
+<span class="token selector"><span class="token class">.button</span></span> <span class="token punctuation">{</span>
+  <span class="token property">border</span><span class="token punctuation">:</span> <span class="token number">1</span><span class="token unit">px</span> solid <span class="token hexcode color">#777</span><span class="token punctuation">;</span>
+  <span class="token property">padding</span><span class="token punctuation">:</span> <span class="token number">5</span><span class="token unit">px</span><span class="token punctuation">;</span>
+  <span class="token property">margin-right</span><span class="token punctuation">:</span> <span class="token number">10</span><span class="token unit">px</span><span class="token punctuation">;</span>
+  <span class="token property">margin-top</span><span class="token punctuation">:</span> <span class="token number">10</span><span class="token unit">px</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span></code></pre></sandpack><solution></solution></section><section class="level4"aria-labelledby="同时使用多个-context-multiple-contexts"><h4 id="同时使用多个-context-multiple-contexts">同时使用多个 context {/<em>multiple-contexts</em>/}</h4><p>在这个例子中，存在两个独立的 context。<code>ThemeContext</code> 提供了当前的主题，它是一个字符串，而 <code>CurrentUserContext</code> 保存了代表当前用户的对象。</p><sandpack><pre class="language-js"><code class="language-js"><span class="token keyword module">import</span> <span class="token imports"><span class="token punctuation">{</span> createContext<span class="token punctuation">,</span> useContext<span class="token punctuation">,</span> useState <span class="token punctuation">}</span></span> <span class="token keyword module">from</span> <span class="token string">'react'</span><span class="token punctuation">;</span>
+
+<span class="token keyword">const</span> <span class="token maybe-class-name">ThemeContext</span> <span class="token operator">=</span> <span class="token function">createContext</span><span class="token punctuation">(</span><span class="token keyword null nil">null</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token keyword">const</span> <span class="token maybe-class-name">CurrentUserContext</span> <span class="token operator">=</span> <span class="token function">createContext</span><span class="token punctuation">(</span><span class="token keyword null nil">null</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+<span class="token keyword module">export</span> <span class="token keyword module">default</span> <span class="token keyword">function</span> <span class="token function"><span class="token maybe-class-name">MyApp</span></span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  <span class="token keyword">const</span> <span class="token punctuation">[</span>theme<span class="token punctuation">,</span> setTheme<span class="token punctuation">]</span> <span class="token operator">=</span> <span class="token function">useState</span><span class="token punctuation">(</span><span class="token string">'light'</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token keyword">const</span> <span class="token punctuation">[</span>currentUser<span class="token punctuation">,</span> setCurrentUser<span class="token punctuation">]</span> <span class="token operator">=</span> <span class="token function">useState</span><span class="token punctuation">(</span><span class="token keyword null nil">null</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token keyword control-flow">return</span> <span class="token punctuation">(</span>
+    <span class="token operator">&#x3C;</span><span class="token maybe-class-name">ThemeContext</span><span class="token punctuation">.</span><span class="token property-access"><span class="token maybe-class-name">Provider</span></span> value<span class="token operator">=</span><span class="token punctuation">{</span>theme<span class="token punctuation">}</span><span class="token operator">></span>
+      <span class="token operator">&#x3C;</span><span class="token maybe-class-name">CurrentUserContext</span><span class="token punctuation">.</span><span class="token property-access"><span class="token maybe-class-name">Provider</span></span>
+        value<span class="token operator">=</span><span class="token punctuation">{</span><span class="token punctuation">{</span>
+          currentUser<span class="token punctuation">,</span>
+          setCurrentUser
+        <span class="token punctuation">}</span><span class="token punctuation">}</span>
+      <span class="token operator">></span>
+        <span class="token operator">&#x3C;</span><span class="token maybe-class-name">WelcomePanel</span> <span class="token operator">/</span><span class="token operator">></span>
+        <span class="token operator">&#x3C;</span>label<span class="token operator">></span>
+          <span class="token operator">&#x3C;</span>input
+            type<span class="token operator">=</span><span class="token string">"checkbox"</span>
+            checked<span class="token operator">=</span><span class="token punctuation">{</span>theme <span class="token operator">===</span> <span class="token string">'dark'</span><span class="token punctuation">}</span>
+            onChange<span class="token operator">=</span><span class="token punctuation">{</span><span class="token punctuation">(</span><span class="token parameter">e</span><span class="token punctuation">)</span> <span class="token arrow operator">=></span> <span class="token punctuation">{</span>
+              <span class="token function">setTheme</span><span class="token punctuation">(</span>e<span class="token punctuation">.</span><span class="token property-access">target</span><span class="token punctuation">.</span><span class="token property-access">checked</span> <span class="token operator">?</span> <span class="token string">'dark'</span> <span class="token operator">:</span> <span class="token string">'light'</span><span class="token punctuation">)</span>
+            <span class="token punctuation">}</span><span class="token punctuation">}</span>
+          <span class="token operator">/</span><span class="token operator">></span>
+          <span class="token maybe-class-name">Use</span> dark mode
+        <span class="token operator">&#x3C;</span><span class="token operator">/</span>label<span class="token operator">></span>
+      <span class="token operator">&#x3C;</span><span class="token operator">/</span><span class="token maybe-class-name">CurrentUserContext</span><span class="token punctuation">.</span><span class="token property-access"><span class="token maybe-class-name">Provider</span></span><span class="token operator">></span>
+    <span class="token operator">&#x3C;</span><span class="token operator">/</span><span class="token maybe-class-name">ThemeContext</span><span class="token punctuation">.</span><span class="token property-access"><span class="token maybe-class-name">Provider</span></span><span class="token operator">></span>
+  <span class="token punctuation">)</span>
+<span class="token punctuation">}</span>
+
+<span class="token keyword">function</span> <span class="token function"><span class="token maybe-class-name">WelcomePanel</span></span><span class="token punctuation">(</span><span class="token parameter"><span class="token punctuation">{</span> children <span class="token punctuation">}</span></span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  <span class="token keyword">const</span> <span class="token punctuation">{</span>currentUser<span class="token punctuation">}</span> <span class="token operator">=</span> <span class="token function">useContext</span><span class="token punctuation">(</span><span class="token maybe-class-name">CurrentUserContext</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token keyword control-flow">return</span> <span class="token punctuation">(</span>
+    <span class="token operator">&#x3C;</span><span class="token maybe-class-name">Panel</span> title<span class="token operator">=</span><span class="token string">"Welcome"</span><span class="token operator">></span>
+      <span class="token punctuation">{</span>currentUser <span class="token operator">!==</span> <span class="token keyword null nil">null</span> <span class="token operator">?</span>
+        <span class="token operator">&#x3C;</span><span class="token maybe-class-name">Greeting</span> <span class="token operator">/</span><span class="token operator">></span> <span class="token operator">:</span>
+        <span class="token operator">&#x3C;</span><span class="token maybe-class-name">LoginForm</span> <span class="token operator">/</span><span class="token operator">></span>
+      <span class="token punctuation">}</span>
+    <span class="token operator">&#x3C;</span><span class="token operator">/</span><span class="token maybe-class-name">Panel</span><span class="token operator">></span>
+  <span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+
+<span class="token keyword">function</span> <span class="token function"><span class="token maybe-class-name">Greeting</span></span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  <span class="token keyword">const</span> <span class="token punctuation">{</span>currentUser<span class="token punctuation">}</span> <span class="token operator">=</span> <span class="token function">useContext</span><span class="token punctuation">(</span><span class="token maybe-class-name">CurrentUserContext</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token keyword control-flow">return</span> <span class="token punctuation">(</span>
+    <span class="token operator">&#x3C;</span>p<span class="token operator">></span><span class="token maybe-class-name">You</span> logged <span class="token keyword">in</span> <span class="token keyword module">as</span> <span class="token punctuation">{</span>currentUser<span class="token punctuation">.</span><span class="token property-access">name</span><span class="token punctuation">}</span><span class="token punctuation">.</span><span class="token operator">&#x3C;</span><span class="token operator">/</span>p<span class="token operator">></span>
+  <span class="token punctuation">)</span>
+<span class="token punctuation">}</span>
+
+<span class="token keyword">function</span> <span class="token function"><span class="token maybe-class-name">LoginForm</span></span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  <span class="token keyword">const</span> <span class="token punctuation">{</span>setCurrentUser<span class="token punctuation">}</span> <span class="token operator">=</span> <span class="token function">useContext</span><span class="token punctuation">(</span><span class="token maybe-class-name">CurrentUserContext</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token keyword">const</span> <span class="token punctuation">[</span>firstName<span class="token punctuation">,</span> setFirstName<span class="token punctuation">]</span> <span class="token operator">=</span> <span class="token function">useState</span><span class="token punctuation">(</span><span class="token string">''</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token keyword">const</span> <span class="token punctuation">[</span>lastName<span class="token punctuation">,</span> setLastName<span class="token punctuation">]</span> <span class="token operator">=</span> <span class="token function">useState</span><span class="token punctuation">(</span><span class="token string">''</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token keyword">const</span> canLogin <span class="token operator">=</span> firstName <span class="token operator">!==</span> <span class="token string">''</span> <span class="token operator">&#x26;&#x26;</span> lastName <span class="token operator">!==</span> <span class="token string">''</span><span class="token punctuation">;</span>
+  <span class="token keyword control-flow">return</span> <span class="token punctuation">(</span>
+    <span class="token operator">&#x3C;</span><span class="token operator">></span>
+      <span class="token operator">&#x3C;</span>label<span class="token operator">></span>
+        <span class="token maybe-class-name">First</span> name<span class="token punctuation">{</span><span class="token string">': '</span><span class="token punctuation">}</span>
+        <span class="token operator">&#x3C;</span>input
+          required
+          value<span class="token operator">=</span><span class="token punctuation">{</span>firstName<span class="token punctuation">}</span>
+          onChange<span class="token operator">=</span><span class="token punctuation">{</span><span class="token parameter">e</span> <span class="token arrow operator">=></span> <span class="token function">setFirstName</span><span class="token punctuation">(</span>e<span class="token punctuation">.</span><span class="token property-access">target</span><span class="token punctuation">.</span><span class="token property-access">value</span><span class="token punctuation">)</span><span class="token punctuation">}</span>
+        <span class="token operator">/</span><span class="token operator">></span>
+      <span class="token operator">&#x3C;</span><span class="token operator">/</span>label<span class="token operator">></span>
+      <span class="token operator">&#x3C;</span>label<span class="token operator">></span>
+        <span class="token maybe-class-name">Last</span> name<span class="token punctuation">{</span><span class="token string">': '</span><span class="token punctuation">}</span>
+        <span class="token operator">&#x3C;</span>input
+        required
+          value<span class="token operator">=</span><span class="token punctuation">{</span>lastName<span class="token punctuation">}</span>
+          onChange<span class="token operator">=</span><span class="token punctuation">{</span><span class="token parameter">e</span> <span class="token arrow operator">=></span> <span class="token function">setLastName</span><span class="token punctuation">(</span>e<span class="token punctuation">.</span><span class="token property-access">target</span><span class="token punctuation">.</span><span class="token property-access">value</span><span class="token punctuation">)</span><span class="token punctuation">}</span>
+        <span class="token operator">/</span><span class="token operator">></span>
+      <span class="token operator">&#x3C;</span><span class="token operator">/</span>label<span class="token operator">></span>
+      <span class="token operator">&#x3C;</span><span class="token maybe-class-name">Button</span>
+        disabled<span class="token operator">=</span><span class="token punctuation">{</span><span class="token operator">!</span>canLogin<span class="token punctuation">}</span>
+        onClick<span class="token operator">=</span><span class="token punctuation">{</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token arrow operator">=></span> <span class="token punctuation">{</span>
+          <span class="token function">setCurrentUser</span><span class="token punctuation">(</span><span class="token punctuation">{</span>
+            <span class="token literal-property property">name</span><span class="token operator">:</span> firstName <span class="token operator">+</span> <span class="token string">' '</span> <span class="token operator">+</span> lastName
+          <span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token punctuation">}</span><span class="token punctuation">}</span>
+      <span class="token operator">></span>
+        <span class="token maybe-class-name">Log</span> <span class="token keyword">in</span>
+      <span class="token operator">&#x3C;</span><span class="token operator">/</span><span class="token maybe-class-name">Button</span><span class="token operator">></span>
+      <span class="token punctuation">{</span><span class="token operator">!</span>canLogin <span class="token operator">&#x26;&#x26;</span> <span class="token operator">&#x3C;</span>i<span class="token operator">></span><span class="token maybe-class-name">Fill</span> <span class="token keyword">in</span> both fields<span class="token punctuation">.</span><span class="token operator">&#x3C;</span><span class="token operator">/</span>i<span class="token operator">></span><span class="token punctuation">}</span>
+    <span class="token operator">&#x3C;</span><span class="token operator">/</span><span class="token operator">></span>
+  <span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+
+<span class="token keyword">function</span> <span class="token function"><span class="token maybe-class-name">Panel</span></span><span class="token punctuation">(</span><span class="token parameter"><span class="token punctuation">{</span> title<span class="token punctuation">,</span> children <span class="token punctuation">}</span></span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  <span class="token keyword">const</span> theme <span class="token operator">=</span> <span class="token function">useContext</span><span class="token punctuation">(</span><span class="token maybe-class-name">ThemeContext</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token keyword">const</span> className <span class="token operator">=</span> <span class="token string">'panel-'</span> <span class="token operator">+</span> theme<span class="token punctuation">;</span>
+  <span class="token keyword control-flow">return</span> <span class="token punctuation">(</span>
+    <span class="token operator">&#x3C;</span>section className<span class="token operator">=</span><span class="token punctuation">{</span>className<span class="token punctuation">}</span><span class="token operator">></span>
+      <span class="token operator">&#x3C;</span>h1<span class="token operator">></span><span class="token punctuation">{</span>title<span class="token punctuation">}</span><span class="token operator">&#x3C;</span><span class="token operator">/</span>h1<span class="token operator">></span>
+      <span class="token punctuation">{</span>children<span class="token punctuation">}</span>
+    <span class="token operator">&#x3C;</span><span class="token operator">/</span>section<span class="token operator">></span>
+  <span class="token punctuation">)</span>
+<span class="token punctuation">}</span>
+
+<span class="token keyword">function</span> <span class="token function"><span class="token maybe-class-name">Button</span></span><span class="token punctuation">(</span><span class="token parameter"><span class="token punctuation">{</span> children<span class="token punctuation">,</span> disabled<span class="token punctuation">,</span> onClick <span class="token punctuation">}</span></span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  <span class="token keyword">const</span> theme <span class="token operator">=</span> <span class="token function">useContext</span><span class="token punctuation">(</span><span class="token maybe-class-name">ThemeContext</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token keyword">const</span> className <span class="token operator">=</span> <span class="token string">'button-'</span> <span class="token operator">+</span> theme<span class="token punctuation">;</span>
+  <span class="token keyword control-flow">return</span> <span class="token punctuation">(</span>
+    <span class="token operator">&#x3C;</span>button
+      className<span class="token operator">=</span><span class="token punctuation">{</span>className<span class="token punctuation">}</span>
+      disabled<span class="token operator">=</span><span class="token punctuation">{</span>disabled<span class="token punctuation">}</span>
+      onClick<span class="token operator">=</span><span class="token punctuation">{</span>onClick<span class="token punctuation">}</span>
+    <span class="token operator">></span>
+      <span class="token punctuation">{</span>children<span class="token punctuation">}</span>
+    <span class="token operator">&#x3C;</span><span class="token operator">/</span>button<span class="token operator">></span>
+  <span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span></code></pre><pre class="language-css"><code class="language-css"><span class="token selector">label</span> <span class="token punctuation">{</span>
+  <span class="token property">display</span><span class="token punctuation">:</span> block<span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+
+<span class="token selector"><span class="token class">.panel-light</span><span class="token punctuation">,</span>
+<span class="token class">.panel-dark</span></span> <span class="token punctuation">{</span>
+  <span class="token property">border</span><span class="token punctuation">:</span> <span class="token number">1</span><span class="token unit">px</span> solid <span class="token color">black</span><span class="token punctuation">;</span>
+  <span class="token property">border-radius</span><span class="token punctuation">:</span> <span class="token number">4</span><span class="token unit">px</span><span class="token punctuation">;</span>
+  <span class="token property">padding</span><span class="token punctuation">:</span> <span class="token number">20</span><span class="token unit">px</span><span class="token punctuation">;</span>
+  <span class="token property">margin-bottom</span><span class="token punctuation">:</span> <span class="token number">10</span><span class="token unit">px</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+<span class="token selector"><span class="token class">.panel-light</span></span> <span class="token punctuation">{</span>
+  <span class="token property">color</span><span class="token punctuation">:</span> <span class="token hexcode color">#222</span><span class="token punctuation">;</span>
+  <span class="token property">background</span><span class="token punctuation">:</span> <span class="token hexcode color">#fff</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+
+<span class="token selector"><span class="token class">.panel-dark</span></span> <span class="token punctuation">{</span>
+  <span class="token property">color</span><span class="token punctuation">:</span> <span class="token hexcode color">#fff</span><span class="token punctuation">;</span>
+  <span class="token property">background</span><span class="token punctuation">:</span> <span class="token color"><span class="token function">rgb</span><span class="token punctuation">(</span><span class="token number">23</span><span class="token punctuation">,</span> <span class="token number">32</span><span class="token punctuation">,</span> <span class="token number">42</span><span class="token punctuation">)</span></span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+
+<span class="token selector"><span class="token class">.button-light</span><span class="token punctuation">,</span>
+<span class="token class">.button-dark</span></span> <span class="token punctuation">{</span>
+  <span class="token property">border</span><span class="token punctuation">:</span> <span class="token number">1</span><span class="token unit">px</span> solid <span class="token hexcode color">#777</span><span class="token punctuation">;</span>
+  <span class="token property">padding</span><span class="token punctuation">:</span> <span class="token number">5</span><span class="token unit">px</span><span class="token punctuation">;</span>
+  <span class="token property">margin-right</span><span class="token punctuation">:</span> <span class="token number">10</span><span class="token unit">px</span><span class="token punctuation">;</span>
+  <span class="token property">margin-top</span><span class="token punctuation">:</span> <span class="token number">10</span><span class="token unit">px</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+
+<span class="token selector"><span class="token class">.button-dark</span></span> <span class="token punctuation">{</span>
+  <span class="token property">background</span><span class="token punctuation">:</span> <span class="token hexcode color">#222</span><span class="token punctuation">;</span>
+  <span class="token property">color</span><span class="token punctuation">:</span> <span class="token hexcode color">#fff</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+
+<span class="token selector"><span class="token class">.button-light</span></span> <span class="token punctuation">{</span>
+  <span class="token property">background</span><span class="token punctuation">:</span> <span class="token hexcode color">#fff</span><span class="token punctuation">;</span>
+  <span class="token property">color</span><span class="token punctuation">:</span> <span class="token hexcode color">#222</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span></code></pre></sandpack><solution></solution></section><section class="level4"aria-labelledby="把-provider-抽离成组件-extracting-providers-to-a-component"><h4 id="把-provider-抽离成组件-extracting-providers-to-a-component">把 provider 抽离成组件 {/<em>extracting-providers-to-a-component</em>/}</h4><p>随着你的应用增长，预计你会有一个像“金字塔”一样的 context 出现在靠近你应用的根部。这样没什么问题。然而，如果你从审美上不喜欢这种嵌套，你可以将 provider 抽离成单独的组件。在这个例子中，<code>MyProviders</code> 隐藏了“管路”，并且在需要的 provider 中渲染传递给它的子节点。请注意，<code>MyApp</code> 本身需要 <code>theme</code> 和 <code>setTheme</code> 状态，因此 <code>MyApp</code> 仍然拥有这部分的状态。</p><sandpack><pre class="language-js"><code class="language-js"><span class="token keyword module">import</span> <span class="token imports"><span class="token punctuation">{</span> createContext<span class="token punctuation">,</span> useContext<span class="token punctuation">,</span> useState <span class="token punctuation">}</span></span> <span class="token keyword module">from</span> <span class="token string">'react'</span><span class="token punctuation">;</span>
+
+<span class="token keyword">const</span> <span class="token maybe-class-name">ThemeContext</span> <span class="token operator">=</span> <span class="token function">createContext</span><span class="token punctuation">(</span><span class="token keyword null nil">null</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token keyword">const</span> <span class="token maybe-class-name">CurrentUserContext</span> <span class="token operator">=</span> <span class="token function">createContext</span><span class="token punctuation">(</span><span class="token keyword null nil">null</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+<span class="token keyword module">export</span> <span class="token keyword module">default</span> <span class="token keyword">function</span> <span class="token function"><span class="token maybe-class-name">MyApp</span></span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  <span class="token keyword">const</span> <span class="token punctuation">[</span>theme<span class="token punctuation">,</span> setTheme<span class="token punctuation">]</span> <span class="token operator">=</span> <span class="token function">useState</span><span class="token punctuation">(</span><span class="token string">'light'</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token keyword control-flow">return</span> <span class="token punctuation">(</span>
+    <span class="token operator">&#x3C;</span><span class="token maybe-class-name">MyProviders</span> theme<span class="token operator">=</span><span class="token punctuation">{</span>theme<span class="token punctuation">}</span> setTheme<span class="token operator">=</span><span class="token punctuation">{</span>setTheme<span class="token punctuation">}</span><span class="token operator">></span>
+      <span class="token operator">&#x3C;</span><span class="token maybe-class-name">WelcomePanel</span> <span class="token operator">/</span><span class="token operator">></span>
+      <span class="token operator">&#x3C;</span>label<span class="token operator">></span>
+        <span class="token operator">&#x3C;</span>input
+          type<span class="token operator">=</span><span class="token string">"checkbox"</span>
+          checked<span class="token operator">=</span><span class="token punctuation">{</span>theme <span class="token operator">===</span> <span class="token string">'dark'</span><span class="token punctuation">}</span>
+          onChange<span class="token operator">=</span><span class="token punctuation">{</span><span class="token punctuation">(</span><span class="token parameter">e</span><span class="token punctuation">)</span> <span class="token arrow operator">=></span> <span class="token punctuation">{</span>
+            <span class="token function">setTheme</span><span class="token punctuation">(</span>e<span class="token punctuation">.</span><span class="token property-access">target</span><span class="token punctuation">.</span><span class="token property-access">checked</span> <span class="token operator">?</span> <span class="token string">'dark'</span> <span class="token operator">:</span> <span class="token string">'light'</span><span class="token punctuation">)</span>
+          <span class="token punctuation">}</span><span class="token punctuation">}</span>
+        <span class="token operator">/</span><span class="token operator">></span>
+        <span class="token maybe-class-name">Use</span> dark mode
+      <span class="token operator">&#x3C;</span><span class="token operator">/</span>label<span class="token operator">></span>
+    <span class="token operator">&#x3C;</span><span class="token operator">/</span><span class="token maybe-class-name">MyProviders</span><span class="token operator">></span>
+  <span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+
+<span class="token keyword">function</span> <span class="token function"><span class="token maybe-class-name">MyProviders</span></span><span class="token punctuation">(</span><span class="token parameter"><span class="token punctuation">{</span> children<span class="token punctuation">,</span> theme<span class="token punctuation">,</span> setTheme <span class="token punctuation">}</span></span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  <span class="token keyword">const</span> <span class="token punctuation">[</span>currentUser<span class="token punctuation">,</span> setCurrentUser<span class="token punctuation">]</span> <span class="token operator">=</span> <span class="token function">useState</span><span class="token punctuation">(</span><span class="token keyword null nil">null</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token keyword control-flow">return</span> <span class="token punctuation">(</span>
+    <span class="token operator">&#x3C;</span><span class="token maybe-class-name">ThemeContext</span><span class="token punctuation">.</span><span class="token property-access"><span class="token maybe-class-name">Provider</span></span> value<span class="token operator">=</span><span class="token punctuation">{</span>theme<span class="token punctuation">}</span><span class="token operator">></span>
+      <span class="token operator">&#x3C;</span><span class="token maybe-class-name">CurrentUserContext</span><span class="token punctuation">.</span><span class="token property-access"><span class="token maybe-class-name">Provider</span></span>
+        value<span class="token operator">=</span><span class="token punctuation">{</span><span class="token punctuation">{</span>
+          currentUser<span class="token punctuation">,</span>
+          setCurrentUser
+        <span class="token punctuation">}</span><span class="token punctuation">}</span>
+      <span class="token operator">></span>
+        <span class="token punctuation">{</span>children<span class="token punctuation">}</span>
+      <span class="token operator">&#x3C;</span><span class="token operator">/</span><span class="token maybe-class-name">CurrentUserContext</span><span class="token punctuation">.</span><span class="token property-access"><span class="token maybe-class-name">Provider</span></span><span class="token operator">></span>
+    <span class="token operator">&#x3C;</span><span class="token operator">/</span><span class="token maybe-class-name">ThemeContext</span><span class="token punctuation">.</span><span class="token property-access"><span class="token maybe-class-name">Provider</span></span><span class="token operator">></span>
+  <span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+
+<span class="token keyword">function</span> <span class="token function"><span class="token maybe-class-name">WelcomePanel</span></span><span class="token punctuation">(</span><span class="token parameter"><span class="token punctuation">{</span> children <span class="token punctuation">}</span></span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  <span class="token keyword">const</span> <span class="token punctuation">{</span>currentUser<span class="token punctuation">}</span> <span class="token operator">=</span> <span class="token function">useContext</span><span class="token punctuation">(</span><span class="token maybe-class-name">CurrentUserContext</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token keyword control-flow">return</span> <span class="token punctuation">(</span>
+    <span class="token operator">&#x3C;</span><span class="token maybe-class-name">Panel</span> title<span class="token operator">=</span><span class="token string">"Welcome"</span><span class="token operator">></span>
+      <span class="token punctuation">{</span>currentUser <span class="token operator">!==</span> <span class="token keyword null nil">null</span> <span class="token operator">?</span>
+        <span class="token operator">&#x3C;</span><span class="token maybe-class-name">Greeting</span> <span class="token operator">/</span><span class="token operator">></span> <span class="token operator">:</span>
+        <span class="token operator">&#x3C;</span><span class="token maybe-class-name">LoginForm</span> <span class="token operator">/</span><span class="token operator">></span>
+      <span class="token punctuation">}</span>
+    <span class="token operator">&#x3C;</span><span class="token operator">/</span><span class="token maybe-class-name">Panel</span><span class="token operator">></span>
+  <span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+
+<span class="token keyword">function</span> <span class="token function"><span class="token maybe-class-name">Greeting</span></span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  <span class="token keyword">const</span> <span class="token punctuation">{</span>currentUser<span class="token punctuation">}</span> <span class="token operator">=</span> <span class="token function">useContext</span><span class="token punctuation">(</span><span class="token maybe-class-name">CurrentUserContext</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token keyword control-flow">return</span> <span class="token punctuation">(</span>
+    <span class="token operator">&#x3C;</span>p<span class="token operator">></span><span class="token maybe-class-name">You</span> logged <span class="token keyword">in</span> <span class="token keyword module">as</span> <span class="token punctuation">{</span>currentUser<span class="token punctuation">.</span><span class="token property-access">name</span><span class="token punctuation">}</span><span class="token punctuation">.</span><span class="token operator">&#x3C;</span><span class="token operator">/</span>p<span class="token operator">></span>
+  <span class="token punctuation">)</span>
+<span class="token punctuation">}</span>
+
+<span class="token keyword">function</span> <span class="token function"><span class="token maybe-class-name">LoginForm</span></span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  <span class="token keyword">const</span> <span class="token punctuation">{</span>setCurrentUser<span class="token punctuation">}</span> <span class="token operator">=</span> <span class="token function">useContext</span><span class="token punctuation">(</span><span class="token maybe-class-name">CurrentUserContext</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token keyword">const</span> <span class="token punctuation">[</span>firstName<span class="token punctuation">,</span> setFirstName<span class="token punctuation">]</span> <span class="token operator">=</span> <span class="token function">useState</span><span class="token punctuation">(</span><span class="token string">''</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token keyword">const</span> <span class="token punctuation">[</span>lastName<span class="token punctuation">,</span> setLastName<span class="token punctuation">]</span> <span class="token operator">=</span> <span class="token function">useState</span><span class="token punctuation">(</span><span class="token string">''</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token keyword">const</span> canLogin <span class="token operator">=</span> firstName <span class="token operator">!==</span> <span class="token string">''</span> <span class="token operator">&#x26;&#x26;</span> lastName <span class="token operator">!==</span> <span class="token string">''</span><span class="token punctuation">;</span>
+  <span class="token keyword control-flow">return</span> <span class="token punctuation">(</span>
+    <span class="token operator">&#x3C;</span><span class="token operator">></span>
+      <span class="token operator">&#x3C;</span>label<span class="token operator">></span>
+        <span class="token maybe-class-name">First</span> name<span class="token punctuation">{</span><span class="token string">': '</span><span class="token punctuation">}</span>
+        <span class="token operator">&#x3C;</span>input
+          required
+          value<span class="token operator">=</span><span class="token punctuation">{</span>firstName<span class="token punctuation">}</span>
+          onChange<span class="token operator">=</span><span class="token punctuation">{</span><span class="token parameter">e</span> <span class="token arrow operator">=></span> <span class="token function">setFirstName</span><span class="token punctuation">(</span>e<span class="token punctuation">.</span><span class="token property-access">target</span><span class="token punctuation">.</span><span class="token property-access">value</span><span class="token punctuation">)</span><span class="token punctuation">}</span>
+        <span class="token operator">/</span><span class="token operator">></span>
+      <span class="token operator">&#x3C;</span><span class="token operator">/</span>label<span class="token operator">></span>
+      <span class="token operator">&#x3C;</span>label<span class="token operator">></span>
+        <span class="token maybe-class-name">Last</span> name<span class="token punctuation">{</span><span class="token string">': '</span><span class="token punctuation">}</span>
+        <span class="token operator">&#x3C;</span>input
+        required
+          value<span class="token operator">=</span><span class="token punctuation">{</span>lastName<span class="token punctuation">}</span>
+          onChange<span class="token operator">=</span><span class="token punctuation">{</span><span class="token parameter">e</span> <span class="token arrow operator">=></span> <span class="token function">setLastName</span><span class="token punctuation">(</span>e<span class="token punctuation">.</span><span class="token property-access">target</span><span class="token punctuation">.</span><span class="token property-access">value</span><span class="token punctuation">)</span><span class="token punctuation">}</span>
+        <span class="token operator">/</span><span class="token operator">></span>
+      <span class="token operator">&#x3C;</span><span class="token operator">/</span>label<span class="token operator">></span>
+      <span class="token operator">&#x3C;</span><span class="token maybe-class-name">Button</span>
+        disabled<span class="token operator">=</span><span class="token punctuation">{</span><span class="token operator">!</span>canLogin<span class="token punctuation">}</span>
+        onClick<span class="token operator">=</span><span class="token punctuation">{</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token arrow operator">=></span> <span class="token punctuation">{</span>
+          <span class="token function">setCurrentUser</span><span class="token punctuation">(</span><span class="token punctuation">{</span>
+            <span class="token literal-property property">name</span><span class="token operator">:</span> firstName <span class="token operator">+</span> <span class="token string">' '</span> <span class="token operator">+</span> lastName
+          <span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token punctuation">}</span><span class="token punctuation">}</span>
+      <span class="token operator">></span>
+        <span class="token maybe-class-name">Log</span> <span class="token keyword">in</span>
+      <span class="token operator">&#x3C;</span><span class="token operator">/</span><span class="token maybe-class-name">Button</span><span class="token operator">></span>
+      <span class="token punctuation">{</span><span class="token operator">!</span>canLogin <span class="token operator">&#x26;&#x26;</span> <span class="token operator">&#x3C;</span>i<span class="token operator">></span><span class="token maybe-class-name">Fill</span> <span class="token keyword">in</span> both fields<span class="token punctuation">.</span><span class="token operator">&#x3C;</span><span class="token operator">/</span>i<span class="token operator">></span><span class="token punctuation">}</span>
+    <span class="token operator">&#x3C;</span><span class="token operator">/</span><span class="token operator">></span>
+  <span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+
+<span class="token keyword">function</span> <span class="token function"><span class="token maybe-class-name">Panel</span></span><span class="token punctuation">(</span><span class="token parameter"><span class="token punctuation">{</span> title<span class="token punctuation">,</span> children <span class="token punctuation">}</span></span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  <span class="token keyword">const</span> theme <span class="token operator">=</span> <span class="token function">useContext</span><span class="token punctuation">(</span><span class="token maybe-class-name">ThemeContext</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token keyword">const</span> className <span class="token operator">=</span> <span class="token string">'panel-'</span> <span class="token operator">+</span> theme<span class="token punctuation">;</span>
+  <span class="token keyword control-flow">return</span> <span class="token punctuation">(</span>
+    <span class="token operator">&#x3C;</span>section className<span class="token operator">=</span><span class="token punctuation">{</span>className<span class="token punctuation">}</span><span class="token operator">></span>
+      <span class="token operator">&#x3C;</span>h1<span class="token operator">></span><span class="token punctuation">{</span>title<span class="token punctuation">}</span><span class="token operator">&#x3C;</span><span class="token operator">/</span>h1<span class="token operator">></span>
+      <span class="token punctuation">{</span>children<span class="token punctuation">}</span>
+    <span class="token operator">&#x3C;</span><span class="token operator">/</span>section<span class="token operator">></span>
+  <span class="token punctuation">)</span>
+<span class="token punctuation">}</span>
+
+<span class="token keyword">function</span> <span class="token function"><span class="token maybe-class-name">Button</span></span><span class="token punctuation">(</span><span class="token parameter"><span class="token punctuation">{</span> children<span class="token punctuation">,</span> disabled<span class="token punctuation">,</span> onClick <span class="token punctuation">}</span></span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  <span class="token keyword">const</span> theme <span class="token operator">=</span> <span class="token function">useContext</span><span class="token punctuation">(</span><span class="token maybe-class-name">ThemeContext</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token keyword">const</span> className <span class="token operator">=</span> <span class="token string">'button-'</span> <span class="token operator">+</span> theme<span class="token punctuation">;</span>
+  <span class="token keyword control-flow">return</span> <span class="token punctuation">(</span>
+    <span class="token operator">&#x3C;</span>button
+      className<span class="token operator">=</span><span class="token punctuation">{</span>className<span class="token punctuation">}</span>
+      disabled<span class="token operator">=</span><span class="token punctuation">{</span>disabled<span class="token punctuation">}</span>
+      onClick<span class="token operator">=</span><span class="token punctuation">{</span>onClick<span class="token punctuation">}</span>
+    <span class="token operator">></span>
+      <span class="token punctuation">{</span>children<span class="token punctuation">}</span>
+    <span class="token operator">&#x3C;</span><span class="token operator">/</span>button<span class="token operator">></span>
+  <span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span></code></pre><pre class="language-css"><code class="language-css"><span class="token selector">label</span> <span class="token punctuation">{</span>
+  <span class="token property">display</span><span class="token punctuation">:</span> block<span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+
+<span class="token selector"><span class="token class">.panel-light</span><span class="token punctuation">,</span>
+<span class="token class">.panel-dark</span></span> <span class="token punctuation">{</span>
+  <span class="token property">border</span><span class="token punctuation">:</span> <span class="token number">1</span><span class="token unit">px</span> solid <span class="token color">black</span><span class="token punctuation">;</span>
+  <span class="token property">border-radius</span><span class="token punctuation">:</span> <span class="token number">4</span><span class="token unit">px</span><span class="token punctuation">;</span>
+  <span class="token property">padding</span><span class="token punctuation">:</span> <span class="token number">20</span><span class="token unit">px</span><span class="token punctuation">;</span>
+  <span class="token property">margin-bottom</span><span class="token punctuation">:</span> <span class="token number">10</span><span class="token unit">px</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+<span class="token selector"><span class="token class">.panel-light</span></span> <span class="token punctuation">{</span>
+  <span class="token property">color</span><span class="token punctuation">:</span> <span class="token hexcode color">#222</span><span class="token punctuation">;</span>
+  <span class="token property">background</span><span class="token punctuation">:</span> <span class="token hexcode color">#fff</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+
+<span class="token selector"><span class="token class">.panel-dark</span></span> <span class="token punctuation">{</span>
+  <span class="token property">color</span><span class="token punctuation">:</span> <span class="token hexcode color">#fff</span><span class="token punctuation">;</span>
+  <span class="token property">background</span><span class="token punctuation">:</span> <span class="token color"><span class="token function">rgb</span><span class="token punctuation">(</span><span class="token number">23</span><span class="token punctuation">,</span> <span class="token number">32</span><span class="token punctuation">,</span> <span class="token number">42</span><span class="token punctuation">)</span></span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+
+<span class="token selector"><span class="token class">.button-light</span><span class="token punctuation">,</span>
+<span class="token class">.button-dark</span></span> <span class="token punctuation">{</span>
+  <span class="token property">border</span><span class="token punctuation">:</span> <span class="token number">1</span><span class="token unit">px</span> solid <span class="token hexcode color">#777</span><span class="token punctuation">;</span>
+  <span class="token property">padding</span><span class="token punctuation">:</span> <span class="token number">5</span><span class="token unit">px</span><span class="token punctuation">;</span>
+  <span class="token property">margin-right</span><span class="token punctuation">:</span> <span class="token number">10</span><span class="token unit">px</span><span class="token punctuation">;</span>
+  <span class="token property">margin-top</span><span class="token punctuation">:</span> <span class="token number">10</span><span class="token unit">px</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+
+<span class="token selector"><span class="token class">.button-dark</span></span> <span class="token punctuation">{</span>
+  <span class="token property">background</span><span class="token punctuation">:</span> <span class="token hexcode color">#222</span><span class="token punctuation">;</span>
+  <span class="token property">color</span><span class="token punctuation">:</span> <span class="token hexcode color">#fff</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+
+<span class="token selector"><span class="token class">.button-light</span></span> <span class="token punctuation">{</span>
+  <span class="token property">background</span><span class="token punctuation">:</span> <span class="token hexcode color">#fff</span><span class="token punctuation">;</span>
+  <span class="token property">color</span><span class="token punctuation">:</span> <span class="token hexcode color">#222</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span></code></pre></sandpack><solution></solution></section><section class="level4"aria-labelledby="使用-context-和-reducer-进行扩展-scaling-up-with-context-and-a-reducer"><h4 id="使用-context-和-reducer-进行扩展-scaling-up-with-context-and-a-reducer">使用 context 和 reducer 进行扩展 {/<em>scaling-up-with-context-and-a-reducer</em>/}</h4><p>在大型应用程序中，通常将 context 和 <a href="/reference/react/useReducer">reducer</a> 结合起来从组件中抽离与某种状态相关的逻辑。在本例中，所有的“线路”都隐藏在 <code>TasksContext.js</code> 中，它包含一个 reducer 和两个单独 context。<p>阅读这个例子的 <a href="/learn/scaling-up-with-reducer-and-context">完整演示。</a></p><sandpack><pre class="language-js"><code class="language-js"><span class="token keyword module">import</span> <span class="token imports"><span class="token maybe-class-name">AddTask</span></span> <span class="token keyword module">from</span> <span class="token string">'./AddTask.js'</span><span class="token punctuation">;</span>
+<span class="token keyword module">import</span> <span class="token imports"><span class="token maybe-class-name">TaskList</span></span> <span class="token keyword module">from</span> <span class="token string">'./TaskList.js'</span><span class="token punctuation">;</span>
+<span class="token keyword module">import</span> <span class="token imports"><span class="token punctuation">{</span> <span class="token maybe-class-name">TasksProvider</span> <span class="token punctuation">}</span></span> <span class="token keyword module">from</span> <span class="token string">'./TasksContext.js'</span><span class="token punctuation">;</span>
+
+<span class="token keyword module">export</span> <span class="token keyword module">default</span> <span class="token keyword">function</span> <span class="token function"><span class="token maybe-class-name">TaskApp</span></span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  <span class="token keyword control-flow">return</span> <span class="token punctuation">(</span>
+    <span class="token operator">&#x3C;</span><span class="token maybe-class-name">TasksProvider</span><span class="token operator">></span>
+      <span class="token operator">&#x3C;</span>h1<span class="token operator">></span><span class="token maybe-class-name">Day</span> off <span class="token keyword">in</span> <span class="token maybe-class-name">Kyoto</span><span class="token operator">&#x3C;</span><span class="token operator">/</span>h1<span class="token operator">></span>
+      <span class="token operator">&#x3C;</span><span class="token maybe-class-name">AddTask</span> <span class="token operator">/</span><span class="token operator">></span>
+      <span class="token operator">&#x3C;</span><span class="token maybe-class-name">TaskList</span> <span class="token operator">/</span><span class="token operator">></span>
+    <span class="token operator">&#x3C;</span><span class="token operator">/</span><span class="token maybe-class-name">TasksProvider</span><span class="token operator">></span>
+  <span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span></code></pre><pre class="language-js"><code class="language-js"><span class="token keyword module">import</span> <span class="token imports"><span class="token punctuation">{</span> createContext<span class="token punctuation">,</span> useContext<span class="token punctuation">,</span> useReducer <span class="token punctuation">}</span></span> <span class="token keyword module">from</span> <span class="token string">'react'</span><span class="token punctuation">;</span>
+
+<span class="token keyword">const</span> <span class="token maybe-class-name">TasksContext</span> <span class="token operator">=</span> <span class="token function">createContext</span><span class="token punctuation">(</span><span class="token keyword null nil">null</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+<span class="token keyword">const</span> <span class="token maybe-class-name">TasksDispatchContext</span> <span class="token operator">=</span> <span class="token function">createContext</span><span class="token punctuation">(</span><span class="token keyword null nil">null</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+<span class="token keyword module">export</span> <span class="token keyword">function</span> <span class="token function"><span class="token maybe-class-name">TasksProvider</span></span><span class="token punctuation">(</span><span class="token parameter"><span class="token punctuation">{</span> children <span class="token punctuation">}</span></span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  <span class="token keyword">const</span> <span class="token punctuation">[</span>tasks<span class="token punctuation">,</span> dispatch<span class="token punctuation">]</span> <span class="token operator">=</span> <span class="token function">useReducer</span><span class="token punctuation">(</span>
+    tasksReducer<span class="token punctuation">,</span>
+    initialTasks
+  <span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+  <span class="token keyword control-flow">return</span> <span class="token punctuation">(</span>
+    <span class="token operator">&#x3C;</span><span class="token maybe-class-name">TasksContext</span><span class="token punctuation">.</span><span class="token property-access"><span class="token maybe-class-name">Provider</span></span> value<span class="token operator">=</span><span class="token punctuation">{</span>tasks<span class="token punctuation">}</span><span class="token operator">></span>
+      <span class="token operator">&#x3C;</span><span class="token maybe-class-name">TasksDispatchContext</span><span class="token punctuation">.</span><span class="token property-access"><span class="token maybe-class-name">Provider</span></span> value<span class="token operator">=</span><span class="token punctuation">{</span>dispatch<span class="token punctuation">}</span><span class="token operator">></span>
+        <span class="token punctuation">{</span>children<span class="token punctuation">}</span>
+      <span class="token operator">&#x3C;</span><span class="token operator">/</span><span class="token maybe-class-name">TasksDispatchContext</span><span class="token punctuation">.</span><span class="token property-access"><span class="token maybe-class-name">Provider</span></span><span class="token operator">></span>
+    <span class="token operator">&#x3C;</span><span class="token operator">/</span><span class="token maybe-class-name">TasksContext</span><span class="token punctuation">.</span><span class="token property-access"><span class="token maybe-class-name">Provider</span></span><span class="token operator">></span>
+  <span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+
+<span class="token keyword module">export</span> <span class="token keyword">function</span> <span class="token function">useTasks</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  <span class="token keyword control-flow">return</span> <span class="token function">useContext</span><span class="token punctuation">(</span><span class="token maybe-class-name">TasksContext</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+
+<span class="token keyword module">export</span> <span class="token keyword">function</span> <span class="token function">useTasksDispatch</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  <span class="token keyword control-flow">return</span> <span class="token function">useContext</span><span class="token punctuation">(</span><span class="token maybe-class-name">TasksDispatchContext</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+
+<span class="token keyword">function</span> <span class="token function">tasksReducer</span><span class="token punctuation">(</span><span class="token parameter">tasks<span class="token punctuation">,</span> action</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  <span class="token keyword control-flow">switch</span> <span class="token punctuation">(</span>action<span class="token punctuation">.</span><span class="token property-access">type</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token keyword">case</span> <span class="token string">'added'</span><span class="token operator">:</span> <span class="token punctuation">{</span>
+      <span class="token keyword control-flow">return</span> <span class="token punctuation">[</span><span class="token spread operator">...</span>tasks<span class="token punctuation">,</span> <span class="token punctuation">{</span>
+        <span class="token literal-property property">text</span><span class="token operator">:</span> action<span class="token punctuation">.</span><span class="token property-access">text</span><span class="token punctuation">,</span>
+        <span class="token literal-property property">done</span><span class="token operator">:</span> <span class="token boolean">false</span>
+      <span class="token punctuation">}</span><span class="token punctuation">]</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+    <span class="token keyword">case</span> <span class="token string">'changed'</span><span class="token operator">:</span> <span class="token punctuation">{</span>
+      <span class="token keyword control-flow">return</span> tasks<span class="token punctuation">.</span><span class="token method function property-access">map</span><span class="token punctuation">(</span><span class="token parameter">t</span> <span class="token arrow operator">=></span> <span class="token punctuation">{</span>
+        <span class="token keyword control-flow">if</span> <span class="token punctuation">(</span>t<span class="token punctuation">.</span><span class="token property-access">id</span> <span class="token operator">===</span> action<span class="token punctuation">.</span><span class="token property-access">task</span><span class="token punctuation">.</span><span class="token property-access">id</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+          <span class="token keyword control-flow">return</span> action<span class="token punctuation">.</span><span class="token property-access">task</span><span class="token punctuation">;</span>
+        <span class="token punctuation">}</span> <span class="token keyword control-flow">else</span> <span class="token punctuation">{</span>
+          <span class="token keyword control-flow">return</span> t<span class="token punctuation">;</span>
+        <span class="token punctuation">}</span>
+      <span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+    <span class="token keyword">case</span> <span class="token string">'deleted'</span><span class="token operator">:</span> <span class="token punctuation">{</span>
+      <span class="token keyword control-flow">return</span> tasks<span class="token punctuation">.</span><span class="token method function property-access">filter</span><span class="token punctuation">(</span><span class="token parameter">t</span> <span class="token arrow operator">=></span> t<span class="token punctuation">.</span><span class="token property-access">id</span> <span class="token operator">!==</span> action<span class="token punctuation">.</span><span class="token property-access">id</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+    <span class="token keyword module">default</span><span class="token operator">:</span> <span class="token punctuation">{</span>
+      <span class="token keyword control-flow">throw</span> <span class="token known-class-name class-name">Error</span><span class="token punctuation">(</span><span class="token string">'Unknown action: '</span> <span class="token operator">+</span> action<span class="token punctuation">.</span><span class="token property-access">type</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+  <span class="token punctuation">}</span>
+<span class="token punctuation">}</span>
+
+<span class="token keyword">const</span> initialTasks <span class="token operator">=</span> <span class="token punctuation">[</span>
+<span class="token punctuation">]</span><span class="token punctuation">;</span></code></pre><pre class="language-js"><code class="language-js"><span class="token keyword module">import</span> <span class="token imports"><span class="token punctuation">{</span> useState<span class="token punctuation">,</span> useContext <span class="token punctuation">}</span></span> <span class="token keyword module">from</span> <span class="token string">'react'</span><span class="token punctuation">;</span>
+<span class="token keyword module">import</span> <span class="token imports"><span class="token punctuation">{</span> useTasksDispatch <span class="token punctuation">}</span></span> <span class="token keyword module">from</span> <span class="token string">'./TasksContext.js'</span><span class="token punctuation">;</span>
+
+<span class="token keyword module">export</span> <span class="token keyword module">default</span> <span class="token keyword">function</span> <span class="token function"><span class="token maybe-class-name">AddTask</span></span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  <span class="token keyword">const</span> <span class="token punctuation">[</span>text<span class="token punctuation">,</span> setText<span class="token punctuation">]</span> <span class="token operator">=</span> <span class="token function">useState</span><span class="token punctuation">(</span><span class="token string">''</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token keyword">const</span> dispatch <span class="token operator">=</span> <span class="token function">useTasksDispatch</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token keyword control-flow">return</span> <span class="token punctuation">(</span>
+    <span class="token operator">&#x3C;</span><span class="token operator">></span>
+      <span class="token operator">&#x3C;</span>input
+        placeholder<span class="token operator">=</span><span class="token string">"Add task"</span>
+        value<span class="token operator">=</span><span class="token punctuation">{</span>text<span class="token punctuation">}</span>
+        onChange<span class="token operator">=</span><span class="token punctuation">{</span><span class="token parameter">e</span> <span class="token arrow operator">=></span> <span class="token function">setText</span><span class="token punctuation">(</span>e<span class="token punctuation">.</span><span class="token property-access">target</span><span class="token punctuation">.</span><span class="token property-access">value</span><span class="token punctuation">)</span><span class="token punctuation">}</span>
+      <span class="token operator">/</span><span class="token operator">></span>
+      <span class="token operator">&#x3C;</span>button onClick<span class="token operator">=</span><span class="token punctuation">{</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token arrow operator">=></span> <span class="token punctuation">{</span>
+        <span class="token function">setText</span><span class="token punctuation">(</span><span class="token string">''</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token function">dispatch</span><span class="token punctuation">(</span><span class="token punctuation">{</span>
+          <span class="token literal-property property">type</span><span class="token operator">:</span> <span class="token string">'added'</span><span class="token punctuation">,</span>
+          <span class="token literal-property property">text</span><span class="token operator">:</span> text<span class="token punctuation">,</span>
+        <span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">;</span> 
+      <span class="token punctuation">}</span><span class="token punctuation">}</span><span class="token operator">></span><span class="token maybe-class-name">Add</span><span class="token operator">&#x3C;</span><span class="token operator">/</span>button<span class="token operator">></span>
+    <span class="token operator">&#x3C;</span><span class="token operator">/</span><span class="token operator">></span>
+  <span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+
+<span class="token keyword">let</span> nextId <span class="token operator">=</span> <span class="token number">3</span><span class="token punctuation">;</span></code></pre><pre class="language-js"><code class="language-js"><span class="token keyword module">import</span> <span class="token imports"><span class="token punctuation">{</span> useState<span class="token punctuation">,</span> useContext <span class="token punctuation">}</span></span> <span class="token keyword module">from</span> <span class="token string">'react'</span><span class="token punctuation">;</span>
+<span class="token keyword module">import</span> <span class="token imports"><span class="token punctuation">{</span> useTasks<span class="token punctuation">,</span> useTasksDispatch <span class="token punctuation">}</span></span> <span class="token keyword module">from</span> <span class="token string">'./TasksContext.js'</span><span class="token punctuation">;</span>
+
+<span class="token keyword module">export</span> <span class="token keyword module">default</span> <span class="token keyword">function</span> <span class="token function"><span class="token maybe-class-name">TaskList</span></span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  <span class="token keyword">const</span> tasks <span class="token operator">=</span> <span class="token function">useTasks</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token keyword control-flow">return</span> <span class="token punctuation">(</span>
+    <span class="token operator">&#x3C;</span>ul<span class="token operator">></span>
+      <span class="token punctuation">{</span>tasks<span class="token punctuation">.</span><span class="token method function property-access">map</span><span class="token punctuation">(</span><span class="token parameter">task</span> <span class="token arrow operator">=></span> <span class="token punctuation">(</span>
+        <span class="token operator">&#x3C;</span>li key<span class="token operator">=</span><span class="token punctuation">{</span>task<span class="token punctuation">.</span><span class="token property-access">id</span><span class="token punctuation">}</span><span class="token operator">></span>
+          <span class="token operator">&#x3C;</span><span class="token maybe-class-name">Task</span> task<span class="token operator">=</span><span class="token punctuation">{</span>task<span class="token punctuation">}</span> <span class="token operator">/</span><span class="token operator">></span>
+        <span class="token operator">&#x3C;</span><span class="token operator">/</span>li<span class="token operator">></span>
+      <span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">}</span>
+    <span class="token operator">&#x3C;</span><span class="token operator">/</span>ul<span class="token operator">></span>
+  <span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+
+<span class="token keyword">function</span> <span class="token function"><span class="token maybe-class-name">Task</span></span><span class="token punctuation">(</span><span class="token parameter"><span class="token punctuation">{</span> task <span class="token punctuation">}</span></span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  <span class="token keyword">const</span> <span class="token punctuation">[</span>isEditing<span class="token punctuation">,</span> setIsEditing<span class="token punctuation">]</span> <span class="token operator">=</span> <span class="token function">useState</span><span class="token punctuation">(</span><span class="token boolean">false</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token keyword">const</span> dispatch <span class="token operator">=</span> <span class="token function">useTasksDispatch</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token keyword">let</span> taskContent<span class="token punctuation">;</span>
+  <span class="token keyword control-flow">if</span> <span class="token punctuation">(</span>isEditing<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    taskContent <span class="token operator">=</span> <span class="token punctuation">(</span>
+      <span class="token operator">&#x3C;</span><span class="token operator">></span>
+        <span class="token operator">&#x3C;</span>input
+          value<span class="token operator">=</span><span class="token punctuation">{</span>task<span class="token punctuation">.</span><span class="token property-access">text</span><span class="token punctuation">}</span>
+          onChange<span class="token operator">=</span><span class="token punctuation">{</span><span class="token parameter">e</span> <span class="token arrow operator">=></span> <span class="token punctuation">{</span>
+            <span class="token function">dispatch</span><span class="token punctuation">(</span><span class="token punctuation">{</span>
+              <span class="token literal-property property">type</span><span class="token operator">:</span> <span class="token string">'changed'</span><span class="token punctuation">,</span>
+              <span class="token literal-property property">task</span><span class="token operator">:</span> <span class="token punctuation">{</span>
+                <span class="token spread operator">...</span>task<span class="token punctuation">,</span>
+                <span class="token literal-property property">text</span><span class="token operator">:</span> e<span class="token punctuation">.</span><span class="token property-access">target</span><span class="token punctuation">.</span><span class="token property-access">value</span>
+              <span class="token punctuation">}</span>
+            <span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+          <span class="token punctuation">}</span><span class="token punctuation">}</span> <span class="token operator">/</span><span class="token operator">></span>
+        <span class="token operator">&#x3C;</span>button onClick<span class="token operator">=</span><span class="token punctuation">{</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token arrow operator">=></span> <span class="token function">setIsEditing</span><span class="token punctuation">(</span><span class="token boolean">false</span><span class="token punctuation">)</span><span class="token punctuation">}</span><span class="token operator">></span>
+          <span class="token maybe-class-name">Save</span>
+        <span class="token operator">&#x3C;</span><span class="token operator">/</span>button<span class="token operator">></span>
+      <span class="token operator">&#x3C;</span><span class="token operator">/</span><span class="token operator">></span>
+    <span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token punctuation">}</span> <span class="token keyword control-flow">else</span> <span class="token punctuation">{</span>
+    taskContent <span class="token operator">=</span> <span class="token punctuation">(</span>
+      <span class="token operator">&#x3C;</span><span class="token operator">></span>
+        <span class="token punctuation">{</span>task<span class="token punctuation">.</span><span class="token property-access">text</span><span class="token punctuation">}</span>
+        <span class="token operator">&#x3C;</span>button onClick<span class="token operator">=</span><span class="token punctuation">{</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token arrow operator">=></span> <span class="token function">setIsEditing</span><span class="token punctuation">(</span><span class="token boolean">true</span><span class="token punctuation">)</span><span class="token punctuation">}</span><span class="token operator">></span>
+          <span class="token maybe-class-name">Edit</span>
+        <span class="token operator">&#x3C;</span><span class="token operator">/</span>button<span class="token operator">></span>
+      <span class="token operator">&#x3C;</span><span class="token operator">/</span><span class="token operator">></span>
+    <span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token punctuation">}</span>
+  <span class="token keyword control-flow">return</span> <span class="token punctuation">(</span>
+    <span class="token operator">&#x3C;</span>label<span class="token operator">></span>
+      <span class="token operator">&#x3C;</span>input
+        type<span class="token operator">=</span><span class="token string">"checkbox"</span>
+        checked<span class="token operator">=</span><span class="token punctuation">{</span>task<span class="token punctuation">.</span><span class="token property-access">done</span><span class="token punctuation">}</span>
+        onChange<span class="token operator">=</span><span class="token punctuation">{</span><span class="token parameter">e</span> <span class="token arrow operator">=></span> <span class="token punctuation">{</span>
+          <span class="token function">dispatch</span><span class="token punctuation">(</span><span class="token punctuation">{</span>
+            <span class="token literal-property property">type</span><span class="token operator">:</span> <span class="token string">'changed'</span><span class="token punctuation">,</span>
+            <span class="token literal-property property">task</span><span class="token operator">:</span> <span class="token punctuation">{</span>
+              <span class="token spread operator">...</span>task<span class="token punctuation">,</span>
+              <span class="token literal-property property">done</span><span class="token operator">:</span> e<span class="token punctuation">.</span><span class="token property-access">target</span><span class="token punctuation">.</span><span class="token property-access">checked</span>
+            <span class="token punctuation">}</span>
+          <span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token punctuation">}</span><span class="token punctuation">}</span>
+      <span class="token operator">/</span><span class="token operator">></span>
+      <span class="token punctuation">{</span>taskContent<span class="token punctuation">}</span>
+      <span class="token operator">&#x3C;</span>button onClick<span class="token operator">=</span><span class="token punctuation">{</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token arrow operator">=></span> <span class="token punctuation">{</span>
+        <span class="token function">dispatch</span><span class="token punctuation">(</span><span class="token punctuation">{</span>
+          <span class="token literal-property property">type</span><span class="token operator">:</span> <span class="token string">'deleted'</span><span class="token punctuation">,</span>
+        <span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+      <span class="token punctuation">}</span><span class="token punctuation">}</span><span class="token operator">></span>
+        <span class="token maybe-class-name">Delete</span>
+      <span class="token operator">&#x3C;</span><span class="token operator">/</span>button<span class="token operator">></span>
+    <span class="token operator">&#x3C;</span><span class="token operator">/</span>label<span class="token operator">></span>
+  <span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span></code></pre><pre class="language-css"><code class="language-css"><span class="token selector">button</span> <span class="token punctuation">{</span> <span class="token property">margin</span><span class="token punctuation">:</span> <span class="token number">5</span><span class="token unit">px</span><span class="token punctuation">;</span> <span class="token punctuation">}</span>
+<span class="token selector">li</span> <span class="token punctuation">{</span> <span class="token property">list-style-type</span><span class="token punctuation">:</span> none<span class="token punctuation">;</span> <span class="token punctuation">}</span>
+<span class="token selector">ul<span class="token punctuation">,</span> li</span> <span class="token punctuation">{</span> <span class="token property">margin</span><span class="token punctuation">:</span> <span class="token number">0</span><span class="token punctuation">;</span> <span class="token property">padding</span><span class="token punctuation">:</span> <span class="token number">0</span><span class="token punctuation">;</span> <span class="token punctuation">}</span></code></pre></sandpack><solution></solution></section></recipes></section><section class="level3"aria-labelledby="指定回退默认值-specifying-a-fallback-default-value"><h3 id="指定回退默认值-specifying-a-fallback-default-value">指定回退默认值 {/<em>specifying-a-fallback-default-value</em>/}</h3><p>如果 React 没有在父树中找到该特定<codestep step="{1}">context</codestep>的任何 provider，<code>useContext()</code> 返回的 context 值将等于你在 <a href="/reference/react/createContext">创建 context</a> 时指定的<codestep step="{3}">默认值</codestep>：<pre class="language-js"><code class="language-js"><span class="token keyword">const</span> <span class="token maybe-class-name">ThemeContext</span> <span class="token operator">=</span> <span class="token function">createContext</span><span class="token punctuation">(</span><span class="token keyword null nil">null</span><span class="token punctuation">)</span><span class="token punctuation">;</span></code></pre><p>默认值 <strong>从不改变</strong>。如果你想要更新 context，请按 <a href="#updating-data-passed-via-context">上述方式</a> 将其与状态一起使用。<p>通常，除了 <code>null</code>，还有一些更有意义的值可以用作默认值，例如：<pre class="language-js"><code class="language-js"><span class="token keyword">const</span> <span class="token maybe-class-name">ThemeContext</span> <span class="token operator">=</span> <span class="token function">createContext</span><span class="token punctuation">(</span><span class="token string">'light'</span><span class="token punctuation">)</span><span class="token punctuation">;</span></code></pre><p>这样，如果你不小心渲染了没有相应 provider 的某个组件，它也不会出错。这也有助于你的组件在测试环境中很好地运行，而无需在测试中设置许多 provider。<p>在下面的例子中，“Toggle theme”按钮总是处于 light 状态，因为它位于 <strong>任何主题的 context provider 之外</strong>，且 context 主题的默认值是 <code>'light'</code>。试着编辑默认主题为 <code>'dark'</code>。</p><sandpack><pre class="language-js"><code class="language-js"><span class="token keyword module">import</span> <span class="token imports"><span class="token punctuation">{</span> createContext<span class="token punctuation">,</span> useContext<span class="token punctuation">,</span> useState <span class="token punctuation">}</span></span> <span class="token keyword module">from</span> <span class="token string">'react'</span><span class="token punctuation">;</span>
+
+<span class="token keyword">const</span> <span class="token maybe-class-name">ThemeContext</span> <span class="token operator">=</span> <span class="token function">createContext</span><span class="token punctuation">(</span><span class="token string">'light'</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+<span class="token keyword module">export</span> <span class="token keyword module">default</span> <span class="token keyword">function</span> <span class="token function"><span class="token maybe-class-name">MyApp</span></span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  <span class="token keyword">const</span> <span class="token punctuation">[</span>theme<span class="token punctuation">,</span> setTheme<span class="token punctuation">]</span> <span class="token operator">=</span> <span class="token function">useState</span><span class="token punctuation">(</span><span class="token string">'light'</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token keyword control-flow">return</span> <span class="token punctuation">(</span>
+    <span class="token operator">&#x3C;</span><span class="token operator">></span>
+      <span class="token operator">&#x3C;</span><span class="token maybe-class-name">ThemeContext</span><span class="token punctuation">.</span><span class="token property-access"><span class="token maybe-class-name">Provider</span></span> value<span class="token operator">=</span><span class="token punctuation">{</span>theme<span class="token punctuation">}</span><span class="token operator">></span>
+        <span class="token operator">&#x3C;</span><span class="token maybe-class-name">Form</span> <span class="token operator">/</span><span class="token operator">></span>
+      <span class="token operator">&#x3C;</span><span class="token operator">/</span><span class="token maybe-class-name">ThemeContext</span><span class="token punctuation">.</span><span class="token property-access"><span class="token maybe-class-name">Provider</span></span><span class="token operator">></span>
+      <span class="token operator">&#x3C;</span><span class="token maybe-class-name">Button</span> onClick<span class="token operator">=</span><span class="token punctuation">{</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token arrow operator">=></span> <span class="token punctuation">{</span>
+        <span class="token function">setTheme</span><span class="token punctuation">(</span>theme <span class="token operator">===</span> <span class="token string">'dark'</span> <span class="token operator">?</span> <span class="token string">'light'</span> <span class="token operator">:</span> <span class="token string">'dark'</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+      <span class="token punctuation">}</span><span class="token punctuation">}</span><span class="token operator">></span>
+        <span class="token maybe-class-name">Toggle</span> theme
+      <span class="token operator">&#x3C;</span><span class="token operator">/</span><span class="token maybe-class-name">Button</span><span class="token operator">></span>
+    <span class="token operator">&#x3C;</span><span class="token operator">/</span><span class="token operator">></span>
+  <span class="token punctuation">)</span>
+<span class="token punctuation">}</span>
+
+<span class="token keyword">function</span> <span class="token function"><span class="token maybe-class-name">Form</span></span><span class="token punctuation">(</span><span class="token parameter"><span class="token punctuation">{</span> children <span class="token punctuation">}</span></span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  <span class="token keyword control-flow">return</span> <span class="token punctuation">(</span>
+    <span class="token operator">&#x3C;</span><span class="token maybe-class-name">Panel</span> title<span class="token operator">=</span><span class="token string">"Welcome"</span><span class="token operator">></span>
+      <span class="token operator">&#x3C;</span><span class="token maybe-class-name">Button</span><span class="token operator">></span><span class="token maybe-class-name">Sign</span> up<span class="token operator">&#x3C;</span><span class="token operator">/</span><span class="token maybe-class-name">Button</span><span class="token operator">></span>
+      <span class="token operator">&#x3C;</span><span class="token maybe-class-name">Button</span><span class="token operator">></span><span class="token maybe-class-name">Log</span> <span class="token keyword">in</span><span class="token operator">&#x3C;</span><span class="token operator">/</span><span class="token maybe-class-name">Button</span><span class="token operator">></span>
+    <span class="token operator">&#x3C;</span><span class="token operator">/</span><span class="token maybe-class-name">Panel</span><span class="token operator">></span>
+  <span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+
+<span class="token keyword">function</span> <span class="token function"><span class="token maybe-class-name">Panel</span></span><span class="token punctuation">(</span><span class="token parameter"><span class="token punctuation">{</span> title<span class="token punctuation">,</span> children <span class="token punctuation">}</span></span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  <span class="token keyword">const</span> theme <span class="token operator">=</span> <span class="token function">useContext</span><span class="token punctuation">(</span><span class="token maybe-class-name">ThemeContext</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token keyword">const</span> className <span class="token operator">=</span> <span class="token string">'panel-'</span> <span class="token operator">+</span> theme<span class="token punctuation">;</span>
+  <span class="token keyword control-flow">return</span> <span class="token punctuation">(</span>
+    <span class="token operator">&#x3C;</span>section className<span class="token operator">=</span><span class="token punctuation">{</span>className<span class="token punctuation">}</span><span class="token operator">></span>
+      <span class="token operator">&#x3C;</span>h1<span class="token operator">></span><span class="token punctuation">{</span>title<span class="token punctuation">}</span><span class="token operator">&#x3C;</span><span class="token operator">/</span>h1<span class="token operator">></span>
+      <span class="token punctuation">{</span>children<span class="token punctuation">}</span>
+    <span class="token operator">&#x3C;</span><span class="token operator">/</span>section<span class="token operator">></span>
+  <span class="token punctuation">)</span>
+<span class="token punctuation">}</span>
+
+<span class="token keyword">function</span> <span class="token function"><span class="token maybe-class-name">Button</span></span><span class="token punctuation">(</span><span class="token parameter"><span class="token punctuation">{</span> children<span class="token punctuation">,</span> onClick <span class="token punctuation">}</span></span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  <span class="token keyword">const</span> theme <span class="token operator">=</span> <span class="token function">useContext</span><span class="token punctuation">(</span><span class="token maybe-class-name">ThemeContext</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token keyword">const</span> className <span class="token operator">=</span> <span class="token string">'button-'</span> <span class="token operator">+</span> theme<span class="token punctuation">;</span>
+  <span class="token keyword control-flow">return</span> <span class="token punctuation">(</span>
+    <span class="token operator">&#x3C;</span>button className<span class="token operator">=</span><span class="token punctuation">{</span>className<span class="token punctuation">}</span> onClick<span class="token operator">=</span><span class="token punctuation">{</span>onClick<span class="token punctuation">}</span><span class="token operator">></span>
+      <span class="token punctuation">{</span>children<span class="token punctuation">}</span>
+    <span class="token operator">&#x3C;</span><span class="token operator">/</span>button<span class="token operator">></span>
+  <span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span></code></pre><pre class="language-css"><code class="language-css"><span class="token selector"><span class="token class">.panel-light</span><span class="token punctuation">,</span>
+<span class="token class">.panel-dark</span></span> <span class="token punctuation">{</span>
+  <span class="token property">border</span><span class="token punctuation">:</span> <span class="token number">1</span><span class="token unit">px</span> solid <span class="token color">black</span><span class="token punctuation">;</span>
+  <span class="token property">border-radius</span><span class="token punctuation">:</span> <span class="token number">4</span><span class="token unit">px</span><span class="token punctuation">;</span>
+  <span class="token property">padding</span><span class="token punctuation">:</span> <span class="token number">20</span><span class="token unit">px</span><span class="token punctuation">;</span>
+  <span class="token property">margin-bottom</span><span class="token punctuation">:</span> <span class="token number">10</span><span class="token unit">px</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+<span class="token selector"><span class="token class">.panel-light</span></span> <span class="token punctuation">{</span>
+  <span class="token property">color</span><span class="token punctuation">:</span> <span class="token hexcode color">#222</span><span class="token punctuation">;</span>
+  <span class="token property">background</span><span class="token punctuation">:</span> <span class="token hexcode color">#fff</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+
+<span class="token selector"><span class="token class">.panel-dark</span></span> <span class="token punctuation">{</span>
+  <span class="token property">color</span><span class="token punctuation">:</span> <span class="token hexcode color">#fff</span><span class="token punctuation">;</span>
+  <span class="token property">background</span><span class="token punctuation">:</span> <span class="token color"><span class="token function">rgb</span><span class="token punctuation">(</span><span class="token number">23</span><span class="token punctuation">,</span> <span class="token number">32</span><span class="token punctuation">,</span> <span class="token number">42</span><span class="token punctuation">)</span></span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+
+<span class="token selector"><span class="token class">.button-light</span><span class="token punctuation">,</span>
+<span class="token class">.button-dark</span></span> <span class="token punctuation">{</span>
+  <span class="token property">border</span><span class="token punctuation">:</span> <span class="token number">1</span><span class="token unit">px</span> solid <span class="token hexcode color">#777</span><span class="token punctuation">;</span>
+  <span class="token property">padding</span><span class="token punctuation">:</span> <span class="token number">5</span><span class="token unit">px</span><span class="token punctuation">;</span>
+  <span class="token property">margin-right</span><span class="token punctuation">:</span> <span class="token number">10</span><span class="token unit">px</span><span class="token punctuation">;</span>
+  <span class="token property">margin-top</span><span class="token punctuation">:</span> <span class="token number">10</span><span class="token unit">px</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+
+<span class="token selector"><span class="token class">.button-dark</span></span> <span class="token punctuation">{</span>
+  <span class="token property">background</span><span class="token punctuation">:</span> <span class="token hexcode color">#222</span><span class="token punctuation">;</span>
+  <span class="token property">color</span><span class="token punctuation">:</span> <span class="token hexcode color">#fff</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+
+<span class="token selector"><span class="token class">.button-light</span></span> <span class="token punctuation">{</span>
+  <span class="token property">background</span><span class="token punctuation">:</span> <span class="token hexcode color">#fff</span><span class="token punctuation">;</span>
+  <span class="token property">color</span><span class="token punctuation">:</span> <span class="token hexcode color">#222</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span></code></pre></sandpack></section><section class="level3"aria-labelledby="覆盖组件树一部分的-context-overriding-context-for-a-part-of-the-tree"><h3 id="覆盖组件树一部分的-context-overriding-context-for-a-part-of-the-tree">覆盖组件树一部分的 context {/<em>overriding-context-for-a-part-of-the-tree</em>/}</h3><p>通过在 provider 中使用不同的值包装树的某个部分，可以覆盖该部分的 context。<pre class="language-js"><code class="language-js"><span class="token operator">&#x3C;</span><span class="token maybe-class-name">ThemeContext</span><span class="token punctuation">.</span><span class="token property-access"><span class="token maybe-class-name">Provider</span></span> value<span class="token operator">=</span><span class="token string">"dark"</span><span class="token operator">></span>
+  <span class="token spread operator">...</span>
+  <span class="token operator">&#x3C;</span><span class="token maybe-class-name">ThemeContext</span><span class="token punctuation">.</span><span class="token property-access"><span class="token maybe-class-name">Provider</span></span> value<span class="token operator">=</span><span class="token string">"light"</span><span class="token operator">></span>
+    <span class="token operator">&#x3C;</span><span class="token maybe-class-name">Footer</span> <span class="token operator">/</span><span class="token operator">></span>
+  <span class="token operator">&#x3C;</span><span class="token operator">/</span><span class="token maybe-class-name">ThemeContext</span><span class="token punctuation">.</span><span class="token property-access"><span class="token maybe-class-name">Provider</span></span><span class="token operator">></span>
+  <span class="token spread operator">...</span>
+<span class="token operator">&#x3C;</span><span class="token operator">/</span><span class="token maybe-class-name">ThemeContext</span><span class="token punctuation">.</span><span class="token property-access"><span class="token maybe-class-name">Provider</span></span><span class="token operator">></span></code></pre><p>你可以根据需要多次嵌套和覆盖 provider。</p><recipes title="Examples of overriding context"><section class="level4"aria-labelledby="覆盖主题-overriding-a-theme"><h4 id="覆盖主题-overriding-a-theme">覆盖主题 {/<em>overriding-a-theme</em>/}</h4><p>这里，与 <code>Footer</code> 外的值为（<code>"dark"</code>）的按钮相比，<strong>里面</strong> 的按钮接收到一个不一样的 context 值（<code>"light"</code>）。</p><sandpack><pre class="language-js"><code class="language-js"><span class="token keyword module">import</span> <span class="token imports"><span class="token punctuation">{</span> createContext<span class="token punctuation">,</span> useContext <span class="token punctuation">}</span></span> <span class="token keyword module">from</span> <span class="token string">'react'</span><span class="token punctuation">;</span>
+
+<span class="token keyword">const</span> <span class="token maybe-class-name">ThemeContext</span> <span class="token operator">=</span> <span class="token function">createContext</span><span class="token punctuation">(</span><span class="token keyword null nil">null</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+<span class="token keyword module">export</span> <span class="token keyword module">default</span> <span class="token keyword">function</span> <span class="token function"><span class="token maybe-class-name">MyApp</span></span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  <span class="token keyword control-flow">return</span> <span class="token punctuation">(</span>
+    <span class="token operator">&#x3C;</span><span class="token maybe-class-name">ThemeContext</span><span class="token punctuation">.</span><span class="token property-access"><span class="token maybe-class-name">Provider</span></span> value<span class="token operator">=</span><span class="token string">"dark"</span><span class="token operator">></span>
+      <span class="token operator">&#x3C;</span><span class="token maybe-class-name">Form</span> <span class="token operator">/</span><span class="token operator">></span>
+    <span class="token operator">&#x3C;</span><span class="token operator">/</span><span class="token maybe-class-name">ThemeContext</span><span class="token punctuation">.</span><span class="token property-access"><span class="token maybe-class-name">Provider</span></span><span class="token operator">></span>
+  <span class="token punctuation">)</span>
+<span class="token punctuation">}</span>
+
+<span class="token keyword">function</span> <span class="token function"><span class="token maybe-class-name">Form</span></span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  <span class="token keyword control-flow">return</span> <span class="token punctuation">(</span>
+    <span class="token operator">&#x3C;</span><span class="token maybe-class-name">Panel</span> title<span class="token operator">=</span><span class="token string">"Welcome"</span><span class="token operator">></span>
+      <span class="token operator">&#x3C;</span><span class="token maybe-class-name">Button</span><span class="token operator">></span><span class="token maybe-class-name">Sign</span> up<span class="token operator">&#x3C;</span><span class="token operator">/</span><span class="token maybe-class-name">Button</span><span class="token operator">></span>
+      <span class="token operator">&#x3C;</span><span class="token maybe-class-name">Button</span><span class="token operator">></span><span class="token maybe-class-name">Log</span> <span class="token keyword">in</span><span class="token operator">&#x3C;</span><span class="token operator">/</span><span class="token maybe-class-name">Button</span><span class="token operator">></span>
+      <span class="token operator">&#x3C;</span><span class="token maybe-class-name">ThemeContext</span><span class="token punctuation">.</span><span class="token property-access"><span class="token maybe-class-name">Provider</span></span> value<span class="token operator">=</span><span class="token string">"light"</span><span class="token operator">></span>
+        <span class="token operator">&#x3C;</span><span class="token maybe-class-name">Footer</span> <span class="token operator">/</span><span class="token operator">></span>
+      <span class="token operator">&#x3C;</span><span class="token operator">/</span><span class="token maybe-class-name">ThemeContext</span><span class="token punctuation">.</span><span class="token property-access"><span class="token maybe-class-name">Provider</span></span><span class="token operator">></span>
+    <span class="token operator">&#x3C;</span><span class="token operator">/</span><span class="token maybe-class-name">Panel</span><span class="token operator">></span>
+  <span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+
+<span class="token keyword">function</span> <span class="token function"><span class="token maybe-class-name">Footer</span></span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  <span class="token keyword control-flow">return</span> <span class="token punctuation">(</span>
+    <span class="token operator">&#x3C;</span>footer<span class="token operator">></span>
+      <span class="token operator">&#x3C;</span><span class="token maybe-class-name">Button</span><span class="token operator">></span><span class="token maybe-class-name">Settings</span><span class="token operator">&#x3C;</span><span class="token operator">/</span><span class="token maybe-class-name">Button</span><span class="token operator">></span>
+    <span class="token operator">&#x3C;</span><span class="token operator">/</span>footer<span class="token operator">></span>
+  <span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+
+<span class="token keyword">function</span> <span class="token function"><span class="token maybe-class-name">Panel</span></span><span class="token punctuation">(</span><span class="token parameter"><span class="token punctuation">{</span> title<span class="token punctuation">,</span> children <span class="token punctuation">}</span></span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  <span class="token keyword">const</span> theme <span class="token operator">=</span> <span class="token function">useContext</span><span class="token punctuation">(</span><span class="token maybe-class-name">ThemeContext</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token keyword">const</span> className <span class="token operator">=</span> <span class="token string">'panel-'</span> <span class="token operator">+</span> theme<span class="token punctuation">;</span>
+  <span class="token keyword control-flow">return</span> <span class="token punctuation">(</span>
+    <span class="token operator">&#x3C;</span>section className<span class="token operator">=</span><span class="token punctuation">{</span>className<span class="token punctuation">}</span><span class="token operator">></span>
+      <span class="token punctuation">{</span>title <span class="token operator">&#x26;&#x26;</span> <span class="token operator">&#x3C;</span>h1<span class="token operator">></span><span class="token punctuation">{</span>title<span class="token punctuation">}</span><span class="token operator">&#x3C;</span><span class="token operator">/</span>h1<span class="token operator">></span><span class="token punctuation">}</span>
+      <span class="token punctuation">{</span>children<span class="token punctuation">}</span>
+    <span class="token operator">&#x3C;</span><span class="token operator">/</span>section<span class="token operator">></span>
+  <span class="token punctuation">)</span>
+<span class="token punctuation">}</span>
+
+<span class="token keyword">function</span> <span class="token function"><span class="token maybe-class-name">Button</span></span><span class="token punctuation">(</span><span class="token parameter"><span class="token punctuation">{</span> children <span class="token punctuation">}</span></span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  <span class="token keyword">const</span> theme <span class="token operator">=</span> <span class="token function">useContext</span><span class="token punctuation">(</span><span class="token maybe-class-name">ThemeContext</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token keyword">const</span> className <span class="token operator">=</span> <span class="token string">'button-'</span> <span class="token operator">+</span> theme<span class="token punctuation">;</span>
+  <span class="token keyword control-flow">return</span> <span class="token punctuation">(</span>
+    <span class="token operator">&#x3C;</span>button className<span class="token operator">=</span><span class="token punctuation">{</span>className<span class="token punctuation">}</span><span class="token operator">></span>
+      <span class="token punctuation">{</span>children<span class="token punctuation">}</span>
+    <span class="token operator">&#x3C;</span><span class="token operator">/</span>button<span class="token operator">></span>
+  <span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span></code></pre><pre class="language-css"><code class="language-css"><span class="token selector">footer</span> <span class="token punctuation">{</span>
+  <span class="token property">margin-top</span><span class="token punctuation">:</span> <span class="token number">20</span><span class="token unit">px</span><span class="token punctuation">;</span>
+  <span class="token property">border-top</span><span class="token punctuation">:</span> <span class="token number">1</span><span class="token unit">px</span> solid <span class="token hexcode color">#aaa</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+
+<span class="token selector"><span class="token class">.panel-light</span><span class="token punctuation">,</span>
+<span class="token class">.panel-dark</span></span> <span class="token punctuation">{</span>
+  <span class="token property">border</span><span class="token punctuation">:</span> <span class="token number">1</span><span class="token unit">px</span> solid <span class="token color">black</span><span class="token punctuation">;</span>
+  <span class="token property">border-radius</span><span class="token punctuation">:</span> <span class="token number">4</span><span class="token unit">px</span><span class="token punctuation">;</span>
+  <span class="token property">padding</span><span class="token punctuation">:</span> <span class="token number">20</span><span class="token unit">px</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+<span class="token selector"><span class="token class">.panel-light</span></span> <span class="token punctuation">{</span>
+  <span class="token property">color</span><span class="token punctuation">:</span> <span class="token hexcode color">#222</span><span class="token punctuation">;</span>
+  <span class="token property">background</span><span class="token punctuation">:</span> <span class="token hexcode color">#fff</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+
+<span class="token selector"><span class="token class">.panel-dark</span></span> <span class="token punctuation">{</span>
+  <span class="token property">color</span><span class="token punctuation">:</span> <span class="token hexcode color">#fff</span><span class="token punctuation">;</span>
+  <span class="token property">background</span><span class="token punctuation">:</span> <span class="token color"><span class="token function">rgb</span><span class="token punctuation">(</span><span class="token number">23</span><span class="token punctuation">,</span> <span class="token number">32</span><span class="token punctuation">,</span> <span class="token number">42</span><span class="token punctuation">)</span></span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+
+<span class="token selector"><span class="token class">.button-light</span><span class="token punctuation">,</span>
+<span class="token class">.button-dark</span></span> <span class="token punctuation">{</span>
+  <span class="token property">border</span><span class="token punctuation">:</span> <span class="token number">1</span><span class="token unit">px</span> solid <span class="token hexcode color">#777</span><span class="token punctuation">;</span>
+  <span class="token property">padding</span><span class="token punctuation">:</span> <span class="token number">5</span><span class="token unit">px</span><span class="token punctuation">;</span>
+  <span class="token property">margin-right</span><span class="token punctuation">:</span> <span class="token number">10</span><span class="token unit">px</span><span class="token punctuation">;</span>
+  <span class="token property">margin-top</span><span class="token punctuation">:</span> <span class="token number">10</span><span class="token unit">px</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+
+<span class="token selector"><span class="token class">.button-dark</span></span> <span class="token punctuation">{</span>
+  <span class="token property">background</span><span class="token punctuation">:</span> <span class="token hexcode color">#222</span><span class="token punctuation">;</span>
+  <span class="token property">color</span><span class="token punctuation">:</span> <span class="token hexcode color">#fff</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+
+<span class="token selector"><span class="token class">.button-light</span></span> <span class="token punctuation">{</span>
+  <span class="token property">background</span><span class="token punctuation">:</span> <span class="token hexcode color">#fff</span><span class="token punctuation">;</span>
+  <span class="token property">color</span><span class="token punctuation">:</span> <span class="token hexcode color">#222</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span></code></pre></sandpack><solution></solution></section><section class="level4"aria-labelledby="自动嵌套标题-automatically-nested-headings"><h4 id="自动嵌套标题-automatically-nested-headings">自动嵌套标题 {/<em>automatically-nested-headings</em>/}</h4><p>在嵌套使用 context provider 时，可以“累积”信息。在此示例中，<code>Section</code> 组件记录了 <code>LevelContext</code>，该 context 指定了 section 嵌套的深度。它从父级 section 中读取 <code>LevelContext</code>，然后把 <code>LevelContext</code> 的数值加一传递给子级。因此，<code>Heading</code> 组件可以根据被 <code>Section</code> 组件嵌套的层数自动决定使用 <code>&#x3C;h1></code>，<code>&#x3C;h2></code>，<code>&#x3C;h3></code>，...，中的哪种标签。<p>阅读此示例的 <a href="/learn/passing-data-deeply-with-context">详细演示</a></p><sandpack><pre class="language-js"><code class="language-js"><span class="token keyword module">import</span> <span class="token imports"><span class="token maybe-class-name">Heading</span></span> <span class="token keyword module">from</span> <span class="token string">'./Heading.js'</span><span class="token punctuation">;</span>
+<span class="token keyword module">import</span> <span class="token imports"><span class="token maybe-class-name">Section</span></span> <span class="token keyword module">from</span> <span class="token string">'./Section.js'</span><span class="token punctuation">;</span>
+
+<span class="token keyword module">export</span> <span class="token keyword module">default</span> <span class="token keyword">function</span> <span class="token function"><span class="token maybe-class-name">Page</span></span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  <span class="token keyword control-flow">return</span> <span class="token punctuation">(</span>
+    <span class="token operator">&#x3C;</span><span class="token maybe-class-name">Section</span><span class="token operator">></span>
+      <span class="token operator">&#x3C;</span><span class="token maybe-class-name">Heading</span><span class="token operator">></span><span class="token maybe-class-name">Title</span><span class="token operator">&#x3C;</span><span class="token operator">/</span><span class="token maybe-class-name">Heading</span><span class="token operator">></span>
+      <span class="token operator">&#x3C;</span><span class="token maybe-class-name">Section</span><span class="token operator">></span>
+        <span class="token operator">&#x3C;</span><span class="token maybe-class-name">Heading</span><span class="token operator">></span><span class="token maybe-class-name">Heading</span><span class="token operator">&#x3C;</span><span class="token operator">/</span><span class="token maybe-class-name">Heading</span><span class="token operator">></span>
+        <span class="token operator">&#x3C;</span><span class="token maybe-class-name">Heading</span><span class="token operator">></span><span class="token maybe-class-name">Heading</span><span class="token operator">&#x3C;</span><span class="token operator">/</span><span class="token maybe-class-name">Heading</span><span class="token operator">></span>
+        <span class="token operator">&#x3C;</span><span class="token maybe-class-name">Heading</span><span class="token operator">></span><span class="token maybe-class-name">Heading</span><span class="token operator">&#x3C;</span><span class="token operator">/</span><span class="token maybe-class-name">Heading</span><span class="token operator">></span>
+        <span class="token operator">&#x3C;</span><span class="token maybe-class-name">Section</span><span class="token operator">></span>
+          <span class="token operator">&#x3C;</span><span class="token maybe-class-name">Heading</span><span class="token operator">></span><span class="token maybe-class-name">Sub</span><span class="token operator">-</span>heading<span class="token operator">&#x3C;</span><span class="token operator">/</span><span class="token maybe-class-name">Heading</span><span class="token operator">></span>
+          <span class="token operator">&#x3C;</span><span class="token maybe-class-name">Heading</span><span class="token operator">></span><span class="token maybe-class-name">Sub</span><span class="token operator">-</span>heading<span class="token operator">&#x3C;</span><span class="token operator">/</span><span class="token maybe-class-name">Heading</span><span class="token operator">></span>
+          <span class="token operator">&#x3C;</span><span class="token maybe-class-name">Heading</span><span class="token operator">></span><span class="token maybe-class-name">Sub</span><span class="token operator">-</span>heading<span class="token operator">&#x3C;</span><span class="token operator">/</span><span class="token maybe-class-name">Heading</span><span class="token operator">></span>
+          <span class="token operator">&#x3C;</span><span class="token maybe-class-name">Section</span><span class="token operator">></span>
+            <span class="token operator">&#x3C;</span><span class="token maybe-class-name">Heading</span><span class="token operator">></span><span class="token maybe-class-name">Sub</span><span class="token operator">-</span>sub<span class="token operator">-</span>heading<span class="token operator">&#x3C;</span><span class="token operator">/</span><span class="token maybe-class-name">Heading</span><span class="token operator">></span>
+            <span class="token operator">&#x3C;</span><span class="token maybe-class-name">Heading</span><span class="token operator">></span><span class="token maybe-class-name">Sub</span><span class="token operator">-</span>sub<span class="token operator">-</span>heading<span class="token operator">&#x3C;</span><span class="token operator">/</span><span class="token maybe-class-name">Heading</span><span class="token operator">></span>
+            <span class="token operator">&#x3C;</span><span class="token maybe-class-name">Heading</span><span class="token operator">></span><span class="token maybe-class-name">Sub</span><span class="token operator">-</span>sub<span class="token operator">-</span>heading<span class="token operator">&#x3C;</span><span class="token operator">/</span><span class="token maybe-class-name">Heading</span><span class="token operator">></span>
+          <span class="token operator">&#x3C;</span><span class="token operator">/</span><span class="token maybe-class-name">Section</span><span class="token operator">></span>
+        <span class="token operator">&#x3C;</span><span class="token operator">/</span><span class="token maybe-class-name">Section</span><span class="token operator">></span>
+      <span class="token operator">&#x3C;</span><span class="token operator">/</span><span class="token maybe-class-name">Section</span><span class="token operator">></span>
+    <span class="token operator">&#x3C;</span><span class="token operator">/</span><span class="token maybe-class-name">Section</span><span class="token operator">></span>
+  <span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span></code></pre><pre class="language-js"><code class="language-js"><span class="token keyword module">import</span> <span class="token imports"><span class="token punctuation">{</span> useContext <span class="token punctuation">}</span></span> <span class="token keyword module">from</span> <span class="token string">'react'</span><span class="token punctuation">;</span>
+<span class="token keyword module">import</span> <span class="token imports"><span class="token punctuation">{</span> <span class="token maybe-class-name">LevelContext</span> <span class="token punctuation">}</span></span> <span class="token keyword module">from</span> <span class="token string">'./LevelContext.js'</span><span class="token punctuation">;</span>
+
+<span class="token keyword module">export</span> <span class="token keyword module">default</span> <span class="token keyword">function</span> <span class="token function"><span class="token maybe-class-name">Section</span></span><span class="token punctuation">(</span><span class="token parameter"><span class="token punctuation">{</span> children <span class="token punctuation">}</span></span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  <span class="token keyword">const</span> level <span class="token operator">=</span> <span class="token function">useContext</span><span class="token punctuation">(</span><span class="token maybe-class-name">LevelContext</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token keyword control-flow">return</span> <span class="token punctuation">(</span>
+    <span class="token operator">&#x3C;</span>section className<span class="token operator">=</span><span class="token string">"section"</span><span class="token operator">></span>
+      <span class="token operator">&#x3C;</span><span class="token maybe-class-name">LevelContext</span><span class="token punctuation">.</span><span class="token property-access"><span class="token maybe-class-name">Provider</span></span> value<span class="token operator">=</span><span class="token punctuation">{</span>level <span class="token operator">+</span> <span class="token number">1</span><span class="token punctuation">}</span><span class="token operator">></span>
+        <span class="token punctuation">{</span>children<span class="token punctuation">}</span>
+      <span class="token operator">&#x3C;</span><span class="token operator">/</span><span class="token maybe-class-name">LevelContext</span><span class="token punctuation">.</span><span class="token property-access"><span class="token maybe-class-name">Provider</span></span><span class="token operator">></span>
+    <span class="token operator">&#x3C;</span><span class="token operator">/</span>section<span class="token operator">></span>
+  <span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span></code></pre><pre class="language-js"><code class="language-js"><span class="token keyword module">import</span> <span class="token imports"><span class="token punctuation">{</span> useContext <span class="token punctuation">}</span></span> <span class="token keyword module">from</span> <span class="token string">'react'</span><span class="token punctuation">;</span>
+<span class="token keyword module">import</span> <span class="token imports"><span class="token punctuation">{</span> <span class="token maybe-class-name">LevelContext</span> <span class="token punctuation">}</span></span> <span class="token keyword module">from</span> <span class="token string">'./LevelContext.js'</span><span class="token punctuation">;</span>
+
+<span class="token keyword module">export</span> <span class="token keyword module">default</span> <span class="token keyword">function</span> <span class="token function"><span class="token maybe-class-name">Heading</span></span><span class="token punctuation">(</span><span class="token parameter"><span class="token punctuation">{</span> children <span class="token punctuation">}</span></span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  <span class="token keyword">const</span> level <span class="token operator">=</span> <span class="token function">useContext</span><span class="token punctuation">(</span><span class="token maybe-class-name">LevelContext</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token keyword control-flow">switch</span> <span class="token punctuation">(</span>level<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token keyword">case</span> <span class="token number">0</span><span class="token operator">:</span>
+      <span class="token keyword control-flow">throw</span> <span class="token known-class-name class-name">Error</span><span class="token punctuation">(</span><span class="token string">'Heading must be inside a Section!'</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token keyword">case</span> <span class="token number">1</span><span class="token operator">:</span>
+      <span class="token keyword control-flow">return</span> <span class="token operator">&#x3C;</span>h1<span class="token operator">></span><span class="token punctuation">{</span>children<span class="token punctuation">}</span><span class="token operator">&#x3C;</span><span class="token operator">/</span>h1<span class="token operator">></span><span class="token punctuation">;</span>
+    <span class="token keyword">case</span> <span class="token number">2</span><span class="token operator">:</span>
+      <span class="token keyword control-flow">return</span> <span class="token operator">&#x3C;</span>h2<span class="token operator">></span><span class="token punctuation">{</span>children<span class="token punctuation">}</span><span class="token operator">&#x3C;</span><span class="token operator">/</span>h2<span class="token operator">></span><span class="token punctuation">;</span>
+    <span class="token keyword">case</span> <span class="token number">3</span><span class="token operator">:</span>
+      <span class="token keyword control-flow">return</span> <span class="token operator">&#x3C;</span>h3<span class="token operator">></span><span class="token punctuation">{</span>children<span class="token punctuation">}</span><span class="token operator">&#x3C;</span><span class="token operator">/</span>h3<span class="token operator">></span><span class="token punctuation">;</span>
+    <span class="token keyword">case</span> <span class="token number">4</span><span class="token operator">:</span>
+      <span class="token keyword control-flow">return</span> <span class="token operator">&#x3C;</span>h4<span class="token operator">></span><span class="token punctuation">{</span>children<span class="token punctuation">}</span><span class="token operator">&#x3C;</span><span class="token operator">/</span>h4<span class="token operator">></span><span class="token punctuation">;</span>
+    <span class="token keyword">case</span> <span class="token number">5</span><span class="token operator">:</span>
+      <span class="token keyword control-flow">return</span> <span class="token operator">&#x3C;</span>h5<span class="token operator">></span><span class="token punctuation">{</span>children<span class="token punctuation">}</span><span class="token operator">&#x3C;</span><span class="token operator">/</span>h5<span class="token operator">></span><span class="token punctuation">;</span>
+    <span class="token keyword">case</span> <span class="token number">6</span><span class="token operator">:</span>
+      <span class="token keyword control-flow">return</span> <span class="token operator">&#x3C;</span>h6<span class="token operator">></span><span class="token punctuation">{</span>children<span class="token punctuation">}</span><span class="token operator">&#x3C;</span><span class="token operator">/</span>h6<span class="token operator">></span><span class="token punctuation">;</span>
+    <span class="token keyword module">default</span><span class="token operator">:</span>
+      <span class="token keyword control-flow">throw</span> <span class="token known-class-name class-name">Error</span><span class="token punctuation">(</span><span class="token string">'Unknown level: '</span> <span class="token operator">+</span> level<span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token punctuation">}</span>
+<span class="token punctuation">}</span></code></pre><pre class="language-js"><code class="language-js"><span class="token keyword module">import</span> <span class="token imports"><span class="token punctuation">{</span> createContext <span class="token punctuation">}</span></span> <span class="token keyword module">from</span> <span class="token string">'react'</span><span class="token punctuation">;</span>
+
+<span class="token keyword module">export</span> <span class="token keyword">const</span> <span class="token maybe-class-name">LevelContext</span> <span class="token operator">=</span> <span class="token function">createContext</span><span class="token punctuation">(</span><span class="token number">0</span><span class="token punctuation">)</span><span class="token punctuation">;</span></code></pre><pre class="language-css"><code class="language-css"><span class="token selector"><span class="token class">.section</span></span> <span class="token punctuation">{</span>
+  <span class="token property">padding</span><span class="token punctuation">:</span> <span class="token number">10</span><span class="token unit">px</span><span class="token punctuation">;</span>
+  <span class="token property">margin</span><span class="token punctuation">:</span> <span class="token number">5</span><span class="token unit">px</span><span class="token punctuation">;</span>
+  <span class="token property">border-radius</span><span class="token punctuation">:</span> <span class="token number">5</span><span class="token unit">px</span><span class="token punctuation">;</span>
+  <span class="token property">border</span><span class="token punctuation">:</span> <span class="token number">1</span><span class="token unit">px</span> solid <span class="token hexcode color">#aaa</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span></code></pre></sandpack><solution></solution></section></recipes></section><section class="level3"aria-labelledby="在传递对象和函数时优化重新渲染-optimizing-re-renders-when-passing-objects-and-functions"><h3 id="在传递对象和函数时优化重新渲染-optimizing-re-renders-when-passing-objects-and-functions">在传递对象和函数时优化重新渲染 {/<em>optimizing-re-renders-when-passing-objects-and-functions</em>/}</h3><p>你可以通过 context 传递任何值，包括对象和函数。<pre class="language-js"><code class="language-js"><span class="token keyword">function</span> <span class="token function"><span class="token maybe-class-name">MyApp</span></span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  <span class="token keyword">const</span> <span class="token punctuation">[</span>currentUser<span class="token punctuation">,</span> setCurrentUser<span class="token punctuation">]</span> <span class="token operator">=</span> <span class="token function">useState</span><span class="token punctuation">(</span><span class="token keyword null nil">null</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+  <span class="token keyword">function</span> <span class="token function">login</span><span class="token punctuation">(</span><span class="token parameter">response</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token function">storeCredentials</span><span class="token punctuation">(</span>response<span class="token punctuation">.</span><span class="token property-access">credentials</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token function">setCurrentUser</span><span class="token punctuation">(</span>response<span class="token punctuation">.</span><span class="token property-access">user</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token punctuation">}</span>
+
+  <span class="token keyword control-flow">return</span> <span class="token punctuation">(</span>
+    <span class="token operator">&#x3C;</span><span class="token maybe-class-name">AuthContext</span><span class="token punctuation">.</span><span class="token property-access"><span class="token maybe-class-name">Provider</span></span> value<span class="token operator">=</span><span class="token punctuation">{</span><span class="token punctuation">{</span> currentUser<span class="token punctuation">,</span> login <span class="token punctuation">}</span><span class="token punctuation">}</span><span class="token operator">></span>
+      <span class="token operator">&#x3C;</span><span class="token maybe-class-name">Page</span> <span class="token operator">/</span><span class="token operator">></span>
+    <span class="token operator">&#x3C;</span><span class="token operator">/</span><span class="token maybe-class-name">AuthContext</span><span class="token punctuation">.</span><span class="token property-access"><span class="token maybe-class-name">Provider</span></span><span class="token operator">></span>
+  <span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span></code></pre><p>此处，<codestep step="{2}">context value</codestep>是一个具有两个属性的 JavaScript 对象，其中一个是函数。每当 <code>MyApp</code> 出现重新渲染（例如，路由更新）时，这里将会是一个 <strong>不同的</strong> 对象指向 <strong>不同的</strong> 函数，因此 React 还必须重新渲染树中调用 <code>useContext(AuthContext)</code> 的所有组件。<p>在较小的应用程序中，这不是问题。但是，如果基础数据如 <code>currentUser</code> 没有更改，则不需要重新渲染它们。为了帮助 React 利用这一点，你可以使用 <a href="/reference/react/useCallback"><code>useCallback</code></a> 包装 <code>login</code> 函数，并将对象创建包装到 <a href="/reference/react/useMemo"><code>useMemo</code></a> 中。这是一个性能优化的例子：<pre class="language-js"><code class="language-js"><span class="token keyword module">import</span> <span class="token imports"><span class="token punctuation">{</span> useCallback<span class="token punctuation">,</span> useMemo <span class="token punctuation">}</span></span> <span class="token keyword module">from</span> <span class="token string">'react'</span><span class="token punctuation">;</span>
+
+<span class="token keyword">function</span> <span class="token function"><span class="token maybe-class-name">MyApp</span></span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  <span class="token keyword">const</span> <span class="token punctuation">[</span>currentUser<span class="token punctuation">,</span> setCurrentUser<span class="token punctuation">]</span> <span class="token operator">=</span> <span class="token function">useState</span><span class="token punctuation">(</span><span class="token keyword null nil">null</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+  <span class="token keyword">const</span> login <span class="token operator">=</span> <span class="token function">useCallback</span><span class="token punctuation">(</span><span class="token punctuation">(</span><span class="token parameter">response</span><span class="token punctuation">)</span> <span class="token arrow operator">=></span> <span class="token punctuation">{</span>
+    <span class="token function">storeCredentials</span><span class="token punctuation">(</span>response<span class="token punctuation">.</span><span class="token property-access">credentials</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token function">setCurrentUser</span><span class="token punctuation">(</span>response<span class="token punctuation">.</span><span class="token property-access">user</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token punctuation">}</span><span class="token punctuation">,</span> <span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+  <span class="token keyword">const</span> contextValue <span class="token operator">=</span> <span class="token function">useMemo</span><span class="token punctuation">(</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token arrow operator">=></span> <span class="token punctuation">(</span><span class="token punctuation">{</span>
+    currentUser<span class="token punctuation">,</span>
+    login
+  <span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">,</span> <span class="token punctuation">[</span>currentUser<span class="token punctuation">,</span> login<span class="token punctuation">]</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+  <span class="token keyword control-flow">return</span> <span class="token punctuation">(</span>
+    <span class="token operator">&#x3C;</span><span class="token maybe-class-name">AuthContext</span><span class="token punctuation">.</span><span class="token property-access"><span class="token maybe-class-name">Provider</span></span> value<span class="token operator">=</span><span class="token punctuation">{</span>contextValue<span class="token punctuation">}</span><span class="token operator">></span>
+      <span class="token operator">&#x3C;</span><span class="token maybe-class-name">Page</span> <span class="token operator">/</span><span class="token operator">></span>
+    <span class="token operator">&#x3C;</span><span class="token operator">/</span><span class="token maybe-class-name">AuthContext</span><span class="token punctuation">.</span><span class="token property-access"><span class="token maybe-class-name">Provider</span></span><span class="token operator">></span>
+  <span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span></code></pre><p>根据以上改变，即使 <code>MyApp</code> 需要重新渲染，调用 <code>useContext(AuthContext)</code> 的组件也不需要重新渲染，除非 <code>currentUser</code> 发生了变化。<p>阅读更多关于 <a href="/reference/react/useMemo#skipping-re-rendering-of-components"><code>useMemo</code></a> 和 <a href="/reference/react/useCallback#skipping-re-rendering-of-components"><code>useCallback</code></a> 的内容。</section></section><section class="level2"aria-labelledby="疑难解答-troubleshooting"><h2 id="疑难解答-troubleshooting">疑难解答 {/<em>troubleshooting</em>/}</h2><section class="level3"aria-labelledby="我的组件获取不到-provider-传递的值my-component-doesnt-see-the-value-from-my-provider"><h3 id="我的组件获取不到-provider-传递的值my-component-doesnt-see-the-value-from-my-provider">我的组件获取不到 provider 传递的值{/<em>my-component-doesnt-see-the-value-from-my-provider</em>/}</h3><p>这里有几种常见的情况会引起这个问题：<ol><li>你在调用 <code>useContext()</code> 的同一组件（或下层）渲染 <code>&#x3C;SomeContext.Provider></code>。把 <code>&#x3C;SomeContext.Provider></code> 向调用 <code>useContext()</code> 组件 <strong>之上和之外</strong> 移动。<li>你可能忘记了使用 <code>&#x3C;SomeContext.Provider></code> 包装组件，或者你可能将组件放在树的不同部分。使用 <a href="/learn/react-developer-tools">React DevTools</a> 检查组件树的层级是否正确。<li>你的工具可能会遇到一些构建问题，导致你在传值组件中的所看到的 <code>SomeContext</code> 和读值组件中所看到的 <code>SomeContext</code> 是两个不同的对象。例如，如果使用符号链接，就会发生这种情况。你可以通过将它们赋值给全局对象如 <code>window.SomeContext1</code> 和 <code>window.SomeContext2</code> 来验证这种情况。然后在控制台检查 <code>window.SomeContext1 === window.SomeContext2</code> 是否相等。如果它们是不相等的，就在构建工具层面修复这个问题。</ol></section><section class="level3"aria-labelledby="尽管设置了不一样的默认值但是我总是从-context-中得到-undefined-i-am-always-getting-undefined-from-my-context-although-the-default-value-is-different"><h3 id="尽管设置了不一样的默认值但是我总是从-context-中得到-undefined-i-am-always-getting-undefined-from-my-context-although-the-default-value-is-different">尽管设置了不一样的默认值，但是我总是从 context 中得到 <code>undefined</code> {/<em>i-am-always-getting-undefined-from-my-context-although-the-default-value-is-different</em>/}</h3><p>你可能在组件树中有一个没有设置 <code>value</code> 的 provider：<pre class="language-js"><code class="language-js"><span class="token comment">// 🚩 不起作用：没有 value 作为 prop</span>
+<span class="token operator">&#x3C;</span><span class="token maybe-class-name">ThemeContext</span><span class="token punctuation">.</span><span class="token property-access"><span class="token maybe-class-name">Provider</span></span><span class="token operator">></span>
+   <span class="token operator">&#x3C;</span><span class="token maybe-class-name">Button</span> <span class="token operator">/</span><span class="token operator">></span>
+<span class="token operator">&#x3C;</span><span class="token operator">/</span><span class="token maybe-class-name">ThemeContext</span><span class="token punctuation">.</span><span class="token property-access"><span class="token maybe-class-name">Provider</span></span><span class="token operator">></span></code></pre><p>如果你忘记了指定 <code>value</code>，它会像这样传值 <code>value={undefined}</code>。<p>你可能还错误地使用了一个不同的 prop 名：<pre class="language-js"><code class="language-js"><span class="token comment">// 🚩 不起作用：prop 应该是“value”</span>
+<span class="token operator">&#x3C;</span><span class="token maybe-class-name">ThemeContext</span><span class="token punctuation">.</span><span class="token property-access"><span class="token maybe-class-name">Provider</span></span> theme<span class="token operator">=</span><span class="token punctuation">{</span>theme<span class="token punctuation">}</span><span class="token operator">></span>
+   <span class="token operator">&#x3C;</span><span class="token maybe-class-name">Button</span> <span class="token operator">/</span><span class="token operator">></span>
+<span class="token operator">&#x3C;</span><span class="token operator">/</span><span class="token maybe-class-name">ThemeContext</span><span class="token punctuation">.</span><span class="token property-access"><span class="token maybe-class-name">Provider</span></span><span class="token operator">></span></code></pre><p>在这两种情况下，你都应该在控制台中看到 React 发出的警告。要解决这些问题，使用 <code>value</code> 作为 prop：<pre class="language-js"><code class="language-js"><span class="token comment">// ✅ 传递 value 作为 prop</span>
+<span class="token operator">&#x3C;</span><span class="token maybe-class-name">ThemeContext</span><span class="token punctuation">.</span><span class="token property-access"><span class="token maybe-class-name">Provider</span></span> value<span class="token operator">=</span><span class="token punctuation">{</span>theme<span class="token punctuation">}</span><span class="token operator">></span>
+   <span class="token operator">&#x3C;</span><span class="token maybe-class-name">Button</span> <span class="token operator">/</span><span class="token operator">></span>
+<span class="token operator">&#x3C;</span><span class="token operator">/</span><span class="token maybe-class-name">ThemeContext</span><span class="token punctuation">.</span><span class="token property-access"><span class="token maybe-class-name">Provider</span></span><span class="token operator">></span></code></pre><p>注意，只有在 <strong>上层根本没有匹配的 provider</strong> 时才使用 <a href="#specifying-a-fallback-default-value"><code>createContext(defaultValue)</code>调用的默认值</a>。如果存在 <code>&#x3C;SomeContext.Provider value={undefined}></code> 组件在父树的某个位置，调用 <code>useContext(SomeContext)</code> 的组件 <strong>将会</strong> 接收到 <code>undefined</code> 作为 context 的值。 <span style="float:footnote"><a href="../../index.html#toc">Go to TOC</a></span></section></section></inlinetoc></section>

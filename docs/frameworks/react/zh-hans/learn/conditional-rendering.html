@@ -1,0 +1,442 @@
+<!doctype html><html lang="zh-hans"><meta charset="utf-8"><title>条件渲染</title><meta name="viewport"content="width=device-width,initial-scale=1"><link rel="stylesheet"href="../../../../themes/packages/prism-coy-theme/theme_common.css"><section class="level1"aria-labelledby="条件渲染"><h1 id="条件渲染">条件渲染</h1><p>translators:<ul><li>Alienover</ul><intro><p>通常你的组件会需要根据不同的情况显示不同的内容。在 React 中，你可以通过使用 JavaScript 的 <code>if</code> 语句、<code>&#x26;&#x26;</code> 和 <code>? :</code> 运算符来选择性地渲染 JSX。</p></intro><youwilllearn><ul><li>如何根据不同条件返回不同的 JSX<li>如何根据不同条件包含或者去掉部分 JSX<li>一些你会在 React 代码库里遇到的常用的条件语法快捷表达式</ul></youwilllearn><section class="level2"aria-labelledby="conditionally-returning-jsx-conditionally-returning-jsx"><h2 id="conditionally-returning-jsx-conditionally-returning-jsx">Conditionally returning JSX {/<em>conditionally-returning-jsx</em>/}</h2><p>假设有一个 <code>PackingList</code> 组件，里面渲染多个 <code>Item</code> 组件，每个物品可标记为打包与否：</p><sandpack><pre class="language-js"><code class="language-js"><span class="token keyword">function</span> <span class="token function"><span class="token maybe-class-name">Item</span></span><span class="token punctuation">(</span><span class="token parameter"><span class="token punctuation">{</span> name<span class="token punctuation">,</span> isPacked <span class="token punctuation">}</span></span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  <span class="token keyword control-flow">return</span> <span class="token operator">&#x3C;</span>li className<span class="token operator">=</span><span class="token string">"item"</span><span class="token operator">></span><span class="token punctuation">{</span>name<span class="token punctuation">}</span><span class="token operator">&#x3C;</span><span class="token operator">/</span>li<span class="token operator">></span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+
+<span class="token keyword module">export</span> <span class="token keyword module">default</span> <span class="token keyword">function</span> <span class="token function"><span class="token maybe-class-name">PackingList</span></span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  <span class="token keyword control-flow">return</span> <span class="token punctuation">(</span>
+    <span class="token operator">&#x3C;</span>section<span class="token operator">></span>
+      <span class="token operator">&#x3C;</span>h1<span class="token operator">></span><span class="token maybe-class-name">Sally</span> <span class="token maybe-class-name">Ride</span> 的行李清单<span class="token operator">&#x3C;</span><span class="token operator">/</span>h1<span class="token operator">></span>
+      <span class="token operator">&#x3C;</span>ul<span class="token operator">></span>
+        <span class="token operator">&#x3C;</span><span class="token maybe-class-name">Item</span> 
+          isPacked<span class="token operator">=</span><span class="token punctuation">{</span><span class="token boolean">true</span><span class="token punctuation">}</span> 
+          name<span class="token operator">=</span><span class="token string">"宇航服"</span> 
+        <span class="token operator">/</span><span class="token operator">></span>
+        <span class="token operator">&#x3C;</span><span class="token maybe-class-name">Item</span> 
+          isPacked<span class="token operator">=</span><span class="token punctuation">{</span><span class="token boolean">true</span><span class="token punctuation">}</span> 
+          name<span class="token operator">=</span><span class="token string">"带金箔的头盔"</span> 
+        <span class="token operator">/</span><span class="token operator">></span>
+        <span class="token operator">&#x3C;</span><span class="token maybe-class-name">Item</span> 
+          isPacked<span class="token operator">=</span><span class="token punctuation">{</span><span class="token boolean">false</span><span class="token punctuation">}</span> 
+          name<span class="token operator">=</span><span class="token string">"Tam 的照片"</span> 
+        <span class="token operator">/</span><span class="token operator">></span>
+      <span class="token operator">&#x3C;</span><span class="token operator">/</span>ul<span class="token operator">></span>
+    <span class="token operator">&#x3C;</span><span class="token operator">/</span>section<span class="token operator">></span>
+  <span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span></code></pre></sandpack><p>需要注意的是，有些 <code>Item</code> 组件的 <code>isPacked</code> 属性是被设为 <code>true</code> 而不是 <code>false</code>。你可以在那些满足 <code>isPacked={true}</code> 条件的物品旁加上一个勾选符号（✔）。<p>你可以用 <a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Statements/if...else">if/else 语句</a> 去判断：<pre class="language-js"><code class="language-js"><span class="token keyword control-flow">if</span> <span class="token punctuation">(</span>isPacked<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  <span class="token keyword control-flow">return</span> <span class="token operator">&#x3C;</span>li className<span class="token operator">=</span><span class="token string">"item"</span><span class="token operator">></span><span class="token punctuation">{</span>name<span class="token punctuation">}</span> ✔<span class="token operator">&#x3C;</span><span class="token operator">/</span>li<span class="token operator">></span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+<span class="token keyword control-flow">return</span> <span class="token operator">&#x3C;</span>li className<span class="token operator">=</span><span class="token string">"item"</span><span class="token operator">></span><span class="token punctuation">{</span>name<span class="token punctuation">}</span><span class="token operator">&#x3C;</span><span class="token operator">/</span>li<span class="token operator">></span><span class="token punctuation">;</span></code></pre><p>如果 <code>isPacked</code> 属性是 <code>true</code>，这段代码会<strong>返回一个不一样的 JSX</strong>。通过这样的改动，一些物品的名字后面会出现一个勾选符号：</p><sandpack><pre class="language-js"><code class="language-js"><span class="token keyword">function</span> <span class="token function"><span class="token maybe-class-name">Item</span></span><span class="token punctuation">(</span><span class="token parameter"><span class="token punctuation">{</span> name<span class="token punctuation">,</span> isPacked <span class="token punctuation">}</span></span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  <span class="token keyword control-flow">if</span> <span class="token punctuation">(</span>isPacked<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token keyword control-flow">return</span> <span class="token operator">&#x3C;</span>li className<span class="token operator">=</span><span class="token string">"item"</span><span class="token operator">></span><span class="token punctuation">{</span>name<span class="token punctuation">}</span> ✔<span class="token operator">&#x3C;</span><span class="token operator">/</span>li<span class="token operator">></span><span class="token punctuation">;</span>
+  <span class="token punctuation">}</span>
+  <span class="token keyword control-flow">return</span> <span class="token operator">&#x3C;</span>li className<span class="token operator">=</span><span class="token string">"item"</span><span class="token operator">></span><span class="token punctuation">{</span>name<span class="token punctuation">}</span><span class="token operator">&#x3C;</span><span class="token operator">/</span>li<span class="token operator">></span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+
+<span class="token keyword module">export</span> <span class="token keyword module">default</span> <span class="token keyword">function</span> <span class="token function"><span class="token maybe-class-name">PackingList</span></span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  <span class="token keyword control-flow">return</span> <span class="token punctuation">(</span>
+    <span class="token operator">&#x3C;</span>section<span class="token operator">></span>
+      <span class="token operator">&#x3C;</span>h1<span class="token operator">></span><span class="token maybe-class-name">Sally</span> <span class="token maybe-class-name">Ride</span> 的行李清单<span class="token operator">&#x3C;</span><span class="token operator">/</span>h1<span class="token operator">></span>
+      <span class="token operator">&#x3C;</span>ul<span class="token operator">></span>
+        <span class="token operator">&#x3C;</span><span class="token maybe-class-name">Item</span> 
+          isPacked<span class="token operator">=</span><span class="token punctuation">{</span><span class="token boolean">true</span><span class="token punctuation">}</span> 
+          name<span class="token operator">=</span><span class="token string">"宇航服"</span> 
+        <span class="token operator">/</span><span class="token operator">></span>
+        <span class="token operator">&#x3C;</span><span class="token maybe-class-name">Item</span> 
+          isPacked<span class="token operator">=</span><span class="token punctuation">{</span><span class="token boolean">true</span><span class="token punctuation">}</span> 
+          name<span class="token operator">=</span><span class="token string">"带金箔的头盔"</span> 
+        <span class="token operator">/</span><span class="token operator">></span>
+        <span class="token operator">&#x3C;</span><span class="token maybe-class-name">Item</span> 
+          isPacked<span class="token operator">=</span><span class="token punctuation">{</span><span class="token boolean">false</span><span class="token punctuation">}</span> 
+          name<span class="token operator">=</span><span class="token string">"Tam 的照片"</span> 
+        <span class="token operator">/</span><span class="token operator">></span>
+      <span class="token operator">&#x3C;</span><span class="token operator">/</span>ul<span class="token operator">></span>
+    <span class="token operator">&#x3C;</span><span class="token operator">/</span>section<span class="token operator">></span>
+  <span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span></code></pre></sandpack><p>动手尝试一下，看看各种情况会出现什么不同的结果！<p>留意这里你是怎么使用 JavaScript 的 <code>if</code> 和 <code>return</code> 语句来写分支逻辑。在 React 中，是由 JavaScript 来处理控制流的（比如条件）。<section class="level3"aria-labelledby="选择性地返回-null-conditionally-returning-nothing-with-null"><h3 id="选择性地返回-null-conditionally-returning-nothing-with-null">选择性地返回 <code>null</code> {/<em>conditionally-returning-nothing-with-null</em>/}</h3><p>在一些情况下，你不想有任何东西进行渲染。比如，你不想显示已经打包好的物品。但一个组件必须返回一些东西。这种情况下，你可以直接返回 <code>null</code>。<pre class="language-js"><code class="language-js"><span class="token keyword control-flow">if</span> <span class="token punctuation">(</span>isPacked<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  <span class="token keyword control-flow">return</span> <span class="token keyword null nil">null</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+<span class="token keyword control-flow">return</span> <span class="token operator">&#x3C;</span>li className<span class="token operator">=</span><span class="token string">"item"</span><span class="token operator">></span><span class="token punctuation">{</span>name<span class="token punctuation">}</span><span class="token operator">&#x3C;</span><span class="token operator">/</span>li<span class="token operator">></span><span class="token punctuation">;</span></code></pre><p>如果组件的 <code>isPacked</code> 属性为 <code>true</code>，那么它将只返回 <code>null</code>。否则，它将返回相应的 JSX 用来渲染。</p><sandpack><pre class="language-js"><code class="language-js"><span class="token keyword">function</span> <span class="token function"><span class="token maybe-class-name">Item</span></span><span class="token punctuation">(</span><span class="token parameter"><span class="token punctuation">{</span> name<span class="token punctuation">,</span> isPacked <span class="token punctuation">}</span></span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  <span class="token keyword control-flow">if</span> <span class="token punctuation">(</span>isPacked<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token keyword control-flow">return</span> <span class="token keyword null nil">null</span><span class="token punctuation">;</span>
+  <span class="token punctuation">}</span>
+  <span class="token keyword control-flow">return</span> <span class="token operator">&#x3C;</span>li className<span class="token operator">=</span><span class="token string">"item"</span><span class="token operator">></span><span class="token punctuation">{</span>name<span class="token punctuation">}</span><span class="token operator">&#x3C;</span><span class="token operator">/</span>li<span class="token operator">></span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+
+<span class="token keyword module">export</span> <span class="token keyword module">default</span> <span class="token keyword">function</span> <span class="token function"><span class="token maybe-class-name">PackingList</span></span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  <span class="token keyword control-flow">return</span> <span class="token punctuation">(</span>
+    <span class="token operator">&#x3C;</span>section<span class="token operator">></span>
+      <span class="token operator">&#x3C;</span>h1<span class="token operator">></span><span class="token maybe-class-name">Sally</span> <span class="token maybe-class-name">Ride</span> 的行李清单<span class="token operator">&#x3C;</span><span class="token operator">/</span>h1<span class="token operator">></span>
+      <span class="token operator">&#x3C;</span>ul<span class="token operator">></span>
+        <span class="token operator">&#x3C;</span><span class="token maybe-class-name">Item</span> 
+          isPacked<span class="token operator">=</span><span class="token punctuation">{</span><span class="token boolean">true</span><span class="token punctuation">}</span> 
+          name<span class="token operator">=</span><span class="token string">"宇航服"</span> 
+        <span class="token operator">/</span><span class="token operator">></span>
+        <span class="token operator">&#x3C;</span><span class="token maybe-class-name">Item</span> 
+          isPacked<span class="token operator">=</span><span class="token punctuation">{</span><span class="token boolean">true</span><span class="token punctuation">}</span> 
+          name<span class="token operator">=</span><span class="token string">"带金箔的头盔"</span> 
+        <span class="token operator">/</span><span class="token operator">></span>
+        <span class="token operator">&#x3C;</span><span class="token maybe-class-name">Item</span> 
+          isPacked<span class="token operator">=</span><span class="token punctuation">{</span><span class="token boolean">false</span><span class="token punctuation">}</span> 
+          name<span class="token operator">=</span><span class="token string">"Tam 的照片"</span> 
+        <span class="token operator">/</span><span class="token operator">></span>
+      <span class="token operator">&#x3C;</span><span class="token operator">/</span>ul<span class="token operator">></span>
+    <span class="token operator">&#x3C;</span><span class="token operator">/</span>section<span class="token operator">></span>
+  <span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span></code></pre></sandpack><p>实际上，在组件里返回 <code>null</code> 并不常见，因为这样会让想使用它的开发者感觉奇怪。通常情况下，你可以在父组件里选择是否要渲染该组件。让我们接着往下看吧！</section></section><section class="level2"aria-labelledby="选择性地包含-jsx-conditionally-including-jsx"><h2 id="选择性地包含-jsx-conditionally-including-jsx">选择性地包含 JSX {/<em>conditionally-including-jsx</em>/}</h2><p>在之前的例子里，你在组件内部控制哪些 JSX 树（如果有的话！）会返回。你可能已经发现了在渲染输出里会有一些重复的内容：<pre class="language-js"><code class="language-js"><span class="token operator">&#x3C;</span>li className<span class="token operator">=</span><span class="token string">"item"</span><span class="token operator">></span><span class="token punctuation">{</span>name<span class="token punctuation">}</span> ✔<span class="token operator">&#x3C;</span><span class="token operator">/</span>li<span class="token operator">></span></code></pre><p>和下面的写法很像：<pre class="language-js"><code class="language-js"><span class="token operator">&#x3C;</span>li className<span class="token operator">=</span><span class="token string">"item"</span><span class="token operator">></span><span class="token punctuation">{</span>name<span class="token punctuation">}</span><span class="token operator">&#x3C;</span><span class="token operator">/</span>li<span class="token operator">></span></code></pre><p>两个条件分支都会返回 <code>&#x3C;li className="item">...&#x3C;/li></code>：<pre class="language-js"><code class="language-js"><span class="token keyword control-flow">if</span> <span class="token punctuation">(</span>isPacked<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  <span class="token keyword control-flow">return</span> <span class="token operator">&#x3C;</span>li className<span class="token operator">=</span><span class="token string">"item"</span><span class="token operator">></span><span class="token punctuation">{</span>name<span class="token punctuation">}</span> ✔<span class="token operator">&#x3C;</span><span class="token operator">/</span>li<span class="token operator">></span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+<span class="token keyword control-flow">return</span> <span class="token operator">&#x3C;</span>li className<span class="token operator">=</span><span class="token string">"item"</span><span class="token operator">></span><span class="token punctuation">{</span>name<span class="token punctuation">}</span><span class="token operator">&#x3C;</span><span class="token operator">/</span>li<span class="token operator">></span><span class="token punctuation">;</span></code></pre><p>虽然这些重复的内容没什么害处，但这样可能会导致你的代码更难维护。比如你想更改 <code>className</code>？你就需要修改两个地方！针对这种情况，你可以通过选择性地包含一小段 JSX 来让你的代码更加 <a href="https://en.wikipedia.org/wiki/Don%27t_repeat_yourself">DRY</a>。<section class="level3"aria-labelledby="三目运算符--conditional-ternary-operator--"><h3 id="三目运算符--conditional-ternary-operator--">三目运算符（<code>? :</code>） {/<em>conditional-ternary-operator--</em>/}</h3><p>JavaScript 有一种紧凑型语法来实现条件判断表达式——<a href="https://developer.mozilla.org/zh-CN/docs/Web/JavaScript/Reference/Operators/Conditional_Operator">条件运算符</a> 又称“三目运算符”。<p>除了这样：<pre class="language-js"><code class="language-js"><span class="token keyword control-flow">if</span> <span class="token punctuation">(</span>isPacked<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  <span class="token keyword control-flow">return</span> <span class="token operator">&#x3C;</span>li className<span class="token operator">=</span><span class="token string">"item"</span><span class="token operator">></span><span class="token punctuation">{</span>name<span class="token punctuation">}</span> ✔<span class="token operator">&#x3C;</span><span class="token operator">/</span>li<span class="token operator">></span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+<span class="token keyword control-flow">return</span> <span class="token operator">&#x3C;</span>li className<span class="token operator">=</span><span class="token string">"item"</span><span class="token operator">></span><span class="token punctuation">{</span>name<span class="token punctuation">}</span><span class="token operator">&#x3C;</span><span class="token operator">/</span>li<span class="token operator">></span><span class="token punctuation">;</span></code></pre><p>你还可以这样实现：<pre class="language-js"><code class="language-js"><span class="token keyword control-flow">return</span> <span class="token punctuation">(</span>
+  <span class="token operator">&#x3C;</span>li className<span class="token operator">=</span><span class="token string">"item"</span><span class="token operator">></span>
+    <span class="token punctuation">{</span>isPacked <span class="token operator">?</span> name <span class="token operator">+</span> <span class="token string">' ✔'</span> <span class="token operator">:</span> name<span class="token punctuation">}</span>
+  <span class="token operator">&#x3C;</span><span class="token operator">/</span>li<span class="token operator">></span>
+<span class="token punctuation">)</span><span class="token punctuation">;</span></code></pre><p>你可以认为，<em>“如果 <code>isPacked</code> 为 true 时，则（<code>?</code>）渲染 <code>name + ' ✔'</code>，否则（<code>:</code>）渲染 <code>name</code>。”</em></p><deepdive><section class="level4"aria-labelledby="两个例子完全一样吗-are-these-two-examples-fully-equivalent"><h4 id="两个例子完全一样吗-are-these-two-examples-fully-equivalent">两个例子完全一样吗？ {/<em>are-these-two-examples-fully-equivalent</em>/}</h4><p>如果你之前是习惯面向对象开发的，你可能会认为上面的两个例子略有不同，因为其中一个可能会创建两个不同的 <code>&#x3C;li></code> “实例”。但 JSX 元素不是“实例”，因为它们没有内部状态也不是真是的 DOM 节点。它们只是一些简单的描述，就像图纸一样。所以上面这两个例子事实上是完全相同的。在 <a href="/learn/preserving-and-resetting-state">状态的保持和重置</a> 里会深入探讨其原因。<p>现在，假如你想将对应物品的文本放到另一个 HTML 标签里，比如用 <code>&#x3C;del></code> 来显示删除线。你可以添加更多的换行和括号，以便在各种情况下更好地去嵌套 JSX：</p><sandpack><pre class="language-js"><code class="language-js"><span class="token keyword">function</span> <span class="token function"><span class="token maybe-class-name">Item</span></span><span class="token punctuation">(</span><span class="token parameter"><span class="token punctuation">{</span> name<span class="token punctuation">,</span> isPacked <span class="token punctuation">}</span></span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  <span class="token keyword control-flow">return</span> <span class="token punctuation">(</span>
+    <span class="token operator">&#x3C;</span>li className<span class="token operator">=</span><span class="token string">"item"</span><span class="token operator">></span>
+      <span class="token punctuation">{</span>isPacked <span class="token operator">?</span> <span class="token punctuation">(</span>
+        <span class="token operator">&#x3C;</span>del<span class="token operator">></span>
+          <span class="token punctuation">{</span>name <span class="token operator">+</span> <span class="token string">' ✔'</span><span class="token punctuation">}</span>
+        <span class="token operator">&#x3C;</span><span class="token operator">/</span>del<span class="token operator">></span>
+      <span class="token punctuation">)</span> <span class="token operator">:</span> <span class="token punctuation">(</span>
+        name
+      <span class="token punctuation">)</span><span class="token punctuation">}</span>
+    <span class="token operator">&#x3C;</span><span class="token operator">/</span>li<span class="token operator">></span>
+  <span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+
+<span class="token keyword module">export</span> <span class="token keyword module">default</span> <span class="token keyword">function</span> <span class="token function"><span class="token maybe-class-name">PackingList</span></span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  <span class="token keyword control-flow">return</span> <span class="token punctuation">(</span>
+    <span class="token operator">&#x3C;</span>section<span class="token operator">></span>
+      <span class="token operator">&#x3C;</span>h1<span class="token operator">></span><span class="token maybe-class-name">Sally</span> <span class="token maybe-class-name">Ride</span> 的行李清单<span class="token operator">&#x3C;</span><span class="token operator">/</span>h1<span class="token operator">></span>
+      <span class="token operator">&#x3C;</span>ul<span class="token operator">></span>
+        <span class="token operator">&#x3C;</span><span class="token maybe-class-name">Item</span> 
+          isPacked<span class="token operator">=</span><span class="token punctuation">{</span><span class="token boolean">true</span><span class="token punctuation">}</span> 
+          name<span class="token operator">=</span><span class="token string">"宇航服"</span> 
+        <span class="token operator">/</span><span class="token operator">></span>
+        <span class="token operator">&#x3C;</span><span class="token maybe-class-name">Item</span> 
+          isPacked<span class="token operator">=</span><span class="token punctuation">{</span><span class="token boolean">true</span><span class="token punctuation">}</span> 
+          name<span class="token operator">=</span><span class="token string">"带金箔的头盔"</span> 
+        <span class="token operator">/</span><span class="token operator">></span>
+        <span class="token operator">&#x3C;</span><span class="token maybe-class-name">Item</span> 
+          isPacked<span class="token operator">=</span><span class="token punctuation">{</span><span class="token boolean">false</span><span class="token punctuation">}</span> 
+          name<span class="token operator">=</span><span class="token string">"Tam 的照片"</span> 
+        <span class="token operator">/</span><span class="token operator">></span>
+      <span class="token operator">&#x3C;</span><span class="token operator">/</span>ul<span class="token operator">></span>
+    <span class="token operator">&#x3C;</span><span class="token operator">/</span>section<span class="token operator">></span>
+  <span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span></code></pre></sandpack><p>对于简单的条件判断，这样的风格可以很好地实现，但需要适量使用。如果你的组件里有很多的嵌套式条件表达式，则需要考虑通过提取为子组件来简化这些嵌套表达式。在 React 里，标签也是你代码中的一部分，所以你可以使用变量和函数来整理一些复杂的表达式。</section></deepdive></section><section class="level3"aria-labelledby="与运算符-logical-and-operator-"><h3 id="与运算符-logical-and-operator-">与运算符（<code>&#x26;&#x26;</code>） {/<em>logical-and-operator-</em>/}</h3><p>你会遇到的另一个常见的快捷表达式是 <a href="https://developer.mozilla.org/zh-CN/docs/Web/JavaScript/Reference/Operators/Logical_AND#:~:text=The%20logical%20AND%20(%20%26%26%20)%20operator,it%20returns%20a%20Boolean%20value.">JavaScript 与（<code>&#x26;&#x26;</code>）运算符</a>。在 React 组件里，通常用在当条件成立时，你想渲染一些 JSX，<strong>或者不做任何渲染</strong>。使用 <code>&#x26;&#x26;</code>，你也可以实现仅当 <code>isPacked</code> 为 <code>true</code> 时，渲染勾选符号。<pre class="language-js"><code class="language-js"><span class="token keyword control-flow">return</span> <span class="token punctuation">(</span>
+  <span class="token operator">&#x3C;</span>li className<span class="token operator">=</span><span class="token string">"item"</span><span class="token operator">></span>
+    <span class="token punctuation">{</span>name<span class="token punctuation">}</span> <span class="token punctuation">{</span>isPacked <span class="token operator">&#x26;&#x26;</span> <span class="token string">'✔'</span><span class="token punctuation">}</span>
+  <span class="token operator">&#x3C;</span><span class="token operator">/</span>li<span class="token operator">></span>
+<span class="token punctuation">)</span><span class="token punctuation">;</span></code></pre><p>你可以认为，<em>“当 <code>isPacked</code> 为真值时，则（<code>&#x26;&#x26;</code>）渲染勾选符号，否则，不渲染。”</em><p>下面为具体的例子：</p><sandpack><pre class="language-js"><code class="language-js"><span class="token keyword">function</span> <span class="token function"><span class="token maybe-class-name">Item</span></span><span class="token punctuation">(</span><span class="token parameter"><span class="token punctuation">{</span> name<span class="token punctuation">,</span> isPacked <span class="token punctuation">}</span></span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  <span class="token keyword control-flow">return</span> <span class="token punctuation">(</span>
+    <span class="token operator">&#x3C;</span>li className<span class="token operator">=</span><span class="token string">"item"</span><span class="token operator">></span>
+      <span class="token punctuation">{</span>name<span class="token punctuation">}</span> <span class="token punctuation">{</span>isPacked <span class="token operator">&#x26;&#x26;</span> <span class="token string">'✔'</span><span class="token punctuation">}</span>
+    <span class="token operator">&#x3C;</span><span class="token operator">/</span>li<span class="token operator">></span>
+  <span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+
+<span class="token keyword module">export</span> <span class="token keyword module">default</span> <span class="token keyword">function</span> <span class="token function"><span class="token maybe-class-name">PackingList</span></span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  <span class="token keyword control-flow">return</span> <span class="token punctuation">(</span>
+    <span class="token operator">&#x3C;</span>section<span class="token operator">></span>
+      <span class="token operator">&#x3C;</span>h1<span class="token operator">></span><span class="token maybe-class-name">Sally</span> <span class="token maybe-class-name">Ride</span> 的行李清单<span class="token operator">&#x3C;</span><span class="token operator">/</span>h1<span class="token operator">></span>
+      <span class="token operator">&#x3C;</span>ul<span class="token operator">></span>
+        <span class="token operator">&#x3C;</span><span class="token maybe-class-name">Item</span> 
+          isPacked<span class="token operator">=</span><span class="token punctuation">{</span><span class="token boolean">true</span><span class="token punctuation">}</span> 
+          name<span class="token operator">=</span><span class="token string">"宇航服"</span> 
+        <span class="token operator">/</span><span class="token operator">></span>
+        <span class="token operator">&#x3C;</span><span class="token maybe-class-name">Item</span> 
+          isPacked<span class="token operator">=</span><span class="token punctuation">{</span><span class="token boolean">true</span><span class="token punctuation">}</span> 
+          name<span class="token operator">=</span><span class="token string">"带金箔的头盔"</span> 
+        <span class="token operator">/</span><span class="token operator">></span>
+        <span class="token operator">&#x3C;</span><span class="token maybe-class-name">Item</span> 
+          isPacked<span class="token operator">=</span><span class="token punctuation">{</span><span class="token boolean">false</span><span class="token punctuation">}</span> 
+          name<span class="token operator">=</span><span class="token string">"Tam 的照片"</span> 
+        <span class="token operator">/</span><span class="token operator">></span>
+      <span class="token operator">&#x3C;</span><span class="token operator">/</span>ul<span class="token operator">></span>
+    <span class="token operator">&#x3C;</span><span class="token operator">/</span>section<span class="token operator">></span>
+  <span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span></code></pre></sandpack><p>当 <a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Logical_AND">JavaScript &#x26;&#x26; 表达式</a> 的左侧（我们的条件）为 <code>true</code> 时，它则返回其右侧的值（在我们的例子里是勾选符号）。但条件的结果是 <code>false</code>，则整个表达式会变成 <code>false</code>。在 JSX 里，React 会将 <code>false</code> 视为一个“空值”，就像 <code>null</code> 或者 <code>undefined</code>，这样 React 就不会在这里进行任何渲染。</p><pitfall><p><strong>切勿将数字放在 <code>&#x26;&#x26;</code> 左侧.</strong><p>JavaScript 会自动将左侧的值转换成布尔类型以判断条件成立与否。然而，如果左侧是 <code>0</code>，整个表达式将变成左侧的值（<code>0</code>），React 此时则会渲染 <code>0</code> 而不是不进行渲染。<p>例如，一个常见的错误是 <code>messageCount &#x26;&#x26; &#x3C;p>New messages&#x3C;/p></code>。其原本是想当 <code>messageCount</code> 为 0 的时候不进行渲染，但实际上却渲染了 <code>0</code>。<p>为了更正，可以将左侧的值改成布尔类型：<code>messageCount > 0 &#x26;&#x26; &#x3C;p>New messages&#x3C;/p></code>。</p></pitfall></section><section class="level3"aria-labelledby="选择性地将-jsx-赋值给变量-conditionally-assigning-jsx-to-a-variable"><h3 id="选择性地将-jsx-赋值给变量-conditionally-assigning-jsx-to-a-variable">选择性地将 JSX 赋值给变量 {/<em>conditionally-assigning-jsx-to-a-variable</em>/}</h3><p>当这些快捷方式妨碍写普通代码时，可以考虑使用 <code>if</code> 语句和变量。因为你可以使用 <a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Statements/let"><code>let</code></a> 进行重复赋值，所以一开始你可以将你想展示的（这里指的是物品的名字）作为默认值赋予给该变量。<pre class="language-js"><code class="language-js"><span class="token keyword">let</span> itemContent <span class="token operator">=</span> name<span class="token punctuation">;</span></code></pre><p>结合 <code>if</code> 语句，当 <code>isPacked</code> 为 <code>true</code> 时，将 JSX 表达式的值重新赋值给 <code>itemContent</code>：<pre class="language-js"><code class="language-js"><span class="token keyword control-flow">if</span> <span class="token punctuation">(</span>isPacked<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  itemContent <span class="token operator">=</span> name <span class="token operator">+</span> <span class="token string">" ✔"</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span></code></pre><p><a href="/learn/javascript-in-jsx-with-curly-braces#using-curly-braces-a-window-into-the-javascript-world">大括号 - JavaScript 的“新世界”</a>。将变量用大括号嵌入在返回的 JSX 树中，来嵌套计算好的表达式与 JSX：<pre class="language-js"><code class="language-js"><span class="token operator">&#x3C;</span>li className<span class="token operator">=</span><span class="token string">"item"</span><span class="token operator">></span>
+  <span class="token punctuation">{</span>itemContent<span class="token punctuation">}</span>
+<span class="token operator">&#x3C;</span><span class="token operator">/</span>li<span class="token operator">></span></code></pre><p>这种方式是最冗长的，但也是最灵活的。下面是相关的例子：</p><sandpack><pre class="language-js"><code class="language-js"><span class="token keyword">function</span> <span class="token function"><span class="token maybe-class-name">Item</span></span><span class="token punctuation">(</span><span class="token parameter"><span class="token punctuation">{</span> name<span class="token punctuation">,</span> isPacked <span class="token punctuation">}</span></span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  <span class="token keyword">let</span> itemContent <span class="token operator">=</span> name<span class="token punctuation">;</span>
+  <span class="token keyword control-flow">if</span> <span class="token punctuation">(</span>isPacked<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    itemContent <span class="token operator">=</span> name <span class="token operator">+</span> <span class="token string">" ✔"</span><span class="token punctuation">;</span>
+  <span class="token punctuation">}</span>
+  <span class="token keyword control-flow">return</span> <span class="token punctuation">(</span>
+    <span class="token operator">&#x3C;</span>li className<span class="token operator">=</span><span class="token string">"item"</span><span class="token operator">></span>
+      <span class="token punctuation">{</span>itemContent<span class="token punctuation">}</span>
+    <span class="token operator">&#x3C;</span><span class="token operator">/</span>li<span class="token operator">></span>
+  <span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+
+<span class="token keyword module">export</span> <span class="token keyword module">default</span> <span class="token keyword">function</span> <span class="token function"><span class="token maybe-class-name">PackingList</span></span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  <span class="token keyword control-flow">return</span> <span class="token punctuation">(</span>
+    <span class="token operator">&#x3C;</span>section<span class="token operator">></span>
+      <span class="token operator">&#x3C;</span>h1<span class="token operator">></span><span class="token maybe-class-name">Sally</span> <span class="token maybe-class-name">Ride</span> 的行李清单<span class="token operator">&#x3C;</span><span class="token operator">/</span>h1<span class="token operator">></span>
+      <span class="token operator">&#x3C;</span>ul<span class="token operator">></span>
+        <span class="token operator">&#x3C;</span><span class="token maybe-class-name">Item</span> 
+          isPacked<span class="token operator">=</span><span class="token punctuation">{</span><span class="token boolean">true</span><span class="token punctuation">}</span> 
+          name<span class="token operator">=</span><span class="token string">"宇航服"</span> 
+        <span class="token operator">/</span><span class="token operator">></span>
+        <span class="token operator">&#x3C;</span><span class="token maybe-class-name">Item</span> 
+          isPacked<span class="token operator">=</span><span class="token punctuation">{</span><span class="token boolean">true</span><span class="token punctuation">}</span> 
+          name<span class="token operator">=</span><span class="token string">"带金箔的头盔"</span> 
+        <span class="token operator">/</span><span class="token operator">></span>
+        <span class="token operator">&#x3C;</span><span class="token maybe-class-name">Item</span> 
+          isPacked<span class="token operator">=</span><span class="token punctuation">{</span><span class="token boolean">false</span><span class="token punctuation">}</span> 
+          name<span class="token operator">=</span><span class="token string">"Tam 的照片"</span> 
+        <span class="token operator">/</span><span class="token operator">></span>
+      <span class="token operator">&#x3C;</span><span class="token operator">/</span>ul<span class="token operator">></span>
+    <span class="token operator">&#x3C;</span><span class="token operator">/</span>section<span class="token operator">></span>
+  <span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span></code></pre></sandpack><p>跟之前的一样，这个方式不仅仅适用于文本，任意的 JSX 均适用：</p><sandpack><pre class="language-js"><code class="language-js"><span class="token keyword">function</span> <span class="token function"><span class="token maybe-class-name">Item</span></span><span class="token punctuation">(</span><span class="token parameter"><span class="token punctuation">{</span> name<span class="token punctuation">,</span> isPacked <span class="token punctuation">}</span></span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  <span class="token keyword">let</span> itemContent <span class="token operator">=</span> name<span class="token punctuation">;</span>
+  <span class="token keyword control-flow">if</span> <span class="token punctuation">(</span>isPacked<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    itemContent <span class="token operator">=</span> <span class="token punctuation">(</span>
+      <span class="token operator">&#x3C;</span>del<span class="token operator">></span>
+        <span class="token punctuation">{</span>name <span class="token operator">+</span> <span class="token string">" ✔"</span><span class="token punctuation">}</span>
+      <span class="token operator">&#x3C;</span><span class="token operator">/</span>del<span class="token operator">></span>
+    <span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token punctuation">}</span>
+  <span class="token keyword control-flow">return</span> <span class="token punctuation">(</span>
+    <span class="token operator">&#x3C;</span>li className<span class="token operator">=</span><span class="token string">"item"</span><span class="token operator">></span>
+      <span class="token punctuation">{</span>itemContent<span class="token punctuation">}</span>
+    <span class="token operator">&#x3C;</span><span class="token operator">/</span>li<span class="token operator">></span>
+  <span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+
+<span class="token keyword module">export</span> <span class="token keyword module">default</span> <span class="token keyword">function</span> <span class="token function"><span class="token maybe-class-name">PackingList</span></span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  <span class="token keyword control-flow">return</span> <span class="token punctuation">(</span>
+    <span class="token operator">&#x3C;</span>section<span class="token operator">></span>
+      <span class="token operator">&#x3C;</span>h1<span class="token operator">></span><span class="token maybe-class-name">Sally</span> <span class="token maybe-class-name">Ride</span> 的行李清单<span class="token operator">&#x3C;</span><span class="token operator">/</span>h1<span class="token operator">></span>
+      <span class="token operator">&#x3C;</span>ul<span class="token operator">></span>
+        <span class="token operator">&#x3C;</span><span class="token maybe-class-name">Item</span> 
+          isPacked<span class="token operator">=</span><span class="token punctuation">{</span><span class="token boolean">true</span><span class="token punctuation">}</span> 
+          name<span class="token operator">=</span><span class="token string">"宇航服"</span> 
+        <span class="token operator">/</span><span class="token operator">></span>
+        <span class="token operator">&#x3C;</span><span class="token maybe-class-name">Item</span> 
+          isPacked<span class="token operator">=</span><span class="token punctuation">{</span><span class="token boolean">true</span><span class="token punctuation">}</span> 
+          name<span class="token operator">=</span><span class="token string">"带金箔的头盔"</span> 
+        <span class="token operator">/</span><span class="token operator">></span>
+        <span class="token operator">&#x3C;</span><span class="token maybe-class-name">Item</span> 
+          isPacked<span class="token operator">=</span><span class="token punctuation">{</span><span class="token boolean">false</span><span class="token punctuation">}</span> 
+          name<span class="token operator">=</span><span class="token string">"Tam 的照片"</span> 
+        <span class="token operator">/</span><span class="token operator">></span>
+      <span class="token operator">&#x3C;</span><span class="token operator">/</span>ul<span class="token operator">></span>
+    <span class="token operator">&#x3C;</span><span class="token operator">/</span>section<span class="token operator">></span>
+  <span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span></code></pre></sandpack><p>如果对 JavaScript 不熟悉，这些不同的风格一开始可能会让你感到不知所措。但是，学习这些将有助于你理解和写任何的 JavaScript 代码，而不仅仅是 React 组件。一开始可以选择一个你喜欢的来用，然后当你忘记其他的怎么用时，可以再翻阅这份参考资料。</p><recap><ul><li>在 React，你可以使用 JavaScript 来控制分支逻辑。<li>你可以使用 <code>if</code> 语句来选择性地返回 JSX 表达式。<li>你可以选择性地将一些 JSX 赋值给变量，然后用大括号将其嵌入到其他 JSX 中。<li>在 JSX 中，<code>{cond ? &#x3C;A /> : &#x3C;B />}</code> 表示 <em>“当 <code>cond</code> 为真值时, 渲染 <code>&#x3C;A /></code>，否则 <code>&#x3C;B /></code>”</em>。<li>在 JSX 中，<code>{cond &#x26;&#x26; &#x3C;A />}</code> 表示 <em>“当 <code>cond</code> 为真值时, 渲染 <code>&#x3C;A /></code>，否则不进行渲染”</em>。<li>快捷的表达式很常见，但如果你更倾向于使用 <code>if</code>，你也可以不使用它们，。</ul></recap><challenges><section class="level4"aria-labelledby="用---给未完成的物品加上图标-show-an-icon-for-incomplete-items-with--"><h4 id="用---给未完成的物品加上图标-show-an-icon-for-incomplete-items-with--">用 <code>? :</code> 给未完成的物品加上图标 {/<em>show-an-icon-for-incomplete-items-with--</em>/}</h4><p>当 <code>isPacked</code> 不为 <code>true</code> 时，使用条件运算符 （<code>cond ? a : b</code>） 来渲染 ❌</p><sandpack><pre class="language-js"><code class="language-js"><span class="token keyword">function</span> <span class="token function"><span class="token maybe-class-name">Item</span></span><span class="token punctuation">(</span><span class="token parameter"><span class="token punctuation">{</span> name<span class="token punctuation">,</span> isPacked <span class="token punctuation">}</span></span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  <span class="token keyword control-flow">return</span> <span class="token punctuation">(</span>
+    <span class="token operator">&#x3C;</span>li className<span class="token operator">=</span><span class="token string">"item"</span><span class="token operator">></span>
+      <span class="token punctuation">{</span>name<span class="token punctuation">}</span> <span class="token punctuation">{</span>isPacked <span class="token operator">&#x26;&#x26;</span> <span class="token string">'✔'</span><span class="token punctuation">}</span>
+    <span class="token operator">&#x3C;</span><span class="token operator">/</span>li<span class="token operator">></span>
+  <span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+
+<span class="token keyword module">export</span> <span class="token keyword module">default</span> <span class="token keyword">function</span> <span class="token function"><span class="token maybe-class-name">PackingList</span></span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  <span class="token keyword control-flow">return</span> <span class="token punctuation">(</span>
+    <span class="token operator">&#x3C;</span>section<span class="token operator">></span>
+      <span class="token operator">&#x3C;</span>h1<span class="token operator">></span><span class="token maybe-class-name">Sally</span> <span class="token maybe-class-name">Ride</span> 的行李清单<span class="token operator">&#x3C;</span><span class="token operator">/</span>h1<span class="token operator">></span>
+      <span class="token operator">&#x3C;</span>ul<span class="token operator">></span>
+        <span class="token operator">&#x3C;</span><span class="token maybe-class-name">Item</span> 
+          isPacked<span class="token operator">=</span><span class="token punctuation">{</span><span class="token boolean">true</span><span class="token punctuation">}</span> 
+          name<span class="token operator">=</span><span class="token string">"宇航服"</span> 
+        <span class="token operator">/</span><span class="token operator">></span>
+        <span class="token operator">&#x3C;</span><span class="token maybe-class-name">Item</span> 
+          isPacked<span class="token operator">=</span><span class="token punctuation">{</span><span class="token boolean">true</span><span class="token punctuation">}</span> 
+          name<span class="token operator">=</span><span class="token string">"带金箔的头盔"</span> 
+        <span class="token operator">/</span><span class="token operator">></span>
+        <span class="token operator">&#x3C;</span><span class="token maybe-class-name">Item</span> 
+          isPacked<span class="token operator">=</span><span class="token punctuation">{</span><span class="token boolean">false</span><span class="token punctuation">}</span> 
+          name<span class="token operator">=</span><span class="token string">"Tam 的照片"</span> 
+        <span class="token operator">/</span><span class="token operator">></span>
+      <span class="token operator">&#x3C;</span><span class="token operator">/</span>ul<span class="token operator">></span>
+    <span class="token operator">&#x3C;</span><span class="token operator">/</span>section<span class="token operator">></span>
+  <span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span></code></pre></sandpack><solution><sandpack><pre class="language-js"><code class="language-js"><span class="token keyword">function</span> <span class="token function"><span class="token maybe-class-name">Item</span></span><span class="token punctuation">(</span><span class="token parameter"><span class="token punctuation">{</span> name<span class="token punctuation">,</span> isPacked <span class="token punctuation">}</span></span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  <span class="token keyword control-flow">return</span> <span class="token punctuation">(</span>
+    <span class="token operator">&#x3C;</span>li className<span class="token operator">=</span><span class="token string">"item"</span><span class="token operator">></span>
+      <span class="token punctuation">{</span>name<span class="token punctuation">}</span> <span class="token punctuation">{</span>isPacked <span class="token operator">?</span> <span class="token string">'✔'</span> <span class="token operator">:</span> <span class="token string">'❌'</span><span class="token punctuation">}</span>
+    <span class="token operator">&#x3C;</span><span class="token operator">/</span>li<span class="token operator">></span>
+  <span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+
+<span class="token keyword module">export</span> <span class="token keyword module">default</span> <span class="token keyword">function</span> <span class="token function"><span class="token maybe-class-name">PackingList</span></span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  <span class="token keyword control-flow">return</span> <span class="token punctuation">(</span>
+    <span class="token operator">&#x3C;</span>section<span class="token operator">></span>
+      <span class="token operator">&#x3C;</span>h1<span class="token operator">></span><span class="token maybe-class-name">Sally</span> <span class="token maybe-class-name">Ride</span> 的行李清单<span class="token operator">&#x3C;</span><span class="token operator">/</span>h1<span class="token operator">></span>
+      <span class="token operator">&#x3C;</span>ul<span class="token operator">></span>
+        <span class="token operator">&#x3C;</span><span class="token maybe-class-name">Item</span> 
+          isPacked<span class="token operator">=</span><span class="token punctuation">{</span><span class="token boolean">true</span><span class="token punctuation">}</span> 
+          name<span class="token operator">=</span><span class="token string">"宇航服"</span> 
+        <span class="token operator">/</span><span class="token operator">></span>
+        <span class="token operator">&#x3C;</span><span class="token maybe-class-name">Item</span> 
+          isPacked<span class="token operator">=</span><span class="token punctuation">{</span><span class="token boolean">true</span><span class="token punctuation">}</span> 
+          name<span class="token operator">=</span><span class="token string">"带金箔的头盔"</span> 
+        <span class="token operator">/</span><span class="token operator">></span>
+        <span class="token operator">&#x3C;</span><span class="token maybe-class-name">Item</span> 
+          isPacked<span class="token operator">=</span><span class="token punctuation">{</span><span class="token boolean">false</span><span class="token punctuation">}</span> 
+          name<span class="token operator">=</span><span class="token string">"Tam 的照片"</span> 
+        <span class="token operator">/</span><span class="token operator">></span>
+      <span class="token operator">&#x3C;</span><span class="token operator">/</span>ul<span class="token operator">></span>
+    <span class="token operator">&#x3C;</span><span class="token operator">/</span>section<span class="token operator">></span>
+  <span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span></code></pre></sandpack></solution></section><section class="level4"aria-labelledby="用--展示物品的重要性-show-the-item-importance-with-"><h4 id="用--展示物品的重要性-show-the-item-importance-with-">用 <code>&#x26;&#x26;</code> 展示物品的重要性 {/<em>show-the-item-importance-with-</em>/}</h4><p>在这个例子里，每个 <code>Item</code> 接收一个名为 <code>importance</code> 的数字类型属性。使用 <code>&#x26;&#x26;</code> 运算符渲染 “<em>（重要性：X）</em>”，以斜体呈现，但仅作用于那些难度值为非零的物品。你的物品列表后最终应该如下：<ul><li>宇航服 <em>（重要性: 9）</em><li>带金箔的头盔<li>Tam 的照片 <em>（重要性: 6）</em></ul><p>注意别忘了在这两个标签之间加上一个空格！</p><sandpack><pre class="language-js"><code class="language-js"><span class="token keyword">function</span> <span class="token function"><span class="token maybe-class-name">Item</span></span><span class="token punctuation">(</span><span class="token parameter"><span class="token punctuation">{</span> name<span class="token punctuation">,</span> importance <span class="token punctuation">}</span></span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  <span class="token keyword control-flow">return</span> <span class="token punctuation">(</span>
+    <span class="token operator">&#x3C;</span>li className<span class="token operator">=</span><span class="token string">"item"</span><span class="token operator">></span>
+      <span class="token punctuation">{</span>name<span class="token punctuation">}</span>
+    <span class="token operator">&#x3C;</span><span class="token operator">/</span>li<span class="token operator">></span>
+  <span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+
+<span class="token keyword module">export</span> <span class="token keyword module">default</span> <span class="token keyword">function</span> <span class="token function"><span class="token maybe-class-name">PackingList</span></span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  <span class="token keyword control-flow">return</span> <span class="token punctuation">(</span>
+    <span class="token operator">&#x3C;</span>section<span class="token operator">></span>
+      <span class="token operator">&#x3C;</span>h1<span class="token operator">></span><span class="token maybe-class-name">Sally</span> <span class="token maybe-class-name">Ride</span> 的行李清单<span class="token operator">&#x3C;</span><span class="token operator">/</span>h1<span class="token operator">></span>
+      <span class="token operator">&#x3C;</span>ul<span class="token operator">></span>
+        <span class="token operator">&#x3C;</span><span class="token maybe-class-name">Item</span> 
+          importance<span class="token operator">=</span><span class="token punctuation">{</span><span class="token number">9</span><span class="token punctuation">}</span> 
+          name<span class="token operator">=</span><span class="token string">"宇航服"</span> 
+        <span class="token operator">/</span><span class="token operator">></span>
+        <span class="token operator">&#x3C;</span><span class="token maybe-class-name">Item</span> 
+          importance<span class="token operator">=</span><span class="token punctuation">{</span><span class="token number">0</span><span class="token punctuation">}</span> 
+          name<span class="token operator">=</span><span class="token string">"带金箔的头盔"</span> 
+        <span class="token operator">/</span><span class="token operator">></span>
+        <span class="token operator">&#x3C;</span><span class="token maybe-class-name">Item</span> 
+          importance<span class="token operator">=</span><span class="token punctuation">{</span><span class="token number">6</span><span class="token punctuation">}</span> 
+          name<span class="token operator">=</span><span class="token string">"Tam 的照片"</span> 
+        <span class="token operator">/</span><span class="token operator">></span>
+      <span class="token operator">&#x3C;</span><span class="token operator">/</span>ul<span class="token operator">></span>
+    <span class="token operator">&#x3C;</span><span class="token operator">/</span>section<span class="token operator">></span>
+  <span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span></code></pre></sandpack><solution><p>这样应该可以实现：</p><sandpack><pre class="language-js"><code class="language-js"><span class="token keyword">function</span> <span class="token function"><span class="token maybe-class-name">Item</span></span><span class="token punctuation">(</span><span class="token parameter"><span class="token punctuation">{</span> name<span class="token punctuation">,</span> importance <span class="token punctuation">}</span></span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  <span class="token keyword control-flow">return</span> <span class="token punctuation">(</span>
+    <span class="token operator">&#x3C;</span>li className<span class="token operator">=</span><span class="token string">"item"</span><span class="token operator">></span>
+      <span class="token punctuation">{</span>name<span class="token punctuation">}</span>
+      <span class="token punctuation">{</span>importance <span class="token operator">></span> <span class="token number">0</span> <span class="token operator">&#x26;&#x26;</span> <span class="token string">' '</span><span class="token punctuation">}</span>
+      <span class="token punctuation">{</span>importance <span class="token operator">></span> <span class="token number">0</span> <span class="token operator">&#x26;&#x26;</span>
+        <span class="token operator">&#x3C;</span>i<span class="token operator">></span>（重要性<span class="token operator">:</span> <span class="token punctuation">{</span>importance<span class="token punctuation">}</span>）<span class="token operator">&#x3C;</span><span class="token operator">/</span>i<span class="token operator">></span>
+      <span class="token punctuation">}</span>
+    <span class="token operator">&#x3C;</span><span class="token operator">/</span>li<span class="token operator">></span>
+  <span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+
+<span class="token keyword module">export</span> <span class="token keyword module">default</span> <span class="token keyword">function</span> <span class="token function"><span class="token maybe-class-name">PackingList</span></span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  <span class="token keyword control-flow">return</span> <span class="token punctuation">(</span>
+    <span class="token operator">&#x3C;</span>section<span class="token operator">></span>
+      <span class="token operator">&#x3C;</span>h1<span class="token operator">></span><span class="token maybe-class-name">Sally</span> <span class="token maybe-class-name">Ride</span> 的行李清单<span class="token operator">&#x3C;</span><span class="token operator">/</span>h1<span class="token operator">></span>
+      <span class="token operator">&#x3C;</span>ul<span class="token operator">></span>
+        <span class="token operator">&#x3C;</span><span class="token maybe-class-name">Item</span> 
+          importance<span class="token operator">=</span><span class="token punctuation">{</span><span class="token number">9</span><span class="token punctuation">}</span> 
+          name<span class="token operator">=</span><span class="token string">"宇航服"</span> 
+        <span class="token operator">/</span><span class="token operator">></span>
+        <span class="token operator">&#x3C;</span><span class="token maybe-class-name">Item</span> 
+          importance<span class="token operator">=</span><span class="token punctuation">{</span><span class="token number">0</span><span class="token punctuation">}</span> 
+          name<span class="token operator">=</span><span class="token string">"带金箔的头盔"</span> 
+        <span class="token operator">/</span><span class="token operator">></span>
+        <span class="token operator">&#x3C;</span><span class="token maybe-class-name">Item</span> 
+          importance<span class="token operator">=</span><span class="token punctuation">{</span><span class="token number">6</span><span class="token punctuation">}</span> 
+          name<span class="token operator">=</span><span class="token string">"Tam 的照片"</span> 
+        <span class="token operator">/</span><span class="token operator">></span>
+      <span class="token operator">&#x3C;</span><span class="token operator">/</span>ul<span class="token operator">></span>
+    <span class="token operator">&#x3C;</span><span class="token operator">/</span>section<span class="token operator">></span>
+  <span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span></code></pre></sandpack><p>需注意的是，你必须使用 <code>importance > 0 &#x26;&#x26; ...</code> 而不是 <code>importance &#x26;&#x26; ...</code>，这样如果 <code>importantce</code> 是 <code>0</code>， <code>0</code> 就不会被渲染出来了！<p>在这个解决方案里，分别用了两个条件判断在名字和重要性标签里插入一个空格。另外，你也可以通过一个带前导空格的 fragment ：<code>importance > 0 &#x26;&#x26; &#x3C;> &#x3C;i>...&#x3C;/i>&#x3C;/></code>，或者将空格放在 <code>&#x3C;i></code> 标签内：<code>importance > 0 &#x26;&#x26; &#x3C;i> ...&#x3C;/i></code>, 来实现相同的效果。</p></solution></section><section class="level4"aria-labelledby="用-if-和变量重构多余的---refactor-a-series-ofto-if-and-variables"><h4 id="用-if-和变量重构多余的---refactor-a-series-ofto-if-and-variables">用 <code>if</code> 和变量重构多余的 <code>? :</code> {/<em>refactor-a-series-ofto-if-and-variables</em>/}</h4><p>这个 <code>Drink</code> 组件使用了一系列的 <code>? :</code> 条件语句，根据 <code>name</code> 属性是 <code>"tea"</code> 还是 <code>"coffee"</code> 来显示不同的信息。问题是，每个饮品的信息是在不同的条件判断里的。请去掉那三个 <code>? :</code> 条件，使用一个 <code>if</code> 语句来重构这段代码。</p><sandpack><pre class="language-js"><code class="language-js"><span class="token keyword">function</span> <span class="token function"><span class="token maybe-class-name">Drink</span></span><span class="token punctuation">(</span><span class="token parameter"><span class="token punctuation">{</span> name <span class="token punctuation">}</span></span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  <span class="token keyword control-flow">return</span> <span class="token punctuation">(</span>
+    <span class="token operator">&#x3C;</span>section<span class="token operator">></span>
+      <span class="token operator">&#x3C;</span>h1<span class="token operator">></span><span class="token punctuation">{</span>name<span class="token punctuation">}</span><span class="token operator">&#x3C;</span><span class="token operator">/</span>h1<span class="token operator">></span>
+      <span class="token operator">&#x3C;</span>dl<span class="token operator">></span>
+        <span class="token operator">&#x3C;</span>dt<span class="token operator">></span><span class="token maybe-class-name">Part</span> <span class="token keyword">of</span> plant<span class="token operator">&#x3C;</span><span class="token operator">/</span>dt<span class="token operator">></span>
+        <span class="token operator">&#x3C;</span>dd<span class="token operator">></span><span class="token punctuation">{</span>name <span class="token operator">===</span> <span class="token string">'tea'</span> <span class="token operator">?</span> <span class="token string">'leaf'</span> <span class="token operator">:</span> <span class="token string">'bean'</span><span class="token punctuation">}</span><span class="token operator">&#x3C;</span><span class="token operator">/</span>dd<span class="token operator">></span>
+        <span class="token operator">&#x3C;</span>dt<span class="token operator">></span><span class="token maybe-class-name">Caffeine</span> content<span class="token operator">&#x3C;</span><span class="token operator">/</span>dt<span class="token operator">></span>
+        <span class="token operator">&#x3C;</span>dd<span class="token operator">></span><span class="token punctuation">{</span>name <span class="token operator">===</span> <span class="token string">'tea'</span> <span class="token operator">?</span> <span class="token string">'15–70 mg/cup'</span> <span class="token operator">:</span> <span class="token string">'80–185 mg/cup'</span><span class="token punctuation">}</span><span class="token operator">&#x3C;</span><span class="token operator">/</span>dd<span class="token operator">></span>
+        <span class="token operator">&#x3C;</span>dt<span class="token operator">></span><span class="token maybe-class-name">Age</span><span class="token operator">&#x3C;</span><span class="token operator">/</span>dt<span class="token operator">></span>
+        <span class="token operator">&#x3C;</span>dd<span class="token operator">></span><span class="token punctuation">{</span>name <span class="token operator">===</span> <span class="token string">'tea'</span> <span class="token operator">?</span> <span class="token string">'4,000+ years'</span> <span class="token operator">:</span> <span class="token string">'1,000+ years'</span><span class="token punctuation">}</span><span class="token operator">&#x3C;</span><span class="token operator">/</span>dd<span class="token operator">></span>
+      <span class="token operator">&#x3C;</span><span class="token operator">/</span>dl<span class="token operator">></span>
+    <span class="token operator">&#x3C;</span><span class="token operator">/</span>section<span class="token operator">></span>
+  <span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+
+<span class="token keyword module">export</span> <span class="token keyword module">default</span> <span class="token keyword">function</span> <span class="token function"><span class="token maybe-class-name">DrinkList</span></span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  <span class="token keyword control-flow">return</span> <span class="token punctuation">(</span>
+    <span class="token operator">&#x3C;</span>div<span class="token operator">></span>
+      <span class="token operator">&#x3C;</span><span class="token maybe-class-name">Drink</span> name<span class="token operator">=</span><span class="token string">"tea"</span> <span class="token operator">/</span><span class="token operator">></span>
+      <span class="token operator">&#x3C;</span><span class="token maybe-class-name">Drink</span> name<span class="token operator">=</span><span class="token string">"coffee"</span> <span class="token operator">/</span><span class="token operator">></span>
+    <span class="token operator">&#x3C;</span><span class="token operator">/</span>div<span class="token operator">></span>
+  <span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span></code></pre></sandpack><p>当你使用 <code>if</code> 语句完成了以上代码的重构，你会不会有其他的想法去简化它？</p><solution><p>很多的方法可以解决这个问题，这是只是其中一个可以切入的点：</p><sandpack><pre class="language-js"><code class="language-js"><span class="token keyword">function</span> <span class="token function"><span class="token maybe-class-name">Drink</span></span><span class="token punctuation">(</span><span class="token parameter"><span class="token punctuation">{</span> name <span class="token punctuation">}</span></span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  <span class="token keyword">let</span> part<span class="token punctuation">,</span> caffeine<span class="token punctuation">,</span> age<span class="token punctuation">;</span>
+  <span class="token keyword control-flow">if</span> <span class="token punctuation">(</span>name <span class="token operator">===</span> <span class="token string">'tea'</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    part <span class="token operator">=</span> <span class="token string">'leaf'</span><span class="token punctuation">;</span>
+    caffeine <span class="token operator">=</span> <span class="token string">'15–70 mg/cup'</span><span class="token punctuation">;</span>
+    age <span class="token operator">=</span> <span class="token string">'4,000+ years'</span><span class="token punctuation">;</span>
+  <span class="token punctuation">}</span> <span class="token keyword control-flow">else</span> <span class="token keyword control-flow">if</span> <span class="token punctuation">(</span>name <span class="token operator">===</span> <span class="token string">'coffee'</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    part <span class="token operator">=</span> <span class="token string">'bean'</span><span class="token punctuation">;</span>
+    caffeine <span class="token operator">=</span> <span class="token string">'80–185 mg/cup'</span><span class="token punctuation">;</span>
+    age <span class="token operator">=</span> <span class="token string">'1,000+ years'</span><span class="token punctuation">;</span>
+  <span class="token punctuation">}</span>
+  <span class="token keyword control-flow">return</span> <span class="token punctuation">(</span>
+    <span class="token operator">&#x3C;</span>section<span class="token operator">></span>
+      <span class="token operator">&#x3C;</span>h1<span class="token operator">></span><span class="token punctuation">{</span>name<span class="token punctuation">}</span><span class="token operator">&#x3C;</span><span class="token operator">/</span>h1<span class="token operator">></span>
+      <span class="token operator">&#x3C;</span>dl<span class="token operator">></span>
+        <span class="token operator">&#x3C;</span>dt<span class="token operator">></span><span class="token maybe-class-name">Part</span> <span class="token keyword">of</span> plant<span class="token operator">&#x3C;</span><span class="token operator">/</span>dt<span class="token operator">></span>
+        <span class="token operator">&#x3C;</span>dd<span class="token operator">></span><span class="token punctuation">{</span>part<span class="token punctuation">}</span><span class="token operator">&#x3C;</span><span class="token operator">/</span>dd<span class="token operator">></span>
+        <span class="token operator">&#x3C;</span>dt<span class="token operator">></span><span class="token maybe-class-name">Caffeine</span> content<span class="token operator">&#x3C;</span><span class="token operator">/</span>dt<span class="token operator">></span>
+        <span class="token operator">&#x3C;</span>dd<span class="token operator">></span><span class="token punctuation">{</span>caffeine<span class="token punctuation">}</span><span class="token operator">&#x3C;</span><span class="token operator">/</span>dd<span class="token operator">></span>
+        <span class="token operator">&#x3C;</span>dt<span class="token operator">></span><span class="token maybe-class-name">Age</span><span class="token operator">&#x3C;</span><span class="token operator">/</span>dt<span class="token operator">></span>
+        <span class="token operator">&#x3C;</span>dd<span class="token operator">></span><span class="token punctuation">{</span>age<span class="token punctuation">}</span><span class="token operator">&#x3C;</span><span class="token operator">/</span>dd<span class="token operator">></span>
+      <span class="token operator">&#x3C;</span><span class="token operator">/</span>dl<span class="token operator">></span>
+    <span class="token operator">&#x3C;</span><span class="token operator">/</span>section<span class="token operator">></span>
+  <span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+
+<span class="token keyword module">export</span> <span class="token keyword module">default</span> <span class="token keyword">function</span> <span class="token function"><span class="token maybe-class-name">DrinkList</span></span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  <span class="token keyword control-flow">return</span> <span class="token punctuation">(</span>
+    <span class="token operator">&#x3C;</span>div<span class="token operator">></span>
+      <span class="token operator">&#x3C;</span><span class="token maybe-class-name">Drink</span> name<span class="token operator">=</span><span class="token string">"tea"</span> <span class="token operator">/</span><span class="token operator">></span>
+      <span class="token operator">&#x3C;</span><span class="token maybe-class-name">Drink</span> name<span class="token operator">=</span><span class="token string">"coffee"</span> <span class="token operator">/</span><span class="token operator">></span>
+    <span class="token operator">&#x3C;</span><span class="token operator">/</span>div<span class="token operator">></span>
+  <span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span></code></pre></sandpack><p>这个例子中，每种饮品的信息是放在一起的，而没有将其分散到多个条件判断里。这会让我们以后可以更容易地增加更多的饮品。<p>还可以通过将饮品信息存入对象中，从而去掉所有的条件判断语句：</p><sandpack><pre class="language-js"><code class="language-js"><span class="token keyword">const</span> drinks <span class="token operator">=</span> <span class="token punctuation">{</span>
+  <span class="token literal-property property">tea</span><span class="token operator">:</span> <span class="token punctuation">{</span>
+    <span class="token literal-property property">part</span><span class="token operator">:</span> <span class="token string">'leaf'</span><span class="token punctuation">,</span>
+    <span class="token literal-property property">caffeine</span><span class="token operator">:</span> <span class="token string">'15–70 mg/cup'</span><span class="token punctuation">,</span>
+    <span class="token literal-property property">age</span><span class="token operator">:</span> <span class="token string">'4,000+ years'</span>
+  <span class="token punctuation">}</span><span class="token punctuation">,</span>
+  <span class="token literal-property property">coffee</span><span class="token operator">:</span> <span class="token punctuation">{</span>
+    <span class="token literal-property property">part</span><span class="token operator">:</span> <span class="token string">'bean'</span><span class="token punctuation">,</span>
+    <span class="token literal-property property">caffeine</span><span class="token operator">:</span> <span class="token string">'80–185 mg/cup'</span><span class="token punctuation">,</span>
+    <span class="token literal-property property">age</span><span class="token operator">:</span> <span class="token string">'1,000+ years'</span>
+  <span class="token punctuation">}</span>
+<span class="token punctuation">}</span><span class="token punctuation">;</span>
+
+<span class="token keyword">function</span> <span class="token function"><span class="token maybe-class-name">Drink</span></span><span class="token punctuation">(</span><span class="token parameter"><span class="token punctuation">{</span> name <span class="token punctuation">}</span></span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  <span class="token keyword">const</span> info <span class="token operator">=</span> drinks<span class="token punctuation">[</span>name<span class="token punctuation">]</span><span class="token punctuation">;</span>
+  <span class="token keyword control-flow">return</span> <span class="token punctuation">(</span>
+    <span class="token operator">&#x3C;</span>section<span class="token operator">></span>
+      <span class="token operator">&#x3C;</span>h1<span class="token operator">></span><span class="token punctuation">{</span>name<span class="token punctuation">}</span><span class="token operator">&#x3C;</span><span class="token operator">/</span>h1<span class="token operator">></span>
+      <span class="token operator">&#x3C;</span>dl<span class="token operator">></span>
+        <span class="token operator">&#x3C;</span>dt<span class="token operator">></span><span class="token maybe-class-name">Part</span> <span class="token keyword">of</span> plant<span class="token operator">&#x3C;</span><span class="token operator">/</span>dt<span class="token operator">></span>
+        <span class="token operator">&#x3C;</span>dd<span class="token operator">></span><span class="token punctuation">{</span>info<span class="token punctuation">.</span><span class="token property-access">part</span><span class="token punctuation">}</span><span class="token operator">&#x3C;</span><span class="token operator">/</span>dd<span class="token operator">></span>
+        <span class="token operator">&#x3C;</span>dt<span class="token operator">></span><span class="token maybe-class-name">Caffeine</span> content<span class="token operator">&#x3C;</span><span class="token operator">/</span>dt<span class="token operator">></span>
+        <span class="token operator">&#x3C;</span>dd<span class="token operator">></span><span class="token punctuation">{</span>info<span class="token punctuation">.</span><span class="token property-access">caffeine</span><span class="token punctuation">}</span><span class="token operator">&#x3C;</span><span class="token operator">/</span>dd<span class="token operator">></span>
+        <span class="token operator">&#x3C;</span>dt<span class="token operator">></span><span class="token maybe-class-name">Age</span><span class="token operator">&#x3C;</span><span class="token operator">/</span>dt<span class="token operator">></span>
+        <span class="token operator">&#x3C;</span>dd<span class="token operator">></span><span class="token punctuation">{</span>info<span class="token punctuation">.</span><span class="token property-access">age</span><span class="token punctuation">}</span><span class="token operator">&#x3C;</span><span class="token operator">/</span>dd<span class="token operator">></span>
+      <span class="token operator">&#x3C;</span><span class="token operator">/</span>dl<span class="token operator">></span>
+    <span class="token operator">&#x3C;</span><span class="token operator">/</span>section<span class="token operator">></span>
+  <span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+
+<span class="token keyword module">export</span> <span class="token keyword module">default</span> <span class="token keyword">function</span> <span class="token function"><span class="token maybe-class-name">DrinkList</span></span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  <span class="token keyword control-flow">return</span> <span class="token punctuation">(</span>
+    <span class="token operator">&#x3C;</span>div<span class="token operator">></span>
+      <span class="token operator">&#x3C;</span><span class="token maybe-class-name">Drink</span> name<span class="token operator">=</span><span class="token string">"tea"</span> <span class="token operator">/</span><span class="token operator">></span>
+      <span class="token operator">&#x3C;</span><span class="token maybe-class-name">Drink</span> name<span class="token operator">=</span><span class="token string">"coffee"</span> <span class="token operator">/</span><span class="token operator">></span>
+    <span class="token operator">&#x3C;</span><span class="token operator">/</span>div<span class="token operator">></span>
+  <span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span></code></pre></sandpack></solution><span style="float:footnote"><a href="../index.html#toc">Go to TOC</a></span></section></challenges></section></section></section>

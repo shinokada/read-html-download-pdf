@@ -1,0 +1,25 @@
+<!doctype html><html lang="pl"><meta charset="utf-8"><title>Unknown Prop Warning</title><meta name="viewport"content="width=device-width,initial-scale=1"><link rel="stylesheet"href="../../../../themes/packages/prism-coy-theme/theme_common.css"><section class="level1"aria-labelledby="unknown-prop-warning"><h1 id="unknown-prop-warning">Unknown Prop Warning</h1><p>Ostrzeżenie o nieznanej właściwości (ang. <em>unknown prop</em>) pojawi się, gdy spróbujesz wyrenderować element DOM z właściwością, której React nie rozpoznaje jako poprawną dla DOM. Upewnij się, że twoje komponenty nie przekazują do elementów DOM żadnych własnych atrybutów.<p>Istnieje kilka prawdopodobnych powodów pojawienia się tego ostrzeżenia:<ol><li><p>Używasz składni <code>{...this.props}</code> lub <code>cloneElement(element, props)</code>? Twój komponent przekazuje w ten sposób wszystkie swoje właściwości (ang. <em>props</em>) do elementu potomnego (<a href="./transferring-props.html">przykład</a>). Przy przekazywaniu właściwości w dół musisz upewnić się, że przez pomyłkę nie uwzględniasz właściwości, które miały trafić tylko do komponentu nadrzędnego.<li><p>Używasz niestandardowego atrybutu DOM na natywnym węźle drzewa DOM, na przykład, aby przekazać mu jakieś dane. Jeśli chcesz zapisać w elemencie DOM dane, użyj odpowiedniego atrybutu, jak opisano <a href="https://developer.mozilla.org/pl/docs/Learn/HTML/Howto/Use_data_attributes">na MDN</a>.<li><p>React jeszcze nie rozpoznaje podanego przez ciebie atrybutu. Istnieje szansa, że zostanie to naprawione w przyszłych wersjach. Obecnie React usuwa wszystkie nieznane atrybuty, wobec czego nie zostaną one przekazane do renderowanego elementu DOM.<li><p>Używasz komponentu reactowego, pisząc jego nazwę małymi literami. React interpretuje taki zapis jako znacznik DOM, ponieważ <a href="./jsx-in-depth.html#user-defined-components-must-be-capitalized">transformacja składni JSX w Reakcie rozpoznaje własne komponenty po wielkich literach</a>.</ol><p>Aby to naprawić, złożone komponenty powinny "konsumować" wszelkie właściwości przeznaczone dla nich, a nie przeznaczone dla komponentów potomnych. Na przykład:<p><strong>Źle:</strong> Do elementu <code>div</code> przekazywana jest nieznana właściwość <code>layout</code>.<pre class="language-js{4,7}"><code class="language-js{4,7}">function MyDiv(props) {
+  if (props.layout === 'horizontal') {
+    // ŹLE! Wiadomo, że właściwość "layout" nie jest obsługiwana przez &#x3C;div>.
+    return &#x3C;div {...props} style={getHorizontalStyle()} />
+  } else {
+    // ŹLE! Wiadomo, że właściwość "layout" nie jest obsługiwana przez &#x3C;div>.
+    return &#x3C;div {...props} style={getVerticalStyle()} />
+  }
+}</code></pre><p><strong>Dobrze:</strong> Za pomocą operatora rozszczepienia (ang. <em>spread operator</em>) możesz wyciągnąć z obiektu interesujące wartości, a resztę spakować do osobnej zmiennej.<pre class="language-js{2}"><code class="language-js{2}">function MyDiv(props) {
+  const { layout, ...rest } = props
+  if (layout === 'horizontal') {
+    return &#x3C;div {...rest} style={getHorizontalStyle()} />
+  } else {
+    return &#x3C;div {...rest} style={getVerticalStyle()} />
+  }
+}</code></pre><p><strong>Dobrze:</strong> Możesz również przypisać właściwości do nowego obiektu i usunąć z niego użyte wartości. Pamiętaj jednak, aby nie usuwać niczego z pierwotnego obiektu <code>this.props</code> - jest on z założenia niezmienny (ang. <em>immutable</em>).<pre class="language-js{3,4}"><code class="language-js{3,4}">function MyDiv(props) {
+  const divProps = Object.assign({}, props);
+  delete divProps.layout;
+
+  if (props.layout === 'horizontal') {
+    return &#x3C;div {...divProps} style={getHorizontalStyle()} />
+  } else {
+    return &#x3C;div {...divProps} style={getVerticalStyle()} />
+  }
+}</code></pre><p><span style="float:footnote"><a href="../index.html#toc">Go to TOC</a></span></section>
