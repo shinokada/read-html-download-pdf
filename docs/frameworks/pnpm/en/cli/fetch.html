@@ -1,5 +1,7 @@
 <!doctype html><html lang="en"><meta charset="utf-8"><title>pnpm fetch</title><meta name="viewport"content="width=device-width,initial-scale=1"><link rel="stylesheet"href="../../../../themes/packages/prism-coy-theme/theme_common.css"><section class="level1"aria-labelledby="pnpm-fetch"><h1 id="pnpm-fetch">pnpm fetch</h1><p>Fetch packages from a lockfile into virtual store, package manifest is ignored.<section class="level2"aria-labelledby="usage-scenario"><h2 id="usage-scenario">Usage scenario</h2><p>This command is specifically designed to improve building a docker image.<p>You may have read the [official guide] to writing a Dockerfile for a Node.js app, if you haven't read it yet, you may want to read it first.<p>From that guide, we learn to write an optimized Dockerfile for projects using pnpm, which looks like<pre class="language-Dockerfile"><code class="language-Dockerfile">FROM node:14
 
+WORKDIR /path/to/somewhere
+
 RUN curl -f https://get.pnpm.io/v6.16.js | node - add --global pnpm
 
 # Files required by pnpm install
@@ -15,6 +17,8 @@ COPY . .
 
 EXPOSE 8080
 CMD [ node, server.js ]</code></pre><p>As long as there are no changes to <code>.npmrc</code>, <code>package.json</code>, <code>pnpm-lock.yaml</code>, <code>.pnpmfile.cjs</code>, docker build cache is still valid up to the layer of <code>RUN pnpm install --frozen-lockfile --prod</code>, which cost most of the time when building a docker image.<p>However, modification to <code>package.json</code> may happen much more frequently than we expect, because it does not only contain dependencies, but may also contain the version number, scripts, and arbitrary configuration for any other tool.<p>It's also hard to maintain a Dockerfile that builds a monorepo project, it may look like<pre class="language-Dockerfile"><code class="language-Dockerfile">FROM node:14
+
+WORKDIR /path/to/somewhere
 
 RUN curl -f https://get.pnpm.io/v6.16.js | node - add --global pnpm
 
@@ -39,12 +43,14 @@ EXPOSE 8080
 CMD [ node, server.js ]
 </code></pre><p>As you can see, the Dockerfile has to be updated when you add or remove sub-packages.<p><code>pnpm fetch</code> solves the above problem perfectly by providing the ability to load packages into the virtual store using only information from a lockfile.<pre class="language-Dockerfile"><code class="language-Dockerfile">FROM node:14
 
+WORKDIR /path/to/somewhere
+
 RUN curl -f https://get.pnpm.io/v6.16.js | node - add --global pnpm
 
 # pnpm fetch does require only lockfile
 COPY pnpm-lock.yaml ./
 
-# If you patched any package, include patches before running pnpm fetch 
+# If you patched any package, include patches before running pnpm fetch
 COPY patches patches
 
 RUN pnpm fetch --prod
@@ -55,4 +61,4 @@ RUN pnpm install -r --offline --prod
 
 
 EXPOSE 8080
-CMD [ node, server.js ]</code></pre><p>It works for both simple and monorepo projects, <code>--offline</code> enforces pnpm not to communicate with the package registry as all needed packages are already present in the virtual store.<p>As long as the lockfile is not changed, the build cache is valid up to the layer, so <code>RUN pnpm install -r --offline --prod</code>, will save you much time.</section><section class="level2"aria-labelledby="options"><h2 id="options">Options</h2><section class="level3"aria-labelledby="--dev"><h3 id="--dev">--dev</h3><p>Only development packages will be fetched</section><section class="level3"aria-labelledby="--prod"><h3 id="--prod">--prod</h3><p>Development packages will not be fetched<p><a href="https://nodejs.org/en/docs/guides/nodejs-docker-webapp/">official guide</a> <span style="float:footnote"><a href="../index.html#toc">Go to TOC</a></span></section></section></section>
+CMD [ node, server.js ]</code></pre><p>It works for both simple and monorepo projects, <code>--offline</code> enforces pnpm not to communicate with the package registry as all needed packages are already present in the virtual store.<p>As long as the lockfile is not changed, the build cache is valid up to the layer, so <code>RUN pnpm install -r --offline --prod</code>, will save you much time.</section><section class="level2"aria-labelledby="options"><h2 id="options">Options</h2><section class="level3"aria-labelledby="--dev--d"><h3 id="--dev--d">--dev, -D</h3><p>Only development packages will be fetched</section><section class="level3"aria-labelledby="--prod--p"><h3 id="--prod--p">--prod, -P</h3><p>Development packages will not be fetched<p><a href="https://nodejs.org/en/docs/guides/nodejs-docker-webapp/">official guide</a> <span style="float:footnote"><a href="../index.html#toc">Go to TOC</a></span></section></section></section>
