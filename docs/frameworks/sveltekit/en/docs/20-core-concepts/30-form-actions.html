@@ -211,16 +211,16 @@ declare namespace <span class="token maybe-class-name">App</span> <span class="t
 </span></span>
 <span class="token inserted-sign inserted"><span class="token prefix inserted">+</span><span class="token line">&#x3C;form method="POST" use:enhance></span></span></code></pre><blockquote><p>Yes, it's a little confusing that the <code>enhance</code> action and <code>&#x3C;form action></code> are both called 'action'. These docs are action-packed. Sorry.</blockquote><p>Without an argument, <code>use:enhance</code> will emulate the browser-native behaviour, just without the full-page reloads. It will:<ul><li>update the <code>form</code> property, <code>$page.form</code> and <code>$page.status</code> on a successful or invalid response, but only if the action is on the same page you're submitting from. So for example if your form looks like <code>&#x3C;form action="/somewhere/else" ..></code>, <code>form</code> and <code>$page</code> will <em>not</em> be updated. This is because in the native form submission case you would be redirected to the page the action is on. If you want to have them updated either way, use <a href="#progressive-enhancement-applyaction"><code>applyAction</code></a><li>reset the <code>&#x3C;form></code> element and invalidate all data using <code>invalidateAll</code> on a successful response<li>call <code>goto</code> on a redirect response<li>render the nearest <code>+error</code> boundary if an error occurs<li><a href="accessibility#focus-management">reset focus</a> to the appropriate element</ul><p>To customise the behaviour, you can provide a <code>SubmitFunction</code> that runs immediately before the form is submitted, and (optionally) returns a callback that runs with the <code>ActionResult</code>. Note that if you return a callback, the default behavior mentioned above is not triggered. To get it back, call <code>update</code>.<pre class="language-svelte"><code class="language-svelte">&#x3C;form
 	method="POST"
-	use:enhance={({ form, data, action, cancel, submitter }) => {
-		// `form` is the `&#x3C;form>` element
-		// `data` is its `FormData` object
+	use:enhance={({ formElement, formData, action, cancel, submitter }) => {
+		// `formElement` is this `&#x3C;form>` element
+		// `formData` is its `FormData` object that's about to be submitted
 		// `action` is the URL to which the form is posted
-		// `cancel()` will prevent the submission
+		// calling `cancel()` will prevent the submission
 		// `submitter` is the `HTMLElement` that caused the form to be submitted
 
 		return async ({ result, update }) => {
 			// `result` is an `ActionResult` object
-			// `update` is a function which triggers the logic that would be triggered if this callback wasn't set
+			// `update` is a function which triggers the default logic that would be triggered if this callback wasn't set
 		};
 	}}
 ></code></pre><p>You can use these functions to show and hide loading UI, and so on.</section><section class="level2"aria-labelledby="applyaction"><h2 id="applyaction">applyAction</h2><p>If you provide your own callbacks, you may need to reproduce part of the default <code>use:enhance</code> behaviour, such as showing the nearest <code>+error</code> boundary. Most of the time, calling <code>update</code> passed to the callback is enough. If you need more customization you can do so with <code>applyAction</code>:<pre class="language-diff"><code class="language-diff">/// file: src/routes/login/+page.svelte
@@ -233,11 +233,7 @@ declare namespace <span class="token maybe-class-name">App</span> <span class="t
 </span></span>
 <span class="token deleted-arrow deleted"><span class="token prefix deleted">&#x3C;</span><span class="token line">form
 </span></span>	method="POST"
-	use:enhance={({ form, data, action, cancel }) => {
-		// `form` is the `&#x3C;form>` element
-		// `data` is its `FormData` object
-		// `action` is the URL to which the form is posted
-		// `cancel()` will prevent the submission
+	use:enhance={({ formElement, formData, action, cancel }) => {
 
 		return async ({ result }) => {
 			// `result` is an `ActionResult` object
