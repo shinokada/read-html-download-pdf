@@ -1,0 +1,18 @@
+<!doctype html><html lang="cn"><meta charset="utf-8"><title>常见错误</title><meta name="viewport"content="width=device-width,initial-scale=1"><link rel="stylesheet"href="../../../../themes/packages/prism-coy-theme/theme_common.css"><section class="level1"aria-labelledby="常见错误"><h1 id="常见错误">常见错误</h1><section class="level2"aria-labelledby="cannot-find-module-relative-path"><h2 id="cannot-find-module-relative-path">Cannot find module './relative-path'</h2><p>如果你收到一个 <strong>module cannot be found</strong> 的报错，则可能意味着几种不同情况：<ul><li>1.你拼错了路径。确保路径正确。<li>2.你可能依赖于 <code>tsconfig.json</code> 中的 <code>baseUrl</code>。默认情况下，Vite 不考虑 <code>tsconfig.json</code>，因此如果你依赖此行为，您可能需要自己安装 <a href="https://www.npmjs.com/package/vite-tsconfig-paths"><code>vite-tsconfig-paths</code></a> 。</ul><pre class="language-ts"><code class="language-ts"><span class="token keyword module">import</span> <span class="token imports"><span class="token punctuation">{</span> defineConfig <span class="token punctuation">}</span></span> <span class="token keyword module">from</span> <span class="token string">'vitest/config'</span>
+<span class="token keyword module">import</span> <span class="token imports">tsconfigPaths</span> <span class="token keyword module">from</span> <span class="token string">'vite-tsconfig-paths'</span>
+
+<span class="token keyword module">export</span> <span class="token keyword module">default</span> <span class="token function">defineConfig</span><span class="token punctuation">(</span><span class="token punctuation">{</span>
+  plugins<span class="token operator">:</span> <span class="token punctuation">[</span><span class="token function">tsconfigPaths</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">]</span>
+<span class="token punctuation">}</span><span class="token punctuation">)</span></code></pre><p>或者重写你的路径，使它不是相对于 root。<pre class="language-diff"><code class="language-diff"><span class="token deleted-sign deleted"><span class="token prefix deleted">-</span><span class="token line"> import helpers from 'src/helpers'
+</span></span><span class="token inserted-sign inserted"><span class="token prefix inserted">+</span><span class="token line"> import helpers from '../src/helpers'</span></span></code></pre><ul><li><ol start="3"><li>确保你没有使用相对路径的 <a href="../config.html#alias">别名</a>。Vite 将它们视为相对于导入所在的文件而不是根目录。</ol></ul><pre class="language-diff"><code class="language-diff">import { defineConfig } from 'vitest/config'
+
+export default defineConfig({
+<span class="token unchanged"><span class="token prefix unchanged"> </span><span class="token line"> test: {
+</span><span class="token prefix unchanged"> </span><span class="token line">   alias: {
+</span></span><span class="token deleted-sign deleted"><span class="token prefix deleted">-</span><span class="token line">     '@/': './src/',
+</span></span><span class="token inserted-sign inserted"><span class="token prefix inserted">+</span><span class="token line">     '@/': new URL('./src/', import.meta.url).pathname,
+</span></span><span class="token unchanged"><span class="token prefix unchanged"> </span><span class="token line">   }
+</span><span class="token prefix unchanged"> </span><span class="token line"> }
+</span></span>})
+```&#x3C;span style='float: footnote;'>&#x3C;a href="../index.html#toc">Go to TOC&#x3C;/a>&#x3C;/span>
+</code></pre></section></section>
