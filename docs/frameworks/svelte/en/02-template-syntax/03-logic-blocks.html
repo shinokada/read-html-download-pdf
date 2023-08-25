@@ -1,0 +1,60 @@
+<!doctype html><html lang="en"><meta charset="utf-8"><title>Logic blocks</title><meta name="viewport"content="width=device-width,initial-scale=1"><link rel="stylesheet"href="../../../../themes/packages/prism-coy-theme/theme_common.css"><section class="level1"aria-labelledby="logic-blocks"><h1 id="logic-blocks">Logic blocks</h1><section class="level2"aria-labelledby="if-"><h2 id="if-">{#if ...}</h2><pre class="language-svelte"><code class="language-svelte">{#if expression}...{/if}</code></pre><pre class="language-svelte"><code class="language-svelte">{#if expression}...{:else if expression}...{/if}</code></pre><pre class="language-svelte"><code class="language-svelte">{#if expression}...{:else}...{/if}</code></pre><p>Content that is conditionally rendered can be wrapped in an if block.<pre class="language-svelte"><code class="language-svelte">{#if answer === 42}
+	&#x3C;p>what was the question?&#x3C;/p>
+{/if}</code></pre><p>Additional conditions can be added with <code>{:else if expression}</code>, optionally ending in an <code>{:else}</code> clause.<pre class="language-svelte"><code class="language-svelte">{#if porridge.temperature > 100}
+	&#x3C;p>too hot!&#x3C;/p>
+{:else if 80 > porridge.temperature}
+	&#x3C;p>too cold!&#x3C;/p>
+{:else}
+	&#x3C;p>just right!&#x3C;/p>
+{/if}</code></pre><p>(Blocks don't have to wrap elements, they can also wrap text within elements!)</section><section class="level2"aria-labelledby="each-"><h2 id="each-">{#each ...}</h2><pre class="language-svelte"><code class="language-svelte">{#each expression as name}...{/each}</code></pre><pre class="language-svelte"><code class="language-svelte">{#each expression as name, index}...{/each}</code></pre><pre class="language-svelte"><code class="language-svelte">{#each expression as name (key)}...{/each}</code></pre><pre class="language-svelte"><code class="language-svelte">{#each expression as name, index (key)}...{/each}</code></pre><pre class="language-svelte"><code class="language-svelte">{#each expression as name}...{:else}...{/each}</code></pre><p>Iterating over lists of values can be done with an each block.<pre class="language-svelte"><code class="language-svelte">&#x3C;h1>Shopping list&#x3C;/h1>
+&#x3C;ul>
+	{#each items as item}
+		&#x3C;li>{item.name} x {item.qty}&#x3C;/li>
+	{/each}
+&#x3C;/ul></code></pre><p>You can use each blocks to iterate over any array or array-like value — that is, any object with a <code>length</code> property.<p>An each block can also specify an <em>index</em>, equivalent to the second argument in an <code>array.map(...)</code> callback:<pre class="language-svelte"><code class="language-svelte">{#each items as item, i}
+	&#x3C;li>{i + 1}: {item.name} x {item.qty}&#x3C;/li>
+{/each}</code></pre><p>If a <em>key</em> expression is provided — which must uniquely identify each list item — Svelte will use it to diff the list when data changes, rather than adding or removing items at the end. The key can be any object, but strings and numbers are recommended since they allow identity to persist when the objects themselves change.<pre class="language-svelte"><code class="language-svelte">{#each items as item (item.id)}
+	&#x3C;li>{item.name} x {item.qty}&#x3C;/li>
+{/each}
+
+&#x3C;!-- or with additional index value -->
+{#each items as item, i (item.id)}
+	&#x3C;li>{i + 1}: {item.name} x {item.qty}&#x3C;/li>
+{/each}</code></pre><p>You can freely use destructuring and rest patterns in each blocks.<pre class="language-svelte"><code class="language-svelte">{#each items as { id, name, qty }, i (id)}
+	&#x3C;li>{i + 1}: {name} x {qty}&#x3C;/li>
+{/each}
+
+{#each objects as { id, ...rest }}
+	&#x3C;li>&#x3C;span>{id}&#x3C;/span>&#x3C;MyComponent {...rest} />&#x3C;/li>
+{/each}
+
+{#each items as [id, ...rest]}
+	&#x3C;li>&#x3C;span>{id}&#x3C;/span>&#x3C;MyComponent values={rest} />&#x3C;/li>
+{/each}</code></pre><p>An each block can also have an <code>{:else}</code> clause, which is rendered if the list is empty.<pre class="language-svelte"><code class="language-svelte">{#each todos as todo}
+	&#x3C;p>{todo.text}&#x3C;/p>
+{:else}
+	&#x3C;p>No tasks today!&#x3C;/p>
+{/each}</code></pre><p>Since Svelte 4 it is possible to iterate over iterables like <code>Map</code> or <code>Set</code>. Iterables need to be finite and static (they shouldn't change while being iterated over). Under the hood, they are transformed to an array using <code>Array.from</code> before being passed off to rendering. If you're writing performance-sensitive code, try to avoid iterables and use regular arrays as they are more performant.</section><section class="level2"aria-labelledby="await-"><h2 id="await-">{#await ...}</h2><pre class="language-svelte"><code class="language-svelte">{#await expression}...{:then name}...{:catch name}...{/await}</code></pre><pre class="language-svelte"><code class="language-svelte">{#await expression}...{:then name}...{/await}</code></pre><pre class="language-svelte"><code class="language-svelte">{#await expression then name}...{/await}</code></pre><pre class="language-svelte"><code class="language-svelte">{#await expression catch name}...{/await}</code></pre><p>Await blocks allow you to branch on the three possible states of a Promise — pending, fulfilled or rejected. In SSR mode, only the pending state will be rendered on the server.<pre class="language-svelte"><code class="language-svelte">{#await promise}
+	&#x3C;!-- promise is pending -->
+	&#x3C;p>waiting for the promise to resolve...&#x3C;/p>
+{:then value}
+	&#x3C;!-- promise was fulfilled -->
+	&#x3C;p>The value is {value}&#x3C;/p>
+{:catch error}
+	&#x3C;!-- promise was rejected -->
+	&#x3C;p>Something went wrong: {error.message}&#x3C;/p>
+{/await}</code></pre><p>The <code>catch</code> block can be omitted if you don't need to render anything when the promise rejects (or no error is possible).<pre class="language-svelte"><code class="language-svelte">{#await promise}
+	&#x3C;!-- promise is pending -->
+	&#x3C;p>waiting for the promise to resolve...&#x3C;/p>
+{:then value}
+	&#x3C;!-- promise was fulfilled -->
+	&#x3C;p>The value is {value}&#x3C;/p>
+{/await}</code></pre><p>If you don't care about the pending state, you can also omit the initial block.<pre class="language-svelte"><code class="language-svelte">{#await promise then value}
+	&#x3C;p>The value is {value}&#x3C;/p>
+{/await}</code></pre><p>Similarly, if you only want to show the error state, you can omit the <code>then</code> block.<pre class="language-svelte"><code class="language-svelte">{#await promise catch error}
+	&#x3C;p>The error is {error}&#x3C;/p>
+{/await}</code></pre></section><section class="level2"aria-labelledby="key-"><h2 id="key-">{#key ...}</h2><pre class="language-svelte"><code class="language-svelte">{#key expression}...{/key}</code></pre><p>Key blocks destroy and recreate their contents when the value of an expression changes.<p>This is useful if you want an element to play its transition whenever a value changes.<pre class="language-svelte"><code class="language-svelte">{#key value}
+	&#x3C;div transition:fade>{value}&#x3C;/div>
+{/key}</code></pre><p>When used around components, this will cause them to be reinstantiated and reinitialised.<pre class="language-svelte"><code class="language-svelte">{#key value}
+	&#x3C;Component />
+{/key}</code></pre><p><span style="float:footnote"><a href="../index.html#toc">Go to TOC</a></span></section></section>

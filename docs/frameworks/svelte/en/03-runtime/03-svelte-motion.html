@@ -1,0 +1,92 @@
+<!doctype html><html lang="en"><meta charset="utf-8"><title>'svelte/motion'</title><meta name="viewport"content="width=device-width,initial-scale=1"><link rel="stylesheet"href="../../../../themes/packages/prism-coy-theme/theme_common.css"><section class="level1"aria-labelledby="sveltemotion"><h1 id="sveltemotion">'svelte/motion'</h1><p>The <code>svelte/motion</code> module exports two functions, <code>tweened</code> and <code>spring</code>, for creating writable stores whose values change over time after <code>set</code> and <code>update</code>, rather than immediately.<section class="level2"aria-labelledby="tweened"><h2 id="tweened"><code>tweened</code></h2><blockquote><p>EXPORT_SNIPPET: svelte/motion#tweened</blockquote><p>Tweened stores update their values over a fixed duration. The following options are available:<ul><li><code>delay</code> (<code>number</code>, default 0) — milliseconds before starting<li><code>duration</code> (<code>number</code> | <code>function</code>, default 400) — milliseconds the tween lasts<li><code>easing</code> (<code>function</code>, default <code>t => t</code>) — an <a href="./svelte-easing">easing function</a><li><code>interpolate</code> (<code>function</code>) — see below</ul><p><code>store.set</code> and <code>store.update</code> can accept a second <code>options</code> argument that will override the options passed in upon instantiation.<p>Both functions return a Promise that resolves when the tween completes. If the tween is interrupted, the promise will never resolve.<p>Out of the box, Svelte will interpolate between two numbers, two arrays or two objects (as long as the arrays and objects are the same 'shape', and their 'leaf' properties are also numbers).<pre class="language-svelte"><code class="language-svelte">&#x3C;script>
+	import { tweened } from 'svelte/motion';
+	import { cubicOut } from 'svelte/easing';
+
+	const size = tweened(1, {
+		duration: 300,
+		easing: cubicOut
+	});
+
+	function handleClick() {
+		// this is equivalent to size.update(n => n + 1)
+		$size += 1;
+	}
+&#x3C;/script>
+
+&#x3C;button on:click={handleClick} style="transform: scale({$size}); transform-origin: 0 0">
+	embiggen
+&#x3C;/button></code></pre><p>If the initial value is <code>undefined</code> or <code>null</code>, the first value change will take effect immediately. This is useful when you have tweened values that are based on props, and don't want any motion when the component first renders.<pre class="language-ts"><code class="language-ts"><span class="token comment">// @filename: ambient.d.ts</span>
+<span class="token keyword">declare</span> global <span class="token punctuation">{</span>
+	<span class="token keyword">var</span> $size<span class="token operator">:</span> <span class="token builtin">number</span><span class="token punctuation">;</span>
+	<span class="token keyword">var</span> big<span class="token operator">:</span> <span class="token builtin">number</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+
+<span class="token keyword module">export</span> <span class="token exports"><span class="token punctuation">{</span><span class="token punctuation">}</span></span><span class="token punctuation">;</span>
+<span class="token comment">// @filename: motion.ts</span>
+<span class="token comment">// cut---</span>
+<span class="token keyword module">import</span> <span class="token imports"><span class="token punctuation">{</span> tweened <span class="token punctuation">}</span></span> <span class="token keyword module">from</span> <span class="token string">'svelte/motion'</span><span class="token punctuation">;</span>
+<span class="token keyword module">import</span> <span class="token imports"><span class="token punctuation">{</span> cubicOut <span class="token punctuation">}</span></span> <span class="token keyword module">from</span> <span class="token string">'svelte/easing'</span><span class="token punctuation">;</span>
+
+<span class="token keyword">const</span> size <span class="token operator">=</span> <span class="token function">tweened</span><span class="token punctuation">(</span><span class="token keyword nil">undefined</span><span class="token punctuation">,</span> <span class="token punctuation">{</span>
+	duration<span class="token operator">:</span> <span class="token number">300</span><span class="token punctuation">,</span>
+	easing<span class="token operator">:</span> cubicOut
+<span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+$<span class="token operator">:</span> $size <span class="token operator">=</span> big <span class="token operator">?</span> <span class="token number">100</span> <span class="token operator">:</span> <span class="token number">10</span><span class="token punctuation">;</span></code></pre><p>The <code>interpolate</code> option allows you to tween between <em>any</em> arbitrary values. It must be an <code>(a, b) => t => value</code> function, where <code>a</code> is the starting value, <code>b</code> is the target value, <code>t</code> is a number between 0 and 1, and <code>value</code> is the result. For example, we can use the <a href="https://github.com/d3/d3-interpolate">d3-interpolate</a> package to smoothly interpolate between two colours.<pre class="language-svelte"><code class="language-svelte">&#x3C;script>
+	import { interpolateLab } from 'd3-interpolate';
+	import { tweened } from 'svelte/motion';
+
+	const colors = ['rgb(255, 62, 0)', 'rgb(64, 179, 255)', 'rgb(103, 103, 120)'];
+
+	const color = tweened(colors[0], {
+		duration: 800,
+		interpolate: interpolateLab
+	});
+&#x3C;/script>
+
+{#each colors as c}
+	&#x3C;button style="background-color: {c}; color: white; border: none;" on:click={(e) => color.set(c)}>
+		{c}
+	&#x3C;/button>
+{/each}
+
+&#x3C;h1 style="color: {$color}">{$color}&#x3C;/h1></code></pre></section><section class="level2"aria-labelledby="spring"><h2 id="spring"><code>spring</code></h2><blockquote><p>EXPORT_SNIPPET: svelte/motion#spring</blockquote><p>A <code>spring</code> store gradually changes to its target value based on its <code>stiffness</code> and <code>damping</code> parameters. Whereas <code>tweened</code> stores change their values over a fixed duration, <code>spring</code> stores change over a duration that is determined by their existing velocity, allowing for more natural-seeming motion in many situations. The following options are available:<ul><li><code>stiffness</code> (<code>number</code>, default <code>0.15</code>) — a value between 0 and 1 where higher means a 'tighter' spring<li><code>damping</code> (<code>number</code>, default <code>0.8</code>) — a value between 0 and 1 where lower means a 'springier' spring<li><code>precision</code> (<code>number</code>, default <code>0.01</code>) — determines the threshold at which the spring is considered to have 'settled', where lower means more precise</ul><p>All of the options above can be changed while the spring is in motion, and will take immediate effect.<pre class="language-js"><code class="language-js"><span class="token keyword module">import</span> <span class="token imports"><span class="token punctuation">{</span> spring <span class="token punctuation">}</span></span> <span class="token keyword module">from</span> <span class="token string">'svelte/motion'</span><span class="token punctuation">;</span>
+
+<span class="token keyword">const</span> size <span class="token operator">=</span> <span class="token function">spring</span><span class="token punctuation">(</span><span class="token number">100</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+size<span class="token punctuation">.</span><span class="token property-access">stiffness</span> <span class="token operator">=</span> <span class="token number">0.3</span><span class="token punctuation">;</span>
+size<span class="token punctuation">.</span><span class="token property-access">damping</span> <span class="token operator">=</span> <span class="token number">0.4</span><span class="token punctuation">;</span>
+size<span class="token punctuation">.</span><span class="token property-access">precision</span> <span class="token operator">=</span> <span class="token number">0.005</span><span class="token punctuation">;</span></code></pre><p>As with <a href="./svelte-motion#tweened"><code>tweened</code></a> stores, <code>set</code> and <code>update</code> return a Promise that resolves if the spring settles.<p>Both <code>set</code> and <code>update</code> can take a second argument — an object with <code>hard</code> or <code>soft</code> properties. <code>{ hard: true }</code> sets the target value immediately; <code>{ soft: n }</code> preserves existing momentum for <code>n</code> seconds before settling. <code>{ soft: true }</code> is equivalent to <code>{ soft: 0.5 }</code>.<pre class="language-js"><code class="language-js"><span class="token keyword module">import</span> <span class="token imports"><span class="token punctuation">{</span> spring <span class="token punctuation">}</span></span> <span class="token keyword module">from</span> <span class="token string">'svelte/motion'</span><span class="token punctuation">;</span>
+
+<span class="token keyword">const</span> coords <span class="token operator">=</span> <span class="token function">spring</span><span class="token punctuation">(</span><span class="token punctuation">{</span> <span class="token literal-property property">x</span><span class="token operator">:</span> <span class="token number">50</span><span class="token punctuation">,</span> <span class="token literal-property property">y</span><span class="token operator">:</span> <span class="token number">50</span> <span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token comment">// updates the value immediately</span>
+coords<span class="token punctuation">.</span><span class="token method function property-access">set</span><span class="token punctuation">(</span><span class="token punctuation">{</span> <span class="token literal-property property">x</span><span class="token operator">:</span> <span class="token number">100</span><span class="token punctuation">,</span> <span class="token literal-property property">y</span><span class="token operator">:</span> <span class="token number">200</span> <span class="token punctuation">}</span><span class="token punctuation">,</span> <span class="token punctuation">{</span> <span class="token literal-property property">hard</span><span class="token operator">:</span> <span class="token boolean">true</span> <span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token comment">// preserves existing momentum for 1s</span>
+coords<span class="token punctuation">.</span><span class="token method function property-access">update</span><span class="token punctuation">(</span>
+	<span class="token punctuation">(</span><span class="token parameter">target_coords<span class="token punctuation">,</span> coords</span><span class="token punctuation">)</span> <span class="token arrow operator">=></span> <span class="token punctuation">{</span>
+		<span class="token keyword control-flow">return</span> <span class="token punctuation">{</span> <span class="token literal-property property">x</span><span class="token operator">:</span> target_coords<span class="token punctuation">.</span><span class="token property-access">x</span><span class="token punctuation">,</span> <span class="token literal-property property">y</span><span class="token operator">:</span> coords<span class="token punctuation">.</span><span class="token property-access">y</span> <span class="token punctuation">}</span><span class="token punctuation">;</span>
+	<span class="token punctuation">}</span><span class="token punctuation">,</span>
+	<span class="token punctuation">{</span> <span class="token literal-property property">soft</span><span class="token operator">:</span> <span class="token number">1</span> <span class="token punctuation">}</span>
+<span class="token punctuation">)</span><span class="token punctuation">;</span></code></pre><p><a href="https://learn.svelte.dev/tutorial/springs">See a full example on the spring tutorial.</a><pre class="language-svelte"><code class="language-svelte">&#x3C;script>
+	import { spring } from 'svelte/motion';
+
+	const coords = spring(
+		{ x: 50, y: 50 },
+		{
+			stiffness: 0.1,
+			damping: 0.25
+		}
+	);
+&#x3C;/script></code></pre><p>If the initial value is <code>undefined</code> or <code>null</code>, the first value change will take effect immediately, just as with <code>tweened</code> values (see above).<pre class="language-ts"><code class="language-ts"><span class="token comment">// @filename: ambient.d.ts</span>
+<span class="token keyword">declare</span> global <span class="token punctuation">{</span>
+	<span class="token keyword">var</span> $size<span class="token operator">:</span> <span class="token builtin">number</span><span class="token punctuation">;</span>
+	<span class="token keyword">var</span> big<span class="token operator">:</span> <span class="token builtin">number</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+
+<span class="token keyword module">export</span> <span class="token exports"><span class="token punctuation">{</span><span class="token punctuation">}</span></span><span class="token punctuation">;</span>
+
+<span class="token comment">// @filename: motion.ts</span>
+<span class="token comment">// cut---</span>
+<span class="token keyword module">import</span> <span class="token imports"><span class="token punctuation">{</span> spring <span class="token punctuation">}</span></span> <span class="token keyword module">from</span> <span class="token string">'svelte/motion'</span><span class="token punctuation">;</span>
+
+<span class="token keyword">const</span> size <span class="token operator">=</span> <span class="token function">spring</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+$<span class="token operator">:</span> $size <span class="token operator">=</span> big <span class="token operator">?</span> <span class="token number">100</span> <span class="token operator">:</span> <span class="token number">10</span><span class="token punctuation">;</span></code></pre></section><section class="level2"aria-labelledby="types"><h2 id="types">Types</h2><blockquote><p>TYPES: svelte/motion <span style="float:footnote"><a href="../index.html#toc">Go to TOC</a></span></blockquote></section></section>

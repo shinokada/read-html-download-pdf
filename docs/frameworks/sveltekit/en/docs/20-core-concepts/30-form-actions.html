@@ -4,7 +4,7 @@
 	<span class="token function-variable function">default</span><span class="token operator">:</span> <span class="token keyword">async</span> <span class="token punctuation">(</span><span class="token parameter">event</span><span class="token punctuation">)</span> <span class="token arrow operator">=></span> <span class="token punctuation">{</span>
 		<span class="token comment">// TODO log the user in</span>
 	<span class="token punctuation">}</span>
-<span class="token punctuation">}</span><span class="token punctuation">;</span></code></pre><p>To invoke this action from the <code>/login</code> page, just add a <code>&#x3C;form></code> — no JavaScript needed:<pre class="language-svelte"><code class="language-svelte">/// file: src/routes/login/+page.svelte
+<span class="token punctuation">}</span><span class="token punctuation">;</span></code></pre><p>To invoke this action from the <code>/login</code> page, just add a <code>&#x3C;form></code> — no JavaScript needed:<pre class="language-svelte"><code class="language-svelte">&#x3C;! file: src/routes/login/+page.svelte --->
 &#x3C;form method="POST">
 	&#x3C;label>
 		Email
@@ -28,8 +28,8 @@ export const actions = {
 <span class="token inserted-sign inserted"><span class="token prefix inserted">+</span><span class="token line">	register: async (event) => {
 </span><span class="token prefix inserted">+</span><span class="token line">		// TODO register the user
 </span><span class="token prefix inserted">+</span><span class="token line">	}
-</span></span>};</code></pre><p>To invoke a named action, add a query parameter with the name prefixed by a <code>/</code> character:<pre class="language-svelte"><code class="language-svelte">/// file: src/routes/login/+page.svelte
-&#x3C;form method="POST" action="?/register"></code></pre><pre class="language-svelte"><code class="language-svelte">/// file: src/routes/+layout.svelte
+</span></span>};</code></pre><p>To invoke a named action, add a query parameter with the name prefixed by a <code>/</code> character:<pre class="language-svelte"><code class="language-svelte">&#x3C;! file: src/routes/login/+page.svelte --->
+&#x3C;form method="POST" action="?/register"></code></pre><pre class="language-svelte"><code class="language-svelte">&#x3C;! file: src/routes/+layout.svelte --->
 &#x3C;form method="POST" action="/login?/register"></code></pre><p>As well as the <code>action</code> attribute, we can use the <code>formaction</code> attribute on a button to <code>POST</code> the same form data to a different action than the parent <code>&#x3C;form></code>:<pre class="language-diff"><code class="language-diff">/// file: src/routes/login/+page.svelte
 <span class="token deleted-sign deleted"><span class="token prefix deleted">-</span><span class="token line">&#x3C;form method="POST">
 </span></span><span class="token inserted-sign inserted"><span class="token prefix inserted">+</span><span class="token line">&#x3C;form method="POST" action="?/login">
@@ -66,7 +66,7 @@ export const actions = {
 	<span class="token function-variable function">register</span><span class="token operator">:</span> <span class="token keyword">async</span> <span class="token punctuation">(</span><span class="token parameter">event</span><span class="token punctuation">)</span> <span class="token arrow operator">=></span> <span class="token punctuation">{</span>
 		<span class="token comment">// TODO register the user</span>
 	<span class="token punctuation">}</span>
-<span class="token punctuation">}</span><span class="token punctuation">;</span></code></pre><pre class="language-svelte"><code class="language-svelte">/// file: src/routes/login/+page.svelte
+<span class="token punctuation">}</span><span class="token punctuation">;</span></code></pre><pre class="language-svelte"><code class="language-svelte">&#x3C;! file: src/routes/login/+page.svelte --->
 &#x3C;script>
 	/** @type {import('./$types').PageData} */
 	export let data;
@@ -151,7 +151,7 @@ export const actions = {
 	register: async (event) => {
 		// TODO register the user
 	}
-};</code></pre></section><section class="level2"aria-labelledby="loading-data"><h2 id="loading-data">Loading data</h2><p>After an action runs, the page will be re-rendered (unless a redirect or an unexpected error occurs), with the action's return value available to the page as the <code>form</code> prop. This means that your page's <code>load</code> functions will run after the action completes.<p>Note that <code>handle</code> runs before the action is invoked, and does not re-run before the <code>load</code> functions. This means that if, for example, you use <code>handle</code> to populate <code>event.locals</code> based on a cookie, you must update <code>event.locals</code> when you set or delete the cookie in an action:<pre class="language-js"><code class="language-js"><span class="token comment">/// file: src/hooks.server.js</span>
+};</code></pre></section><section class="level2"aria-labelledby="loading-data"><h2 id="loading-data">Loading data</h2><p>After an action runs, the page will be re-rendered (unless a redirect or an unexpected error occurs), with the action's return value available to the page as the <code>form</code> prop. This means that your page's <code>load</code> functions will run after the action completes.<p>Note that <code>handle</code> runs before the action is invoked, and does not rerun before the <code>load</code> functions. This means that if, for example, you use <code>handle</code> to populate <code>event.locals</code> based on a cookie, you must update <code>event.locals</code> when you set or delete the cookie in an action:<pre class="language-js"><code class="language-js"><span class="token comment">/// file: src/hooks.server.js</span>
 <span class="token comment">// @filename: ambient.d.ts</span>
 declare namespace <span class="token maybe-class-name">App</span> <span class="token punctuation">{</span>
 	<span class="token keyword">interface</span> <span class="token class-name">Locals</span> <span class="token punctuation">{</span>
@@ -242,7 +242,7 @@ declare namespace <span class="token maybe-class-name">App</span> <span class="t
 </span><span class="token prefix inserted">+</span><span class="token line">			}
 </span></span>		};
 	}}
-<span class="token inserted-arrow inserted"><span class="token prefix inserted">></span></span></code></pre><p>The behaviour of <code>applyAction(result)</code> depends on <code>result.type</code>:<ul><li><code>success</code>, <code>failure</code> — sets <code>$page.status</code> to <code>result.status</code> and updates <code>form</code> and <code>$page.form</code> to <code>result.data</code> (regardless of where you are submitting from, in contrast to <code>update</code> from <code>enhance</code>)<li><code>redirect</code> — calls <code>goto(result.location)</code><li><code>error</code> — renders the nearest <code>+error</code> boundary with <code>result.error</code></ul><p>In all cases, <a href="accessibility#focus-management">focus will be reset</a>.</section><section class="level2"aria-labelledby="custom-event-listener"><h2 id="custom-event-listener">Custom event listener</h2><p>We can also implement progressive enhancement ourselves, without <code>use:enhance</code>, with a normal event listener on the <code>&#x3C;form></code>:<pre class="language-svelte"><code class="language-svelte">/// file: src/routes/login/+page.svelte
+<span class="token inserted-arrow inserted"><span class="token prefix inserted">></span></span></code></pre><p>The behaviour of <code>applyAction(result)</code> depends on <code>result.type</code>:<ul><li><code>success</code>, <code>failure</code> — sets <code>$page.status</code> to <code>result.status</code> and updates <code>form</code> and <code>$page.form</code> to <code>result.data</code> (regardless of where you are submitting from, in contrast to <code>update</code> from <code>enhance</code>)<li><code>redirect</code> — calls <code>goto(result.location)</code><li><code>error</code> — renders the nearest <code>+error</code> boundary with <code>result.error</code></ul><p>In all cases, <a href="accessibility#focus-management">focus will be reset</a>.</section><section class="level2"aria-labelledby="custom-event-listener"><h2 id="custom-event-listener">Custom event listener</h2><p>We can also implement progressive enhancement ourselves, without <code>use:enhance</code>, with a normal event listener on the <code>&#x3C;form></code>:<pre class="language-svelte"><code class="language-svelte">&#x3C;! file: src/routes/login/+page.svelte --->
 &#x3C;script>
 	import { invalidateAll, goto } from '$app/navigation';
 	import { applyAction, deserialize } from '$app/forms';
@@ -265,7 +265,7 @@ declare namespace <span class="token maybe-class-name">App</span> <span class="t
 		const result = deserialize(await response.text());
 
 		if (result.type === 'success') {
-			// re-run all `load` functions, following the successful update
+			// rerun all `load` functions, following the successful update
 			await invalidateAll();
 		}
 
@@ -281,7 +281,7 @@ declare namespace <span class="token maybe-class-name">App</span> <span class="t
 <span class="token inserted-sign inserted"><span class="token prefix inserted">+</span><span class="token line">	headers: {
 </span><span class="token prefix inserted">+</span><span class="token line">		'x-sveltekit-action': 'true'
 </span><span class="token prefix inserted">+</span><span class="token line">	}
-</span></span>});</code></pre></section><section class="level2"aria-labelledby="alternatives"><h2 id="alternatives">Alternatives</h2><p>Form actions are the preferred way to send data to the server, since they can be progressively enhanced, but you can also use <a href="routing#server"><code>+server.js</code></a> files to expose (for example) a JSON API. Here's how such an interaction could look like:<pre class="language-svelte"><code class="language-svelte">/// file: send-message/+page.svelte
+</span></span>});</code></pre></section><section class="level2"aria-labelledby="alternatives"><h2 id="alternatives">Alternatives</h2><p>Form actions are the preferred way to send data to the server, since they can be progressively enhanced, but you can also use <a href="routing#server"><code>+server.js</code></a> files to expose (for example) a JSON API. Here's how such an interaction could look like:<pre class="language-svelte"><code class="language-svelte">&#x3C;! file: send-message/+page.svelte --->
 &#x3C;script>
 	function rerun() {
 		fetch('/api/ci', {
@@ -290,7 +290,7 @@ declare namespace <span class="token maybe-class-name">App</span> <span class="t
 	}
 &#x3C;/script>
 
-&#x3C;button on:click={rerun}>Rerun CI&#x3C;/button></code></pre><pre class="language-js"><code class="language-js"><span class="token comment">// @errors: 2355 1360</span>
+&#x3C;button on:click={rerun}>Rerun CI&#x3C;/button></code></pre><pre class="language-js"><code class="language-js"><span class="token comment">// @errors: 2355 1360 2322</span>
 <span class="token comment">/// file: api/ci/+server.js</span>
 
 <span class="token doc-comment comment">/** <span class="token keyword">@type</span> <span class="token class-name"><span class="token punctuation">{</span><span class="token keyword module">import</span><span class="token punctuation">(</span><span class="token string">'./$types'</span><span class="token punctuation">)</span><span class="token punctuation">.</span>RequestHandler<span class="token punctuation">}</span></span> */</span>

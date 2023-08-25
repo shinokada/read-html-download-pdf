@@ -17,24 +17,48 @@
     <span class="token punctuation">{</span> <span class="token property">"source"</span><span class="token operator">:</span> <span class="token string">"/(.*)"</span><span class="token punctuation">,</span> <span class="token property">"destination"</span><span class="token operator">:</span> <span class="token string">"/index.html"</span> <span class="token punctuation">}</span>
   <span class="token punctuation">]</span>
 <span class="token punctuation">}</span></code></pre><p>Then go to your Vercel dashboard and create a new site with the repository.</section></section><section class="level2"aria-labelledby="github-pages"><h2 id="github-pages">GitHub Pages</h2><ul><li><a href="https://pages.github.com/">GitHub Pages</a></ul><p>To deploy your slides on GitHub Pages:<ul><li>upload all the files of the project in your repo (i.e. named <code>name_of_repo</code>)<li>create <code>.github/workflows/deploy.yml</code> with following content to deploy your slides to GitHub Pages via GitHub Actions. In this file, replace <code>&#x3C;name_of_repo></code> with <code>name_of_repo</code>.</ul><pre class="language-yaml"><code class="language-yaml"><span class="token key atrule">name</span><span class="token punctuation">:</span> Deploy pages
-<span class="token key atrule">on</span><span class="token punctuation">:</span> push
+
+<span class="token key atrule">on</span><span class="token punctuation">:</span>
+  <span class="token key atrule">workflow_dispatch</span><span class="token punctuation">:</span> <span class="token punctuation">{</span><span class="token punctuation">}</span>
+  <span class="token key atrule">push</span><span class="token punctuation">:</span>
+    <span class="token key atrule">branches</span><span class="token punctuation">:</span>
+      <span class="token punctuation">-</span> main
+
 <span class="token key atrule">jobs</span><span class="token punctuation">:</span>
   <span class="token key atrule">deploy</span><span class="token punctuation">:</span>
     <span class="token key atrule">runs-on</span><span class="token punctuation">:</span> ubuntu<span class="token punctuation">-</span>latest
+
+    <span class="token key atrule">permissions</span><span class="token punctuation">:</span>
+      <span class="token key atrule">contents</span><span class="token punctuation">:</span> read
+      <span class="token key atrule">pages</span><span class="token punctuation">:</span> write
+      <span class="token key atrule">id-token</span><span class="token punctuation">:</span> write
+
+    <span class="token key atrule">environment</span><span class="token punctuation">:</span>
+      <span class="token key atrule">name</span><span class="token punctuation">:</span> github<span class="token punctuation">-</span>pages
+      <span class="token key atrule">url</span><span class="token punctuation">:</span> $<span class="token punctuation">{</span><span class="token punctuation">{</span> steps.deployment.outputs.page_url <span class="token punctuation">}</span><span class="token punctuation">}</span>
+
     <span class="token key atrule">steps</span><span class="token punctuation">:</span>
       <span class="token punctuation">-</span> <span class="token key atrule">uses</span><span class="token punctuation">:</span> actions/checkout@v3
+
       <span class="token punctuation">-</span> <span class="token key atrule">uses</span><span class="token punctuation">:</span> actions/setup<span class="token punctuation">-</span>node@v3
         <span class="token key atrule">with</span><span class="token punctuation">:</span>
-          <span class="token key atrule">node-version</span><span class="token punctuation">:</span> <span class="token string">'14'</span>
+          <span class="token key atrule">node-version</span><span class="token punctuation">:</span> <span class="token string">'lts/*'</span>
+
       <span class="token punctuation">-</span> <span class="token key atrule">name</span><span class="token punctuation">:</span> Install dependencies
         <span class="token key atrule">run</span><span class="token punctuation">:</span> npm install
+
       <span class="token punctuation">-</span> <span class="token key atrule">name</span><span class="token punctuation">:</span> Install slidev
         <span class="token key atrule">run</span><span class="token punctuation">:</span>  npm i <span class="token punctuation">-</span>g @slidev/cli
+
       <span class="token punctuation">-</span> <span class="token key atrule">name</span><span class="token punctuation">:</span> Build
         <span class="token key atrule">run</span><span class="token punctuation">:</span> slidev build <span class="token punctuation">-</span><span class="token punctuation">-</span>base &#x3C;name_of_repo<span class="token punctuation">></span>
-      <span class="token punctuation">-</span> <span class="token key atrule">name</span><span class="token punctuation">:</span> Deploy pages
-        <span class="token key atrule">uses</span><span class="token punctuation">:</span> crazy<span class="token punctuation">-</span>max/ghaction<span class="token punctuation">-</span>github<span class="token punctuation">-</span>pages@v2
+
+      <span class="token punctuation">-</span> <span class="token key atrule">uses</span><span class="token punctuation">:</span> actions/configure<span class="token punctuation">-</span>pages@v3
+
+      <span class="token punctuation">-</span> <span class="token key atrule">uses</span><span class="token punctuation">:</span> actions/upload<span class="token punctuation">-</span>pages<span class="token punctuation">-</span>artifact@v1
         <span class="token key atrule">with</span><span class="token punctuation">:</span>
-          <span class="token key atrule">build_dir</span><span class="token punctuation">:</span> dist
-        <span class="token key atrule">env</span><span class="token punctuation">:</span>
-          <span class="token key atrule">GITHUB_TOKEN</span><span class="token punctuation">:</span> $<span class="token punctuation">{</span><span class="token punctuation">{</span> secrets.GITHUB_TOKEN <span class="token punctuation">}</span><span class="token punctuation">}</span></code></pre><ul><li>In your repository, go to Settings>Pages. Under "Build and deployment", select "Deploy from a branch", select "gh-pages" and "root". Click on save.<li>Finally, after all workflows are executed, a link to the slides should appear under Settings>Pages. <span style="float:footnote"><a href="../index.html#toc">Go to TOC</a></span></ul></section></section>
+          <span class="token key atrule">path</span><span class="token punctuation">:</span> dist
+
+      <span class="token punctuation">-</span> <span class="token key atrule">name</span><span class="token punctuation">:</span> Deploy
+        <span class="token key atrule">id</span><span class="token punctuation">:</span> deployment
+        <span class="token key atrule">uses</span><span class="token punctuation">:</span> actions/deploy<span class="token punctuation">-</span>pages@v2</code></pre><ul><li>In your repository, go to Settings>Pages. Under "Build and deployment", select "Deploy from a branch", select "gh-pages" and "root". Click on save.<li>Finally, after all workflows are executed, a link to the slides should appear under Settings>Pages. <span style="float:footnote"><a href="../index.html#toc">Go to TOC</a></span></ul></section></section>
