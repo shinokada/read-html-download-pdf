@@ -45,7 +45,11 @@ self<span class="token punctuation">.</span><span class="token method function p
 
 		<span class="token comment">// `build`/`files` can always be served from the cache</span>
 		<span class="token keyword control-flow">if</span> <span class="token punctuation">(</span><span class="token constant">ASSETS</span><span class="token punctuation">.</span><span class="token method function property-access">includes</span><span class="token punctuation">(</span>url<span class="token punctuation">.</span><span class="token property-access">pathname</span><span class="token punctuation">)</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
-			<span class="token keyword control-flow">return</span> cache<span class="token punctuation">.</span><span class="token method function property-access">match</span><span class="token punctuation">(</span>url<span class="token punctuation">.</span><span class="token property-access">pathname</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+			<span class="token keyword">const</span> response <span class="token operator">=</span> <span class="token keyword control-flow">await</span> cache<span class="token punctuation">.</span><span class="token method function property-access">match</span><span class="token punctuation">(</span>url<span class="token punctuation">.</span><span class="token property-access">pathname</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+			<span class="token keyword control-flow">if</span> <span class="token punctuation">(</span>response<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+				<span class="token keyword control-flow">return</span> response<span class="token punctuation">;</span>
+			<span class="token punctuation">}</span>
 		<span class="token punctuation">}</span>
 
 		<span class="token comment">// for everything else, try the network first, but</span>
@@ -53,13 +57,27 @@ self<span class="token punctuation">.</span><span class="token method function p
 		<span class="token keyword control-flow">try</span> <span class="token punctuation">{</span>
 			<span class="token keyword">const</span> response <span class="token operator">=</span> <span class="token keyword control-flow">await</span> <span class="token function">fetch</span><span class="token punctuation">(</span>event<span class="token punctuation">.</span><span class="token property-access">request</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
 
+			<span class="token comment">// if we're offline, fetch can return a value that is not a Response</span>
+			<span class="token comment">// instead of throwing - and we can't pass this non-Response to respondWith</span>
+			<span class="token keyword control-flow">if</span> <span class="token punctuation">(</span><span class="token operator">!</span><span class="token punctuation">(</span>response <span class="token keyword">instanceof</span> <span class="token class-name">Response</span><span class="token punctuation">)</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+				<span class="token keyword control-flow">throw</span> <span class="token keyword">new</span> <span class="token class-name">Error</span><span class="token punctuation">(</span><span class="token string">'invalid response from fetch'</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+			<span class="token punctuation">}</span>
+
 			<span class="token keyword control-flow">if</span> <span class="token punctuation">(</span>response<span class="token punctuation">.</span><span class="token property-access">status</span> <span class="token operator">===</span> <span class="token number">200</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
 				cache<span class="token punctuation">.</span><span class="token method function property-access">put</span><span class="token punctuation">(</span>event<span class="token punctuation">.</span><span class="token property-access">request</span><span class="token punctuation">,</span> response<span class="token punctuation">.</span><span class="token method function property-access">clone</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
 			<span class="token punctuation">}</span>
 
 			<span class="token keyword control-flow">return</span> response<span class="token punctuation">;</span>
-		<span class="token punctuation">}</span> <span class="token keyword control-flow">catch</span> <span class="token punctuation">{</span>
-			<span class="token keyword control-flow">return</span> cache<span class="token punctuation">.</span><span class="token method function property-access">match</span><span class="token punctuation">(</span>event<span class="token punctuation">.</span><span class="token property-access">request</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+		<span class="token punctuation">}</span> <span class="token keyword control-flow">catch</span> <span class="token punctuation">(</span>err<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+			<span class="token keyword">const</span> response <span class="token operator">=</span> <span class="token keyword control-flow">await</span> cache<span class="token punctuation">.</span><span class="token method function property-access">match</span><span class="token punctuation">(</span>event<span class="token punctuation">.</span><span class="token property-access">request</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+			<span class="token keyword control-flow">if</span> <span class="token punctuation">(</span>response<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+				<span class="token keyword control-flow">return</span> response<span class="token punctuation">;</span>
+			<span class="token punctuation">}</span>
+
+			<span class="token comment">// if there's no cache, then just error out</span>
+			<span class="token comment">// as there is nothing we can do to respond to this request</span>
+			<span class="token keyword control-flow">throw</span> err<span class="token punctuation">;</span>
 		<span class="token punctuation">}</span>
 	<span class="token punctuation">}</span>
 

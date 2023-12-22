@@ -2,7 +2,7 @@
 <span class="token keyword module">export</span> <span class="token keyword module">default</span> <span class="token punctuation">{</span>
   <span class="token function">load</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
     <span class="token keyword control-flow">return</span> <span class="token punctuation">{</span>
-      <span class="token literal-property property">data</span><span class="token operator">:</span> <span class="token string">'hello'</span>
+      <span class="token literal-property property">hello</span><span class="token operator">:</span> <span class="token string">'world'</span>
     <span class="token punctuation">}</span>
   <span class="token punctuation">}</span>
 <span class="token punctuation">}</span></code></pre><p>The loader module is evaluated only in Node.js, so you can import Node APIs and npm dependencies as needed.<p>You can then import data from this file in <code>.md</code> pages and <code>.vue</code> components using the <code>data</code> named export:<pre class="language-vue"><code class="language-vue">&#x3C;script setup>
@@ -10,7 +10,7 @@ import { data } from './example.data.js'
 &#x3C;/script>
 
 &#x3C;pre>{{ data }}&#x3C;/pre></code></pre><p>Output:<pre class="language-json"><code class="language-json"><span class="token punctuation">{</span>
-  <span class="token property">"data"</span><span class="token operator">:</span> <span class="token string">"hello"</span>
+  <span class="token property">"hello"</span><span class="token operator">:</span> <span class="token string">"world"</span>
 <span class="token punctuation">}</span></code></pre><p>You'll notice the data loader itself does not export the <code>data</code>. It is VitePress calling the <code>load()</code> method behind the scenes and implicitly exposing the result via the <code>data</code> named export.<p>This works even if the loader is async:<pre class="language-js"><code class="language-js"><span class="token keyword module">export</span> <span class="token keyword module">default</span> <span class="token punctuation">{</span>
   <span class="token keyword">async</span> <span class="token function">load</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
     <span class="token comment">// fetch remote data</span>
@@ -36,7 +36,8 @@ import { data } from './example.data.js'
 <span class="token keyword module">import</span> <span class="token imports"><span class="token punctuation">{</span> createContentLoader <span class="token punctuation">}</span></span> <span class="token keyword module">from</span> <span class="token string">'vitepress'</span>
 
 <span class="token keyword module">export</span> <span class="token keyword module">default</span> <span class="token function">createContentLoader</span><span class="token punctuation">(</span><span class="token string">'posts/*.md'</span><span class="token punctuation">,</span> <span class="token comment">/* options */</span><span class="token punctuation">)</span></code></pre><p>The helper takes a glob pattern relative to the <a href="./routing.html#source-directory.html">source directory</a>, and returns a <code>{ watch, load }</code> data loader object that can be used as the default export in a data loader file. It also implements caching based on file modified timestamps to improve dev performance.<p>Note the loader only works with Markdown files - matched non-Markdown files will be skipped.<p>The loaded data will be an array with the type of <code>ContentData[]</code>:<pre class="language-ts"><code class="language-ts"><span class="token keyword">interface</span> <span class="token class-name"><span class="token maybe-class-name">ContentData</span></span> <span class="token punctuation">{</span>
-  <span class="token comment">// mapped absolute URL for the page. e.g. /posts/hello.html</span>
+  <span class="token comment">// mapped URL for the page. e.g. /posts/hello.html (does not include base)</span>
+  <span class="token comment">// manually iterate or use custom `transform` to normalize the paths</span>
   url<span class="token operator">:</span> <span class="token builtin">string</span>
   <span class="token comment">// frontmatter data of the page</span>
   frontmatter<span class="token operator">:</span> <span class="token maybe-class-name">Record</span><span class="token operator">&#x3C;</span><span class="token builtin">string</span><span class="token punctuation">,</span> <span class="token builtin">any</span><span class="token operator">></span>
@@ -130,7 +131,7 @@ import { data as posts } from './posts.data.js'
 
 <span class="token keyword module">export</span> <span class="token keyword module">default</span> <span class="token function">defineLoader</span><span class="token punctuation">(</span><span class="token punctuation">{</span>
   <span class="token comment">// type checked loader options</span>
-  glob<span class="token operator">:</span> <span class="token punctuation">[</span><span class="token string">'...'</span><span class="token punctuation">]</span><span class="token punctuation">,</span>
+  watch<span class="token operator">:</span> <span class="token punctuation">[</span><span class="token string">'...'</span><span class="token punctuation">]</span><span class="token punctuation">,</span>
   <span class="token keyword">async</span> <span class="token function">load</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token operator">:</span> <span class="token known-class-name class-name">Promise</span><span class="token operator">&#x3C;</span><span class="token maybe-class-name">Data</span><span class="token operator">></span> <span class="token punctuation">{</span>
     <span class="token comment">// ...</span>
   <span class="token punctuation">}</span>

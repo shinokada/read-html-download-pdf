@@ -1,31 +1,46 @@
-<!doctype html><html lang="cn"><meta charset="utf-8"><title>Workspace</title><meta name="viewport"content="width=device-width,initial-scale=1"><link rel="stylesheet"href="../../../../themes/packages/prism-coy-theme/theme_common.css"><section class="level1"aria-labelledby="workspace"><h1 id="workspace">Workspace</h1><p>Vitest 提供了内置支持 monorepo 的工作区配置文件。你可以创建一个工作区来定义项目设置。<section class="level2"aria-labelledby="定义-workspace"><h2 id="定义-workspace">定义 Workspace</h2><p>一个工作区应该在其根目录下（如果你有配置文件，则与其位于同一文件夹中）有一个名为 <code>vitest.workspace</code> 或 <code>vitest.projects</code> 的文件。Vitest 支持 <code>ts</code>/<code>js</code>/<code>json</code> 扩展名的文件。<p>工作区配置文件应该有一个默认导出，其中包含一个文件列表或 glob 模式，引用你的项目。例如，如果你有一个名为 <code>packages</code> 的项目文件夹，你可以使用以下配置文件定义一个工作区：</p>code-group ```ts [vitest.workspace.ts] export default [ 'packages/*' ] ```<p>即使某个文件夹中没有配置文件，Vitest 也会将 <code>packages</code> 文件夹中的每个文件夹视为单独的项目。<blockquote>除非在此配置文件中指定，否则 Vitest 不会将根配置文件视为工作区项目（因此它不会运行在 `include` 中指定的测试）。</blockquote><p>你还可以使用项目的配置文件引用项目：</p>code-group ```ts [vitest.workspace.ts] export default [ 'packages/*/vitest.config.{e2e,unit}.ts' ] ```<p>该模式仅包括具有包含 <code>e2e</code> 和 <code>unit</code> 的 <code>vitest.config</code> 文件的项目。这些关键字需要在文件扩展名之前出现。<blockquote>如果你正在使用 glob 模式引用文件名，请确保你的配置文件以 `vite.config` 或 `vitest.config` 开头。否则，Vitest将跳过它。</blockquote><p>你还可以使用内联配置定义项目。工作区文件支持同时使用这两种语法。</p>code-group ```ts [vitest.workspace.ts] import { defineWorkspace } from 'vitest/config'<p>// defineWorkspace provides a nice type hinting DX export default defineWorkspace([ 'packages/<em>', { // add "extends" to merge two configs together extends: './vite.config.js', test: { include: ['tests/**/</em>.{browser}.test.{ts,js}'], // it is recommended to define a name when using inline configs name: 'happy-dom', environment: 'happy-dom', } }, { test: { include: ['tests/*<em>/</em>.{node}.test.{ts,js}'], name: 'node', environment: 'node', } } ])<pre class="language-text"><code class="language-text">&#x3C;/blockquote>
+<!doctype html><html lang="cn"><meta charset="utf-8"><title>工作空间 | 指南</title><meta name="viewport"content="width=device-width,initial-scale=1"><link rel="stylesheet"href="../../../../themes/packages/prism-coy-theme/theme_common.css"><section class="level1"aria-labelledby="工作空间"><h1 id="工作空间">工作空间</h1><p>Vitest 通过工作空间配置文件提供了对 monotrepositions 的内置支持。你可以创建一个工作空间来定义项目的配置。<section class="level2"aria-labelledby="定义工作空间"><h2 id="定义工作空间">定义工作空间</h2><p>一个工作区应该在其根目录下（如果你有配置文件，则与其位于同一文件夹中）有一个名为 <code>vitest.workspace</code> 或 <code>vitest.projects</code> 的文件。Vitest 支持 <code>ts</code>/<code>js</code>/<code>json</code> 扩展名的文件。<p>工作区配置文件应该有一个默认导出，其中包含一个文件列表或 glob 模式，引用你的项目。例如，如果你有一个名为 <code>packages</code> 的项目文件夹，你可以使用以下配置文件定义一个工作区：</p>code-group<pre class="language-ts"><code class="language-ts"><span class="token keyword module">export</span> <span class="token keyword module">default</span> <span class="token punctuation">[</span><span class="token string">'packages/*'</span><span class="token punctuation">]</span></code></pre><p>即使某个文件夹中没有配置文件，Vitest 也会将 <code>packages</code> 文件夹中的每个文件夹视为单独的项目。<blockquote>除非在此配置文件中指定，否则 Vitest 不会将根配置文件视为工作区项目（因此它不会运行在 `include` 中指定的测试）。</blockquote><p>你还可以使用项目的配置文件引用项目：</p>code-group<pre class="language-ts"><code class="language-ts"><span class="token keyword module">export</span> <span class="token keyword module">default</span> <span class="token punctuation">[</span><span class="token string">'packages/*/vitest.config.{e2e,unit}.ts'</span><span class="token punctuation">]</span></code></pre><p>该模式仅包括具有包含 <code>e2e</code> 和 <code>unit</code> 的 <code>vitest.config</code> 文件的项目。这些关键字需要在文件扩展名之前出现。<blockquote>如果你正在使用 glob 模式引用文件名，请确保你的配置文件以 `vite.config` 或 `vitest.config` 开头。否则，Vitest 将跳过它。</blockquote><p>你还可以使用内联配置定义项目。工作区文件支持同时使用这两种语法。</p>code-group<pre class="language-ts"><code class="language-ts"><span class="token keyword module">import</span> <span class="token imports"><span class="token punctuation">{</span> defineWorkspace <span class="token punctuation">}</span></span> <span class="token keyword module">from</span> <span class="token string">'vitest/config'</span>
 
-&#x3C;blockquote>
-所有项目应该具有唯一的名称。否则，Vitest会抛出错误。如果你没有在内联配置中提供名称，Vitest将分配一个数字。如果你没有在使用 glob 语法定义的项目配置中提供名称，Vitest将默认使用目录名称。
-&#x3C;/blockquote>
+<span class="token comment">// defineWorkspace provides a nice type hinting DX</span>
+<span class="token keyword module">export</span> <span class="token keyword module">default</span> <span class="token function">defineWorkspace</span><span class="token punctuation">(</span><span class="token punctuation">[</span>
+  <span class="token string">'packages/*'</span><span class="token punctuation">,</span>
+  <span class="token punctuation">{</span>
+    <span class="token comment">// add "extends" to merge two configs together</span>
+    <span class="token keyword">extends</span><span class="token operator">:</span> <span class="token string">'./vite.config.js'</span><span class="token punctuation">,</span>
+    test<span class="token operator">:</span> <span class="token punctuation">{</span>
+      include<span class="token operator">:</span> <span class="token punctuation">[</span><span class="token string">'tests/**/*.{browser}.test.{ts,js}'</span><span class="token punctuation">]</span><span class="token punctuation">,</span>
+      <span class="token comment">// it is recommended to define a name when using inline configs</span>
+      name<span class="token operator">:</span> <span class="token string">'happy-dom'</span><span class="token punctuation">,</span>
+      environment<span class="token operator">:</span> <span class="token string">'happy-dom'</span><span class="token punctuation">,</span>
+    <span class="token punctuation">}</span><span class="token punctuation">,</span>
+  <span class="token punctuation">}</span><span class="token punctuation">,</span>
+  <span class="token punctuation">{</span>
+    test<span class="token operator">:</span> <span class="token punctuation">{</span>
+      include<span class="token operator">:</span> <span class="token punctuation">[</span><span class="token string">'tests/**/*.{node}.test.{ts,js}'</span><span class="token punctuation">]</span><span class="token punctuation">,</span>
+      name<span class="token operator">:</span> <span class="token string">'node'</span><span class="token punctuation">,</span>
+      environment<span class="token operator">:</span> <span class="token string">'node'</span><span class="token punctuation">,</span>
+    <span class="token punctuation">}</span><span class="token punctuation">,</span>
+  <span class="token punctuation">}</span><span class="token punctuation">,</span>
+<span class="token punctuation">]</span><span class="token punctuation">)</span></code></pre><blockquote>所有项目应该具有唯一的名称。否则，Vitest 会抛出错误。如果你没有在内联配置中提供名称，Vitest 将分配一个数字。如果你没有在使用 glob 语法定义的项目配置中提供名称，Vitest 将默认使用目录名称。</blockquote><p>如果你不依赖内联配置，你可以在根目录中创建一个小的 JSON 文件：</p>code-group<pre class="language-json"><code class="language-json"><span class="token punctuation">[</span><span class="token string">"packages/*"</span><span class="token punctuation">]</span></code></pre><p>工作区项目不支持所有配置属性。为了获得更好的类型安全性，请在项目配置文件中使用 <code>defineProject</code> 方法而不是 <code>defineConfig</code> 方法：</p>code-group<pre class="language-ts"><code class="language-ts"><span class="token keyword module">import</span> <span class="token imports"><span class="token punctuation">{</span> defineProject <span class="token punctuation">}</span></span> <span class="token keyword module">from</span> <span class="token string">'vitest/config'</span>
 
-如果你不依赖内联配置，你可以在根目录中创建一个小的 JSON 文件：
+<span class="token keyword module">export</span> <span class="token keyword module">default</span> <span class="token function">defineProject</span><span class="token punctuation">(</span><span class="token punctuation">{</span>
+  test<span class="token operator">:</span> <span class="token punctuation">{</span>
+    environment<span class="token operator">:</span> <span class="token string">'jsdom'</span><span class="token punctuation">,</span>
+    <span class="token comment">// "reporters" is not supported in a project config,</span>
+    <span class="token comment">// so it will show an error</span>
+    reporters<span class="token operator">:</span> <span class="token punctuation">[</span><span class="token string">'json'</span><span class="token punctuation">]</span><span class="token punctuation">,</span>
+  <span class="token punctuation">}</span><span class="token punctuation">,</span>
+<span class="token punctuation">}</span><span class="token punctuation">)</span></code></pre></section><section class="level2"aria-labelledby="运行测试"><h2 id="运行测试">运行测试</h2><p>要在工作区内运行测试，请在根目录 <code>package.json</code> 中定义一个脚本：<pre class="language-json"><code class="language-json"><span class="token punctuation">{</span>
+  <span class="token property">"scripts"</span><span class="token operator">:</span> <span class="token punctuation">{</span>
+    <span class="token property">"test"</span><span class="token operator">:</span> <span class="token string">"vitest"</span>
+  <span class="token punctuation">}</span>
+<span class="token punctuation">}</span></code></pre><p>现在可以使用 CLI 运行测试了：</p>code-group<pre class="language-bash"><code class="language-bash"><span class="token function">npm</span> run <span class="token builtin class-name">test</span></code></pre><pre class="language-bash"><code class="language-bash"><span class="token function">yarn</span> <span class="token builtin class-name">test</span></code></pre><pre class="language-bash"><code class="language-bash"><span class="token function">pnpm</span> run <span class="token builtin class-name">test</span></code></pre><pre class="language-bash"><code class="language-bash">bun <span class="token builtin class-name">test</span></code></pre><p>如果只需在单个项目内运行测试，使用 <code>--project</code> CLI 选项：<pre class="language-bash"><code class="language-bash"><span class="token function">npm</span> run <span class="token builtin class-name">test</span> --project e2e</code></pre><blockquote>CLI 选项 `--project` 可多次使用，以筛选出多个项目：<pre class="language-bash"><code class="language-bash"><span class="token function">npm</span> run <span class="token builtin class-name">test</span> --project e2e --project unit</code></pre></blockquote></section><section class="level2"aria-labelledby="配置"><h2 id="配置">配置</h2><p>没有任何配置选项从根级别的配置文件继承。你可以创建一个共享的配置文件，并将其与项目配置文件合并：</p>code-group<pre class="language-ts"><code class="language-ts"><span class="token keyword module">import</span> <span class="token imports"><span class="token punctuation">{</span> defineProject<span class="token punctuation">,</span> mergeConfig <span class="token punctuation">}</span></span> <span class="token keyword module">from</span> <span class="token string">'vitest/config'</span>
+<span class="token keyword module">import</span> <span class="token imports">configShared</span> <span class="token keyword module">from</span> <span class="token string">'../vitest.shared.js'</span>
 
-&#x3C;/blockquote>code-group
-```json [vitest.workspace.json]
-[
-  "packages/*"
-]</code></pre><p>工作区项目不支持所有配置属性。为了获得更好的类型安全性，请在项目配置文件中使用 <code>defineProject</code> 方法而不是 <code>defineConfig</code> 方法：</p>code-group ```ts [packages/a/vitest.config.ts] import { defineProject } from 'vitest/config'<p>export default defineProject({ test: { environment: 'jsdom', // "reporters" is not supported in a project config, // so it will show an error reporters: ['json'] } })<pre class="language-text"><code class="language-text">&#x3C;/blockquote>
-
-## Configuration
-
-没有任何配置选项从根级别的配置文件继承。你可以创建一个共享的配置文件，并将其与项目配置文件合并：
-
-&#x3C;/blockquote>code-group
-```ts [packages/a/vitest.config.ts]
-import { defineProject, mergeConfig } from 'vitest/config'
-import configShared from '../vitest.shared.js'
-
-export default mergeConfig(
-  configShared,
-  defineProject({
-    test: {
-      environment: 'jsdom',
-    }
-  })
-)</code></pre><p>此外，某些配置选项不允许在项目配置中使用。其中最明显的是：<ul><li><code>coverage</code>: 覆盖率是针对整个工作区进行的。<li><code>reporters</code>: 仅支持根级别的报告器。<li><code>resolveSnapshotPath</code>: 仅支持根级别的解析器。<li>所有其他不影响测试运行器的选项。</ul><blockquote>所有不支持在项目配置中使用的配置选项，在 ["Config"](/config/) 页面上都有一个<nonprojectoption>标记。</nonprojectoption></blockquote></section><section class="level2"aria-labelledby="coverage"><h2 id="coverage">Coverage</h2><p>工作区项目的覆盖率可以直接使用。但是，如果你启用了 <a href="../config.html#coverage-all"><code>all</code></a> 选项并且在某些项目中使用了非常规扩展名，则需要在根配置文件中使用处理此扩展名的插件。<p>例如，如果你有一个使用 Vue 文件的包，并且它有自己的配置文件，但是某些文件没有在测试中导入，覆盖率分析将会失败，因为它依赖于根配置而不是项目配置，试图分析未使用文件的使用情况。 <span style="float:footnote"><a href="../index.html#toc">Go to TOC</a></span></section></section>
+<span class="token keyword module">export</span> <span class="token keyword module">default</span> <span class="token function">mergeConfig</span><span class="token punctuation">(</span>
+  configShared<span class="token punctuation">,</span>
+  <span class="token function">defineProject</span><span class="token punctuation">(</span><span class="token punctuation">{</span>
+    test<span class="token operator">:</span> <span class="token punctuation">{</span>
+      environment<span class="token operator">:</span> <span class="token string">'jsdom'</span><span class="token punctuation">,</span>
+    <span class="token punctuation">}</span><span class="token punctuation">,</span>
+  <span class="token punctuation">}</span><span class="token punctuation">)</span>
+<span class="token punctuation">)</span></code></pre><p>此外，某些配置选项不允许在项目配置中使用。其中最明显的是：<ul><li><code>coverage</code>: 覆盖率是针对整个工作区进行的。<li><code>reporters</code>: 仅支持根级别的报告器。<li><code>resolveSnapshotPath</code>: 仅支持根级别的解析器。<li>所有其他不影响测试运行器的选项。</ul><blockquote>所有不支持在项目配置中使用的配置选项，在 ["Config"](/config/) 页面上都有一个<nonprojectoption>标记。</nonprojectoption></blockquote></section><section class="level2"aria-labelledby="覆盖率"><h2 id="覆盖率">覆盖率</h2><p>工作区项目的覆盖率可以直接使用。但是，如果你启用了 <a href="../config.html#coverage-all"><code>all</code></a> 选项并且在某些项目中使用了非常规扩展名，则需要在根配置文件中使用处理此扩展名的插件。<p>例如，如果你有一个使用 Vue 文件的包，并且它有自己的配置文件，但是某些文件没有在测试中导入，覆盖率分析将会失败，因为它依赖于根配置而不是项目配置，试图分析未使用文件的使用情况。 <span style="float:footnote"><a href="../index.html#toc">Go to TOC</a></span></section></section>

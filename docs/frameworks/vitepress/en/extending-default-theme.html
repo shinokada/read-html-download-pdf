@@ -1,4 +1,4 @@
-<!doctype html><html lang="en"><meta charset="utf-8"><title>Extending the Default Theme</title><meta name="viewport"content="width=device-width,initial-scale=1"><link rel="stylesheet"href="../../../themes/packages/prism-coy-theme/theme_common.css"><section class="level1"aria-labelledby="extending-the-default-theme"><h1 id="extending-the-default-theme">Extending the Default Theme</h1><p>VitePress' default theme is optimized for documentation, and can be customized. Consult the <a href="../reference/default-theme-config">Default Theme Config Overview</a> for a comprehensive list of options.<p>However, there are a number of cases where configuration alone won't be enough. For example:<ol><li>You need to tweak the CSS styling;<li>You need to modify the Vue app instance, for example to register global components;<li>You need to inject custom content into the theme via layout slots.</ol><p>These advanced customizations will require using a custom theme that "extends" the default theme.<p>::: tip Before proceeding, make sure to first read <a href="./custom-theme.html">Using a Custom Theme</a> to understand how custom themes work. :::<section class="level2"aria-labelledby="customizing-css"><h2 id="customizing-css">Customizing CSS</h2><p>The default theme CSS is customizable by overriding root level CSS variables:<pre class="language-js"><code class="language-js"><span class="token comment">// .vitepress/theme/index.js</span>
+<!doctype html><html lang="en"><meta charset="utf-8"><title>Extending the Default Theme</title><meta name="viewport"content="width=device-width,initial-scale=1"><meta name="outline"content="deep"><link rel="stylesheet"href="../../../themes/packages/prism-coy-theme/theme_common.css"><section class="level1"aria-labelledby="extending-the-default-theme"><h1 id="extending-the-default-theme">Extending the Default Theme</h1><p>VitePress' default theme is optimized for documentation, and can be customized. Consult the <a href="../reference/default-theme-config">Default Theme Config Overview</a> for a comprehensive list of options.<p>However, there are a number of cases where configuration alone won't be enough. For example:<ol><li>You need to tweak the CSS styling;<li>You need to modify the Vue app instance, for example to register global components;<li>You need to inject custom content into the theme via layout slots.</ol><p>These advanced customizations will require using a custom theme that "extends" the default theme.<p>::: tip Before proceeding, make sure to first read <a href="./custom-theme.html">Using a Custom Theme</a> to understand how custom themes work. :::<section class="level2"aria-labelledby="customizing-css"><h2 id="customizing-css">Customizing CSS</h2><p>The default theme CSS is customizable by overriding root level CSS variables:<pre class="language-js"><code class="language-js"><span class="token comment">// .vitepress/theme/index.js</span>
 <span class="token keyword module">import</span> <span class="token imports"><span class="token maybe-class-name">DefaultTheme</span></span> <span class="token keyword module">from</span> <span class="token string">'vitepress/theme'</span>
 <span class="token keyword module">import</span> <span class="token string">'./custom.css'</span>
 
@@ -37,18 +37,29 @@
 <span class="token punctuation">}</span></code></pre></section><section class="level2"aria-labelledby="registering-global-components"><h2 id="registering-global-components">Registering Global Components</h2><pre class="language-js"><code class="language-js"><span class="token comment">// .vitepress/theme/index.js</span>
 <span class="token keyword module">import</span> <span class="token imports"><span class="token maybe-class-name">DefaultTheme</span></span> <span class="token keyword module">from</span> <span class="token string">'vitepress/theme'</span>
 
+<span class="token doc-comment comment">/** <span class="token keyword">@type</span> <span class="token class-name"><span class="token punctuation">{</span><span class="token keyword module">import</span><span class="token punctuation">(</span><span class="token string">'vitepress'</span><span class="token punctuation">)</span><span class="token punctuation">.</span>Theme<span class="token punctuation">}</span></span> */</span>
 <span class="token keyword module">export</span> <span class="token keyword module">default</span> <span class="token punctuation">{</span>
   <span class="token keyword">extends</span><span class="token operator">:</span> <span class="token maybe-class-name">DefaultTheme</span><span class="token punctuation">,</span>
-  <span class="token function">enhanceApp</span><span class="token punctuation">(</span><span class="token parameter">ctx</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  <span class="token function">enhanceApp</span><span class="token punctuation">(</span><span class="token parameter"><span class="token punctuation">{</span> app <span class="token punctuation">}</span></span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
     <span class="token comment">// register your custom global components</span>
-    ctx<span class="token punctuation">.</span><span class="token property-access">app</span><span class="token punctuation">.</span><span class="token method function property-access">component</span><span class="token punctuation">(</span><span class="token string">'MyGlobalComponent'</span> <span class="token comment">/* ... */</span><span class="token punctuation">)</span>
+    app<span class="token punctuation">.</span><span class="token method function property-access">component</span><span class="token punctuation">(</span><span class="token string">'MyGlobalComponent'</span> <span class="token comment">/* ... */</span><span class="token punctuation">)</span>
   <span class="token punctuation">}</span>
-<span class="token punctuation">}</span></code></pre><p>Since we are using Vite, you can also leverage Vite's <a href="https://vitejs.dev/guide/features.html#glob-import">glob import feature</a> to auto register a directory of components.</section><section class="level2"aria-labelledby="layout-slots"><h2 id="layout-slots">Layout Slots</h2><p>The default theme's <code>&#x3C;Layout/></code> component has a few slots that can be used to inject content at certain locations of the page. Here's an example of injecting a component into the before outline:<pre class="language-js"><code class="language-js"><span class="token comment">// .vitepress/theme/index.js</span>
+<span class="token punctuation">}</span></code></pre><p>If you're using TypeScript:<pre class="language-ts"><code class="language-ts"><span class="token comment">// .vitepress/theme/index.ts</span>
+<span class="token keyword module">import</span> <span class="token keyword">type</span> <span class="token punctuation">{</span> <span class="token maybe-class-name">Theme</span> <span class="token punctuation">}</span> <span class="token keyword module">from</span> <span class="token string">'vitepress'</span>
+<span class="token keyword module">import</span> <span class="token imports"><span class="token maybe-class-name">DefaultTheme</span></span> <span class="token keyword module">from</span> <span class="token string">'vitepress/theme'</span>
+
+<span class="token keyword module">export</span> <span class="token keyword module">default</span> <span class="token punctuation">{</span>
+  <span class="token keyword">extends</span><span class="token operator">:</span> <span class="token maybe-class-name">DefaultTheme</span><span class="token punctuation">,</span>
+  <span class="token function">enhanceApp</span><span class="token punctuation">(</span><span class="token punctuation">{</span> app <span class="token punctuation">}</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token comment">// register your custom global components</span>
+    app<span class="token punctuation">.</span><span class="token method function property-access">component</span><span class="token punctuation">(</span><span class="token string">'MyGlobalComponent'</span> <span class="token comment">/* ... */</span><span class="token punctuation">)</span>
+  <span class="token punctuation">}</span>
+<span class="token punctuation">}</span> satisfies <span class="token maybe-class-name">Theme</span></code></pre><p>Since we are using Vite, you can also leverage Vite's <a href="https://vitejs.dev/guide/features.html#glob-import">glob import feature</a> to auto register a directory of components.</section><section class="level2"aria-labelledby="layout-slots"><h2 id="layout-slots">Layout Slots</h2><p>The default theme's <code>&#x3C;Layout/></code> component has a few slots that can be used to inject content at certain locations of the page. Here's an example of injecting a component into the before outline:<pre class="language-js"><code class="language-js"><span class="token comment">// .vitepress/theme/index.js</span>
 <span class="token keyword module">import</span> <span class="token imports"><span class="token maybe-class-name">DefaultTheme</span></span> <span class="token keyword module">from</span> <span class="token string">'vitepress/theme'</span>
 <span class="token keyword module">import</span> <span class="token imports"><span class="token maybe-class-name">MyLayout</span></span> <span class="token keyword module">from</span> <span class="token string">'./MyLayout.vue'</span>
 
 <span class="token keyword module">export</span> <span class="token keyword module">default</span> <span class="token punctuation">{</span>
-  <span class="token spread operator">...</span><span class="token maybe-class-name">DefaultTheme</span><span class="token punctuation">,</span>
+  <span class="token keyword">extends</span><span class="token operator">:</span> <span class="token maybe-class-name">DefaultTheme</span><span class="token punctuation">,</span>
   <span class="token comment">// override the Layout with a wrapper component that</span>
   <span class="token comment">// injects the slots</span>
   <span class="token literal-property property">Layout</span><span class="token operator">:</span> <span class="token maybe-class-name">MyLayout</span>
@@ -71,13 +82,84 @@ const { Layout } = DefaultTheme
 <span class="token keyword module">import</span> <span class="token imports"><span class="token maybe-class-name">MyComponent</span></span> <span class="token keyword module">from</span> <span class="token string">'./MyComponent.vue'</span>
 
 <span class="token keyword module">export</span> <span class="token keyword module">default</span> <span class="token punctuation">{</span>
-  <span class="token spread operator">...</span><span class="token maybe-class-name">DefaultTheme</span><span class="token punctuation">,</span>
+  <span class="token keyword">extends</span><span class="token operator">:</span> <span class="token maybe-class-name">DefaultTheme</span><span class="token punctuation">,</span>
   <span class="token function"><span class="token maybe-class-name">Layout</span></span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
     <span class="token keyword control-flow">return</span> <span class="token function">h</span><span class="token punctuation">(</span><span class="token maybe-class-name">DefaultTheme</span><span class="token punctuation">.</span><span class="token property-access"><span class="token maybe-class-name">Layout</span></span><span class="token punctuation">,</span> <span class="token keyword null nil">null</span><span class="token punctuation">,</span> <span class="token punctuation">{</span>
       <span class="token string-property property">'aside-outline-before'</span><span class="token operator">:</span> <span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token arrow operator">=></span> <span class="token function">h</span><span class="token punctuation">(</span><span class="token maybe-class-name">MyComponent</span><span class="token punctuation">)</span>
     <span class="token punctuation">}</span><span class="token punctuation">)</span>
   <span class="token punctuation">}</span>
-<span class="token punctuation">}</span></code></pre><p>Full list of slots available in the default theme layout:<ul><li>When <code>layout: 'doc'</code> (default) is enabled via frontmatter:<ul><li><code>doc-top</code><li><code>doc-bottom</code><li><code>doc-footer-before</code><li><code>doc-before</code><li><code>doc-after</code><li><code>sidebar-nav-before</code><li><code>sidebar-nav-after</code><li><code>aside-top</code><li><code>aside-bottom</code><li><code>aside-outline-before</code><li><code>aside-outline-after</code><li><code>aside-ads-before</code><li><code>aside-ads-after</code></ul><li>When <code>layout: 'home'</code> is enabled via frontmatter:<ul><li><code>home-hero-before</code><li><code>home-hero-info</code><li><code>home-hero-image</code><li><code>home-hero-after</code><li><code>home-features-before</code><li><code>home-features-after</code></ul><li>When <code>layout: 'page'</code> is enabled via frontmatter:<ul><li><code>page-top</code><li><code>page-bottom</code></ul><li>On not found (404) page:<ul><li><code>not-found</code></ul><li>Always:<ul><li><code>layout-top</code><li><code>layout-bottom</code><li><code>nav-bar-title-before</code><li><code>nav-bar-title-after</code><li><code>nav-bar-content-before</code><li><code>nav-bar-content-after</code><li><code>nav-screen-content-before</code><li><code>nav-screen-content-after</code></ul></ul></section><section class="level2"aria-labelledby="overriding-internal-components"><h2 id="overriding-internal-components">Overriding Internal Components</h2><p>You can use Vite's <a href="https://vitejs.dev/config/shared-options.html#resolve-alias">aliases</a> to replace default theme components with your custom ones:<pre class="language-ts"><code class="language-ts"><span class="token keyword module">import</span> <span class="token punctuation">{</span> fileURLToPath<span class="token punctuation">,</span> <span class="token constant">URL</span> <span class="token punctuation">}</span> <span class="token keyword module">from</span> <span class="token string">'node:url'</span>
+<span class="token punctuation">}</span></code></pre><p>Full list of slots available in the default theme layout:<ul><li>When <code>layout: 'doc'</code> (default) is enabled via frontmatter:<ul><li><code>doc-top</code><li><code>doc-bottom</code><li><code>doc-footer-before</code><li><code>doc-before</code><li><code>doc-after</code><li><code>sidebar-nav-before</code><li><code>sidebar-nav-after</code><li><code>aside-top</code><li><code>aside-bottom</code><li><code>aside-outline-before</code><li><code>aside-outline-after</code><li><code>aside-ads-before</code><li><code>aside-ads-after</code></ul><li>When <code>layout: 'home'</code> is enabled via frontmatter:<ul><li><code>home-hero-before</code><li><code>home-hero-info</code><li><code>home-hero-image</code><li><code>home-hero-after</code><li><code>home-features-before</code><li><code>home-features-after</code></ul><li>When <code>layout: 'page'</code> is enabled via frontmatter:<ul><li><code>page-top</code><li><code>page-bottom</code></ul><li>On not found (404) page:<ul><li><code>not-found</code></ul><li>Always:<ul><li><code>layout-top</code><li><code>layout-bottom</code><li><code>nav-bar-title-before</code><li><code>nav-bar-title-after</code><li><code>nav-bar-content-before</code><li><code>nav-bar-content-after</code><li><code>nav-screen-content-before</code><li><code>nav-screen-content-after</code></ul></ul></section><section class="level2"aria-labelledby="using-view-transitions-api"><h2 id="using-view-transitions-api">Using View Transitions API</h2><section class="level3"aria-labelledby="on-appearance-toggle"><h3 id="on-appearance-toggle">On Appearance Toggle</h3><p>You can extend the default theme to provide a custom transition when the color mode is toggled. An example:<pre class="language-vue"><code class="language-vue">&#x3C;!-- .vitepress/theme/Layout.vue -->
+
+&#x3C;script setup lang="ts">
+import { useData } from 'vitepress'
+import DefaultTheme from 'vitepress/theme'
+import { nextTick, provide } from 'vue'
+
+const { isDark } = useData()
+
+const enableTransitions = () =>
+  'startViewTransition' in document &#x26;&#x26;
+  window.matchMedia('(prefers-reduced-motion: no-preference)').matches
+
+provide('toggle-appearance', async ({ clientX: x, clientY: y }: MouseEvent) => {
+  if (!enableTransitions()) {
+    isDark.value = !isDark.value
+    return
+  }
+
+  const clipPath = [
+    `circle(0px at ${x}px ${y}px)`,
+    `circle(${Math.hypot(
+      Math.max(x, innerWidth - x),
+      Math.max(y, innerHeight - y)
+    )}px at ${x}px ${y}px)`
+  ]
+
+  await document.startViewTransition(async () => {
+    isDark.value = !isDark.value
+    await nextTick()
+  }).ready
+
+  document.documentElement.animate(
+    { clipPath: isDark.value ? clipPath.reverse() : clipPath },
+    {
+      duration: 300,
+      easing: 'ease-in',
+      pseudoElement: `::view-transition-${isDark.value ? 'old' : 'new'}(root)`
+    }
+  )
+})
+&#x3C;/script>
+
+&#x3C;template>
+  &#x3C;DefaultTheme.Layout />
+&#x3C;/template>
+
+&#x3C;style>
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation: none;
+  mix-blend-mode: normal;
+}
+
+::view-transition-old(root),
+.dark::view-transition-new(root) {
+  z-index: 1;
+}
+
+::view-transition-new(root),
+.dark::view-transition-old(root) {
+  z-index: 9999;
+}
+
+.VPSwitchAppearance {
+  width: 22px !important;
+}
+
+.VPSwitchAppearance .check {
+  transform: none !important;
+}
+&#x3C;/style></code></pre><p>Result (<strong>warning!</strong>: flashing colors, sudden movements, bright lights):<details><summary>Demo</summary><figure><img src="/appearance-toggle-transition.webp"alt="Appearance Toggle Transition Demo"><figcaption aria-hidden="true">Appearance Toggle Transition Demo</figcaption></figure></details><p>Refer <a href="https://developer.chrome.com/docs/web-platform/view-transitions/">Chrome Docs</a> from more details on view transitions.</section><section class="level3"aria-labelledby="on-route-change"><h3 id="on-route-change">On Route Change</h3><p>Coming soon.</section></section><section class="level2"aria-labelledby="overriding-internal-components"><h2 id="overriding-internal-components">Overriding Internal Components</h2><p>You can use Vite's <a href="https://vitejs.dev/config/shared-options.html#resolve-alias">aliases</a> to replace default theme components with your custom ones:<pre class="language-ts"><code class="language-ts"><span class="token keyword module">import</span> <span class="token punctuation">{</span> fileURLToPath<span class="token punctuation">,</span> <span class="token constant">URL</span> <span class="token punctuation">}</span> <span class="token keyword module">from</span> <span class="token string">'node:url'</span>
 <span class="token keyword module">import</span> <span class="token imports"><span class="token punctuation">{</span> defineConfig <span class="token punctuation">}</span></span> <span class="token keyword module">from</span> <span class="token string">'vitepress'</span>
 
 <span class="token keyword module">export</span> <span class="token keyword module">default</span> <span class="token function">defineConfig</span><span class="token punctuation">(</span><span class="token punctuation">{</span>

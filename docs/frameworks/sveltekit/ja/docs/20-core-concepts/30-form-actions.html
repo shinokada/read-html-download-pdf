@@ -4,7 +4,7 @@
 	<span class="token function-variable function">default</span><span class="token operator">:</span> <span class="token keyword">async</span> <span class="token punctuation">(</span><span class="token parameter">event</span><span class="token punctuation">)</span> <span class="token arrow operator">=></span> <span class="token punctuation">{</span>
 		<span class="token comment">// TODO log the user in</span>
 	<span class="token punctuation">}</span>
-<span class="token punctuation">}</span><span class="token punctuation">;</span></code></pre><p><code>/login</code> ページからこの action を呼び出すには、<code>&#x3C;form></code> を追加します。JavaScript は必要ありません:<pre class="language-svelte"><code class="language-svelte">/// file: src/routes/login/+page.svelte
+<span class="token punctuation">}</span><span class="token punctuation">;</span></code></pre><p><code>/login</code> ページからこの action を呼び出すには、<code>&#x3C;form></code> を追加します。JavaScript は必要ありません:<pre class="language-svelte"><code class="language-svelte">&#x3C;! file: src/routes/login/+page.svelte --->
 &#x3C;form method="POST">
 	&#x3C;label>
 		Email
@@ -28,8 +28,8 @@ export const actions = {
 <span class="token inserted-sign inserted"><span class="token prefix inserted">+</span><span class="token line">	register: async (event) => {
 </span><span class="token prefix inserted">+</span><span class="token line">		// TODO register the user
 </span><span class="token prefix inserted">+</span><span class="token line">	}
-</span></span>};</code></pre><p>名前付きの action (named action) を呼び出すには、クエリパラメータに <code>/</code> を接頭辞に付与したその action の名前を追加します:<pre class="language-svelte"><code class="language-svelte">/// file: src/routes/login/+page.svelte
-&#x3C;form method="POST" action="?/register"></code></pre><pre class="language-svelte"><code class="language-svelte">/// file: src/routes/+layout.svelte
+</span></span>};</code></pre><p>名前付きの action (named action) を呼び出すには、クエリパラメータに <code>/</code> を接頭辞に付与したその action の名前を追加します:<pre class="language-svelte"><code class="language-svelte">&#x3C;! file: src/routes/login/+page.svelte --->
+&#x3C;form method="POST" action="?/register"></code></pre><pre class="language-svelte"><code class="language-svelte">&#x3C;! file: src/routes/+layout.svelte --->
 &#x3C;form method="POST" action="/login?/register"></code></pre><p><code>action</code> 属性と同じように、button の <code>formaction</code> 属性を使用することができ、こうすると親の <code>&#x3C;form></code> とは別の action に同じ form のデータを <code>POST</code> することができます:<pre class="language-diff"><code class="language-diff">/// file: src/routes/login/+page.svelte
 <span class="token deleted-sign deleted"><span class="token prefix deleted">-</span><span class="token line">&#x3C;form method="POST">
 </span></span><span class="token inserted-sign inserted"><span class="token prefix inserted">+</span><span class="token line">&#x3C;form method="POST" action="?/login">
@@ -43,7 +43,7 @@ export const actions = {
 	&#x3C;/label>
 	&#x3C;button>Log in&#x3C;/button>
 <span class="token inserted-sign inserted"><span class="token prefix inserted">+</span><span class="token line">	&#x3C;button formaction="?/register">Register&#x3C;/button>
-</span></span><span class="token deleted-arrow deleted"><span class="token prefix deleted">&#x3C;</span><span class="token line">/form></span></span></code></pre><blockquote><p>名前付き action (named action) の隣にデフォルトの action を置くことはできません。なぜなら リダイレクト無しで名前付き action (named action) に POST をすると、クエリパラメータが URL に保持され、それ以降デフォルトの POST をしようとしても以前 POST した名前付き action (named action) を通ってしまうからです。</blockquote></section><section class="level2"aria-labelledby="action-の解剖学"><h2 id="action-の解剖学">action の解剖学</h2><p>action はそれぞれ <code>RequestEvent</code> オブジェクトを受け取って、<code>request.formData()</code> でデータを読み込むことができます。リクエスト (例えば、cookie をセットしてユーザーをログインさせるなど) を処理したあと、action は次の更新まで、対応するページでは <code>form</code> プロパティで、アプリ全体では <code>$page.form</code> で利用可能なデータで応答することができます。<pre class="language-js"><code class="language-js"><span class="token comment">// @errors: 2304</span>
+</span></span><span class="token deleted-arrow deleted"><span class="token prefix deleted">&#x3C;</span><span class="token line">/form></span></span></code></pre><blockquote><p>名前付き action (named action) の隣にデフォルトの action を置くことはできません。なぜなら リダイレクト無しで名前付き action (named action) に POST をすると、クエリパラメータが URL に保持され、それ以降デフォルトの POST をしようとしても以前 POST した名前付き action (named action) を通ってしまうからです。</blockquote></section><section class="level2"aria-labelledby="action-の解剖学---anatomy-of-an-action--"><h2 id="action-の解剖学---anatomy-of-an-action--">action の解剖学</h2><p>action はそれぞれ <code>RequestEvent</code> オブジェクトを受け取って、<code>request.formData()</code> でデータを読み込むことができます。リクエスト (例えば、cookie をセットしてユーザーをログインさせるなど) を処理したあと、action は次の更新まで、対応するページでは <code>form</code> プロパティで、アプリ全体では <code>$page.form</code> で利用可能なデータで応答することができます。<pre class="language-js"><code class="language-js"><span class="token comment">// @errors: 2304</span>
 <span class="token comment">/// file: src/routes/login/+page.server.js</span>
 <span class="token doc-comment comment">/** <span class="token keyword">@type</span> <span class="token class-name"><span class="token punctuation">{</span><span class="token keyword module">import</span><span class="token punctuation">(</span><span class="token string">'./$types'</span><span class="token punctuation">)</span><span class="token punctuation">.</span>PageServerLoad<span class="token punctuation">}</span></span> */</span>
 <span class="token keyword module">export</span> <span class="token keyword">async</span> <span class="token keyword">function</span> <span class="token function">load</span><span class="token punctuation">(</span><span class="token parameter"><span class="token punctuation">{</span> cookies <span class="token punctuation">}</span></span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
@@ -66,7 +66,7 @@ export const actions = {
 	<span class="token function-variable function">register</span><span class="token operator">:</span> <span class="token keyword">async</span> <span class="token punctuation">(</span><span class="token parameter">event</span><span class="token punctuation">)</span> <span class="token arrow operator">=></span> <span class="token punctuation">{</span>
 		<span class="token comment">// TODO register the user</span>
 	<span class="token punctuation">}</span>
-<span class="token punctuation">}</span><span class="token punctuation">;</span></code></pre><pre class="language-svelte"><code class="language-svelte">/// file: src/routes/login/+page.svelte
+<span class="token punctuation">}</span><span class="token punctuation">;</span></code></pre><pre class="language-svelte"><code class="language-svelte">&#x3C;! file: src/routes/login/+page.svelte --->
 &#x3C;script>
 	/** @type {import('./$types').PageData} */
 	export let data;
@@ -209,7 +209,7 @@ declare namespace <span class="token maybe-class-name">App</span> <span class="t
 	export let form;
 <span class="token deleted-arrow deleted"><span class="token prefix deleted">&#x3C;</span><span class="token line">/script>
 </span></span>
-<span class="token inserted-sign inserted"><span class="token prefix inserted">+</span><span class="token line">&#x3C;form method="POST" use:enhance></span></span></code></pre><blockquote><p>ええ、<code>enhance</code> action と <code>&#x3C;form action></code> をどちらも 'action' と呼んでいて、少し紛らわしいですよね。このドキュメントは action でいっぱいです。申し訳ありません。</blockquote><p>引数が無い場合、<code>use:enhance</code> は、ブラウザネイティブの動作を、フルページリロードを除いてエミュレートします。それは:<ul><li>action が送信元のページと同じ場所にある場合に限り、成功レスポンスまたは不正なレスポンスに応じて、<code>form</code> プロパティと <code>$page.form</code> と <code>$page.status</code> を更新します。例えば、<code>&#x3C;form action="/somewhere/else" ..></code> というようなフォームの場合、<code>form</code> と <code>$page</code> は更新されません。これは、ネイティブのフォーム送信では action があるページにリダイレクトされるからです。どちらにしても更新させたい場合は、<a href="#progressive-enhancement-applyaction"><code>applyAction</code></a> を使用してください<li>成功レスポンスの場合は、<code>&#x3C;form></code> 要素をリセットして <code>invalidateAll</code> で全てのデータを無効化・最新化(invalidate)します<li>リダイレクトレスポンスの場合は <code>goto</code> を呼び出します<li>エラーが発生した場合はもっとも近くにある <code>+error</code> 境界をレンダリングします<li>適切な要素に <a href="accessibility#focus-management">フォーカスをリセット</a> します</ul><p>この挙動をカスタマイズするために、form が送信される直前に実行される <code>SubmitFunction</code> 関数を提供することができます。そして (オプションで) <code>ActionResult</code> を引数に取るコールバックを返すことができます。もしコールバックを返す場合、上述のデフォルトの動作はトリガーされません。元に戻すには、<code>update</code> を呼び出してください。<pre class="language-svelte"><code class="language-svelte">&#x3C;form
+<span class="token inserted-sign inserted"><span class="token prefix inserted">+</span><span class="token line">&#x3C;form method="POST" use:enhance></span></span></code></pre><blockquote><p>ええ、<code>enhance</code> action と <code>&#x3C;form action></code> をどちらも 'action' と呼んでいて、少し紛らわしいですよね。このドキュメントは action でいっぱいです。申し訳ありません。</blockquote><p>引数が無い場合、<code>use:enhance</code> は、ブラウザネイティブの動作を、フルページリロードを除いてエミュレートします。それは:<ul><li>action が送信元のページと同じ場所にある場合に限り、成功レスポンスまたは不正なレスポンスに応じて、<code>form</code> プロパティと <code>$page.form</code> と <code>$page.status</code> を更新します。例えば、<code>&#x3C;form action="/somewhere/else" ..></code> というようなフォームの場合、<code>form</code> と <code>$page</code> は更新されません。これは、ネイティブのフォーム送信では action があるページにリダイレクトされるからです。どちらにしても更新させたい場合は、<a href="#progressive-enhancement-customising-use-enhance"><code>applyAction</code></a> を使用してください<li><code>&#x3C;form></code> 要素をリセットします<li>成功レスポンスの場合は <code>invalidateAll</code> で全てのデータを無効化・最新化(invalidate)します<li>リダイレクトレスポンスの場合は <code>goto</code> を呼び出します<li>エラーが発生した場合はもっとも近くにある <code>+error</code> 境界をレンダリングします<li>適切な要素に <a href="accessibility#focus-management">フォーカスをリセット</a> します</ul></section><section class="level2"aria-labelledby="useenhance-をカスタマイズする---customising-use-enhance--"><h2 id="useenhance-をカスタマイズする---customising-use-enhance--">use:enhance をカスタマイズする</h2><p>この挙動をカスタマイズするために、form が送信される直前に実行される <code>SubmitFunction</code> 関数を提供することができます。そして (オプションで) <code>ActionResult</code> を引数に取るコールバックを返すことができます。もしコールバックを返す場合、上述のデフォルトの動作はトリガーされません。元に戻すには、<code>update</code> を呼び出してください。<pre class="language-svelte"><code class="language-svelte">&#x3C;form
 	method="POST"
 	use:enhance={({ formElement, formData, action, cancel, submitter }) => {
 		// `formElement` はこの `&#x3C;form>` 要素です
@@ -223,7 +223,7 @@ declare namespace <span class="token maybe-class-name">App</span> <span class="t
 			// `update` は、このコールバックが設定されていない場合に起動されるデフォルトのロジックを起動する関数です
 		};
 	}}
-></code></pre><p>これらの関数を、ロード中の UI (loading UI) を表示したり隠したりすることなどに使用できます。</section><section class="level2"aria-labelledby="applyaction"><h2 id="applyaction">applyAction</h2><p>独自のコールバックを提供する場合は、最も近くにある <code>+error</code> 境界を表示するなど、デフォルトの <code>use:enhance</code> の一部を再現する必要があるでしょう。ほとんどの場合、コールバックに渡された <code>update</code> を呼び出すだけで十分です。もっとカスタマイズが必要な場合は、<code>applyAction</code> を使用してそれを行うことができます:<pre class="language-diff"><code class="language-diff">/// file: src/routes/login/+page.svelte
+></code></pre><p>これらの関数を、ロード中の UI (loading UI) を表示したり隠したりすることなどに使用できます。<p>コールバックを返す場合は <code>use:enhance</code> のデフォルトの動作の一部を再現させる必要があるかもしれませんが、成功レスポンスで全てのデータを無効化・最新化(invalidate)する必要はありません。このような場合には <code>applyAction</code> を使用するとよいでしょう:<pre class="language-diff"><code class="language-diff">/// file: src/routes/login/+page.svelte
 <span class="token deleted-arrow deleted"><span class="token prefix deleted">&#x3C;</span><span class="token line">script>
 </span></span><span class="token inserted-sign inserted"><span class="token prefix inserted">+</span><span class="token line">	import { enhance, applyAction } from '$app/forms';
 </span></span>
@@ -237,12 +237,14 @@ declare namespace <span class="token maybe-class-name">App</span> <span class="t
 
 		return async ({ result }) => {
 			// `result` は `ActionResult` オブジェクトです
-<span class="token inserted-sign inserted"><span class="token prefix inserted">+</span><span class="token line">			if (result.type === 'error') {
+<span class="token inserted-sign inserted"><span class="token prefix inserted">+</span><span class="token line">			if (result.type === 'redirect') {
+</span><span class="token prefix inserted">+</span><span class="token line">				goto(result.location);
+</span><span class="token prefix inserted">+</span><span class="token line">			} else {
 </span><span class="token prefix inserted">+</span><span class="token line">				await applyAction(result);
 </span><span class="token prefix inserted">+</span><span class="token line">			}
 </span></span>		};
 	}}
-<span class="token inserted-arrow inserted"><span class="token prefix inserted">></span></span></code></pre><p><code>applyAction(result)</code> の挙動は <code>result.type</code> に依存しています:<ul><li><code>success</code>, <code>failure</code> — <code>$page.status</code> を <code>result.status</code> に設定し、<code>form</code> と <code>$page.form</code> を <code>result.data</code> で更新します (<code>enhance</code> の <code>update</code> とは対照的に、送信元がどこかは関係ありません)<li><code>redirect</code> — <code>goto(result.location)</code> を呼び出します<li><code>error</code> — もっとも近くにある <code>+error</code> 境界を <code>result.error</code> でレンダリングします</ul><p>いずれの場合でも、<a href="accessibility#focus-management">フォーカスはリセットされます</a>。</section><section class="level2"aria-labelledby="custom-event-listener"><h2 id="custom-event-listener">Custom event listener</h2><p><code>use:enhance</code> ではなく、<code>&#x3C;form></code> の通常のイベントリスナーを使うことで、ご自身でプログレッシブ・エンハンスメント(progressive enhancement)を実装することもできます:<pre class="language-svelte"><code class="language-svelte">/// file: src/routes/login/+page.svelte
+<span class="token inserted-arrow inserted"><span class="token prefix inserted">></span></span></code></pre><p><code>applyAction(result)</code> の挙動は <code>result.type</code> に依存しています:<ul><li><code>success</code>, <code>failure</code> — <code>$page.status</code> を <code>result.status</code> に設定し、<code>form</code> と <code>$page.form</code> を <code>result.data</code> で更新します (<code>enhance</code> の <code>update</code> とは対照的に、送信元がどこかは関係ありません)<li><code>redirect</code> — <code>goto(result.location, { invalidateAll: true })</code> を呼び出します<li><code>error</code> — もっとも近くにある <code>+error</code> 境界を <code>result.error</code> でレンダリングします</ul><p>いずれの場合でも、<a href="accessibility#focus-management">フォーカスはリセットされます</a>。</section><section class="level2"aria-labelledby="custom-event-listener"><h2 id="custom-event-listener">Custom event listener</h2><p><code>use:enhance</code> ではなく、<code>&#x3C;form></code> の通常のイベントリスナーを使うことで、ご自身でプログレッシブ・エンハンスメント(progressive enhancement)を実装することもできます:<pre class="language-svelte"><code class="language-svelte">&#x3C;! file: src/routes/login/+page.svelte --->
 &#x3C;script>
 	import { invalidateAll, goto } from '$app/navigation';
 	import { applyAction, deserialize } from '$app/forms';
@@ -253,10 +255,11 @@ declare namespace <span class="token maybe-class-name">App</span> <span class="t
 	/** @type {any} */
 	let error;
 
+	/** @param {{ currentTarget: EventTarget &#x26; HTMLFormElement}} event */
 	async function handleSubmit(event) {
-		const data = new FormData(this);
+		const data = new FormData(event.currentTarget);
 
-		const response = await fetch(this.action, {
+		const response = await fetch(event.currentTarget.action, {
 			method: 'POST',
 			body: data
 		});
@@ -281,7 +284,7 @@ declare namespace <span class="token maybe-class-name">App</span> <span class="t
 <span class="token inserted-sign inserted"><span class="token prefix inserted">+</span><span class="token line">	headers: {
 </span><span class="token prefix inserted">+</span><span class="token line">		'x-sveltekit-action': 'true'
 </span><span class="token prefix inserted">+</span><span class="token line">	}
-</span></span>});</code></pre></section><section class="level2"aria-labelledby="alternatives"><h2 id="alternatives">Alternatives</h2><p>サーバーにデータを送信する方法として、プログレッシブな強化(progressively enhance)を行うことができるため Form actions は望ましい方法ですが、<a href="routing#server"><code>+server.js</code></a> ファイルを使用して (例えば) JSON API を公開することもできます。それは例えばこのように行います:<pre class="language-svelte"><code class="language-svelte">/// file: send-message/+page.svelte
+</span></span>});</code></pre></section><section class="level2"aria-labelledby="alternatives"><h2 id="alternatives">Alternatives</h2><p>サーバーにデータを送信する方法として、プログレッシブな強化(progressively enhance)を行うことができるため Form actions は望ましい方法ですが、<a href="routing#server"><code>+server.js</code></a> ファイルを使用して (例えば) JSON API を公開することもできます。それは例えばこのように行います:<pre class="language-svelte"><code class="language-svelte">&#x3C;! file: send-message/+page.svelte --->
 &#x3C;script>
 	function rerun() {
 		fetch('/api/ci', {
@@ -290,7 +293,7 @@ declare namespace <span class="token maybe-class-name">App</span> <span class="t
 	}
 &#x3C;/script>
 
-&#x3C;button on:click={rerun}>Rerun CI&#x3C;/button></code></pre><pre class="language-js"><code class="language-js"><span class="token comment">// @errors: 2355 1360</span>
+&#x3C;button on:click={rerun}>Rerun CI&#x3C;/button></code></pre><pre class="language-js"><code class="language-js"><span class="token comment">// @errors: 2355 1360 2322</span>
 <span class="token comment">/// file: api/ci/+server.js</span>
 
 <span class="token doc-comment comment">/** <span class="token keyword">@type</span> <span class="token class-name"><span class="token punctuation">{</span><span class="token keyword module">import</span><span class="token punctuation">(</span><span class="token string">'./$types'</span><span class="token punctuation">)</span><span class="token punctuation">.</span>RequestHandler<span class="token punctuation">}</span></span> */</span>
@@ -301,4 +304,4 @@ declare namespace <span class="token maybe-class-name">App</span> <span class="t
 		Search
 		<span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;</span>input</span> <span class="token attr-name">name</span><span class="token attr-value"><span class="token punctuation attr-equals">=</span><span class="token punctuation">"</span>q<span class="token punctuation">"</span></span><span class="token punctuation">></span></span>
 	<span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;/</span>label</span><span class="token punctuation">></span></span>
-<span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;/</span>form</span><span class="token punctuation">></span></span></code></pre><p>この form を送信すると <code>/search?q=...</code> に移動して load 関数が実行されますが、action は実行されません。<code>&#x3C;a></code> 要素と同じように、<a href="link-options#data-sveltekit-reload"><code>data-sveltekit-reload</code></a> 属性、 <a href="link-options#data-sveltekit-replacestate"><code>data-sveltekit-replacestate</code></a> 属性、<a href="link-options#data-sveltekit-keepfocus"><code>data-sveltekit-keepfocus</code></a> 属性、 <a href="link-options#data-sveltekit-noscroll"><code>data-sveltekit-noscroll</code></a> 属性を <code>&#x3C;form></code> に設定することができ、ルーターの挙動をコントロールすることができます。</section><section class="level2"aria-labelledby="その他の参考資料"><h2 id="その他の参考資料">その他の参考資料</h2><ul><li><a href="https://learn.svelte.jp/tutorial/the-form-element">Tutorial: Forms</a> <span style="float:footnote"><a href="../../index.html#toc">Go to TOC</a></span></ul></section></section>
+<span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;/</span>form</span><span class="token punctuation">></span></span></code></pre><p>この form を送信すると <code>/search?q=...</code> に移動して load 関数が実行されますが、action は実行されません。<code>&#x3C;a></code> 要素と同じように、<a href="link-options#data-sveltekit-reload"><code>data-sveltekit-reload</code></a> 属性、 <a href="link-options#data-sveltekit-replacestate"><code>data-sveltekit-replacestate</code></a> 属性、<a href="link-options#data-sveltekit-keepfocus"><code>data-sveltekit-keepfocus</code></a> 属性、 <a href="link-options#data-sveltekit-noscroll"><code>data-sveltekit-noscroll</code></a> 属性を <code>&#x3C;form></code> に設定することができ、ルーターの挙動をコントロールすることができます。</section><section class="level2"aria-labelledby="その他の参考資料---further-reading--"><h2 id="その他の参考資料---further-reading--">その他の参考資料</h2><ul><li><a href="https://learn.svelte.jp/tutorial/the-form-element">Tutorial: Forms</a> <span style="float:footnote"><a href="../../index.html#toc">Go to TOC</a></span></ul></section></section>
