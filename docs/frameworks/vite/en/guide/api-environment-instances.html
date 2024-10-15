@@ -1,0 +1,127 @@
+<!doctype html><html lang="en"><meta charset="utf-8"><title>Using Environment instances</title><meta name="viewport"content="width=device-width,initial-scale=1"><link rel="stylesheet"type="text/css"href="../../../../themes/packages/prism-coy-theme/theme_common.css"><section class="level1"aria-labelledby="using-environment-instances"><h1 id="using-environment-instances">Using <code>Environment</code> instances</h1>warning Experimental Initial work for this API was introduced in Vite 5.1 with the name "Vite Runtime API". This guide describes a revised API, renamed to Environment API. This API will be released in Vite 6 as experimental. You can already test it in the latest `vite@6.0.0-beta.x` version.<p>Resources:<ul><li><a href="https://github.com/vitejs/vite/discussions/16358">Feedback discussion</a> where we are gathering feedback about the new APIs.<li><a href="https://github.com/vitejs/vite/pull/16471">Environment API PR</a> where the new API were implemented and reviewed.</ul><p>Please share with us your feedback as you test the proposal.<section class="level2"aria-labelledby="accessing-the-environments"><h2 id="accessing-the-environments">Accessing the environments</h2><p>During dev, the available environments in a dev server can be accessed using <code>server.environments</code>:<pre class="language-js"><code class="language-js"><span class="token comment">// create the server, or get it from the configureServer hook</span>
+<span class="token keyword">const</span> server <span class="token operator">=</span> <span class="token keyword control-flow">await</span> <span class="token function">createServer</span><span class="token punctuation">(</span><span class="token comment">/* options */</span><span class="token punctuation">)</span>
+
+<span class="token keyword">const</span> environment <span class="token operator">=</span> server<span class="token punctuation">.</span><span class="token property-access">environments</span><span class="token punctuation">.</span><span class="token property-access">client</span>
+environment<span class="token punctuation">.</span><span class="token method function property-access">transformRequest</span><span class="token punctuation">(</span>url<span class="token punctuation">)</span>
+<span class="token console class-name">console</span><span class="token punctuation">.</span><span class="token method function property-access">log</span><span class="token punctuation">(</span>server<span class="token punctuation">.</span><span class="token property-access">environments</span><span class="token punctuation">.</span><span class="token property-access">ssr</span><span class="token punctuation">.</span><span class="token property-access">moduleGraph</span><span class="token punctuation">)</span></code></pre><p>You can also access the current environment from plugins. See the <a href="./api-environment-plugins.md.html#accessing-the-current-environment-in-hooks">Environment API for Plugins</a> for more details.</section><section class="level2"aria-labelledby="devenvironment-class"><h2 id="devenvironment-class"><code>DevEnvironment</code> class</h2><p>During dev, each environment is an instance of the <code>DevEnvironment</code> class:<pre class="language-ts"><code class="language-ts"><span class="token keyword">class</span> <span class="token class-name"><span class="token maybe-class-name">DevEnvironment</span></span> <span class="token punctuation">{</span>
+  <span class="token doc-comment comment">/**
+   * Unique identifier for the environment in a Vite server.
+   * By default Vite exposes 'client' and 'ssr' environments.
+   */</span>
+  name<span class="token operator">:</span> <span class="token builtin">string</span>
+  <span class="token doc-comment comment">/**
+   * Communication channel to send and receive messages from the
+   * associated module runner in the target runtime.
+   */</span>
+  hot<span class="token operator">:</span> <span class="token maybe-class-name">HotChannel</span> <span class="token operator">|</span> <span class="token keyword null nil">null</span>
+  <span class="token doc-comment comment">/**
+   * Graph of module nodes, with the imported relationship between
+   * processed modules and the cached result of the processed code.
+   */</span>
+  moduleGraph<span class="token operator">:</span> <span class="token maybe-class-name">EnvironmentModuleGraph</span>
+  <span class="token doc-comment comment">/**
+   * Resolved plugins for this environment, including the ones
+   * created using the per-environment `create` hook
+   */</span>
+  plugins<span class="token operator">:</span> <span class="token maybe-class-name">Plugin</span><span class="token punctuation">[</span><span class="token punctuation">]</span>
+  <span class="token doc-comment comment">/**
+   * Allows to resolve, load, and transform code through the
+   * environment plugins pipeline
+   */</span>
+  pluginContainer<span class="token operator">:</span> <span class="token maybe-class-name">EnvironmentPluginContainer</span>
+  <span class="token doc-comment comment">/**
+   * Resolved config options for this environment. Options at the server
+   * global scope are taken as defaults for all environments, and can
+   * be overridden (resolve conditions, external, optimizedDeps)
+   */</span>
+  config<span class="token operator">:</span> <span class="token maybe-class-name">ResolvedConfig</span> <span class="token operator">&#x26;</span> <span class="token maybe-class-name">ResolvedDevEnvironmentOptions</span>
+
+  <span class="token function">constructor</span><span class="token punctuation">(</span>name<span class="token punctuation">,</span> config<span class="token punctuation">,</span> <span class="token punctuation">{</span> hot<span class="token punctuation">,</span> options <span class="token punctuation">}</span><span class="token operator">:</span> <span class="token maybe-class-name">DevEnvironmentSetup</span><span class="token punctuation">)</span>
+
+  <span class="token doc-comment comment">/**
+   * Resolve the URL to an id, load it, and process the code using the
+   * plugins pipeline. The module graph is also updated.
+   */</span>
+  <span class="token keyword">async</span> <span class="token function">transformRequest</span><span class="token punctuation">(</span>url<span class="token operator">:</span> <span class="token builtin">string</span><span class="token punctuation">)</span><span class="token operator">:</span> <span class="token maybe-class-name">TransformResult</span>
+
+  <span class="token doc-comment comment">/**
+   * Register a request to be processed with low priority. This is useful
+   * to avoid waterfalls. The Vite server has information about the imported
+   * modules by other requests, so it can warmup the module graph so the
+   * modules are already processed when they are requested.
+   */</span>
+  <span class="token keyword">async</span> <span class="token function">warmupRequest</span><span class="token punctuation">(</span>url<span class="token operator">:</span> <span class="token builtin">string</span><span class="token punctuation">)</span><span class="token operator">:</span> <span class="token keyword">void</span>
+<span class="token punctuation">}</span></code></pre><p>With <code>TransformResult</code> being:<pre class="language-ts"><code class="language-ts"><span class="token keyword">interface</span> <span class="token class-name"><span class="token maybe-class-name">TransformResult</span></span> <span class="token punctuation">{</span>
+  code<span class="token operator">:</span> <span class="token builtin">string</span>
+  map<span class="token operator">:</span> <span class="token maybe-class-name">SourceMap</span> <span class="token operator">|</span> <span class="token punctuation">{</span> mappings<span class="token operator">:</span> <span class="token string">''</span> <span class="token punctuation">}</span> <span class="token operator">|</span> <span class="token keyword null nil">null</span>
+  etag<span class="token operator">?</span><span class="token operator">:</span> <span class="token builtin">string</span>
+  deps<span class="token operator">?</span><span class="token operator">:</span> <span class="token builtin">string</span><span class="token punctuation">[</span><span class="token punctuation">]</span>
+  dynamicDeps<span class="token operator">?</span><span class="token operator">:</span> <span class="token builtin">string</span><span class="token punctuation">[</span><span class="token punctuation">]</span>
+<span class="token punctuation">}</span></code></pre><p>An environment instance in the Vite server lets you process a URL using the <code>environment.transformRequest(url)</code> method. This function will use the plugin pipeline to resolve the <code>url</code> to a module <code>id</code>, load it (reading the file from the file system or through a plugin that implements a virtual module), and then transform the code. While transforming the module, imports and other metadata will be recorded in the environment module graph by creating or updating the corresponding module node. When processing is done, the transform result is also stored in the module.</p>info transformRequest naming We are using `transformRequest(url)` and `warmupRequest(url)` in the current version of this proposal so it is easier to discuss and understand for users used to Vite's current API. Before releasing, we can take the opportunity to review these names too. For example, it could be named `environment.processModule(url)` or `environment.loadModule(url)` taking a page from Rollup's `context.load(id)` in plugin hooks. For the moment, we think keeping the current names and delaying this discussion is better.</section><section class="level2"aria-labelledby="separate-module-graphs"><h2 id="separate-module-graphs">Separate module graphs</h2><p>Each environment has an isolated module graph. All module graphs have the same signature, so generic algorithms can be implemented to crawl or query the graph without depending on the environment. <code>hotUpdate</code> is a good example. When a file is modified, the module graph of each environment will be used to discover the affected modules and perform HMR for each environment independently.</p>info Vite v5 had a mixed Client and SSR module graph. Given an unprocessed or invalidated node, it isn't possible to know if it corresponds to the Client, SSR, or both environments. Module nodes have some properties prefixed, like `clientImportedModules` and `ssrImportedModules` (and `importedModules` that returns the union of both). `importers` contains all importers from both the Client and SSR environment for each module node. A module node also has `transformResult` and `ssrTransformResult`. A backward compatibility layer allows the ecosystem to migrate from the deprecated `server.moduleGraph`.<p>Each module is represented by a <code>EnvironmentModuleNode</code> instance. Modules may be registered in the graph without yet being processed (<code>transformResult</code> would be <code>null</code> in that case). <code>importers</code> and <code>importedModules</code> are also updated after the module is processed.<pre class="language-ts"><code class="language-ts"><span class="token keyword">class</span> <span class="token class-name"><span class="token maybe-class-name">EnvironmentModuleNode</span></span> <span class="token punctuation">{</span>
+  environment<span class="token operator">:</span> <span class="token builtin">string</span>
+
+  url<span class="token operator">:</span> <span class="token builtin">string</span>
+  id<span class="token operator">:</span> <span class="token builtin">string</span> <span class="token operator">|</span> <span class="token keyword null nil">null</span> <span class="token operator">=</span> <span class="token keyword null nil">null</span>
+  file<span class="token operator">:</span> <span class="token builtin">string</span> <span class="token operator">|</span> <span class="token keyword null nil">null</span> <span class="token operator">=</span> <span class="token keyword null nil">null</span>
+
+  type<span class="token operator">:</span> <span class="token string">'js'</span> <span class="token operator">|</span> <span class="token string">'css'</span>
+
+  importers <span class="token operator">=</span> <span class="token keyword">new</span> <span class="token class-name"><span class="token known-class-name class-name">Set</span><span class="token operator">&#x3C;</span><span class="token maybe-class-name">EnvironmentModuleNode</span><span class="token operator">></span></span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+  importedModules <span class="token operator">=</span> <span class="token keyword">new</span> <span class="token class-name"><span class="token known-class-name class-name">Set</span><span class="token operator">&#x3C;</span><span class="token maybe-class-name">EnvironmentModuleNode</span><span class="token operator">></span></span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+  importedBindings<span class="token operator">:</span> <span class="token known-class-name class-name">Map</span><span class="token operator">&#x3C;</span><span class="token builtin">string</span><span class="token punctuation">,</span> <span class="token known-class-name class-name">Set</span><span class="token operator">&#x3C;</span><span class="token builtin">string</span><span class="token operator">>></span> <span class="token operator">|</span> <span class="token keyword null nil">null</span> <span class="token operator">=</span> <span class="token keyword null nil">null</span>
+
+  info<span class="token operator">?</span><span class="token operator">:</span> <span class="token maybe-class-name">ModuleInfo</span>
+  meta<span class="token operator">?</span><span class="token operator">:</span> <span class="token maybe-class-name">Record</span><span class="token operator">&#x3C;</span><span class="token builtin">string</span><span class="token punctuation">,</span> <span class="token builtin">any</span><span class="token operator">></span>
+  transformResult<span class="token operator">:</span> <span class="token maybe-class-name">TransformResult</span> <span class="token operator">|</span> <span class="token keyword null nil">null</span> <span class="token operator">=</span> <span class="token keyword null nil">null</span>
+
+  acceptedHmrDeps <span class="token operator">=</span> <span class="token keyword">new</span> <span class="token class-name"><span class="token known-class-name class-name">Set</span><span class="token operator">&#x3C;</span><span class="token maybe-class-name">EnvironmentModuleNode</span><span class="token operator">></span></span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+  acceptedHmrExports<span class="token operator">:</span> <span class="token known-class-name class-name">Set</span><span class="token operator">&#x3C;</span><span class="token builtin">string</span><span class="token operator">></span> <span class="token operator">|</span> <span class="token keyword null nil">null</span> <span class="token operator">=</span> <span class="token keyword null nil">null</span>
+  isSelfAccepting<span class="token operator">?</span><span class="token operator">:</span> <span class="token builtin">boolean</span>
+  lastHMRTimestamp <span class="token operator">=</span> <span class="token number">0</span>
+  lastInvalidationTimestamp <span class="token operator">=</span> <span class="token number">0</span>
+<span class="token punctuation">}</span></code></pre><p><code>environment.moduleGraph</code> is an instance of <code>EnvironmentModuleGraph</code>:<pre class="language-ts"><code class="language-ts"><span class="token keyword module">export</span> <span class="token keyword">class</span> <span class="token class-name"><span class="token maybe-class-name">EnvironmentModuleGraph</span></span> <span class="token punctuation">{</span>
+  environment<span class="token operator">:</span> <span class="token builtin">string</span>
+
+  urlToModuleMap <span class="token operator">=</span> <span class="token keyword">new</span> <span class="token class-name"><span class="token known-class-name class-name">Map</span><span class="token operator">&#x3C;</span><span class="token builtin">string</span><span class="token punctuation">,</span> <span class="token maybe-class-name">EnvironmentModuleNode</span><span class="token operator">></span></span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+  idToModuleMap <span class="token operator">=</span> <span class="token keyword">new</span> <span class="token class-name"><span class="token known-class-name class-name">Map</span><span class="token operator">&#x3C;</span><span class="token builtin">string</span><span class="token punctuation">,</span> <span class="token maybe-class-name">EnvironmentModuleNode</span><span class="token operator">></span></span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+  etagToModuleMap <span class="token operator">=</span> <span class="token keyword">new</span> <span class="token class-name"><span class="token known-class-name class-name">Map</span><span class="token operator">&#x3C;</span><span class="token builtin">string</span><span class="token punctuation">,</span> <span class="token maybe-class-name">EnvironmentModuleNode</span><span class="token operator">></span></span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+  fileToModulesMap <span class="token operator">=</span> <span class="token keyword">new</span> <span class="token class-name"><span class="token known-class-name class-name">Map</span><span class="token operator">&#x3C;</span><span class="token builtin">string</span><span class="token punctuation">,</span> <span class="token known-class-name class-name">Set</span><span class="token operator">&#x3C;</span><span class="token maybe-class-name">EnvironmentModuleNode</span><span class="token operator">>></span></span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+
+  <span class="token function">constructor</span><span class="token punctuation">(</span>
+    environment<span class="token operator">:</span> <span class="token builtin">string</span><span class="token punctuation">,</span>
+    <span class="token function-variable function">resolveId</span><span class="token operator">:</span> <span class="token punctuation">(</span>url<span class="token operator">:</span> <span class="token builtin">string</span><span class="token punctuation">)</span> <span class="token arrow operator">=></span> <span class="token known-class-name class-name">Promise</span><span class="token operator">&#x3C;</span><span class="token maybe-class-name">PartialResolvedId</span> <span class="token operator">|</span> <span class="token keyword null nil">null</span><span class="token operator">></span><span class="token punctuation">,</span>
+  <span class="token punctuation">)</span>
+
+  <span class="token keyword">async</span> <span class="token function">getModuleByUrl</span><span class="token punctuation">(</span>
+    rawUrl<span class="token operator">:</span> <span class="token builtin">string</span><span class="token punctuation">,</span>
+  <span class="token punctuation">)</span><span class="token operator">:</span> <span class="token known-class-name class-name">Promise</span><span class="token operator">&#x3C;</span><span class="token maybe-class-name">EnvironmentModuleNode</span> <span class="token operator">|</span> <span class="token keyword nil">undefined</span><span class="token operator">></span>
+
+  <span class="token function">getModulesByFile</span><span class="token punctuation">(</span>file<span class="token operator">:</span> <span class="token builtin">string</span><span class="token punctuation">)</span><span class="token operator">:</span> <span class="token known-class-name class-name">Set</span><span class="token operator">&#x3C;</span><span class="token maybe-class-name">EnvironmentModuleNode</span><span class="token operator">></span> <span class="token operator">|</span> <span class="token keyword nil">undefined</span>
+
+  <span class="token function">onFileChange</span><span class="token punctuation">(</span>file<span class="token operator">:</span> <span class="token builtin">string</span><span class="token punctuation">)</span><span class="token operator">:</span> <span class="token keyword">void</span>
+
+  <span class="token function">invalidateModule</span><span class="token punctuation">(</span>
+    mod<span class="token operator">:</span> <span class="token maybe-class-name">EnvironmentModuleNode</span><span class="token punctuation">,</span>
+    seen<span class="token operator">:</span> <span class="token known-class-name class-name">Set</span><span class="token operator">&#x3C;</span><span class="token maybe-class-name">EnvironmentModuleNode</span><span class="token operator">></span> <span class="token operator">=</span> <span class="token keyword">new</span> <span class="token class-name"><span class="token known-class-name class-name">Set</span></span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">,</span>
+    timestamp<span class="token operator">:</span> <span class="token builtin">number</span> <span class="token operator">=</span> <span class="token known-class-name class-name">Date</span><span class="token punctuation">.</span><span class="token method function property-access">now</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">,</span>
+    isHmr<span class="token operator">:</span> <span class="token builtin">boolean</span> <span class="token operator">=</span> <span class="token boolean">false</span><span class="token punctuation">,</span>
+  <span class="token punctuation">)</span><span class="token operator">:</span> <span class="token keyword">void</span>
+
+  <span class="token function">invalidateAll</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token operator">:</span> <span class="token keyword">void</span>
+
+  <span class="token keyword">async</span> <span class="token function">ensureEntryFromUrl</span><span class="token punctuation">(</span>
+    rawUrl<span class="token operator">:</span> <span class="token builtin">string</span><span class="token punctuation">,</span>
+    setIsSelfAccepting <span class="token operator">=</span> <span class="token boolean">true</span><span class="token punctuation">,</span>
+  <span class="token punctuation">)</span><span class="token operator">:</span> <span class="token known-class-name class-name">Promise</span><span class="token operator">&#x3C;</span><span class="token maybe-class-name">EnvironmentModuleNode</span><span class="token operator">></span>
+
+  <span class="token function">createFileOnlyEntry</span><span class="token punctuation">(</span>file<span class="token operator">:</span> <span class="token builtin">string</span><span class="token punctuation">)</span><span class="token operator">:</span> <span class="token maybe-class-name">EnvironmentModuleNode</span>
+
+  <span class="token keyword">async</span> <span class="token function">resolveUrl</span><span class="token punctuation">(</span>url<span class="token operator">:</span> <span class="token builtin">string</span><span class="token punctuation">)</span><span class="token operator">:</span> <span class="token known-class-name class-name">Promise</span><span class="token operator">&#x3C;</span><span class="token maybe-class-name">ResolvedUrl</span><span class="token operator">></span>
+
+  <span class="token function">updateModuleTransformResult</span><span class="token punctuation">(</span>
+    mod<span class="token operator">:</span> <span class="token maybe-class-name">EnvironmentModuleNode</span><span class="token punctuation">,</span>
+    result<span class="token operator">:</span> <span class="token maybe-class-name">TransformResult</span> <span class="token operator">|</span> <span class="token keyword null nil">null</span><span class="token punctuation">,</span>
+  <span class="token punctuation">)</span><span class="token operator">:</span> <span class="token keyword">void</span>
+
+  <span class="token function">getModuleByEtag</span><span class="token punctuation">(</span>etag<span class="token operator">:</span> <span class="token builtin">string</span><span class="token punctuation">)</span><span class="token operator">:</span> <span class="token maybe-class-name">EnvironmentModuleNode</span> <span class="token operator">|</span> <span class="token keyword nil">undefined</span>
+<span class="token punctuation">}</span></code></pre><p><span style="float:footnote"><a href="./index.html#toc">Go to TOC</a></span></section></section>

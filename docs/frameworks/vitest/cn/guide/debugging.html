@@ -1,4 +1,4 @@
-<!doctype html><html lang="cn"><meta charset="utf-8"><title>调试 | 指南</title><meta name="viewport"content="width=device-width,initial-scale=1"><link rel="stylesheet"href="../../../../themes/packages/prism-coy-theme/theme_common.css"><section class="level1"aria-labelledby="调试"><h1 id="调试">调试</h1><section class="level2"aria-labelledby="terminal"><h2 id="terminal">Terminal</h2><p>在非集成开发环境下，为了调试一个测试文件，你可以使用 <a href="https://github.com/GoogleChromeLabs/ndb"><code>ndb</code></a>。仅仅在你的代码的任何位置添加一个 <code>debugger</code> 语句，然后运行 <code>ndb</code>：<pre class="language-sh"><code class="language-sh"># 全局安装 ndb
+<!doctype html><html lang="cn"><meta charset="utf-8"><title>调试 | 指南</title><meta name="viewport"content="width=device-width,initial-scale=1"><link rel="stylesheet"type="text/css"href="../../../../themes/packages/prism-coy-theme/theme_common.css"><section class="level1"aria-labelledby="调试"><h1 id="调试">调试</h1><section class="level2"aria-labelledby="terminal"><h2 id="terminal">Terminal</h2><p>在非集成开发环境下，为了调试一个测试文件，你可以使用 <a href="https://github.com/GoogleChromeLabs/ndb"><code>ndb</code></a>。仅仅在你的代码的任何位置添加一个 <code>debugger</code> 语句，然后运行 <code>ndb</code>：<pre class="language-sh"><code class="language-sh"># 全局安装 ndb
 npm install -g ndb
 
 # 或者使用 yarn
@@ -21,8 +21,42 @@ ndb npm run test</code></pre><blockquote>在调试测试时，你可能使用 `-
       <span class="token property">"console"</span><span class="token operator">:</span> <span class="token string">"integratedTerminal"</span>
     <span class="token punctuation">}</span>
   <span class="token punctuation">]</span>
-<span class="token punctuation">}</span></code></pre><p>然后在调试选项卡中确保选择 'Debug Current Test File'，然后你可以打开要调试的测试文件并按 F5 开始调试。</section><section class="level2"aria-labelledby="intellij-idea"><h2 id="intellij-idea">IntelliJ IDEA</h2><p>创建一个 'Node.js' 运行配置。使用以下配置在调试模式下运行所有测试：<table><thead><tr><th>Setting<th>Value<tbody><tr><td>Working directory<td><code>/path/to/your-project-root</code><tr><td>JavaScript file<td><code>./node_modules/vitest/vitest.mjs</code><tr><td>Application parameters<td><code>run --pool forks</code></table><p>然后在调试模式下运行此配置。IDE 将在编辑器中设置的 JS/TS 断点处停止。</section><section class="level2"aria-labelledby="node-inspector-eg-chrome-devtools"><h2 id="node-inspector-eg-chrome-devtools">Node Inspector, e.g. Chrome DevTools</h2><p>Vitest 还支持在没有 IDE 的情况下调试测试。然而，这要求测试不是并行运行的。可以使用以下命令之一启动 Vitest。<pre class="language-sh"><code class="language-sh"># To run in a single worker
+<span class="token punctuation">}</span></code></pre><p>然后在调试选项卡中确保选择 'Debug Current Test File'，然后你可以打开要调试的测试文件并按 F5 开始调试。<section class="level3"aria-labelledby="浏览器模式"><h3 id="浏览器模式">浏览器模式</h3><p>要调试 <a href="/guide/browser/index.md">Vitest 浏览器模式</a>，请在 CLI 中传递 <code>--inspect</code> 或 <code>--inspect-brk</code>，或在 Vitest 配置中定义它：</section>code-group ```bash [CLI] vitest --inspect-brk --browser --no-file-parallelism ``` ```ts [vitest.config.js] import { defineConfig } from 'vitest/config'<p>export default defineConfig({ test: { inspectBrk: true, fileParallelism: false, browser: { name: 'chromium', provider: 'playwright', }, }, })<pre class="language-text"><code class="language-text">&#x3C;/blockquote>
+
+默认情况下，Vitest 将使用端口 `9229` 作为调试端口。您可以通过在 `--inspect-brk`中传递值来覆盖它：
+
+```bash
+vitest --inspect-brk=127.0.0.1:3000 --browser --no-file-parallelism</code></pre><p>使用以下 <a href="https://code.visualstudio.com/docs/editor/debugging#_compound-launch-configurations">VSCode 复合配置</a> 在浏览器中启动 Vitest 并附加调试器：<pre class="language-json"><code class="language-json"><span class="token punctuation">{</span>
+  <span class="token property">"version"</span><span class="token operator">:</span> <span class="token string">"0.2.0"</span><span class="token punctuation">,</span>
+  <span class="token property">"configurations"</span><span class="token operator">:</span> <span class="token punctuation">[</span>
+    <span class="token punctuation">{</span>
+      <span class="token property">"type"</span><span class="token operator">:</span> <span class="token string">"node"</span><span class="token punctuation">,</span>
+      <span class="token property">"request"</span><span class="token operator">:</span> <span class="token string">"launch"</span><span class="token punctuation">,</span>
+      <span class="token property">"name"</span><span class="token operator">:</span> <span class="token string">"Run Vitest Browser"</span><span class="token punctuation">,</span>
+      <span class="token property">"program"</span><span class="token operator">:</span> <span class="token string">"${workspaceRoot}/node_modules/vitest/vitest.mjs"</span><span class="token punctuation">,</span>
+      <span class="token property">"console"</span><span class="token operator">:</span> <span class="token string">"integratedTerminal"</span><span class="token punctuation">,</span>
+      <span class="token property">"args"</span><span class="token operator">:</span> <span class="token punctuation">[</span><span class="token string">"--inspect-brk"</span><span class="token punctuation">,</span> <span class="token string">"--browser"</span><span class="token punctuation">,</span> <span class="token string">"--no-file-parallelism"</span><span class="token punctuation">]</span>
+    <span class="token punctuation">}</span><span class="token punctuation">,</span>
+    <span class="token punctuation">{</span>
+      <span class="token property">"type"</span><span class="token operator">:</span> <span class="token string">"chrome"</span><span class="token punctuation">,</span>
+      <span class="token property">"request"</span><span class="token operator">:</span> <span class="token string">"attach"</span><span class="token punctuation">,</span>
+      <span class="token property">"name"</span><span class="token operator">:</span> <span class="token string">"Attach to Vitest Browser"</span><span class="token punctuation">,</span>
+      <span class="token property">"port"</span><span class="token operator">:</span> <span class="token number">9229</span>
+    <span class="token punctuation">}</span>
+  <span class="token punctuation">]</span><span class="token punctuation">,</span>
+  <span class="token property">"compounds"</span><span class="token operator">:</span> <span class="token punctuation">[</span>
+    <span class="token punctuation">{</span>
+      <span class="token property">"name"</span><span class="token operator">:</span> <span class="token string">"Debug Vitest Browser"</span><span class="token punctuation">,</span>
+      <span class="token property">"configurations"</span><span class="token operator">:</span> <span class="token punctuation">[</span><span class="token string">"Attach to Vitest Browser"</span><span class="token punctuation">,</span> <span class="token string">"Run Vitest Browser"</span><span class="token punctuation">]</span><span class="token punctuation">,</span>
+      <span class="token property">"stopAll"</span><span class="token operator">:</span> <span class="token boolean">true</span>
+    <span class="token punctuation">}</span>
+  <span class="token punctuation">]</span>
+<span class="token punctuation">}</span></code></pre></section><section class="level2"aria-labelledby="intellij-idea"><h2 id="intellij-idea">IntelliJ IDEA</h2><p>创建一个 <a href="https://www.jetbrains.com/help/idea/vitest.html#createRunConfigVitest">vitest</a> 运行配置。使用以下配置在调试模式下运行所有测试：<table><thead><tr><th>Setting<th>Value<tbody><tr><td>Working directory<td><code>/path/to/your-project-root</code></table><p>然后在调试模式下运行此配置。IDE 将在编辑器中设置的 JS/TS 断点处停止。</section><section class="level2"aria-labelledby="node-inspector-eg-chrome-devtools"><h2 id="node-inspector-eg-chrome-devtools">Node Inspector, e.g. Chrome DevTools</h2><p>Vitest 还支持在没有 IDE 的情况下调试测试。然而，这要求测试不是并行运行的。可以使用以下命令之一启动 Vitest。<pre class="language-sh"><code class="language-sh"># To run in a single worker
 vitest --inspect-brk --pool threads --poolOptions.threads.singleThread
 
 # To run in a single child process
-vitest --inspect-brk --pool forks --poolOptions.forks.singleFork</code></pre><p>一旦 Vitest 启动，它将停止执行并等待你打开可以连接到 <a href="https://nodejs.org/en/docs/guides/debugging-getting-started/">NodeJS 检查器</a> 的开发人员工具。 你可以通过在浏览器上打开 <code>chrome://inspect</code> 来使用 Chrome DevTools。<p>在监视模式下，你可以使用 <code>--poolOptions.threads.isolate false</code> 选项在测试重新运行期间保持调试器打开。 <span style="float:footnote"><a href="../index.html#toc">Go to TOC</a></span></section></section>
+vitest --inspect-brk --pool forks --poolOptions.forks.singleFork
+
+# To run in browser mode
+vitest --inspect-brk --browser --no-file-parallelism</code></pre><p>如果你使用的是 Vitest 1.1 或更高版本，你也可以仅提供 <code>--no-parallelism</code> 标志：<pre class="language-sh"><code class="language-sh"># 如果线程池未知
+vitest --inspect-brk --no-file-parallelism</code></pre><p>一旦 Vitest 启动，它将停止执行并等待你打开可以连接到 <a href="https://nodejs.org/en/docs/guides/debugging-getting-started/">NodeJS 检查器</a> 的开发者工具。 你可以通过在浏览器上打开 <code>chrome://inspect</code> 来使用 Chrome DevTools。<p>在监视模式下，你可以使用 <code>--poolOptions.threads.isolate false</code> 选项在测试重新运行期间保持调试器打开。 <span style="float:footnote"><a href="../index.html#toc">Go to TOC</a></span></section></section>

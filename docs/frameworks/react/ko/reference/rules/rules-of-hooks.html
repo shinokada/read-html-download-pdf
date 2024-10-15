@@ -1,0 +1,74 @@
+<!doctype html><html lang="ko"><meta charset="utf-8"><title>Hook의 규칙</title><meta name="viewport"content="width=device-width,initial-scale=1"><link rel="stylesheet"type="text/css"href="../../../../../themes/packages/prism-coy-theme/theme_common.css"><section class="level1"aria-labelledby="hook의-규칙"><h1 id="hook의-규칙">Hook의 규칙</h1><intro>Hook은 JavaScript 함수로 정의되지만 호출 위치에 제약이 있는 특별한 유형의 재사용 가능한 UI 로직입니다.</intro><inlinetoc><section class="level2"aria-labelledby="hook을-최상위-레벨에서만-호출하세요-only-call-hooks-at-the-top-level"><h2 id="hook을-최상위-레벨에서만-호출하세요-only-call-hooks-at-the-top-level">Hook을 최상위 레벨에서만 호출하세요 {/<em>only-call-hooks-at-the-top-level</em>/}</h2><p>React에서는 <code>use</code>로 시작하는 함수를 <a href="/reference/react"><em>Hook</em></a> 이라고 부릅니다.<p><strong>Hook을 반복문, 조건문, 중첩 함수, 또는 <code>try</code>/<code>catch</code>/<code>finally</code> 블록 내부에서 호출하지 마세요.</strong> 대신 Hook을 항상 React 함수의 최상위 레벨에서 호출하고, early return 이전에 사용해야 합니다. Hook은 React가 함수 컴포넌트를 렌더링하는 동안에만 호출할 수 있습니다.<ul><li>✅ <a href="/learn/your-first-component">함수 컴포넌트</a>의 본문 최상위 레벨에서 호출하세요.<li>✅ <a href="/learn/reusing-logic-with-custom-hooks">커스텀 Hook</a>의 본문 최상위 레벨에서 호출하세요.</ul><pre class="language-js{2-3,8-9}"><code class="language-js{2-3,8-9}">function Counter() {
+  // ✅ 함수 컴포넌트의 최상위 레벨에서 사용합니다
+  const [count, setCount] = useState(0);
+  // ...
+}
+
+function useWindowWidth() {
+  // ✅ 커스텀 Hook의 최상위 레벨에서 사용합니다
+  const [width, setWidth] = useState(window.innerWidth);
+  // ...
+}</code></pre><p>다음과 같이 Hook(<code>use</code>로 시작하는 함수)을 호출하는 것은 지원되지 <strong>않습니다</strong>.<ul><li>🔴 조건문이나 반복문 내부에서 Hook을 호출하지 마세요.<li>🔴 조건부 <code>return</code>문 이후에 Hook을 호출하지 마세요.<li>🔴 이벤트 핸들러에서 Hook을 호출하지 마세요.<li>🔴 클래스 컴포넌트에서 Hook을 호출하지 마세요.<li>🔴 <code>useMemo</code>, <code>useReducer</code>, <code>useEffect</code>에 전달된 함수 내부에서 Hook을 호출하지 마세요.<li>🔴 <code>try</code>/<code>catch</code>/<code>finally</code> 블록 내부에서 Hook을 호출하지 마세요.</ul><p>이 규칙을 어기면 오류가 발생할 수 있습니다.<pre class="language-js{3-4,11-12,20-21}"><code class="language-js{3-4,11-12,20-21}">function Bad({ cond }) {
+  if (cond) {
+    // 🔴 조건부 내부 (수정하려면 외부로 이동하세요!)
+    const theme = useContext(ThemeContext);
+  }
+  // ...
+}
+
+function Bad() {
+  for (let i = 0; i &#x3C; 10; i++) {
+    // 🔴 반복문 내부 (수정하려면 외부로 이동하세요!)
+    const theme = useContext(ThemeContext);
+  }
+  // ...
+}
+
+function Bad({ cond }) {
+  if (cond) {
+    return;
+  }
+  // 🔴 조건부 return문 이후 (수정하려면 return문 이전으로 이동하세요!)
+  const theme = useContext(ThemeContext);
+  // ...
+}
+
+function Bad() {
+  function handleClick() {
+    // 🔴 이벤트 핸들러 내부 (수정하려면 외부로 이동하세요!)
+    const theme = useContext(ThemeContext);
+  }
+  // ...
+}
+
+function Bad() {
+  const style = useMemo(() => {
+    // 🔴 useMemo 내부 (수정하려면 외부로 이동하세요!)
+    const theme = useContext(ThemeContext);
+    return createStyle(theme);
+  });
+  // ...
+}
+
+class Bad extends React.Component {
+  render() {
+    // 🔴 클래스 컴포넌트 내부 (수정하려면 클래스 컴포넌트 대신 함수 컴포넌트를 사용하세요!)
+    useEffect(() => {})
+    // ...
+  }
+}
+
+function Bad() {
+  try {
+    // 🔴 try/catch/finally 블록 내부 (수정하려면 외부로 이동하세요!)
+    const [x, setX] = useState(0);
+  } catch {
+    const [x, setX] = useState(1);
+  }
+}</code></pre><p>이러한 실수를 잡기 위해 <a href="https://www.npmjs.com/package/eslint-plugin-react-hooks"><code>eslint-plugin-react-hooks</code> 플러그인</a>을 사용할 수 있습니다.</p><note><p><a href="/learn/reusing-logic-with-custom-hooks">커스텀 Hook</a>은 다른 Hook을 <em>호출할 수 있습니다</em> (그것이 커스텀 Hook의 주된 목적입니다). 커스텀 Hook도 함수 컴포넌트가 렌더링되는 동안에만 호출될 수 있기 때문입니다.</p></note></section><section class="level2"aria-labelledby="hook을-react-함수에서만-호출하세요-only-call-hooks-from-react-functions"><h2 id="hook을-react-함수에서만-호출하세요-only-call-hooks-from-react-functions">Hook을 React 함수에서만 호출하세요 {/<em>only-call-hooks-from-react-functions</em>/}</h2><p>일반 JavaScript 함수에서 Hook을 호출하지 마세요. 대신 다음과 같이 사용할 수 있습니다.<p>✅ Hook을 React 함수 컴포넌트에서 호출하세요. ✅ Hook을 <a href="/learn/reusing-logic-with-custom-hooks#extracting-your-own-custom-hook-from-a-component">커스텀 Hook</a>에서 호출하세요.<p>이 규칙을 따르면 컴포넌트의 모든 상태 관리 로직이 소스 코드에서 명확히 보입니다.<pre class="language-js"><code class="language-js"><span class="token keyword">function</span> <span class="token function"><span class="token maybe-class-name">FriendList</span></span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  <span class="token keyword">const</span> <span class="token punctuation">[</span>onlineStatus<span class="token punctuation">,</span> setOnlineStatus<span class="token punctuation">]</span> <span class="token operator">=</span> <span class="token function">useOnlineStatus</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span> <span class="token comment">// ✅</span>
+<span class="token punctuation">}</span>
+
+<span class="token keyword">function</span> <span class="token function">setOnlineStatus</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span> <span class="token comment">// ❌ 컴포넌트나 커스텀 Hook이 아닙니다!</span>
+  <span class="token keyword">const</span> <span class="token punctuation">[</span>onlineStatus<span class="token punctuation">,</span> setOnlineStatus<span class="token punctuation">]</span> <span class="token operator">=</span> <span class="token function">useOnlineStatus</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span></code></pre><p><span style="float:footnote"><a href="../../index.html#toc">Go to TOC</a></span></section></inlinetoc></section>

@@ -1,0 +1,64 @@
+<!doctype html><html lang="cn"><meta charset="utf-8"><title>性能测试分析</title><meta name="viewport"content="width=device-width,initial-scale=1"><link rel="stylesheet"type="text/css"href="../../../../themes/packages/prism-coy-theme/theme_common.css"><section class="level1"aria-labelledby="性能测试分析"><h1 id="性能测试分析">性能测试分析</h1><p>当你运行 Vitest 时，会显示你的多个时间指标：<blockquote><pre class="language-bash"><code class="language-bash">RUN  v2.1.1 /x/vitest/examples/profiling
+
+✓ test/prime-number.test.ts <span class="token punctuation">(</span><span class="token number">1</span><span class="token punctuation">)</span> 4517ms
+  ✓ generate prime number 4517ms
+
+Test Files  <span class="token number">1</span> passed <span class="token punctuation">(</span><span class="token number">1</span><span class="token punctuation">)</span>
+     Tests  <span class="token number">1</span> passed <span class="token punctuation">(</span><span class="token number">1</span><span class="token punctuation">)</span>
+  Start at  09:32:53
+  Duration  <span class="token number">4</span>.80s <span class="token punctuation">(</span>transform 44ms, setup 0ms, collect 35ms, tests <span class="token number">4</span>.52s, environment 0ms, prepare 81ms<span class="token punctuation">)</span>
+  <span class="token comment"># Time metrics ^^</span></code></pre></blockquote><ul><li>「 转换 / Transform 」：转换文件所花费的时间。参见<a href="#file-transform">文件转换</a>。<li>Setup：运行 <a href="../config.html#setupfiles"><code>setupFiles</code></a> 文件所花费的时间。<li>「 收集 / Collect 」：收集测试文件中所有测试所花费的时间。这包括导入所有文件依赖项所花费的时间。<li>「 测试 / Tests 」：实际运行测试用例所花费的时间。<li>「 环境 / Environment 」：设置测试<a href="../config.html#environment"><code>环境</code></a>所花费的时间，例如 JSDOM 。<li>「 准备 / Prepare 」：Vitest 用于准备 测试运行器 的时间。</ul><section class="level2"aria-labelledby="test-runner"><h2 id="test-runner">Test runner</h2><p>当测试执行时间较长的时候，可以生成测试运行器的性能分析报告。可以参考 NodeJS 文档来了解和使用这些选项：<ul><li><a href="https://nodejs.org/api/cli.html#--cpu-prof"><code>--cpu-prof</code></a><li><a href="https://nodejs.org/api/cli.html#--heap-prof"><code>--heap-prof</code></a><li><a href="https://nodejs.org/api/cli.html#--prof"><code>--prof</code></a></ul><blockquote>由于 `node:worker_threads` 的限制， `--prof` 不能与 `pool: 'threads'` 一起使用。</blockquote><p>要将这些选项传递给 Vitest ，可以在 Vitest 的配置中定义 <code>poolOptions.&#x3C;pool>.execArgv</code>：</p>code-group ```ts [Forks] import { defineConfig } from 'vitest/config'<p>export default defineConfig({ test: { pool: 'forks', poolOptions: { forks: { execArgv: [ '--cpu-prof', '--cpu-prof-dir=test-runner-profile', '--heap-prof', '--heap-prof-dir=test-runner-profile' ],<pre class="language-text"><code class="language-text">    // 生成单一的配置文件
+    singleFork: true,
+  },
+},</code></pre><p>}, })<pre class="language-text"><code class="language-text">```ts [Threads]
+import { defineConfig } from 'vitest/config'
+
+export default defineConfig({
+  test: {
+    pool: 'threads',
+    poolOptions: {
+      threads: {
+        execArgv: [
+          '--cpu-prof',
+          '--cpu-prof-dir=test-runner-profile',
+          '--heap-prof',
+          '--heap-prof-dir=test-runner-profile'
+        ],
+
+        // 生成单一的配置文件
+        singleThread: true,
+      },
+    },
+  },
+})</code></pre><p>测试运行后，应该会生成 <code>test-runner-profile/*.cpuprofile</code> 和 <code>test-runner-profile/*.heapprofile</code> 文件。想要知道如何分析这些文件，可以仔细查看<a href="#inspecting-profiling-records">「 检查分析记录 / Inspecting profiling records 」</a>。<p>也可以看看<a href="https://github.com/vitest-dev/vitest/tree/main/examples/profiling">性能分析 | 示例</a>。</section><section class="level2"aria-labelledby="main-thread"><h2 id="main-thread">Main thread</h2><p>对主线程进行性能分析有助于调试 Vitest 的 Vite 使用情况和 <a href="../config.html#globalsetup"><code>globalSetup</code></a> 文件。 这也是 Vite 插件运行的地方。<blockquote>可以查看 [性能 | Vite](https://cn.vitejs.dev/guide/performance) 以获取更多关于 Vite 特定性能分析的提示。<p>我们推荐使用 <a href="https://github.com/antfu-collective/vite-plugin-inspect"><code>vite-plugin-inspect</code></a> 来分析你的 Vite 插件性能。</blockquote><p>要执行此操作，需要向运行 Vitest 的 Node 进程传递参数。<pre class="language-bash"><code class="language-bash">$ <span class="token function">node</span> --cpu-prof --cpu-prof-dir<span class="token operator">=</span>main-profile ./node_modules/vitest/vitest.mjs --run
+<span class="token comment">#      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^                                  ^^^^^</span>
+<span class="token comment">#               NodeJS arguments                                           Vitest arguments</span></code></pre><p>测试运行后会生成一个 <code>main-profile/*.cpuprofile</code> 文件。有关如何分析这些文件的说明，可以查看<a href="#inspecting-profiling-records">检查分析记录</a>。</section><section class="level2"aria-labelledby="file-transform"><h2 id="file-transform">File transform</h2><p>当测试转换和收集的时间较长时，可以使用环境变量 <code>DEBUG=vite-node:*</code> 来查看哪些文件正在被 <code>vite-node</code> 转换和执行。<pre class="language-bash"><code class="language-bash">$ <span class="token assign-left variable">DEBUG</span><span class="token operator">=</span>vite-node:* vitest --run
+
+ RUN  v2.1.1 /x/vitest/examples/profiling
+
+  vite-node:server:request /x/vitest/examples/profiling/global-setup.ts +0ms
+  vite-node:client:execute /x/vitest/examples/profiling/global-setup.ts +0ms
+  vite-node:server:request /x/vitest/examples/profiling/test/prime-number.test.ts +45ms
+  vite-node:client:execute /x/vitest/examples/profiling/test/prime-number.test.ts +26ms
+  vite-node:server:request /src/prime-number.ts +9ms
+  vite-node:client:execute /x/vitest/examples/profiling/src/prime-number.ts +9ms
+  vite-node:server:request /src/unnecessary-file.ts +6ms
+  vite-node:client:execute /x/vitest/examples/profiling/src/unnecessary-file.ts +4ms
+<span class="token punctuation">..</span>.</code></pre><p>这种分析策略是识别由<a href="https://cn.vitejs.dev/guide/performance#avoid-barrel-files">「 桶文件 / barrel files 」</a>引起的不必要转换的好方法。如果这些日志包含了在运行测试时不应该加载的文件，你可能有桶文件在不必要地导入文件。<p>也可以使用 <a href="/guide/ui">Vitest UI</a> 来调试由打包文件引起的缓慢问题。 下面的例子展示了不使用打包文件导入文件可以减少约85%的转换文件数量。</p>code-group ``` [File tree] ├── src │ └── utils │ ├── currency.ts │ ├── formatters.ts &#x3C;-- File to test │ ├── index.ts │ ├── location.ts │ ├── math.ts │ ├── time.ts │ └── users.ts ├── test │ └── formatters.test.ts └── vitest.config.ts ``` ```ts [example.test.ts] import { expect, test } from 'vitest' import { formatter } from '../src/utils' // [!code --] import { formatter } from '../src/utils/formatters' // [!code ++]<p>test('formatter works', () => { expect(formatter).not.toThrow() })<pre class="language-text"><code class="language-text">&#x3C;/blockquote>
+
+&#x3C;img src="/module-graph-barrel-file.png" alt="Vitest UI demonstrating barrel file issues" />
+
+要查看文件是如何转换的，可以使用 `VITE_NODE_DEBUG_DUMP` 环境变量将转换后的文件写入文件系统：
+
+```bash
+$ VITE_NODE_DEBUG_DUMP=true vitest --run
+
+[vite-node] [debug] dump modules to /x/examples/profiling/.vite-node/dump
+
+ RUN  v2.1.1 /x/vitest/examples/profiling
+...
+
+$ ls .vite-node/dump/
+_x_examples_profiling_global-setup_ts-1292904907.js
+_x_examples_profiling_test_prime-number_test_ts-1413378098.js
+_src_prime-number_ts-525172412.js</code></pre></section><section class="level2"aria-labelledby="inspecting-profiling-records"><h2 id="inspecting-profiling-records">Inspecting profiling records</h2><p>可以使用各种工具检查 <code>*.cpuprofile</code> 和 <code>*.heapprofile</code> 的内容。下面是一些示例。<ul><li><a href="https://www.speedscope.app/">Speedscope</a><li><a href="https://code.visualstudio.com/docs/nodejs/profiling#_analyzing-a-profile">在 Visual Studio Code 中对 JavaScript 进行性能分析</a><li><a href="https://developer.chrome.com/docs/devtools/performance/nodejs#analyze">使用性能面板分析 Node.js 性能 | developer.chrome.com</a><li><a href="https://developer.chrome.com/docs/devtools/memory-problems/heap-snapshots#view_snapshots">内存面板概览 | developer.chrome.com</a> <span style="float:footnote"><a href="../index.html#toc">Go to TOC</a></span></ul></section></section>

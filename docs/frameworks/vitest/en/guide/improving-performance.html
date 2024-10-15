@@ -1,0 +1,99 @@
+<!doctype html><html lang="en"><meta charset="utf-8"><title>Improving Performance</title><meta name="viewport"content="width=device-width,initial-scale=1"><link rel="stylesheet"type="text/css"href="../../../../themes/packages/prism-coy-theme/theme_common.css"><section class="level1"aria-labelledby="improving-performance"><h1 id="improving-performance">Improving Performance</h1><section class="level2"aria-labelledby="test-isolation"><h2 id="test-isolation">Test isolation</h2><p>By default Vitest runs every test file in an isolated environment based on the <a href="../config.html#pool">pool</a>:<ul><li><code>threads</code> pool runs every test file in a separate <a href="https://nodejs.org/api/worker_threads.html#class-worker"><code>Worker</code></a><li><code>forks</code> pool runs every test file in a separate <a href="https://nodejs.org/api/child_process.html#child_processforkmodulepath-args-options">forked child process</a><li><code>vmThreads</code> pool runs every test file in a separate <a href="https://nodejs.org/api/vm.html#vmcreatecontextcontextobject-options">VM context</a>, but it uses workers for parallelism</ul><p>This greatly increases test times, which might not be desirable for projects that don't rely on side effects and properly cleanup their state (which is usually true for projects with <code>node</code> environment). In this case disabling isolation will improve the speed of your tests. To do that, you can provide <code>--no-isolate</code> flag to the CLI or set <a href="../config.html#isolate"><code>test.isolate</code></a> property in the config to <code>false</code>. If you are using several pools at once with <code>poolMatchGlobs</code>, you can also disable isolation for a specific pool you are using.</p>code-group ```bash [CLI] vitest --no-isolate ``` ```ts [vitest.config.js] import { defineConfig } from 'vitest/config'<p>export default defineConfig({ test: { isolate: false, // you can also disable isolation only for specific pools poolOptions: { forks: { isolate: false, }, }, }, })<pre class="language-text"><code class="language-text">&#x3C;/blockquote>
+
+&#x3C;blockquote>
+If you are using `vmThreads` pool, you cannot disable isolation. Use `threads` pool instead to improve your tests performance.
+&#x3C;/blockquote>
+
+For some projects, it might also be desirable to disable parallelism to improve startup time. To do that, provide `--no-file-parallelism` flag to the CLI or set [`test.fileParallelism`](../config.html#fileparallelism) property in the config to `false`.
+
+&#x3C;/blockquote> code-group
+```bash [CLI]
+vitest --no-file-parallelism</code></pre><pre class="language-ts"><code class="language-ts"><span class="token keyword module">import</span> <span class="token imports"><span class="token punctuation">{</span> defineConfig <span class="token punctuation">}</span></span> <span class="token keyword module">from</span> <span class="token string">'vitest/config'</span>
+
+<span class="token keyword module">export</span> <span class="token keyword module">default</span> <span class="token function">defineConfig</span><span class="token punctuation">(</span><span class="token punctuation">{</span>
+  test<span class="token operator">:</span> <span class="token punctuation">{</span>
+    fileParallelism<span class="token operator">:</span> <span class="token boolean">false</span><span class="token punctuation">,</span>
+  <span class="token punctuation">}</span><span class="token punctuation">,</span>
+<span class="token punctuation">}</span><span class="token punctuation">)</span></code></pre></section><section class="level2"aria-labelledby="pool"><h2 id="pool">Pool</h2><p>By default Vitest runs tests in <code>pool: 'forks'</code>. While <code>'forks'</code> pool is better for compatibility issues (<a href="/guide/common-errors.html#failed-to-terminate-worker">hanging process</a> and <a href="/guide/common-errors.html#segfaults-and-native-code-errors">segfaults</a>), it may be slightly slower than <code>pool: 'threads'</code> in larger projects.<p>You can try to improve test run time by switching <code>pool</code> option in configuration:</p>code-group ```bash [CLI] vitest --pool=threads ``` ```ts [vitest.config.js] import { defineConfig } from 'vitest/config'<p>export default defineConfig({ test: { pool: 'threads', }, })<pre class="language-text"><code class="language-text">&#x3C;/blockquote>
+
+## Sharding
+
+Test sharding means running a small subset of test cases at a time. It can be useful when you have multiple machines that could be used to run tests simultaneously.
+
+To split Vitest tests on multiple different runs, use [`--shard`](/guide/cli#shard) option with [`--reporter=blob`](/guide/reporters#blob-reporter) option:
+
+```sh
+vitest run --reporter=blob --shard=1/3 # 1st machine
+vitest run --reporter=blob --shard=2/3 # 2nd machine
+vitest run --reporter=blob --shard=3/3 # 3rd machine</code></pre><p>Collect the results stored in <code>.vitest-reports</code> directory from each machine and merge them with <a href="/guide/cli#merge-reports"><code>--merge-reports</code></a> option:<pre class="language-sh"><code class="language-sh">vitest --merge-reports</code></pre><details><summary>Github action example</summary><p>This setup is also used at <a href="https://github.com/vitest-tests/test-sharding">https://github.com/vitest-tests/test-sharding</a>.<pre class="language-yaml"><code class="language-yaml"><span class="token comment"># Inspired from https://playwright.dev/docs/test-sharding</span>
+<span class="token key atrule">name</span><span class="token punctuation">:</span> Tests
+<span class="token key atrule">on</span><span class="token punctuation">:</span>
+  <span class="token key atrule">push</span><span class="token punctuation">:</span>
+    <span class="token key atrule">branches</span><span class="token punctuation">:</span>
+      <span class="token punctuation">-</span> main
+<span class="token key atrule">jobs</span><span class="token punctuation">:</span>
+  <span class="token key atrule">tests</span><span class="token punctuation">:</span>
+    <span class="token key atrule">runs-on</span><span class="token punctuation">:</span> ubuntu<span class="token punctuation">-</span>latest
+    <span class="token key atrule">strategy</span><span class="token punctuation">:</span>
+      <span class="token key atrule">matrix</span><span class="token punctuation">:</span>
+        <span class="token key atrule">shardIndex</span><span class="token punctuation">:</span> <span class="token punctuation">[</span><span class="token number">1</span><span class="token punctuation">,</span> <span class="token number">2</span><span class="token punctuation">,</span> <span class="token number">3</span><span class="token punctuation">,</span> <span class="token number">4</span><span class="token punctuation">]</span>
+        <span class="token key atrule">shardTotal</span><span class="token punctuation">:</span> <span class="token punctuation">[</span><span class="token number">4</span><span class="token punctuation">]</span>
+    <span class="token key atrule">steps</span><span class="token punctuation">:</span>
+      <span class="token punctuation">-</span> <span class="token key atrule">uses</span><span class="token punctuation">:</span> actions/checkout@v4
+      <span class="token punctuation">-</span> <span class="token key atrule">uses</span><span class="token punctuation">:</span> actions/setup<span class="token punctuation">-</span>node@v4
+        <span class="token key atrule">with</span><span class="token punctuation">:</span>
+          <span class="token key atrule">node-version</span><span class="token punctuation">:</span> <span class="token number">20</span>
+
+      <span class="token punctuation">-</span> <span class="token key atrule">name</span><span class="token punctuation">:</span> Install pnpm
+        <span class="token key atrule">uses</span><span class="token punctuation">:</span> pnpm/action<span class="token punctuation">-</span>setup@v4
+
+      <span class="token punctuation">-</span> <span class="token key atrule">name</span><span class="token punctuation">:</span> Install dependencies
+        <span class="token key atrule">run</span><span class="token punctuation">:</span> pnpm i
+
+      <span class="token punctuation">-</span> <span class="token key atrule">name</span><span class="token punctuation">:</span> Run tests
+        <span class="token key atrule">run</span><span class="token punctuation">:</span> pnpm run test <span class="token punctuation">-</span><span class="token punctuation">-</span>reporter=blob <span class="token punctuation">-</span><span class="token punctuation">-</span>shard=$<span class="token punctuation">{</span><span class="token punctuation">{</span> matrix.shardIndex <span class="token punctuation">}</span><span class="token punctuation">}</span>/$<span class="token punctuation">{</span><span class="token punctuation">{</span> matrix.shardTotal <span class="token punctuation">}</span><span class="token punctuation">}</span>
+
+      <span class="token punctuation">-</span> <span class="token key atrule">name</span><span class="token punctuation">:</span> Upload blob report to GitHub Actions Artifacts
+        <span class="token key atrule">if</span><span class="token punctuation">:</span> $<span class="token punctuation">{</span><span class="token punctuation">{</span> <span class="token tag">!cancelled()</span> <span class="token punctuation">}</span><span class="token punctuation">}</span>
+        <span class="token key atrule">uses</span><span class="token punctuation">:</span> actions/upload<span class="token punctuation">-</span>artifact@v4
+        <span class="token key atrule">with</span><span class="token punctuation">:</span>
+          <span class="token key atrule">name</span><span class="token punctuation">:</span> blob<span class="token punctuation">-</span>report<span class="token punctuation">-</span>$<span class="token punctuation">{</span><span class="token punctuation">{</span> matrix.shardIndex <span class="token punctuation">}</span><span class="token punctuation">}</span>
+          <span class="token key atrule">path</span><span class="token punctuation">:</span> .vitest<span class="token punctuation">-</span>reports/*
+          <span class="token key atrule">include-hidden-files</span><span class="token punctuation">:</span> <span class="token boolean important">true</span>
+          <span class="token key atrule">retention-days</span><span class="token punctuation">:</span> <span class="token number">1</span>
+
+  <span class="token key atrule">merge-reports</span><span class="token punctuation">:</span>
+    <span class="token key atrule">if</span><span class="token punctuation">:</span> $<span class="token punctuation">{</span><span class="token punctuation">{</span> <span class="token tag">!cancelled()</span> <span class="token punctuation">}</span><span class="token punctuation">}</span>
+    <span class="token key atrule">needs</span><span class="token punctuation">:</span> <span class="token punctuation">[</span>tests<span class="token punctuation">]</span>
+
+    <span class="token key atrule">runs-on</span><span class="token punctuation">:</span> ubuntu<span class="token punctuation">-</span>latest
+    <span class="token key atrule">steps</span><span class="token punctuation">:</span>
+      <span class="token punctuation">-</span> <span class="token key atrule">uses</span><span class="token punctuation">:</span> actions/checkout@v4
+      <span class="token punctuation">-</span> <span class="token key atrule">uses</span><span class="token punctuation">:</span> actions/setup<span class="token punctuation">-</span>node@v4
+        <span class="token key atrule">with</span><span class="token punctuation">:</span>
+          <span class="token key atrule">node-version</span><span class="token punctuation">:</span> <span class="token number">20</span>
+
+      <span class="token punctuation">-</span> <span class="token key atrule">name</span><span class="token punctuation">:</span> Install pnpm
+        <span class="token key atrule">uses</span><span class="token punctuation">:</span> pnpm/action<span class="token punctuation">-</span>setup@v4
+
+      <span class="token punctuation">-</span> <span class="token key atrule">name</span><span class="token punctuation">:</span> Install dependencies
+        <span class="token key atrule">run</span><span class="token punctuation">:</span> pnpm i
+
+      <span class="token punctuation">-</span> <span class="token key atrule">name</span><span class="token punctuation">:</span> Download blob reports from GitHub Actions Artifacts
+        <span class="token key atrule">uses</span><span class="token punctuation">:</span> actions/download<span class="token punctuation">-</span>artifact@v4
+        <span class="token key atrule">with</span><span class="token punctuation">:</span>
+          <span class="token key atrule">path</span><span class="token punctuation">:</span> .vitest<span class="token punctuation">-</span>reports
+          <span class="token key atrule">pattern</span><span class="token punctuation">:</span> blob<span class="token punctuation">-</span>report<span class="token punctuation">-</span>*
+          <span class="token key atrule">merge-multiple</span><span class="token punctuation">:</span> <span class="token boolean important">true</span>
+
+      <span class="token punctuation">-</span> <span class="token key atrule">name</span><span class="token punctuation">:</span> Merge reports
+        <span class="token key atrule">run</span><span class="token punctuation">:</span> npx vitest <span class="token punctuation">-</span><span class="token punctuation">-</span>merge<span class="token punctuation">-</span>reports</code></pre></details><blockquote>Test sharding can also become useful on high CPU-count machines.<p>Vitest will run only a single Vite server in its main thread. Rest of the threads are used to run test files. In a high CPU-count machine the main thread can become a bottleneck as it cannot handle all the requests coming from the threads. For example in 32 CPU machine the main thread is responsible to handle load coming from 31 test threads.<p>To reduce the load from main thread's Vite server you can use test sharding. The load can be balanced on multiple Vite server.<pre class="language-sh"><code class="language-sh"># Example for splitting tests on 32 CPU to 4 shards.
+# As each process needs 1 main thread, there's 7 threads for test runners (1+7)*4 = 32
+# Use VITEST_MAX_THREADS or VITEST_MAX_FORKS depending on the pool:
+VITEST_MAX_THREADS=7 vitest run --reporter=blob --shard=1/4 &#x26; \
+VITEST_MAX_THREADS=7 vitest run --reporter=blob --shard=2/4 &#x26; \
+VITEST_MAX_THREADS=7 vitest run --reporter=blob --shard=3/4 &#x26; \
+VITEST_MAX_THREADS=7 vitest run --reporter=blob --shard=4/4 &#x26; \
+wait # https://man7.org/linux/man-pages/man2/waitpid.2.html
+
+vitest --merge-reports</code></pre></blockquote><span style="float:footnote"><a href="../index.html#toc">Go to TOC</a></span></section></section>

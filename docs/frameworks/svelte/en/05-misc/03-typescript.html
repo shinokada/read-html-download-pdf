@@ -1,4 +1,14 @@
-<!doctype html><html lang="en"><meta charset="utf-8"><title>TypeScript</title><meta name="viewport"content="width=device-width,initial-scale=1"><link rel="stylesheet"href="../../../../themes/packages/prism-coy-theme/theme_common.css"><section class="level1"aria-labelledby="typescript"><h1 id="typescript">TypeScript</h1><p>You can use TypeScript within Svelte components. IDE extensions like the <a href="https://marketplace.visualstudio.com/items?itemName=svelte.svelte-vscode">Svelte VSCode extension</a> will help you catch errors right in your editor, and <a href="https://www.npmjs.com/package/svelte-check"><code>svelte-check</code></a> does the same on the command line, which you can integrate into your CI.<section class="level2"aria-labelledby="setup"><h2 id="setup">Setup</h2><p>To use TypeScript within Svelte components, you need to add a preprocessor that will turn TypeScript into JavaScript.</section><section class="level2"aria-labelledby="using-sveltekit-or-vite"><h2 id="using-sveltekit-or-vite">Using SvelteKit or Vite</h2><p>The easiest way to get started is scaffolding a new SvelteKit project by typing <code>npm create svelte@latest</code>, following the prompts and choosing the TypeScript option.<pre class="language-ts"><code class="language-ts"><span class="token comment">/// file: svelte.config.js</span>
+<!doctype html><html lang="en"><meta charset="utf-8"><title>TypeScript</title><meta name="viewport"content="width=device-width,initial-scale=1"><link rel="stylesheet"type="text/css"href="../../../../themes/packages/prism-coy-theme/theme_common.css"><section class="level1"aria-labelledby="typescript"><h1 id="typescript">TypeScript</h1><ul><li><a href="https://svelte.dev/docs/typescript">basically what we have today</a><li>built-in support, but only for type-only features<li>generics<li>using <code>Component</code> and the other helper types<li>using <code>svelte-check</code></ul><p>You can use TypeScript within Svelte components. IDE extensions like the <a href="https://marketplace.visualstudio.com/items?itemName=svelte.svelte-vscode">Svelte VS Code extension</a> will help you catch errors right in your editor, and <a href="https://www.npmjs.com/package/svelte-check"><code>svelte-check</code></a> does the same on the command line, which you can integrate into your CI.<section class="level2"><h2 id=""><code>&#x3C;script lang="ts"></code></h2><p>To use TypeScript inside your Svelte components, add <code>lang="ts"</code> to your <code>script</code> tags:<pre class="language-svelte"><code class="language-svelte">&#x3C;script lang="ts">
+	let name: string = 'world';
+
+	function greet(name: string) {
+		alert(`Hello, ${name}!`);
+	}
+&#x3C;/script>
+
+&#x3C;button onclick={(e: Event) => greet(e.target.innerText)}>
+	{name as string}
+&#x3C;/button></code></pre><p>Doing so allows you to use TypeScript's <em>type-only</em> features. That is, all features that just disappear when transpiling to JavaScript, such as type annotations or interface declarations. Features that require the TypeScript compiler to output actual code are not supported. This includes:<ul><li>using enums<li>using <code>private</code>, <code>protected</code> or <code>public</code> modifiers in constructor functions together with initializers<li>using features that are not yet part of the ECMAScript standard (i.e. not level 4 in the TC39 process) and therefore not implemented yet within Acorn, the parser we use for parsing JavaScript</ul><p>If you want to use one of these features, you need to setup up a <code>script</code> preprocessor.</section><section class="level2"aria-labelledby="preprocessor-setup"><h2 id="preprocessor-setup">Preprocessor setup</h2><p>To use non-type-only TypeScript features within Svelte components, you need to add a preprocessor that will turn TypeScript into JavaScript.</section><section class="level2"aria-labelledby="using-sveltekit-or-vite"><h2 id="using-sveltekit-or-vite">Using SvelteKit or Vite</h2><p>The easiest way to get started is scaffolding a new SvelteKit project by typing <code>npm create svelte@latest</code>, following the prompts and choosing the TypeScript option.<pre class="language-ts"><code class="language-ts"><span class="token comment">/// file: svelte.config.js</span>
 <span class="token comment">// @noErrors</span>
 <span class="token keyword module">import</span> <span class="token imports"><span class="token punctuation">{</span> vitePreprocess <span class="token punctuation">}</span></span> <span class="token keyword module">from</span> <span class="token string">'@sveltejs/kit/vite'</span><span class="token punctuation">;</span>
 
@@ -13,45 +23,71 @@
 	preprocess<span class="token operator">:</span> <span class="token function">vitePreprocess</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
 <span class="token punctuation">}</span><span class="token punctuation">;</span>
 
-<span class="token keyword module">export</span> <span class="token keyword module">default</span> config<span class="token punctuation">;</span></code></pre><p>In both cases, a <code>svelte.config.js</code> with <code>vitePreprocess</code> will be added. Vite/SvelteKit will read from this config file.</section><section class="level2"aria-labelledby="other-build-tools"><h2 id="other-build-tools">Other build tools</h2><p>If you're using tools like Rollup or Webpack instead, install their respective Svelte plugins. For Rollup that's <a href="https://github.com/sveltejs/rollup-plugin-svelte">rollup-plugin-svelte</a> and for Webpack that's <a href="https://github.com/sveltejs/svelte-loader">svelte-loader</a>. For both, you need to install <code>typescript</code> and <code>svelte-preprocess</code> and add the preprocessor to the plugin config (see the respective READMEs for more info). If you're starting a new project, you can also use the <a href="https://github.com/sveltejs/template">rollup</a> or <a href="https://github.com/sveltejs/template-webpack">webpack</a> template to scaffold the setup from a script.<blockquote><p>If you're starting a new project, we recommend using SvelteKit or Vite instead</blockquote></section><section class="level2"aria-labelledby="script-langts"><h2 id="script-langts"><code>&#x3C;script lang="ts"></code></h2><p>To use TypeScript inside your Svelte components, add <code>lang="ts"</code> to your <code>script</code> tags:<pre class="language-svelte"><code class="language-svelte">&#x3C;script lang="ts">
-	let name: string = 'world';
+<span class="token keyword module">export</span> <span class="token keyword module">default</span> config<span class="token punctuation">;</span></code></pre><p>In both cases, a <code>svelte.config.js</code> with <code>vitePreprocess</code> will be added. Vite/SvelteKit will read from this config file.</section><section class="level2"aria-labelledby="other-build-tools"><h2 id="other-build-tools">Other build tools</h2><p>If you're using tools like Rollup or Webpack instead, install their respective Svelte plugins. For Rollup that's <a href="https://github.com/sveltejs/rollup-plugin-svelte">rollup-plugin-svelte</a> and for Webpack that's <a href="https://github.com/sveltejs/svelte-loader">svelte-loader</a>. For both, you need to install <code>typescript</code> and <code>svelte-preprocess</code> and add the preprocessor to the plugin config (see the respective READMEs for more info). If you're starting a new project, you can also use the <a href="https://github.com/sveltejs/template">rollup</a> or <a href="https://github.com/sveltejs/template-webpack">webpack</a> template to scaffold the setup from a script.<blockquote><p>[!NOTE] If you're starting a new project, we recommend using SvelteKit or Vite instead</blockquote></section><section class="level2"aria-labelledby="typing-props"><h2 id="typing-props">Typing <code>$props</code></h2><p>Type <code>$props</code> just like a regular object with certain properties.<pre class="language-svelte"><code class="language-svelte">&#x3C;script lang="ts">
+	import type { Snippet } from 'svelte';
 
-	function greet(name: string) {
-		alert(`Hello, ${name}!`);
+	interface Props {
+		requiredProperty: number;
+		optionalProperty?: boolean;
+		snippetWithStringArgument: Snippet&#x3C;[string]>;
+		eventHandler: (arg: string) => void;
+		[key: string]: unknown;
 	}
-&#x3C;/script></code></pre></section><section class="level2"aria-labelledby="props"><h2 id="props">Props</h2><p>Props can be typed directly on the <code>export let</code> statement:<pre class="language-svelte"><code class="language-svelte">&#x3C;script lang="ts">
-	export let name: string;
-&#x3C;/script></code></pre></section><section class="level2"aria-labelledby="slots"><h2 id="slots">Slots</h2><p>Slot and slot prop types are inferred from the types of the slot props passed to them:<pre class="language-svelte"><code class="language-svelte">&#x3C;script lang="ts">
-	export let name: string;
+
+	let {
+		requiredProperty,
+		optionalProperty,
+		snippetWithStringArgument,
+		eventHandler,
+		...everythingElse
+	}: Props = $props();
 &#x3C;/script>
 
-&#x3C;slot {name} />
-
-&#x3C;!-- Later -->
-&#x3C;Comp let:name>
-	&#x3C;!--    ^ Inferred as string -->
-	{name}
-&#x3C;/Comp></code></pre></section><section class="level2"aria-labelledby="events"><h2 id="events">Events</h2><p>Events can be typed with <code>createEventDispatcher</code>:<pre class="language-svelte"><code class="language-svelte">&#x3C;script lang="ts">
-	import { createEventDispatcher } from 'svelte';
-
-	const dispatch = createEventDispatcher&#x3C;{
-		event: null; // does not accept a payload
-		click: string; // has a required string payload
-		type: string | null; // has an optional string payload
-	}>();
-
-	function handleClick() {
-		dispatch('event');
-		dispatch('click', 'hello');
+&#x3C;button onclick={() => eventHandler('clicked button')}>
+	{@render snippetWithStringArgument('hello')}
+&#x3C;/button></code></pre></section><section class="level2"aria-labelledby="generic-props"><h2 id="generic-props">Generic <code>$props</code></h2><p>Components can declare a generic relationship between their properties. One example is a generic list component that receives a list of items and a callback property that reveives an item from the list. To declare that the <code>items</code> property and the <code>select</code> callback operate on the same types, add the <code>generics</code> attribute to the <code>script</code> tag:<pre class="language-svelte"><code class="language-svelte">&#x3C;script lang="ts" generics="Item extends { text: string }">
+	interface Props {
+		items: Item[];
+		select: Item;
 	}
 
-	function handleType() {
-		dispatch('event');
-		dispatch('type', Math.random() > 0.5 ? 'world' : null);
-	}
+	let { items, select }: Props = $props();
 &#x3C;/script>
 
-&#x3C;button on:click={handleClick} on:keydown={handleType}>Click&#x3C;/button></code></pre></section><section class="level2"aria-labelledby="enhancing-built-in-dom-types"><h2 id="enhancing-built-in-dom-types">Enhancing built-in DOM types</h2><p>Svelte provides a best effort of all the HTML DOM types that exist. Sometimes you may want to use experimental attributes or custom events coming from an action. In these cases, TypeScript will throw a type error, saying that it does not know these types. If it's a non-experimental standard attribute/event, this may very well be a missing typing from our <a href="https://github.com/sveltejs/svelte/blob/master/packages/svelte/elements.d.ts">HTML typings</a>. In that case, you are welcome to open an issue and/or a PR fixing it.<p>In case this is a custom or experimental attribute/event, you can enhance the typings like this:<pre class="language-ts"><code class="language-ts"><span class="token comment">/// file: additional-svelte-typings.d.ts</span>
+{#each items as item}
+	&#x3C;button onclick={() => select(item)}>
+		{item.text}
+	&#x3C;/button>
+{/each}</code></pre><p>The content of <code>generics</code> is what you would put between the <code>&#x3C;...></code> tags of a generic function. In other words, you can use multiple generics, <code>extends</code> and fallback types.</section><section class="level2"aria-labelledby="typing-state"><h2 id="typing-state">Typing <code>$state</code></h2><p>You can type <code>$state</code> like any other variable.<pre class="language-ts"><code class="language-ts"><span class="token keyword">let</span> count<span class="token operator">:</span> <span class="token builtin">number</span> <span class="token operator">=</span> <span class="token function">$state</span><span class="token punctuation">(</span><span class="token number">0</span><span class="token punctuation">)</span><span class="token punctuation">;</span></code></pre><p>If you don't give <code>$state</code> an initial value, part of its types will be <code>undefined</code>.<pre class="language-ts"><code class="language-ts"><span class="token comment">// @noErrors</span>
+<span class="token comment">// Error: Type 'number | undefined' is not assignable to type 'number'</span>
+<span class="token keyword">let</span> count<span class="token operator">:</span> <span class="token builtin">number</span> <span class="token operator">=</span> <span class="token function">$state</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span></code></pre><p>If you know that the variable <em>will</em> be defined before you first use it, use an <code>as</code> casting. This is especially useful in the context of classes:<pre class="language-ts"><code class="language-ts"><span class="token keyword">class</span> <span class="token class-name"><span class="token maybe-class-name">Counter</span></span> <span class="token punctuation">{</span>
+	count <span class="token operator">=</span> <span class="token function">$state</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token keyword module">as</span> <span class="token builtin">number</span><span class="token punctuation">;</span>
+	<span class="token function">constructor</span><span class="token punctuation">(</span>initial<span class="token operator">:</span> <span class="token builtin">number</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+		<span class="token keyword">this</span><span class="token punctuation">.</span><span class="token property-access">count</span> <span class="token operator">=</span> initial<span class="token punctuation">;</span>
+	<span class="token punctuation">}</span>
+<span class="token punctuation">}</span></code></pre></section><section class="level2"aria-labelledby="the-component-type"><h2 id="the-component-type">The <code>Component</code> type</h2><p>Svelte components or of type <code>Component</code>. You can use it and its related types to express a variety of constraints.<p>Using it together with <code>&#x3C;svelte:component></code> to restrict what kinds of component can be passed to it:<pre class="language-svelte"><code class="language-svelte">&#x3C;script lang="ts">
+	import type { Component } from 'svelte';
+
+	interface Props {
+		// only components that have at most the "prop"
+		// property required can be passed
+		component: Component&#x3C;{ prop: string }>
+	}
+
+	let { component }: Props = $props();
+&#x3C;/script>
+
+&#x3C;svelte:component this={component} prop="foo" /></code></pre><p>Closely related to the <code>Component</code> type is the <code>ComponentProps</code> type which extracts the properties a component expects.<pre class="language-ts"><code class="language-ts"><span class="token keyword module">import</span> <span class="token keyword">type</span> <span class="token punctuation">{</span> <span class="token maybe-class-name">Component</span><span class="token punctuation">,</span> <span class="token maybe-class-name">ComponentProps</span> <span class="token punctuation">}</span> <span class="token keyword module">from</span> <span class="token string">'svelte'</span><span class="token punctuation">;</span>
+<span class="token keyword module">import</span> <span class="token imports"><span class="token maybe-class-name">MyComponent</span></span> <span class="token keyword module">from</span> <span class="token string">'./MyComponent.svelte'</span><span class="token punctuation">;</span>
+
+<span class="token keyword">function</span> <span class="token generic-function"><span class="token function">withProps</span><span class="token generic class-name"><span class="token operator">&#x3C;</span><span class="token maybe-class-name">TComponent</span> <span class="token keyword">extends</span> <span class="token maybe-class-name">Component</span><span class="token operator">&#x3C;</span><span class="token builtin">any</span><span class="token operator">>></span></span></span><span class="token punctuation">(</span>
+	component<span class="token operator">:</span> <span class="token maybe-class-name">TComponent</span><span class="token punctuation">,</span>
+	props<span class="token operator">:</span> <span class="token maybe-class-name">ComponentProps</span><span class="token operator">&#x3C;</span><span class="token maybe-class-name">TComponent</span><span class="token operator">></span>
+<span class="token punctuation">)</span> <span class="token punctuation">{</span><span class="token punctuation">}</span>
+
+<span class="token comment">// Errors if the second argument is not the correct props expected</span>
+<span class="token comment">// by the component in the first argument.</span>
+<span class="token function">withProps</span><span class="token punctuation">(</span><span class="token maybe-class-name">MyComponent</span><span class="token punctuation">,</span> <span class="token punctuation">{</span> foo<span class="token operator">:</span> <span class="token string">'bar'</span> <span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">;</span></code></pre></section><section class="level2"aria-labelledby="enhancing-built-in-dom-types"><h2 id="enhancing-built-in-dom-types">Enhancing built-in DOM types</h2><p>Svelte provides a best effort of all the HTML DOM types that exist. Sometimes you may want to use experimental attributes or custom events coming from an action. In these cases, TypeScript will throw a type error, saying that it does not know these types. If it's a non-experimental standard attribute/event, this may very well be a missing typing from our <a href="https://github.com/sveltejs/svelte/blob/main/packages/svelte/elements.d.ts">HTML typings</a>. In that case, you are welcome to open an issue and/or a PR fixing it.<p>In case this is a custom or experimental attribute/event, you can enhance the typings like this:<pre class="language-ts"><code class="language-ts"><span class="token comment">/// file: additional-svelte-typings.d.ts</span>
 <span class="token keyword">declare</span> <span class="token keyword">namespace</span> svelteHTML <span class="token punctuation">{</span>
 	<span class="token comment">// enhance elements</span>
 	<span class="token keyword">interface</span> <span class="token class-name"><span class="token maybe-class-name">IntrinsicElements</span></span> <span class="token punctuation">{</span>
@@ -59,12 +95,12 @@
 	<span class="token punctuation">}</span>
 	<span class="token comment">// enhance attributes</span>
 	<span class="token keyword">interface</span> <span class="token class-name"><span class="token maybe-class-name">HTMLAttributes</span><span class="token operator">&#x3C;</span><span class="token constant">T</span><span class="token operator">></span></span> <span class="token punctuation">{</span>
-		<span class="token comment">// If you want to use on:beforeinstallprompt</span>
-		<span class="token string">'on:beforeinstallprompt'</span><span class="token operator">?</span><span class="token operator">:</span> <span class="token punctuation">(</span>event<span class="token operator">:</span> <span class="token builtin">any</span><span class="token punctuation">)</span> <span class="token arrow operator">=></span> <span class="token builtin">any</span><span class="token punctuation">;</span>
+		<span class="token comment">// If you want to use the beforeinstallprompt event</span>
+		<span class="token string">'onbeforeinstallprompt'</span><span class="token operator">?</span><span class="token operator">:</span> <span class="token punctuation">(</span>event<span class="token operator">:</span> <span class="token builtin">any</span><span class="token punctuation">)</span> <span class="token arrow operator">=></span> <span class="token builtin">any</span><span class="token punctuation">;</span>
 		<span class="token comment">// If you want to use myCustomAttribute={..} (note: all lowercase)</span>
 		mycustomattribute<span class="token operator">?</span><span class="token operator">:</span> <span class="token builtin">any</span><span class="token punctuation">;</span> <span class="token comment">// You can replace any with something more specific if you like</span>
 	<span class="token punctuation">}</span>
-<span class="token punctuation">}</span></code></pre><p>Then make sure that <code>d.ts</code> file is referenced in your <code>tsconfig.json</code>. If it reads something like <code>"include": ["src/**/*"]</code> and your <code>d.ts</code> file is inside <code>src</code>, it should work. You may need to reload for the changes to take effect.<p>Since Svelte version 4.2 / <code>svelte-check</code> version 3.5 / VS Code extension version 107.10.0 you can also declare the typings by augmenting the <code>svelte/elements</code> module like this:<pre class="language-ts"><code class="language-ts"><span class="token comment">/// file: additional-svelte-typings.d.ts</span>
+<span class="token punctuation">}</span></code></pre><p>Then make sure that <code>d.ts</code> file is referenced in your <code>tsconfig.json</code>. If it reads something like <code>"include": ["src/**/*"]</code> and your <code>d.ts</code> file is inside <code>src</code>, it should work. You may need to reload for the changes to take effect.<p>You can also declare the typings by augmenting the <code>svelte/elements</code> module like this:<pre class="language-ts"><code class="language-ts"><span class="token comment">/// file: additional-svelte-typings.d.ts</span>
 <span class="token keyword module">import</span> <span class="token imports"><span class="token punctuation">{</span> <span class="token maybe-class-name">HTMLButtonAttributes</span> <span class="token punctuation">}</span></span> <span class="token keyword module">from</span> <span class="token string">'svelte/elements'</span><span class="token punctuation">;</span>
 
 <span class="token keyword">declare</span> <span class="token keyword">module</span> <span class="token string">'svelte/elements'</span> <span class="token punctuation">{</span>
@@ -78,21 +114,4 @@
 	<span class="token punctuation">}</span>
 <span class="token punctuation">}</span>
 
-<span class="token keyword module">export</span> <span class="token exports"><span class="token punctuation">{</span><span class="token punctuation">}</span></span><span class="token punctuation">;</span> <span class="token comment">// ensure this is not an ambient module, else types will be overridden instead of augmented</span></code></pre></section><section class="level2"aria-labelledby="experimental-advanced-typings"><h2 id="experimental-advanced-typings">Experimental advanced typings</h2><p>A few features are missing from taking full advantage of TypeScript in more advanced use cases like typing that a component implements a certain interface, explicitly typing slots, or using generics. These things are possible using experimental advanced type capabilities. See <a href="https://github.com/dummdidumm/rfcs/blob/ts-typedefs-within-svelte-components/text/ts-typing-props-slots-events.md">this RFC</a> for more information on how to make use of them.<blockquote><p>The API is experimental and may change at any point</blockquote></section><section class="level2"aria-labelledby="limitations"><h2 id="limitations">Limitations</h2></section><section class="level2"aria-labelledby="no-ts-in-markup"><h2 id="no-ts-in-markup">No TS in markup</h2><p>You cannot use TypeScript in your template's markup. For example, the following does not work:<pre class="language-svelte"><code class="language-svelte">&#x3C;script lang="ts">
-	let count = 10;
-&#x3C;/script>
-
-&#x3C;h1>Count as string: {count as string}!&#x3C;/h1> &#x3C;!-- ❌ Does not work -->
-{#if count > 4}
-	{@const countString: string = count} &#x3C;!-- ❌ Does not work -->
-	{countString}
-{/if}</code></pre></section><section class="level2"aria-labelledby="reactive-declarations"><h2 id="reactive-declarations">Reactive Declarations</h2><p>You cannot type your reactive declarations with TypeScript in the way you type a variable. For example, the following does not work:<pre class="language-svelte"><code class="language-svelte">&#x3C;script lang="ts">
-	let count = 0;
-
-	$: doubled: number = count * 2; // ❌ Does not work
-&#x3C;/script></code></pre><p>You cannot add a <code>: TYPE</code> because it's invalid syntax in this position. Instead, you can move the definition to a <code>let</code> statement just above:<pre class="language-svelte"><code class="language-svelte">&#x3C;script lang="ts">
-	let count = 0;
-
-	let doubled: number;
-	$: doubled = count * 2;
-&#x3C;/script></code></pre></section><section class="level2"aria-labelledby="types"><h2 id="types">Types</h2><blockquote><p>TYPES: svelte <span style="float:footnote"><a href="../index.html#toc">Go to TOC</a></span></blockquote></section></section>
+<span class="token keyword module">export</span> <span class="token exports"><span class="token punctuation">{</span><span class="token punctuation">}</span></span><span class="token punctuation">;</span> <span class="token comment">// ensure this is not an ambient module, else types will be overridden instead of augmented</span></code></pre><p><span style="float:footnote"><a href="../index.html#toc">Go to TOC</a></span></section></section>

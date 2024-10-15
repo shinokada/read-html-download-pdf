@@ -1,0 +1,74 @@
+<!doctype html><html lang="zh-hans"><meta charset="utf-8"><title>Hook 的规则</title><meta name="viewport"content="width=device-width,initial-scale=1"><link rel="stylesheet"type="text/css"href="../../../../../themes/packages/prism-coy-theme/theme_common.css"><section class="level1"aria-labelledby="hook-的规则"><h1 id="hook-的规则">Hook 的规则</h1><intro>Hook 是使用 JavaScript 函数定义的，但它们代表了一种特殊的可重用的 UI 逻辑，并且对它们可以被调用的位置有限制。</intro><inlinetoc><section class="level2"aria-labelledby="只在顶层调用-hook-only-call-hooks-at-the-top-level"><h2 id="只在顶层调用-hook-only-call-hooks-at-the-top-level">只在顶层调用 Hook {/<em>only-call-hooks-at-the-top-level</em>/}</h2><p>在 React 中，以 <code>use</code> 开头命名的函数被称为 <strong><a href="/reference/react">Hook</a></strong>。<p><strong>不要在循环、条件语句、嵌套函数或 <code>try</code>/<code>catch</code>/<code>finally</code> 代码块中调用 Hook</strong>。相反，你应该在 React 函数组件的顶层使用 Hook，且在任何提前返回之前。你只能在 React 渲染函数组件时调用 Hook：<ul><li>✅ 在 <a href="/learn/your-first-component">函数组件主体</a> 的顶层调用它们。<li>✅ 在 <a href="/learn/reusing-logic-with-custom-hooks">自定义 Hook 主体</a> 的顶层调用它们。</ul><pre class="language-js{2-3,8-9}"><code class="language-js{2-3,8-9}">function Counter() {
+  // ✅ 正确的：在函数组件顶层
+  const [count, setCount] = useState(0);
+  // ...
+}
+
+function useWindowWidth() {
+  // ✅ 正确的：在自定义 Hooks 顶层
+  const [width, setWidth] = useState(window.innerWidth);
+  // ...
+}</code></pre><p>不支持在其他任何情况下调用以 <code>use</code> 开头的 Hook，例如：<ul><li>🔴 不要在条件语句或循环中调用 Hook。<li>🔴 不要在条件性的 <code>return</code> 语句之后调用 Hook。<li>🔴 不要在事件处理函数中调用 Hook。<li>🔴 不要在类组件中调用 Hook。<li>🔴 不要在传递给 <code>useMemo</code>、<code>useReducer</code> 或 <code>useEffect</code> 的函数内部调用 Hook。<li>🔴 不要在 <code>try</code>/<code>catch</code>/<code>finally</code> 代码块中调用 Hook。</ul><p>如果你违反了这些规则，你可能会看到以下错误：<pre class="language-js{3-4,11-12,20-21}"><code class="language-js{3-4,11-12,20-21}">function Bad({ cond }) {
+  if (cond) {
+    // 🔴 错误的：在条件语句内部（要修复这个问题，将其移到外部！）
+    const theme = useContext(ThemeContext);
+  }
+  // ...
+}
+
+function Bad() {
+  for (let i = 0; i &#x3C; 10; i++) {
+    // 🔴 错误的：在循环语句内部（要修复这个问题，将其移到外部！）
+    const theme = useContext(ThemeContext);
+  }
+  // ...
+}
+
+function Bad({ cond }) {
+  if (cond) {
+    return;
+  }
+  // 🔴 错误的：在条件性 return 语句之后（要修复这个问题，将其移到 return 之前！）
+  const theme = useContext(ThemeContext);
+  // ...
+}
+
+function Bad() {
+  function handleClick() {
+    // 🔴 错误的：在事件处理函数内部（要修复这个问题，将其移到 return 之前！）
+    const theme = useContext(ThemeContext);
+  }
+  // ...
+}
+
+function Bad() {
+  const style = useMemo(() => {
+    // 🔴 错误的：在 useMemo 内部调用（要修复这个问题，将其移到外部！）
+    const theme = useContext(ThemeContext);
+    return createStyle(theme);
+  });
+  // ...
+}
+
+class Bad extends React.Component {
+  render() {
+    // 🔴 错误的：在类组件内部调用（要修复这个问题，改写为函数组件！）
+    useEffect(() => {})
+    // ...
+  }
+}
+
+function Bad() {
+  try {
+    // 🔴 错误的：在 try、catch、finally 代码块内部调用（要修复这个问题，将其移到外部！）
+    const [x, setX] = useState(0);
+  } catch {
+    const [x, setX] = useState(1);
+  }
+}</code></pre><p>你可以使用 <a href="https://www.npmjs.com/package/eslint-plugin-react-hooks"><code>eslint-plugin-react-hooks</code> 插件</a> 来捕获这些错误。</p><note><p><a href="/learn/reusing-logic-with-custom-hooks">自定义 Hook</a> <strong>可以</strong> 调用其他 Hook（这正是它们的主要目的）。之所以可以这样做，是因为自定义 Hook 也应该只在函数组件渲染时被调用。</p></note></section><section class="level2"aria-labelledby="仅在-react-函数中调用-hook-only-call-hooks-from-react-functions"><h2 id="仅在-react-函数中调用-hook-only-call-hooks-from-react-functions">仅在 React 函数中调用 Hook {/<em>only-call-hooks-from-react-functions</em>/}</h2><p>不要在常规的 JavaScript 函数中调用 Hook。相反，你可以：<p>✅ 在 React 函数组件中调用 Hook。 ✅ 在 <a href="/learn/reusing-logic-with-custom-hooks#extracting-your-own-custom-hook-from-a-component">自定义 Hook</a> 中调用 Hook。<p>遵循这条规则，你可以确保组件中的所有状态逻辑在其源代码中清晰可见。<pre class="language-js"><code class="language-js"><span class="token keyword">function</span> <span class="token function"><span class="token maybe-class-name">FriendList</span></span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  <span class="token keyword">const</span> <span class="token punctuation">[</span>onlineStatus<span class="token punctuation">,</span> setOnlineStatus<span class="token punctuation">]</span> <span class="token operator">=</span> <span class="token function">useOnlineStatus</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span> <span class="token comment">// ✅</span>
+<span class="token punctuation">}</span>
+
+<span class="token keyword">function</span> <span class="token function">setOnlineStatus</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span> <span class="token comment">// ❌ Not a component or custom Hook!</span>
+  <span class="token keyword">const</span> <span class="token punctuation">[</span>onlineStatus<span class="token punctuation">,</span> setOnlineStatus<span class="token punctuation">]</span> <span class="token operator">=</span> <span class="token function">useOnlineStatus</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span></code></pre><p><span style="float:footnote"><a href="../../index.html#toc">Go to TOC</a></span></section></inlinetoc></section>

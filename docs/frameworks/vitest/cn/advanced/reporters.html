@@ -1,4 +1,4 @@
-<!doctype html><html lang="cn"><meta charset="utf-8"><title>扩展默认报告器 (Extending Reporters)</title><meta name="viewport"content="width=device-width,initial-scale=1"><link rel="stylesheet"href="../../../../themes/packages/prism-coy-theme/theme_common.css"><section class="level1"aria-labelledby="扩展默认报告器-extending-reporters"><h1 id="扩展默认报告器-extending-reporters">扩展默认报告器 (Extending Reporters)</h1><p>你可以从 <code>vitest/reporters</code> 导入报告器并扩展它们以创建您的自定义报告器。<section class="level2"aria-labelledby="扩展内置报告器-extending-built-in-reporters"><h2 id="扩展内置报告器-extending-built-in-reporters">扩展内置报告器 (Extending Built-in Reporters)</h2><p>一般来说，你不需要从头开始创建报告器。<code>vitest</code> 附带了几个可以扩展的默认报告程序。<pre class="language-ts"><code class="language-ts"><span class="token keyword module">import</span> <span class="token imports"><span class="token punctuation">{</span> <span class="token maybe-class-name">DefaultReporter</span> <span class="token punctuation">}</span></span> <span class="token keyword module">from</span> <span class="token string">'vitest/reporters'</span>
+<!doctype html><html lang="cn"><meta charset="utf-8"><title>扩展默认报告器 (Extending Reporters)</title><meta name="viewport"content="width=device-width,initial-scale=1"><link rel="stylesheet"type="text/css"href="../../../../themes/packages/prism-coy-theme/theme_common.css"><section class="level1"aria-labelledby="扩展默认报告器-extending-reporters"><h1 id="扩展默认报告器-extending-reporters">扩展默认报告器 (Extending Reporters)</h1><p>你可以从 <code>vitest/reporters</code> 导入报告器并扩展它们以创建你的自定义报告器。<section class="level2"aria-labelledby="扩展内置报告器-extending-built-in-reporters"><h2 id="扩展内置报告器-extending-built-in-reporters">扩展内置报告器 (Extending Built-in Reporters)</h2><p>一般来说，你不需要从头开始创建报告器。<code>vitest</code> 附带了几个可以扩展的默认报告程序。<pre class="language-ts"><code class="language-ts"><span class="token keyword module">import</span> <span class="token imports"><span class="token punctuation">{</span> <span class="token maybe-class-name">DefaultReporter</span> <span class="token punctuation">}</span></span> <span class="token keyword module">from</span> <span class="token string">'vitest/reporters'</span>
 
 <span class="token keyword module">export</span> <span class="token keyword module">default</span> <span class="token keyword">class</span> <span class="token class-name"><span class="token maybe-class-name">MyDefaultReporter</span></span> <span class="token keyword">extends</span> <span class="token class-name"><span class="token maybe-class-name">DefaultReporter</span></span> <span class="token punctuation">{</span>
   <span class="token comment">// do something</span>
@@ -24,4 +24,313 @@
   test<span class="token operator">:</span> <span class="token punctuation">{</span>
     reporters<span class="token operator">:</span> <span class="token punctuation">[</span><span class="token keyword">new</span> <span class="token class-name"><span class="token maybe-class-name">CustomReporter</span></span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">]</span><span class="token punctuation">,</span>
   <span class="token punctuation">}</span><span class="token punctuation">,</span>
-<span class="token punctuation">}</span><span class="token punctuation">)</span></code></pre></section><section class="level2"aria-labelledby="导出报告器-exported-reporters"><h2 id="导出报告器-exported-reporters">导出报告器 (Exported Reporters)</h2><p><code>vitest</code> 附带了一些<a href="/guide/reporters">内置报告器</a>，你可以开箱即用。<section class="level3"aria-labelledby="内置报告器"><h3 id="内置报告器">内置报告器:</h3><ol><li><code>BasicReporter</code><li><code>DefaultReporter</code><li><code>DotReporter</code><li><code>JsonReporter</code><li><code>VerboseReporter</code><li><code>TapReporter</code><li><code>JUnitReporter</code><li><code>TapFlatReporter</code><li><code>HangingProcessReporter</code></ol></section><section class="level3"aria-labelledby="基础抽象报告器"><h3 id="基础抽象报告器">基础抽象报告器:</h3><ol><li><code>BaseReporter</code></ol></section><section class="level3"aria-labelledby="接口报告器"><h3 id="接口报告器">接口报告器:</h3><ol><li><code>Reporter</code> <span style="float:footnote"><a href="../index.html#toc">Go to TOC</a></span></ol></section></section></section>
+<span class="token punctuation">}</span><span class="token punctuation">)</span></code></pre></section><section class="level2"aria-labelledby="报告的任务reported-tasks"><h2 id="报告的任务reported-tasks">报告的任务(Reported Tasks)</h2><blockquote>这是一个试验性 API。破坏性更改可能不会跟进 SemVer。使用时请使用 Vitest 的版本。<p>你可以通过调用 <code>vitest.state.getReportedEntity(runnerTask)</code> 访问此 API：<pre class="language-ts"><code class="language-ts"><span class="token comment">// @noErrors</span>
+<span class="token keyword module">import</span> <span class="token keyword">type</span> <span class="token punctuation">{</span> <span class="token maybe-class-name">Vitest</span> <span class="token punctuation">}</span> <span class="token keyword module">from</span> <span class="token string">'vitest/node'</span>
+<span class="token keyword module">import</span> <span class="token keyword">type</span> <span class="token punctuation">{</span> <span class="token maybe-class-name">RunnerTestFile</span> <span class="token punctuation">}</span> <span class="token keyword module">from</span> <span class="token string">'vitest'</span>
+<span class="token keyword module">import</span> <span class="token keyword">type</span> <span class="token punctuation">{</span> <span class="token maybe-class-name">Reporter</span><span class="token punctuation">,</span> <span class="token maybe-class-name">TestModule</span> <span class="token punctuation">}</span> <span class="token keyword module">from</span> <span class="token string">'vitest/reporters'</span>
+
+<span class="token keyword">class</span> <span class="token class-name"><span class="token maybe-class-name">MyReporter</span></span> <span class="token keyword">implements</span> <span class="token class-name"><span class="token maybe-class-name">Reporter</span></span> <span class="token punctuation">{</span>
+  ctx<span class="token operator">!</span><span class="token operator">:</span> <span class="token maybe-class-name">Vitest</span>
+
+  <span class="token function">onInit</span><span class="token punctuation">(</span>ctx<span class="token operator">:</span> <span class="token maybe-class-name">Vitest</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token keyword">this</span><span class="token punctuation">.</span><span class="token property-access">ctx</span> <span class="token operator">=</span> ctx
+  <span class="token punctuation">}</span>
+
+  <span class="token function">onFinished</span><span class="token punctuation">(</span>files<span class="token operator">:</span> <span class="token maybe-class-name">RunnerTestFile</span><span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token keyword control-flow">for</span> <span class="token punctuation">(</span><span class="token keyword">const</span> fileTask <span class="token keyword">of</span> files<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+      <span class="token comment">// note that the old task implementation uses "file" instead of "module"</span>
+      <span class="token keyword">const</span> testModule <span class="token operator">=</span> <span class="token keyword">this</span><span class="token punctuation">.</span><span class="token property-access">ctx</span><span class="token punctuation">.</span><span class="token property-access">state</span><span class="token punctuation">.</span><span class="token method function property-access">getReportedEntity</span><span class="token punctuation">(</span>fileTask<span class="token punctuation">)</span> <span class="token keyword module">as</span> <span class="token maybe-class-name">TestModule</span>
+      <span class="token keyword control-flow">for</span> <span class="token punctuation">(</span><span class="token keyword">const</span> task <span class="token keyword">of</span> testModule<span class="token punctuation">.</span><span class="token property-access">children</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token comment">//                          ^?</span>
+        <span class="token console class-name">console</span><span class="token punctuation">.</span><span class="token method function property-access">log</span><span class="token punctuation">(</span><span class="token string">'finished'</span><span class="token punctuation">,</span> task<span class="token punctuation">.</span><span class="token property-access">type</span><span class="token punctuation">,</span> task<span class="token punctuation">.</span><span class="token property-access">fullName</span><span class="token punctuation">)</span>
+      <span class="token punctuation">}</span>
+    <span class="token punctuation">}</span>
+  <span class="token punctuation">}</span>
+<span class="token punctuation">}</span></code></pre><p>我们计划在 Vitest 2.1 中稳定该应用程序接口。</blockquote><section class="level3"aria-labelledby="testcase"><h3 id="testcase">TestCase</h3><p><code>TestCase</code> 代表一次测试.<pre class="language-ts"><code class="language-ts"><span class="token keyword">declare</span> <span class="token keyword">class</span> <span class="token class-name"><span class="token maybe-class-name">TestCase</span></span> <span class="token punctuation">{</span>
+  <span class="token keyword">readonly</span> type <span class="token operator">=</span> <span class="token string">'test'</span> <span class="token operator">|</span> <span class="token string">'custom'</span>
+  <span class="token doc-comment comment">/**
+   * Task instance.
+   * <span class="token keyword">@experimental</span> Public task API 是试验性的，并不遵循 semver。
+   */</span>
+  <span class="token keyword">readonly</span> task<span class="token operator">:</span> <span class="token maybe-class-name">RunnerTestCase</span> <span class="token operator">|</span> <span class="token maybe-class-name">RunnerCustomCase</span>
+  <span class="token doc-comment comment">/**
+   * 与测试相关的项目。
+   */</span>
+  <span class="token keyword">readonly</span> project<span class="token operator">:</span> <span class="token maybe-class-name">TestProject</span>
+  <span class="token doc-comment comment">/**
+   * 直接引用定义测试的测试文件。
+   */</span>
+  <span class="token keyword">readonly</span> module<span class="token operator">:</span> <span class="token maybe-class-name">TestModule</span>
+  <span class="token doc-comment comment">/**
+   * 测试名称。
+   */</span>
+  <span class="token keyword">readonly</span> name<span class="token operator">:</span> <span class="token builtin">string</span>
+  <span class="token doc-comment comment">/**
+   * 测试的全名，包括用 `>` 分隔的所有父套件
+   */</span>
+  <span class="token keyword">readonly</span> fullName<span class="token operator">:</span> <span class="token builtin">string</span>
+  <span class="token doc-comment comment">/**
+   * 唯一标识符。
+   * 该 ID 是确定的，多次运行时同一测试的 ID 将是相同的。
+   * ID 基于项目名称、文件路径和测试位置。
+   */</span>
+  <span class="token keyword">readonly</span> id<span class="token operator">:</span> <span class="token builtin">string</span>
+  <span class="token doc-comment comment">/**
+   * 文件中定义测试的位置。
+   * 只有在配置中启用  `includeTaskLocation` 时，才会收集位置信息。
+   */</span>
+  <span class="token keyword">readonly</span> <span class="token dom variable">location</span><span class="token operator">:</span> <span class="token punctuation">{</span> line<span class="token operator">:</span> <span class="token builtin">number</span><span class="token punctuation">,</span> column<span class="token operator">:</span> <span class="token builtin">number</span> <span class="token punctuation">}</span> <span class="token operator">|</span> <span class="token keyword nil">undefined</span>
+  <span class="token doc-comment comment">/**
+   * 如果测试是在文件中直接调用的，则父套件将是文件。
+   */</span>
+  <span class="token keyword">readonly</span> parent<span class="token operator">:</span> <span class="token maybe-class-name">TestSuite</span> <span class="token operator">|</span> <span class="token maybe-class-name">TestModule</span>
+  <span class="token doc-comment comment">/**
+   * 启动测试时使用的选项。
+   */</span>
+  <span class="token keyword">readonly</span> options<span class="token operator">:</span> <span class="token maybe-class-name">TaskOptions</span>
+  <span class="token doc-comment comment">/**
+   * 检查测试是否没有失败。
+   * 如果测试尚未完成或被跳过，则返回 `true`。
+   */</span>
+  <span class="token function">ok</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token operator">:</span> <span class="token builtin">boolean</span>
+  <span class="token doc-comment comment">/**
+   * 执行测试时附加到测试中的自定义元数据。
+   */</span>
+  <span class="token function">meta</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token operator">:</span> <span class="token maybe-class-name">TaskMeta</span>
+  <span class="token doc-comment comment">/**
+   * 测试结果。如果测试尚未完成或刚刚收集，则将为`undefined`。
+   */</span>
+  <span class="token function">result</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token operator">:</span> <span class="token maybe-class-name">TestResult</span> <span class="token operator">|</span> <span class="token keyword nil">undefined</span>
+  <span class="token doc-comment comment">/**
+   * 有关测试的有用信息，如持续时间、内存使用情况等。
+   */</span>
+  <span class="token function">diagnostic</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token operator">:</span> <span class="token maybe-class-name">TestDiagnostic</span> <span class="token operator">|</span> <span class="token keyword nil">undefined</span>
+<span class="token punctuation">}</span>
+
+<span class="token keyword module">export</span> <span class="token keyword">type</span> <span class="token class-name"><span class="token maybe-class-name">TestResult</span></span> <span class="token operator">=</span> <span class="token maybe-class-name">TestResultPassed</span> <span class="token operator">|</span> <span class="token maybe-class-name">TestResultFailed</span> <span class="token operator">|</span> <span class="token maybe-class-name">TestResultSkipped</span>
+
+<span class="token keyword module">export</span> <span class="token keyword">interface</span> <span class="token class-name"><span class="token maybe-class-name">TestResultPassed</span></span> <span class="token punctuation">{</span>
+  <span class="token doc-comment comment">/**
+   * 测试已成功通过。
+   */</span>
+  state<span class="token operator">:</span> <span class="token string">'passed'</span>
+  <span class="token doc-comment comment">/**
+   * 测试执行过程中出现的错误。
+   *
+   * **Note**: 如果测试重试成功，仍会报告错误。
+
+   */</span>
+  errors<span class="token operator">:</span> <span class="token known-class-name class-name">TestError</span><span class="token punctuation">[</span><span class="token punctuation">]</span> <span class="token operator">|</span> <span class="token keyword nil">undefined</span>
+<span class="token punctuation">}</span>
+
+<span class="token keyword module">export</span> <span class="token keyword">interface</span> <span class="token class-name"><span class="token maybe-class-name">TestResultFailed</span></span> <span class="token punctuation">{</span>
+  <span class="token doc-comment comment">/**
+   * 测试执行失败。
+   */</span>
+  state<span class="token operator">:</span> <span class="token string">'failed'</span>
+  <span class="token doc-comment comment">/**
+   * 测试执行过程中出现的错误。
+   */</span>
+  errors<span class="token operator">:</span> <span class="token known-class-name class-name">TestError</span><span class="token punctuation">[</span><span class="token punctuation">]</span>
+<span class="token punctuation">}</span>
+
+<span class="token keyword module">export</span> <span class="token keyword">interface</span> <span class="token class-name"><span class="token maybe-class-name">TestResultSkipped</span></span> <span class="token punctuation">{</span>
+  <span class="token doc-comment comment">/**
+   * 使用`only`、`skip`或`todo`标志跳过测试。点击并应用。
+   * 你可以在 `mode` 选项中看到使用的是哪一种。
+   */</span>
+  state<span class="token operator">:</span> <span class="token string">'skipped'</span>
+  <span class="token doc-comment comment">/**
+   * 跳过的测试没有错误。
+   */</span>
+  errors<span class="token operator">:</span> <span class="token keyword nil">undefined</span>
+<span class="token punctuation">}</span>
+
+<span class="token keyword module">export</span> <span class="token keyword">interface</span> <span class="token class-name"><span class="token maybe-class-name">TestDiagnostic</span></span> <span class="token punctuation">{</span>
+  <span class="token doc-comment comment">/**
+   * 测试使用的内存量（字节）。
+   * 只有使用 `logHeapUsage` 标志执行测试时，该值才可用。
+   */</span>
+  heap<span class="token operator">:</span> <span class="token builtin">number</span> <span class="token operator">|</span> <span class="token keyword nil">undefined</span>
+  <span class="token doc-comment comment">/**
+   * 执行测试所需的时间（毫秒）。
+   */</span>
+  duration<span class="token operator">:</span> <span class="token builtin">number</span>
+  <span class="token doc-comment comment">/**
+   * 测试开始的时间（毫秒）。
+   */</span>
+  startTime<span class="token operator">:</span> <span class="token builtin">number</span>
+  <span class="token doc-comment comment">/**
+   * 测试重试的次数。
+   */</span>
+  retryCount<span class="token operator">:</span> <span class="token builtin">number</span>
+  <span class="token doc-comment comment">/**
+   * 重复测试的次数，由 `repeats` 选项设置。
+   * 如果测试在重复过程中失败，且未配置 `retry`，则该值可以更小。
+   */</span>
+  repeatCount<span class="token operator">:</span> <span class="token builtin">number</span>
+  <span class="token doc-comment comment">/**
+   * 如果第二次重试时测试通过。
+   */</span>
+  flaky<span class="token operator">:</span> <span class="token builtin">boolean</span>
+<span class="token punctuation">}</span></code></pre></section><section class="level3"aria-labelledby="testsuite"><h3 id="testsuite">TestSuite</h3><p><code>TestSuite</code> 表示包含测试和其他套件的单一套件。<pre class="language-ts"><code class="language-ts"><span class="token keyword">declare</span> <span class="token keyword">class</span> <span class="token class-name"><span class="token maybe-class-name">TestSuite</span></span> <span class="token punctuation">{</span>
+  <span class="token keyword">readonly</span> type <span class="token operator">=</span> <span class="token string">'suite'</span>
+  <span class="token doc-comment comment">/**
+   * Task instance.
+   * <span class="token keyword">@experimental</span> Public task API 是实验性的，并不遵循 semver。
+   */</span>
+  <span class="token keyword">readonly</span> task<span class="token operator">:</span> <span class="token maybe-class-name">RunnerTestSuite</span>
+  <span class="token doc-comment comment">/**
+   * 与测试相关的项目。
+   */</span>
+  <span class="token keyword">readonly</span> project<span class="token operator">:</span> <span class="token maybe-class-name">TestProject</span>
+  <span class="token doc-comment comment">/**
+   * 直接引用定义套件的测试文件。
+   */</span>
+  <span class="token keyword">readonly</span> module<span class="token operator">:</span> <span class="token maybe-class-name">TestModule</span>
+  <span class="token doc-comment comment">/**
+   * Name of the suite.
+   */</span>
+  <span class="token keyword">readonly</span> name<span class="token operator">:</span> <span class="token builtin">string</span>
+  <span class="token doc-comment comment">/**
+   * 套件的全名，包括用 `>` 分隔的所有父套件。
+   */</span>
+  <span class="token keyword">readonly</span> fullName<span class="token operator">:</span> <span class="token builtin">string</span>
+  <span class="token doc-comment comment">/**
+   * 唯一标识符。
+   * 该 ID 是确定的，多次运行时同一测试的 ID 将是相同的。
+   * ID 基于项目名称、文件路径和测试位置。
+   */</span>
+  <span class="token keyword">readonly</span> id<span class="token operator">:</span> <span class="token builtin">string</span>
+  <span class="token doc-comment comment">/**
+   * 文件中定义套件的位置。
+   * 只有在配置中启用 `includeTaskLocation` 时，才会收集位置信息。
+   */</span>
+  <span class="token keyword">readonly</span> <span class="token dom variable">location</span><span class="token operator">:</span> <span class="token punctuation">{</span> line<span class="token operator">:</span> <span class="token builtin">number</span><span class="token punctuation">,</span> column<span class="token operator">:</span> <span class="token builtin">number</span> <span class="token punctuation">}</span> <span class="token operator">|</span> <span class="token keyword nil">undefined</span>
+  <span class="token doc-comment comment">/**
+   * 套件和属于该套件的测试的集合。
+   */</span>
+  <span class="token keyword">readonly</span> children<span class="token operator">:</span> <span class="token maybe-class-name">TaskCollection</span>
+  <span class="token doc-comment comment">/**
+   * 启动套件时使用的选项。
+   */</span>
+  <span class="token keyword">readonly</span> options<span class="token operator">:</span> <span class="token maybe-class-name">TaskOptions</span>
+<span class="token punctuation">}</span></code></pre></section><section class="level3"aria-labelledby="testmodule"><h3 id="testmodule">TestModule</h3><p><code>TestModule</code> 表示包含套件和测试的单个文件。<pre class="language-ts"><code class="language-ts"><span class="token keyword">declare</span> <span class="token keyword">class</span> <span class="token class-name"><span class="token maybe-class-name">TestModule</span></span> <span class="token keyword">extends</span> <span class="token class-name"><span class="token maybe-class-name">SuiteImplementation</span></span> <span class="token punctuation">{</span>
+  <span class="token keyword">readonly</span> type <span class="token operator">=</span> <span class="token string">'module'</span>
+  <span class="token doc-comment comment">/**
+   * Task instance.
+   * <span class="token keyword">@experimental</span> Public task API 是实验性的，并不遵循 semver。
+   */</span>
+  <span class="token keyword">readonly</span> task<span class="token operator">:</span> <span class="token maybe-class-name">RunnerTestFile</span>
+  <span class="token doc-comment comment">/**
+   * 属于该文件的套件和测试集合。
+   */</span>
+  <span class="token keyword">readonly</span> children<span class="token operator">:</span> <span class="token maybe-class-name">TestCollection</span>
+  <span class="token doc-comment comment">/**
+   * 这通常是一个绝对的 Unix 文件路径。
+   * 如果文件不在磁盘上，它可以是一个虚拟 ID。
+   * 该值对应于 Vite 的 `ModuleGraph` id。
+   */</span>
+  <span class="token keyword">readonly</span> moduleId<span class="token operator">:</span> <span class="token builtin">string</span>
+  <span class="token doc-comment comment">/**
+   * 有关文件的有用信息，如持续时间、内存使用情况等。
+   * 如果文件尚未执行，所有诊断值都将返回 `0`。
+   */</span>
+  <span class="token function">diagnostic</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token operator">:</span> <span class="token maybe-class-name">ModuleDiagnostic</span>
+<span class="token punctuation">}</span>
+
+<span class="token keyword module">export</span> <span class="token keyword">interface</span> <span class="token class-name"><span class="token maybe-class-name">ModuleDiagnostic</span></span> <span class="token punctuation">{</span>
+  <span class="token doc-comment comment">/**
+   * 导入和启动环境所需的时间。
+   */</span>
+  environmentSetupDuration<span class="token operator">:</span> <span class="token builtin">number</span>
+  <span class="token doc-comment comment">/**
+   * Vitest 设置测试工具（运行程序、模拟等）所需的时间。
+   */</span>
+  prepareDuration<span class="token operator">:</span> <span class="token builtin">number</span>
+  <span class="token doc-comment comment">/**
+   * 导入测试文件所需的时间。
+   * 这包括导入文件中的所有内容和执行套件回调。
+   */</span>
+  collectDuration<span class="token operator">:</span> <span class="token builtin">number</span>
+  <span class="token doc-comment comment">/**
+   * 导入设置文件所需的时间。
+   */</span>
+  setupDuration<span class="token operator">:</span> <span class="token builtin">number</span>
+  <span class="token doc-comment comment">/**
+   * 文件中所有测试和钩子的累计持续时间。
+   */</span>
+  duration<span class="token operator">:</span> <span class="token builtin">number</span>
+<span class="token punctuation">}</span></code></pre></section><section class="level3"aria-labelledby="testcollection"><h3 id="testcollection">TestCollection</h3><p><code>TestCollection</code> 表示套件和测试的集合。它还提供了迭代自身的有用方法。<pre class="language-ts"><code class="language-ts"><span class="token keyword">declare</span> <span class="token keyword">class</span> <span class="token class-name"><span class="token maybe-class-name">TestCollection</span></span> <span class="token punctuation">{</span>
+  <span class="token doc-comment comment">/**
+   * 返回数组中特定索引处的测试或套件。
+   */</span>
+  <span class="token function">at</span><span class="token punctuation">(</span>index<span class="token operator">:</span> <span class="token builtin">number</span><span class="token punctuation">)</span><span class="token operator">:</span> <span class="token maybe-class-name">TestCase</span> <span class="token operator">|</span> <span class="token maybe-class-name">TestSuite</span> <span class="token operator">|</span> <span class="token keyword nil">undefined</span>
+  <span class="token doc-comment comment">/**
+   * 集合中测试和套件的数量。
+   */</span>
+  size<span class="token operator">:</span> <span class="token builtin">number</span>
+  <span class="token doc-comment comment">/**
+   * 以数组形式返回集合，以便于操作。
+   */</span>
+  <span class="token function">array</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token operator">:</span> <span class="token punctuation">(</span><span class="token maybe-class-name">TestCase</span> <span class="token operator">|</span> <span class="token maybe-class-name">TestSuite</span><span class="token punctuation">)</span><span class="token punctuation">[</span><span class="token punctuation">]</span>
+  <span class="token doc-comment comment">/**
+   * 过滤属于此集合及其子集合的所有套件。
+   */</span>
+  <span class="token function">allSuites</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token operator">:</span> <span class="token maybe-class-name">IterableIterator</span><span class="token operator">&#x3C;</span><span class="token maybe-class-name">TestSuite</span><span class="token operator">></span>
+  <span class="token doc-comment comment">/**
+   * 过滤属于此集合及其子集合的所有测试。
+   */</span>
+  <span class="token function">allTests</span><span class="token punctuation">(</span>state<span class="token operator">?</span><span class="token operator">:</span> <span class="token maybe-class-name">TestResult</span><span class="token punctuation">[</span><span class="token string">'state'</span><span class="token punctuation">]</span> <span class="token operator">|</span> <span class="token string">'running'</span><span class="token punctuation">)</span><span class="token operator">:</span> <span class="token maybe-class-name">IterableIterator</span><span class="token operator">&#x3C;</span><span class="token maybe-class-name">TestCase</span><span class="token operator">></span>
+  <span class="token doc-comment comment">/**
+   * 只筛选属于该集合的测试。
+   */</span>
+  <span class="token function">tests</span><span class="token punctuation">(</span>state<span class="token operator">?</span><span class="token operator">:</span> <span class="token maybe-class-name">TestResult</span><span class="token punctuation">[</span><span class="token string">'state'</span><span class="token punctuation">]</span> <span class="token operator">|</span> <span class="token string">'running'</span><span class="token punctuation">)</span><span class="token operator">:</span> <span class="token maybe-class-name">IterableIterator</span><span class="token operator">&#x3C;</span><span class="token maybe-class-name">TestCase</span><span class="token operator">></span>
+  <span class="token doc-comment comment">/**
+   * 仅筛选属于该系列的套件。
+   */</span>
+  <span class="token function">suites</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token operator">:</span> <span class="token maybe-class-name">IterableIterator</span><span class="token operator">&#x3C;</span><span class="token maybe-class-name">TestSuite</span><span class="token operator">></span><span class="token punctuation">;</span>
+  <span class="token punctuation">[</span><span class="token known-class-name class-name">Symbol</span><span class="token punctuation">.</span><span class="token property-access">iterator</span><span class="token punctuation">]</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token operator">:</span> <span class="token maybe-class-name">IterableIterator</span><span class="token operator">&#x3C;</span><span class="token maybe-class-name">TestSuite</span> <span class="token operator">|</span> <span class="token maybe-class-name">TestCase</span><span class="token operator">></span>
+<span class="token punctuation">}</span></code></pre><p>例如，你可以通过调用 <code>testFile.children.allTests()</code> 遍历文件中的所有测试：<pre class="language-ts"><code class="language-ts"><span class="token keyword">function</span> <span class="token function">onFileCollected</span><span class="token punctuation">(</span>testModule<span class="token operator">:</span> <span class="token maybe-class-name">TestModule</span><span class="token punctuation">)</span><span class="token operator">:</span> <span class="token keyword">void</span> <span class="token punctuation">{</span>
+  <span class="token console class-name">console</span><span class="token punctuation">.</span><span class="token method function property-access">log</span><span class="token punctuation">(</span><span class="token string">'collecting tests in'</span><span class="token punctuation">,</span> testModule<span class="token punctuation">.</span><span class="token property-access">moduleId</span><span class="token punctuation">)</span>
+
+  <span class="token comment">// iterate over all tests and suites in the module</span>
+  <span class="token keyword control-flow">for</span> <span class="token punctuation">(</span><span class="token keyword">const</span> task <span class="token keyword">of</span> testModule<span class="token punctuation">.</span><span class="token property-access">children</span><span class="token punctuation">.</span><span class="token method function property-access">allTests</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token console class-name">console</span><span class="token punctuation">.</span><span class="token method function property-access">log</span><span class="token punctuation">(</span><span class="token string">'collected'</span><span class="token punctuation">,</span> task<span class="token punctuation">.</span><span class="token property-access">type</span><span class="token punctuation">,</span> task<span class="token punctuation">.</span><span class="token property-access">fullName</span><span class="token punctuation">)</span>
+  <span class="token punctuation">}</span>
+<span class="token punctuation">}</span></code></pre></section><section class="level3"aria-labelledby="testproject"><h3 id="testproject">TestProject</h3><p><code>TestProject</code> 是与文件相关联的项目。该文件中的每个测试和套件都将引用同一个项目。<p>项目可用于获取配置或提供的上下文。<pre class="language-ts"><code class="language-ts"><span class="token keyword">declare</span> <span class="token keyword">class</span> <span class="token class-name"><span class="token maybe-class-name">TestProject</span></span> <span class="token punctuation">{</span>
+  <span class="token doc-comment comment">/**
+   * The global vitest instance.
+   * <span class="token keyword">@experimental</span> The public Vitest API 是实验性的，并不遵循 semver。
+   */</span>
+  <span class="token keyword">readonly</span> vitest<span class="token operator">:</span> <span class="token maybe-class-name">Vitest</span>
+  <span class="token doc-comment comment">/**
+   * 与该测试项目相关联的工作区项目。
+   * <span class="token keyword">@experimental</span> The public Vitest API 是实验性的，并不遵循 semver。
+   */</span>
+  <span class="token keyword">readonly</span> workspaceProject<span class="token operator">:</span> <span class="token maybe-class-name">WorkspaceProject</span>
+  <span class="token doc-comment comment">/**
+   * 已解决项目配置问题。
+   */</span>
+  <span class="token keyword">readonly</span> config<span class="token operator">:</span> <span class="token maybe-class-name">ResolvedProjectConfig</span>
+  <span class="token doc-comment comment">/**
+   * 已解决的全局配置问题。如果没有工作区项目，则与 `config`相同。
+   */</span>
+  <span class="token keyword">readonly</span> globalConfig<span class="token operator">:</span> <span class="token maybe-class-name">ResolvedConfig</span>
+  <span class="token doc-comment comment">/**
+   * 序列化的项目配置。这就是测试会收到的配置。
+   */</span>
+  <span class="token keyword">get</span> <span class="token function">serializedConfig</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token operator">:</span> <span class="token maybe-class-name">SerializedConfig</span>
+  <span class="token doc-comment comment">/**
+   * 项目名称，如果未设置，则为空字符串。
+   */</span>
+  <span class="token function">name</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token operator">:</span> <span class="token builtin">string</span>
+  <span class="token doc-comment comment">/**
+   * 为项目提供的自定义上下文。
+   */</span>
+  <span class="token function">context</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token operator">:</span> <span class="token maybe-class-name">ProvidedContext</span>
+  <span class="token doc-comment comment">/**
+   * 为项目提供自定义的可序列化上下文。测试运行后，该上下文将可供测试使用。
+   */</span>
+  <span class="token generic-function"><span class="token function">provide</span><span class="token generic class-name"><span class="token operator">&#x3C;</span><span class="token constant">T</span> <span class="token keyword">extends</span> <span class="token keyword">keyof</span> <span class="token maybe-class-name">ProvidedContext</span> <span class="token operator">&#x26;</span> <span class="token builtin">string</span><span class="token operator">></span></span></span><span class="token punctuation">(</span>key<span class="token operator">:</span> <span class="token constant">T</span><span class="token punctuation">,</span> value<span class="token operator">:</span> <span class="token maybe-class-name">ProvidedContext</span><span class="token punctuation">[</span><span class="token constant">T</span><span class="token punctuation">]</span><span class="token punctuation">)</span><span class="token operator">:</span> <span class="token keyword">void</span>
+<span class="token punctuation">}</span></code></pre></section></section><section class="level2"aria-labelledby="导出报告器-exported-reporters"><h2 id="导出报告器-exported-reporters">导出报告器 (Exported Reporters)</h2><p><code>vitest</code> 附带了一些<a href="/guide/reporters">内置报告器</a>，你可以开箱即用。<section class="level3"aria-labelledby="内置报告器"><h3 id="内置报告器">内置报告器:</h3><ol><li><code>BasicReporter</code><li><code>DefaultReporter</code><li><code>DotReporter</code><li><code>JsonReporter</code><li><code>VerboseReporter</code><li><code>TapReporter</code><li><code>JUnitReporter</code><li><code>TapFlatReporter</code><li><code>HangingProcessReporter</code></ol></section><section class="level3"aria-labelledby="基础抽象报告器"><h3 id="基础抽象报告器">基础抽象报告器:</h3><ol><li><code>BaseReporter</code></ol></section><section class="level3"aria-labelledby="接口报告器"><h3 id="接口报告器">接口报告器:</h3><ol><li><code>Reporter</code> <span style="float:footnote"><a href="../index.html#toc">Go to TOC</a></span></ol></section></section></section>

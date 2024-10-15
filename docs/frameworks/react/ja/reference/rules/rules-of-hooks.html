@@ -1,0 +1,74 @@
+<!doctype html><html lang="ja"><meta charset="utf-8"><title>フックのルール</title><meta name="viewport"content="width=device-width,initial-scale=1"><link rel="stylesheet"type="text/css"href="../../../../../themes/packages/prism-coy-theme/theme_common.css"><section class="level1"aria-labelledby="フックのルール"><h1 id="フックのルール">フックのルール</h1><intro>フックは再利用可能な UI ロジックを表す JavaScript の関数として定義されており、呼び出せる場所に関する制約があります。</intro><inlinetoc><section class="level2"aria-labelledby="フックはトップレベルでのみ呼び出す-only-call-hooks-at-the-top-level"><h2 id="フックはトップレベルでのみ呼び出す-only-call-hooks-at-the-top-level">フックはトップレベルでのみ呼び出す {/<em>only-call-hooks-at-the-top-level</em>/}</h2><p><code>use</code> で始まる関数名を持つ関数は React では<a href="/reference/react"><em>フック (hook)</em></a> と呼ばれます。<p><strong>ループ、条件分岐、ネストされた関数、<code>try</code>/<code>catch</code>/<code>finally</code> ブロックの内部でフックを呼び出してはいけません</strong>。代わりに、フックは常に React 関数のトップレベルで、早期 return を行う前に呼び出します。フックは React が関数コンポーネントをレンダーしている間にのみ呼び出すことができます。<ul><li>✅ <a href="/learn/your-first-component">関数コンポーネント</a>本体のトップレベルで呼び出す。<li>✅ <a href="/learn/reusing-logic-with-custom-hooks">カスタムフック</a>本体のトップレベルで呼び出す。</ul><pre class="language-js{2-3,8-9}"><code class="language-js{2-3,8-9}">function Counter() {
+  // ✅ Good: top-level in a function component
+  const [count, setCount] = useState(0);
+  // ...
+}
+
+function useWindowWidth() {
+  // ✅ Good: top-level in a custom Hook
+  const [width, setWidth] = useState(window.innerWidth);
+  // ...
+}</code></pre><p>以下のような場合にフック（<code>use</code> で始まる関数）を呼び出すことは<strong>サポートされていません</strong>。<ul><li>🔴 条件やループの内部でフックを呼び出してはいけない。<li>🔴 条件付き <code>return</code> 文の後でフックを呼び出してはいけない。<li>🔴 イベントハンドラ内でフックを呼び出してはいけない。<li>🔴 クラスコンポーネント内でフックを呼び出してはいけない。<li>🔴 <code>useMemo</code>、<code>useReducer</code>、<code>useEffect</code> に渡される関数内でフックを呼び出してはいけない。<li>🔴 <code>try</code>/<code>catch</code>/<code>finally</code> ブロック内でフックを呼び出してはいけない。</ul><p>これらのルールを破ると、以下のエラーが表示される可能性があります。<pre class="language-js{3-4,11-12,20-21}"><code class="language-js{3-4,11-12,20-21}">function Bad({ cond }) {
+  if (cond) {
+    // 🔴 Bad: inside a condition (to fix, move it outside!)
+    const theme = useContext(ThemeContext);
+  }
+  // ...
+}
+
+function Bad() {
+  for (let i = 0; i &#x3C; 10; i++) {
+    // 🔴 Bad: inside a loop (to fix, move it outside!)
+    const theme = useContext(ThemeContext);
+  }
+  // ...
+}
+
+function Bad({ cond }) {
+  if (cond) {
+    return;
+  }
+  // 🔴 Bad: after a conditional return (to fix, move it before the return!)
+  const theme = useContext(ThemeContext);
+  // ...
+}
+
+function Bad() {
+  function handleClick() {
+    // 🔴 Bad: inside an event handler (to fix, move it outside!)
+    const theme = useContext(ThemeContext);
+  }
+  // ...
+}
+
+function Bad() {
+  const style = useMemo(() => {
+    // 🔴 Bad: inside useMemo (to fix, move it outside!)
+    const theme = useContext(ThemeContext);
+    return createStyle(theme);
+  });
+  // ...
+}
+
+class Bad extends React.Component {
+  render() {
+    // 🔴 Bad: inside a class component (to fix, write a function component instead of a class!)
+    useEffect(() => {})
+    // ...
+  }
+}
+
+function Bad() {
+  try {
+    // 🔴 Bad: inside try/catch/finally block (to fix, move it outside!)
+    const [x, setX] = useState(0);
+  } catch {
+    const [x, setX] = useState(1);
+  }
+}</code></pre><p>これらの間違いを捕捉するために <a href="https://www.npmjs.com/package/eslint-plugin-react-hooks"><code>eslint-plugin-react-hooks</code> プラグイン</a>が利用可能です。</p><note><p><a href="/learn/reusing-logic-with-custom-hooks">カスタムフック</a>は他のフックを呼び出しても<em>構いません</em>（むしろそれが主目的です）。これは、カスタムフックも関数コンポーネントのレンダー中にのみ呼び出されることが前提だからです。</p></note></section><section class="level2"aria-labelledby="react-の関数からのみフックを呼び出す-only-call-hooks-from-react-functions"><h2 id="react-の関数からのみフックを呼び出す-only-call-hooks-from-react-functions">React の関数からのみフックを呼び出す {/<em>only-call-hooks-from-react-functions</em>/}</h2><p>通常の JavaScript 関数からフックを呼び出さないでください。代わりに以下のようにします。<p>✅ React の関数コンポーネントからフックを呼び出す。 ✅ <a href="/learn/reusing-logic-with-custom-hooks#extracting-your-own-custom-hook-from-a-component">カスタムフック</a>からフックを呼び出す。<p>このルールに従うことで、コンポーネント内のすべてのステートフルなロジックがそのソースコードから明確に見えることが保証されます。<pre class="language-js"><code class="language-js"><span class="token keyword">function</span> <span class="token function"><span class="token maybe-class-name">FriendList</span></span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  <span class="token keyword">const</span> <span class="token punctuation">[</span>onlineStatus<span class="token punctuation">,</span> setOnlineStatus<span class="token punctuation">]</span> <span class="token operator">=</span> <span class="token function">useOnlineStatus</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span> <span class="token comment">// ✅</span>
+<span class="token punctuation">}</span>
+
+<span class="token keyword">function</span> <span class="token function">setOnlineStatus</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span> <span class="token comment">// ❌ Not a component or custom Hook!</span>
+  <span class="token keyword">const</span> <span class="token punctuation">[</span>onlineStatus<span class="token punctuation">,</span> setOnlineStatus<span class="token punctuation">]</span> <span class="token operator">=</span> <span class="token function">useOnlineStatus</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span></code></pre><p><span style="float:footnote"><a href="../../index.html#toc">Go to TOC</a></span></section></inlinetoc></section>

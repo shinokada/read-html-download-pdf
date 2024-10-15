@@ -1,0 +1,104 @@
+<!doctype html><html lang="en"><meta charset="utf-8"><title>Bindings</title><meta name="viewport"content="width=device-width,initial-scale=1"><link rel="stylesheet"type="text/css"href="../../../../themes/packages/prism-coy-theme/theme_common.css"><section class="level1"aria-labelledby="bindings"><h1 id="bindings">Bindings</h1><ul><li>how for dom elements<li>list of all bindings<li>how for components</ul><p>Most of the time a clear separation between data flowing down and events going up is worthwhile and results in more robust apps. But in some cases - especially when interacting with form elements - it's more ergonomic to declare a two way binding. Svelte provides many element bindings out of the box, and also allows component bindings.<section class="level2"aria-labelledby="bindproperty-for-elements"><h2 id="bindproperty-for-elements">bind:<em>property</em> for elements</h2><pre class="language-svelte"><code class="language-svelte">&#x3C;! copy: false --->
+bind:property={variable}</code></pre><p>Data ordinarily flows down, from parent to child. The <code>bind:</code> directive allows data to flow the other way, from child to parent. Most bindings are specific to particular elements.<p>The simplest bindings reflect the value of a property, such as <code>input.value</code>.<pre class="language-svelte"><code class="language-svelte">&#x3C;input bind:value={name} />
+&#x3C;textarea bind:value={text} />
+
+&#x3C;input type="checkbox" bind:checked={yes} /></code></pre><p>If the name matches the value, you can use a shorthand.<pre class="language-svelte"><code class="language-svelte">&#x3C;input bind:value />
+&#x3C;!-- equivalent to
+&#x3C;input bind:value={value} />
+--></code></pre><p>Numeric input values are coerced; even though <code>input.value</code> is a string as far as the DOM is concerned, Svelte will treat it as a number. If the input is empty or invalid (in the case of <code>type="number"</code>), the value is <code>undefined</code>.<pre class="language-svelte"><code class="language-svelte">&#x3C;input type="number" bind:value={num} />
+&#x3C;input type="range" bind:value={num} /></code></pre><p>On <code>&#x3C;input></code> elements with <code>type="file"</code>, you can use <code>bind:files</code> to get the <a href="https://developer.mozilla.org/en-US/docs/Web/API/FileList"><code>FileList</code> of selected files</a>. When you want to update the files programmatically, you always need to use a <code>FileList</code> object. Currently <code>FileList</code> objects cannot be constructed directly, so you need to create a new <a href="https://developer.mozilla.org/en-US/docs/Web/API/DataTransfer"><code>DataTransfer</code></a> object and get <code>files</code> from there.<pre class="language-svelte"><code class="language-svelte">&#x3C;script>
+	let files = $state();
+
+	function clear() {
+		files = new DataTransfer().files; // null or undefined does not work
+	}
+&#x3C;/script>
+
+&#x3C;label for="avatar">Upload a picture:&#x3C;/label>
+&#x3C;input accept="image/png, image/jpeg" bind:files id="avatar" name="avatar" type="file" />
+&#x3C;button onclick={clear}>clear&#x3C;/button></code></pre><p><code>FileList</code> objects also cannot be modified, so if you want to e.g. delete a single file from the list, you need to create a new <code>DataTransfer</code> object and add the files you want to keep.<blockquote><p>[!NOTE] <code>DataTransfer</code> may not be available in server-side JS runtimes. Leaving the state that is bound to <code>files</code> uninitialized prevents potential errors if components are server-side rendered.</blockquote><p>If you're using <code>bind:</code> directives together with <code>on</code> event attributes, the binding will always fire before the event attribute.<pre class="language-svelte"><code class="language-svelte">&#x3C;script>
+	let value = 'Hello World';
+&#x3C;/script>
+
+&#x3C;input oninput={() => console.log('New value:', value)} bind:value /></code></pre><p>Here we were binding to the value of a text input, which uses the <code>input</code> event. Bindings on other elements may use different events such as <code>change</code>.</section><section class="level2"aria-labelledby="binding--value"><h2 id="binding--value">Binding <code>&#x3C;select></code> value</h2><p>A <code>&#x3C;select></code> value binding corresponds to the <code>value</code> property on the selected <code>&#x3C;option></code>, which can be any value (not just strings, as is normally the case in the DOM).<pre class="language-svelte"><code class="language-svelte">&#x3C;select bind:value={selected}>
+	&#x3C;option value={a}>a&#x3C;/option>
+	&#x3C;option value={b}>b&#x3C;/option>
+	&#x3C;option value={c}>c&#x3C;/option>
+&#x3C;/select></code></pre><p>A <code>&#x3C;select multiple></code> element behaves similarly to a checkbox group. The bound variable is an array with an entry corresponding to the <code>value</code> property of each selected <code>&#x3C;option></code>.<pre class="language-svelte"><code class="language-svelte">&#x3C;select multiple bind:value={fillings}>
+	&#x3C;option value="Rice">Rice&#x3C;/option>
+	&#x3C;option value="Beans">Beans&#x3C;/option>
+	&#x3C;option value="Cheese">Cheese&#x3C;/option>
+	&#x3C;option value="Guac (extra)">Guac (extra)&#x3C;/option>
+&#x3C;/select></code></pre><p>When the value of an <code>&#x3C;option></code> matches its text content, the attribute can be omitted.<pre class="language-svelte"><code class="language-svelte">&#x3C;select multiple bind:value={fillings}>
+	&#x3C;option>Rice&#x3C;/option>
+	&#x3C;option>Beans&#x3C;/option>
+	&#x3C;option>Cheese&#x3C;/option>
+	&#x3C;option>Guac (extra)&#x3C;/option>
+&#x3C;/select></code></pre><p>Elements with the <code>contenteditable</code> attribute support the following bindings:<ul><li><a href="https://developer.mozilla.org/en-US/docs/Web/API/Element/innerHTML"><code>innerHTML</code></a><li><a href="https://developer.mozilla.org/en-US/docs/Web/API/HTMLElement/innerText"><code>innerText</code></a><li><a href="https://developer.mozilla.org/en-US/docs/Web/API/Node/textContent"><code>textContent</code></a></ul><p>There are slight differences between each of these, read more about them <a href="https://developer.mozilla.org/en-US/docs/Web/API/Node/textContent#Differences_from_innerText">here</a>.<pre class="language-svelte"><code class="language-svelte">&#x3C;div contenteditable="true" bind:innerHTML={html} /></code></pre><p><code>&#x3C;details></code> elements support binding to the <code>open</code> property.<pre class="language-svelte"><code class="language-svelte">&#x3C;details bind:open={isOpen}>
+	&#x3C;summary>Details&#x3C;/summary>
+	&#x3C;p>Something small enough to escape casual notice.&#x3C;/p>
+&#x3C;/details></code></pre></section><section class="level2"aria-labelledby="media-element-bindings"><h2 id="media-element-bindings">Media element bindings</h2><p>Media elements (<code>&#x3C;audio></code> and <code>&#x3C;video></code>) have their own set of bindings — seven <em>readonly</em> ones...<ul><li><code>duration</code> (readonly) — the total duration of the video, in seconds<li><code>buffered</code> (readonly) — an array of <code>{start, end}</code> objects<li><code>played</code> (readonly) — ditto<li><code>seekable</code> (readonly) — ditto<li><code>seeking</code> (readonly) — boolean<li><code>ended</code> (readonly) — boolean<li><code>readyState</code> (readonly) — number between (and including) 0 and 4</ul><p>...and five <em>two-way</em> bindings:<ul><li><code>currentTime</code> — the current playback time in the video, in seconds<li><code>playbackRate</code> — how fast or slow to play the video, where 1 is 'normal'<li><code>paused</code> — this one should be self-explanatory<li><code>volume</code> — a value between 0 and 1<li><code>muted</code> — a boolean value indicating whether the player is muted</ul><p>Videos additionally have readonly <code>videoWidth</code> and <code>videoHeight</code> bindings.<pre class="language-svelte"><code class="language-svelte">&#x3C;video
+	src={clip}
+	bind:duration
+	bind:buffered
+	bind:played
+	bind:seekable
+	bind:seeking
+	bind:ended
+	bind:readyState
+	bind:currentTime
+	bind:playbackRate
+	bind:paused
+	bind:volume
+	bind:muted
+	bind:videoWidth
+	bind:videoHeight
+/></code></pre></section><section class="level2"aria-labelledby="image-element-bindings"><h2 id="image-element-bindings">Image element bindings</h2><p>Image elements (<code>&#x3C;img></code>) have two readonly bindings:<ul><li><code>naturalWidth</code> (readonly) — the original width of the image, available after the image has loaded<li><code>naturalHeight</code> (readonly) — the original height of the image, available after the image has loaded</ul><pre class="language-svelte"><code class="language-svelte">&#x3C;img
+	bind:naturalWidth
+	bind:naturalHeight
+>&#x3C;/img></code></pre></section><section class="level2"aria-labelledby="block-level-element-bindings"><h2 id="block-level-element-bindings">Block-level element bindings</h2><p>Block-level elements have 4 read-only bindings, measured using a technique similar to <a href="http://www.backalleycoder.com/2013/03/18/cross-browser-event-based-element-resize-detection/">this one</a>:<ul><li><code>clientWidth</code><li><code>clientHeight</code><li><code>offsetWidth</code><li><code>offsetHeight</code></ul><pre class="language-svelte"><code class="language-svelte">&#x3C;div bind:offsetWidth={width} bind:offsetHeight={height}>
+	&#x3C;Chart {width} {height} />
+&#x3C;/div></code></pre></section><section class="level2"aria-labelledby="bindgroup"><h2 id="bindgroup">bind:group</h2><pre class="language-svelte"><code class="language-svelte">&#x3C;! copy: false --->
+bind:group={variable}</code></pre><p>Inputs that work together can use <code>bind:group</code>.<pre class="language-svelte"><code class="language-svelte">&#x3C;script>
+	let tortilla = 'Plain';
+
+	/** @type {Array&#x3C;string>} */
+	let fillings = [];
+&#x3C;/script>
+
+&#x3C;!-- grouped radio inputs are mutually exclusive -->
+&#x3C;input type="radio" bind:group={tortilla} value="Plain" />
+&#x3C;input type="radio" bind:group={tortilla} value="Whole wheat" />
+&#x3C;input type="radio" bind:group={tortilla} value="Spinach" />
+
+&#x3C;!-- grouped checkbox inputs populate an array -->
+&#x3C;input type="checkbox" bind:group={fillings} value="Rice" />
+&#x3C;input type="checkbox" bind:group={fillings} value="Beans" />
+&#x3C;input type="checkbox" bind:group={fillings} value="Cheese" />
+&#x3C;input type="checkbox" bind:group={fillings} value="Guac (extra)" /></code></pre><blockquote><p>[!NOTE] <code>bind:group</code> only works if the inputs are in the same Svelte component.</blockquote></section><section class="level2"aria-labelledby="bindthis"><h2 id="bindthis">bind:this</h2><pre class="language-svelte"><code class="language-svelte">&#x3C;! copy: false --->
+bind:this={dom_node}</code></pre><p>To get a reference to a DOM node, use <code>bind:this</code>.<pre class="language-svelte"><code class="language-svelte">&#x3C;script>
+	import { onMount } from 'svelte';
+
+	/** @type {HTMLCanvasElement} */
+	let canvasElement;
+
+	onMount(() => {
+		const ctx = canvasElement.getContext('2d');
+		drawStuff(ctx);
+	});
+&#x3C;/script>
+
+&#x3C;canvas bind:this={canvasElement} /></code></pre><p>Components also support <code>bind:this</code>, allowing you to interact with component instances programmatically.<pre class="language-svelte"><code class="language-svelte">&#x3C;! App.svelte --->
+&#x3C;ShoppingCart bind:this={cart} />
+
+&#x3C;button onclick={() => cart.empty()}> Empty shopping cart &#x3C;/button></code></pre><pre class="language-svelte"><code class="language-svelte">&#x3C;! ShoppingCart.svelte --->
+&#x3C;script>
+	// All instance exports are available on the instance object
+	export function empty() {
+		// ...
+	}
+&#x3C;/script></code></pre><blockquote><p>[!NOTE] Note that we can't do <code>{cart.empty}</code> since <code>cart</code> is <code>undefined</code> when the button is first rendered and throws an error.</blockquote></section><section class="level2"aria-labelledby="bindproperty-for-components"><h2 id="bindproperty-for-components">bind:<em>property</em> for components</h2><pre class="language-svelte"><code class="language-svelte">bind:property={variable}</code></pre><p>You can bind to component props using the same syntax as for elements.<pre class="language-svelte"><code class="language-svelte">&#x3C;Keypad bind:value={pin} /></code></pre><p>While Svelte props are reactive without binding, that reactivity only flows downward into the component by default. Using <code>bind:property</code> allows changes to the property from within the component to flow back up out of the component.<p>To mark a property as bindable, use the <code>$bindable</code> rune:<pre class="language-svelte"><code class="language-svelte">&#x3C;script>
+	let { readonlyProperty, bindableProperty = $bindable() } = $props();
+&#x3C;/script></code></pre><p>Declaring a property as bindable means it <em>can</em> be used using <code>bind:</code>, not that it <em>must</em> be used using <code>bind:</code>.<p>Bindable properties can have a fallback value:<pre class="language-svelte"><code class="language-svelte">&#x3C;script>
+	let { bindableProperty = $bindable('fallback value') } = $props();
+&#x3C;/script></code></pre><p>This fallback value <em>only</em> applies when the property is <em>not</em> bound. When the property is bound and a fallback value is present, the parent is expected to provide a value other than <code>undefined</code>, else a runtime error is thrown. This prevents hard-to-reason-about situations where it's unclear which value should apply. <span style="float:footnote"><a href="../index.html#toc">Go to TOC</a></span></section></section>

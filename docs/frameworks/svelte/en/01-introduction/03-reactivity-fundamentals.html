@@ -1,0 +1,71 @@
+<!doctype html><html lang="en"><meta charset="utf-8"><title>Reactivity fundamentals</title><meta name="viewport"content="width=device-width,initial-scale=1"><link rel="stylesheet"type="text/css"href="../../../../themes/packages/prism-coy-theme/theme_common.css"><section class="level1"aria-labelledby="reactivity-fundamentals"><h1 id="reactivity-fundamentals">Reactivity fundamentals</h1><p>Reactivity is at the heart of interactive UIs. When you click a button, you expect some kind of response. It's your job as a developer to make this happen. It's Svelte's job to make your job as intuitive as possible, by providing a good API to express reactive systems.<section class="level2"aria-labelledby="runes"><h2 id="runes">Runes</h2><p>Svelte 5 uses <em>runes</em>, a powerful set of primitives for controlling reactivity inside your Svelte components and inside <code>.svelte.js</code> and <code>.svelte.ts</code> modules.<p>Runes are function-like symbols that provide instructions to the Svelte compiler. You don't need to import them from anywhere — when you use Svelte, they're part of the language.<p>The following sections introduce the most important runes for declare state, derived state and side effects at a high level. For more details refer to the later sections on <a href="state">state</a> and <a href="side-effects">side effects</a>.</section><section class="level2"aria-labelledby="state"><h2 id="state"><code>$state</code></h2><p>Reactive state is declared with the <code>$state</code> rune:<pre class="language-svelte"><code class="language-svelte">&#x3C;script>
+	let count = $state(0);
+&#x3C;/script>
+
+&#x3C;button onclick={() => count++}>
+	clicks: {count}
+&#x3C;/button></code></pre><p>You can also use <code>$state</code> in class fields (whether public or private):<pre class="language-js"><code class="language-js"><span class="token comment">// @errors: 7006 2554</span>
+<span class="token keyword">class</span> <span class="token class-name">Todo</span> <span class="token punctuation">{</span>
+	done <span class="token operator">=</span> <span class="token function">$state</span><span class="token punctuation">(</span><span class="token boolean">false</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+	text <span class="token operator">=</span> <span class="token function">$state</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+	<span class="token function">constructor</span><span class="token punctuation">(</span><span class="token parameter">text</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+		<span class="token keyword">this</span><span class="token punctuation">.</span><span class="token property-access">text</span> <span class="token operator">=</span> text<span class="token punctuation">;</span>
+	<span class="token punctuation">}</span>
+<span class="token punctuation">}</span></code></pre><blockquote><p>[!LEGACY] In Svelte 4, state was implicitly reactive if the variable was declared at the top level<pre class="language-svelte"><code class="language-svelte">&#x3C;script>
+	let count = 0;
+&#x3C;/script>
+
+&#x3C;button on:click={() => count++}>
+	clicks: {count}
+&#x3C;/button></code></pre></blockquote></section><section class="level2"aria-labelledby="derived"><h2 id="derived"><code>$derived</code></h2><p>Derived state is declared with the <code>$derived</code> rune:<pre class="language-svelte"><code class="language-svelte">&#x3C;script>
+	let count = $state(0);
+	let doubled = $derived(count * 2);
+&#x3C;/script>
+
+&#x3C;button onclick={() => count++}>
+	{doubled}
+&#x3C;/button>
+
+&#x3C;p>{count} doubled is {doubled}&#x3C;/p></code></pre><p>The expression inside <code>$derived(...)</code> should be free of side-effects. Svelte will disallow state changes (e.g. <code>count++</code>) inside derived expressions.<p>As with <code>$state</code>, you can mark class fields as <code>$derived</code>.<blockquote><p>[!LEGACY] In Svelte 4, you could use reactive statements for this.<pre class="language-svelte"><code class="language-svelte">&#x3C;script>
+	let count = 0;
+	$: doubled = count * 2;
+&#x3C;/script>
+
+&#x3C;button on:click={() => count++}>
+	{doubled}
+&#x3C;/button>
+
+&#x3C;p>{count} doubled is {doubled}&#x3C;/p></code></pre><p>This only worked at the top level of a component.</blockquote></section><section class="level2"aria-labelledby="effect"><h2 id="effect"><code>$effect</code></h2><p>To run <em>side-effects</em> when the component is mounted to the DOM, and when values change, we can use the <code>$effect</code> rune (<a href="/#H4sIAAAAAAAAE31T24rbMBD9lUG7kAQ2sbdlX7xOYNk_aB_rQhRpbAsU2UiTW0P-vbrYubSlYGzmzMzROTPymdVKo2PFjzMzfIusYB99z14YnfoQuD1qQh-7bmdFQEonrOppVZmKNBI49QthCc-OOOH0LZ-9jxnR6c7eUpOnuv6KeT5JFdcqbvbcBcgDz1jXKGg6ncFyBedYR6IzLrAZwiN5vtSxaJA-EzadfJEjKw11C6GR22-BLH8B_wxdByWpvUYtqqal2XB6RVkG1CoHB6U1WJzbnYFDiwb3aGEdDa3Bm1oH12sQLTcNPp7r56m_00mHocSG97_zd7ICUXonA5fwKbPbkE2ZtMJGGVkEdctzQi4QzSwr9prnFYNk5hpmqVuqPQjNnfOJoMF22lUsrq_UfIN6lfSVyvQ7grB3X2mjMZYO3XO9w-U5iLx42qg29md3BP_ni5P4gy9ikTBlHxjLzAtPDlyYZmRdjAbGq7HprEQ7p64v4LU_guu0kvAkhBim3nMplWl8FreQD-CW20aZR0wq12t-KqDWeBywhvexKC3memmDwlHAv9q4Vo2ZK8KtK0CgX7u9J8wXbzdKv-nRnfF_2baTqlYoWUF2h5efl9-n0O6koAMAAA==">demo</a>):<pre class="language-svelte"><code class="language-svelte">&#x3C;script>
+	let size = $state(50);
+	let color = $state('#ff3e00');
+
+	let canvas;
+
+	$effect(() => {
+		const context = canvas.getContext('2d');
+		context.clearRect(0, 0, canvas.width, canvas.height);
+
+		// this will re-run whenever `color` or `size` change
+		context.fillStyle = color;
+		context.fillRect(0, 0, size, size);
+	});
+&#x3C;/script>
+
+&#x3C;canvas bind:this={canvas} width="100" height="100" /></code></pre><p>The function passed to <code>$effect</code> will run when the component mounts, and will re-run after any changes to the values it reads that were declared with <code>$state</code> or <code>$derived</code> (including those passed in with <code>$props</code>). Re-runs are batched (i.e. changing <code>color</code> and <code>size</code> in the same moment won't cause two separate runs), and happen after any DOM updates have been applied.<blockquote><p>[!LEGACY] In Svelte 4, you could use reactive statements for this.<pre class="language-svelte"><code class="language-svelte">&#x3C;script>
+	let size = 50;
+	let color = '#ff3e00';
+
+	let canvas;
+
+	$: {
+		const context = canvas.getContext('2d');
+		context.clearRect(0, 0, canvas.width, canvas.height);
+
+		// this will re-run whenever `color` or `size` change
+		context.fillStyle = color;
+		context.fillRect(0, 0, size, size);
+	}
+&#x3C;/script>
+
+&#x3C;canvas bind:this={canvas} width="100" height="100" /></code></pre><p>This only worked at the top level of a component. <span style="float:footnote"><a href="../index.html#toc">Go to TOC</a></span></blockquote></section></section>

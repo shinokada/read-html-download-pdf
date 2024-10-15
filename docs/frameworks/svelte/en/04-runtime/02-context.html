@@ -1,0 +1,55 @@
+<!doctype html><html lang="en"><meta charset="utf-8"><title>Context</title><meta name="viewport"content="width=device-width,initial-scale=1"><link rel="stylesheet"type="text/css"href="../../../../themes/packages/prism-coy-theme/theme_common.css"><section class="level1"aria-labelledby="context"><h1 id="context">Context</h1><ul><li>get/set/hasContext<li>how to use, best practises (like encapsulating them)</ul><p>Most state is component-level state that lives as long as its component lives. There's also section-wide or app-wide state however, which also needs to be handled somehow.<p>The easiest way to do that is to create global state and just import that.<pre class="language-ts"><code class="language-ts"><span class="token comment">/// file: state.svelte.js</span>
+<span class="token keyword module">export</span> <span class="token keyword">const</span> myGlobalState <span class="token operator">=</span> <span class="token function">$state</span><span class="token punctuation">(</span><span class="token punctuation">{</span>
+	user<span class="token operator">:</span> <span class="token punctuation">{</span>
+		<span class="token comment">/* ... */</span>
+	<span class="token punctuation">}</span>
+	<span class="token comment">/* ... */</span>
+<span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">;</span></code></pre><pre class="language-svelte"><code class="language-svelte">&#x3C;! file: App.svelte --->
+&#x3C;script>
+	import { myGlobalState } from './state.svelte';
+	// ...
+&#x3C;/script></code></pre><p>This has a few drawbacks though:<ul><li>it only safely works when your global state is only used client-side - for example, when you're building a single page application that does not render any of your components on the server. If your state ends up being managed and updated on the server, it could end up being shared between sessions and/or users, causing bugs<li>it may give the false impression that certain state is global when in reality it should only used in a certain part of your app</ul><p>To solve these drawbacks, Svelte provides a few <code>context</code> primitives which alleviate these problems.<section class="level2"aria-labelledby="setting-and-getting-context"><h2 id="setting-and-getting-context">Setting and getting context</h2><p>To associate an arbitrary object with the current component, use <code>setContext</code>.<pre class="language-svelte"><code class="language-svelte">&#x3C;script>
+	import { setContext } from 'svelte';
+
+	setContext('key', value);
+&#x3C;/script></code></pre><p>The context is then available to children of the component (including slotted content) with <code>getContext</code>.<pre class="language-svelte"><code class="language-svelte">&#x3C;script>
+	import { getContext } from 'svelte';
+
+	const value = getContext('key');
+&#x3C;/script></code></pre><p><code>setContext</code> and <code>getContext</code> solve the above problems:<ul><li>the state is not global, it's scoped to the component. That way it's safe to render your components on the server and not leak state<li>it's clear that the state is not global but rather scoped to a specific component tree and therefore can't be used in other parts of your app</ul><blockquote><p>[!NOTE] <code>setContext</code>/<code>getContext</code> must be called during component initialisation.</blockquote><p>Context is not inherently reactive. If you need reactive values in context then you can pass a <code>$state</code> object into context, whos properties <em>will</em> be reactive.<pre class="language-svelte"><code class="language-svelte">&#x3C;! file: Parent.svelte --->
+&#x3C;script>
+	import { setContext } from 'svelte';
+
+	let value = $state({ count: 0 });
+	setContext('counter', value);
+&#x3C;/script>
+
+&#x3C;button onclick={() => value.count++}>increment&#x3C;/button></code></pre><pre class="language-svelte"><code class="language-svelte">&#x3C;! file: Child.svelte --->
+&#x3C;script>
+	import { setContext } from 'svelte';
+
+	const value = setContext('counter');
+&#x3C;/script>
+
+&#x3C;p>Count is {value.count}&#x3C;/p></code></pre><p>To check whether a given <code>key</code> has been set in the context of a parent component, use <code>hasContext</code>.<pre class="language-svelte"><code class="language-svelte">&#x3C;script>
+	import { hasContext } from 'svelte';
+
+	if (hasContext('key')) {
+		// do something
+	}
+&#x3C;/script></code></pre><p>You can also retrieve the whole context map that belongs to the closest parent component using <code>getAllContexts</code>. This is useful, for example, if you programmatically create a component and want to pass the existing context to it.<pre class="language-svelte"><code class="language-svelte">&#x3C;script>
+	import { getAllContexts } from 'svelte';
+
+	const contexts = getAllContexts();
+&#x3C;/script></code></pre></section><section class="level2"aria-labelledby="encapsulating-context-interactions"><h2 id="encapsulating-context-interactions">Encapsulating context interactions</h2><p>The above methods are very unopionated about how to use them. When your app grows in scale, it's worthwhile to encapsulate setting and getting the context into functions and properly type them.<pre class="language-ts"><code class="language-ts"><span class="token comment">// @errors: 2304</span>
+<span class="token keyword module">import</span> <span class="token imports"><span class="token punctuation">{</span> getContext<span class="token punctuation">,</span> setContext <span class="token punctuation">}</span></span> <span class="token keyword module">from</span> <span class="token string">'svelte'</span><span class="token punctuation">;</span>
+
+<span class="token keyword">let</span> userKey <span class="token operator">=</span> <span class="token known-class-name class-name">Symbol</span><span class="token punctuation">(</span><span class="token string">'user'</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+<span class="token keyword module">export</span> <span class="token keyword">function</span> <span class="token function">setUserContext</span><span class="token punctuation">(</span>user<span class="token operator">:</span> <span class="token maybe-class-name">User</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+	<span class="token function">setContext</span><span class="token punctuation">(</span>userKey<span class="token punctuation">,</span> user<span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+
+<span class="token keyword module">export</span> <span class="token keyword">function</span> <span class="token function">getUserContext</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token operator">:</span> <span class="token maybe-class-name">User</span> <span class="token punctuation">{</span>
+	<span class="token keyword control-flow">return</span> <span class="token function">getContext</span><span class="token punctuation">(</span>userKey<span class="token punctuation">)</span> <span class="token keyword module">as</span> <span class="token maybe-class-name">User</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span></code></pre><p><span style="float:footnote"><a href="../index.html#toc">Go to TOC</a></span></section></section>

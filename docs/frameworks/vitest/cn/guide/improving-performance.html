@@ -1,0 +1,98 @@
+<!doctype html><html lang="cn"><meta charset="utf-8"><title>性能优化 | 指南</title><meta name="viewport"content="width=device-width,initial-scale=1"><link rel="stylesheet"type="text/css"href="../../../../themes/packages/prism-coy-theme/theme_common.css"><section class="level1"aria-labelledby="性能优化"><h1 id="性能优化">性能优化</h1><section class="level2"aria-labelledby="测试隔离"><h2 id="测试隔离">测试隔离</h2><p>默认情况下，Vitest 在基于<a href="../config.html#pool">pool</a> 的隔离环境中运行每个测试文件：<ul><li><code>threads</code> 池在单独的 <a href="https://nodejs.org/api/worker_threads.html#class-worker"><code>Worker</code></a> 中运行每个测试文件<li><code>forks</code> 池在单独的 <a href="https://nodejs.org/api/child_process.html#child_processforkmodulepath-args-options">forked child process</a> 中运行每个测试文件<li><code>vmThreads</code> 池在单独的 <a href="https://nodejs.org/api/vm.html#vmcreatecontextcontextobject-options">VM context</a> 中运行每个测试文件，但它并行工作</ul><p>这大大增加了测试时间，这对于不依赖副作用并正确清理其状态的项目来说可能是不可取的（对于具有 <code>node</code> 环境的项目来说通常是这样）。在这种情况下，禁用隔离将提高测试的速度。要做到这一点，你可以向 CLI 提供 <code>--no-isolate</code> 标志，或者将 config 中的<a href="../config.html#isolate"><code>test.isolate</code></a> 属性设置为 <code>false</code>。如果你使用 <code>poolMatchGlobs</code> 同时使用多个池，你还可以禁用正在使用的特定池的隔离。</p>code-group<pre class="language-bash"><code class="language-bash">vitest --no-isolate</code></pre><pre class="language-ts"><code class="language-ts"><span class="token keyword module">import</span> <span class="token imports"><span class="token punctuation">{</span> defineConfig <span class="token punctuation">}</span></span> <span class="token keyword module">from</span> <span class="token string">'vitest/config'</span>
+
+<span class="token keyword module">export</span> <span class="token keyword module">default</span> <span class="token function">defineConfig</span><span class="token punctuation">(</span><span class="token punctuation">{</span>
+  test<span class="token operator">:</span> <span class="token punctuation">{</span>
+    isolate<span class="token operator">:</span> <span class="token boolean">false</span><span class="token punctuation">,</span>
+    <span class="token comment">// 你还可以仅对特定池禁用隔离</span>
+    poolOptions<span class="token operator">:</span> <span class="token punctuation">{</span>
+      forks<span class="token operator">:</span> <span class="token punctuation">{</span>
+        isolate<span class="token operator">:</span> <span class="token boolean">false</span><span class="token punctuation">,</span>
+      <span class="token punctuation">}</span><span class="token punctuation">,</span>
+    <span class="token punctuation">}</span><span class="token punctuation">,</span>
+  <span class="token punctuation">}</span><span class="token punctuation">,</span>
+<span class="token punctuation">}</span><span class="token punctuation">)</span></code></pre><blockquote>如果使用的是 `vmThreads` 池，则不能禁用隔离。请改用 `threads` 池来提高测试性能。</blockquote><p>对于某些项目，可能还需要禁用并行性以缩短启动时间。为此，请向 CLI 提供 <code>--no-file-parallelism</code> 标志，或将 config 中的<a href="../config.html#fileParallelism"><code>test.fileParallelism</code></a> 属性设置为 <code>false</code>。</p>code-group<pre class="language-bash"><code class="language-bash">vitest --no-file-parallelism</code></pre><pre class="language-ts"><code class="language-ts"><span class="token keyword module">import</span> <span class="token imports"><span class="token punctuation">{</span> defineConfig <span class="token punctuation">}</span></span> <span class="token keyword module">from</span> <span class="token string">'vitest/config'</span>
+
+<span class="token keyword module">export</span> <span class="token keyword module">default</span> <span class="token function">defineConfig</span><span class="token punctuation">(</span><span class="token punctuation">{</span>
+  test<span class="token operator">:</span> <span class="token punctuation">{</span>
+    fileParallelism<span class="token operator">:</span> <span class="token boolean">false</span><span class="token punctuation">,</span>
+  <span class="token punctuation">}</span><span class="token punctuation">,</span>
+<span class="token punctuation">}</span><span class="token punctuation">)</span></code></pre></section><section class="level2"aria-labelledby="pool"><h2 id="pool">Pool</h2><p>默认情况下，Vitest 在 <code>pool: 'forks'</code> 中运行测试。虽然 <code>'forks'</code> 池更适合解决兼容性问题（<a href="/guide/common-errors.html#failed-to-terminate-worker">hanging process</a> 和<a href="/guide/common-errors.html#segfaults-and-native-code-errors">segfaults</a>），但在较大的项目中，它可能比 <code>pool: 'threads'</code> 稍慢。<p>你可以尝试通过切换配置中的 <code>pool</code> 选项来改善测试运行时间：</p>code-group<pre class="language-bash"><code class="language-bash">vitest --pool<span class="token operator">=</span>threads</code></pre><pre class="language-ts"><code class="language-ts"><span class="token keyword module">import</span> <span class="token imports"><span class="token punctuation">{</span> defineConfig <span class="token punctuation">}</span></span> <span class="token keyword module">from</span> <span class="token string">'vitest/config'</span>
+
+<span class="token keyword module">export</span> <span class="token keyword module">default</span> <span class="token function">defineConfig</span><span class="token punctuation">(</span><span class="token punctuation">{</span>
+  test<span class="token operator">:</span> <span class="token punctuation">{</span>
+    pool<span class="token operator">:</span> <span class="token string">'threads'</span><span class="token punctuation">,</span>
+  <span class="token punctuation">}</span><span class="token punctuation">,</span>
+<span class="token punctuation">}</span><span class="token punctuation">)</span></code></pre></section><section class="level2"aria-labelledby="sharding"><h2 id="sharding">Sharding</h2><p>测试分片意味着一次运行一小部分测试用例。当你有多台可用于同时运行测试的机器时，它会很有用。<p>要在多个不同的运行中拆分 Vitest 测试，请将 <a href="/guide/cli#shard"><code>--shard</code></a> 选项与 <a href="/guide/reporters#blob-reporter"><code>--reporter=blob</code></a> 选项一起使用：<pre class="language-sh"><code class="language-sh">vitest run --reporter=blob --shard=1/3 # 1st machine
+vitest run --reporter=blob --shard=2/3 # 2nd machine
+vitest run --reporter=blob --shard=3/3 # 3rd machine</code></pre><p>从每台计算机收集存储在 <code>.vitest-reports</code> 目录中的结果，并使用 <a href="/guide/cli#merge-reports"><code>--merge-reports</code></a> 选项将其合并：<pre class="language-sh"><code class="language-sh">vitest --merge-reports</code></pre><details><summary>Github action example</summary><p>This setup is also used at <a href="https://github.com/vitest-tests/test-sharding">https://github.com/vitest-tests/test-sharding</a>.<pre class="language-yaml"><code class="language-yaml"><span class="token comment"># Inspired from https://playwright.dev/docs/test-sharding</span>
+<span class="token key atrule">name</span><span class="token punctuation">:</span> Tests
+<span class="token key atrule">on</span><span class="token punctuation">:</span>
+  <span class="token key atrule">push</span><span class="token punctuation">:</span>
+    <span class="token key atrule">branches</span><span class="token punctuation">:</span>
+      <span class="token punctuation">-</span> main
+<span class="token key atrule">jobs</span><span class="token punctuation">:</span>
+  <span class="token key atrule">tests</span><span class="token punctuation">:</span>
+    <span class="token key atrule">runs-on</span><span class="token punctuation">:</span> ubuntu<span class="token punctuation">-</span>latest
+    <span class="token key atrule">strategy</span><span class="token punctuation">:</span>
+      <span class="token key atrule">matrix</span><span class="token punctuation">:</span>
+        <span class="token key atrule">shardIndex</span><span class="token punctuation">:</span> <span class="token punctuation">[</span><span class="token number">1</span><span class="token punctuation">,</span> <span class="token number">2</span><span class="token punctuation">,</span> <span class="token number">3</span><span class="token punctuation">,</span> <span class="token number">4</span><span class="token punctuation">]</span>
+        <span class="token key atrule">shardTotal</span><span class="token punctuation">:</span> <span class="token punctuation">[</span><span class="token number">4</span><span class="token punctuation">]</span>
+    <span class="token key atrule">steps</span><span class="token punctuation">:</span>
+      <span class="token punctuation">-</span> <span class="token key atrule">uses</span><span class="token punctuation">:</span> actions/checkout@v4
+      <span class="token punctuation">-</span> <span class="token key atrule">uses</span><span class="token punctuation">:</span> actions/setup<span class="token punctuation">-</span>node@v4
+        <span class="token key atrule">with</span><span class="token punctuation">:</span>
+          <span class="token key atrule">node-version</span><span class="token punctuation">:</span> <span class="token number">20</span>
+
+      <span class="token punctuation">-</span> <span class="token key atrule">name</span><span class="token punctuation">:</span> Install pnpm
+        <span class="token key atrule">uses</span><span class="token punctuation">:</span> pnpm/action<span class="token punctuation">-</span>setup@v4
+
+      <span class="token punctuation">-</span> <span class="token key atrule">name</span><span class="token punctuation">:</span> Install dependencies
+        <span class="token key atrule">run</span><span class="token punctuation">:</span> pnpm i
+
+      <span class="token punctuation">-</span> <span class="token key atrule">name</span><span class="token punctuation">:</span> Run tests
+        <span class="token key atrule">run</span><span class="token punctuation">:</span> pnpm run test <span class="token punctuation">-</span><span class="token punctuation">-</span>reporter=blob <span class="token punctuation">-</span><span class="token punctuation">-</span>shard=$<span class="token punctuation">{</span><span class="token punctuation">{</span> matrix.shardIndex <span class="token punctuation">}</span><span class="token punctuation">}</span>/$<span class="token punctuation">{</span><span class="token punctuation">{</span> matrix.shardTotal <span class="token punctuation">}</span><span class="token punctuation">}</span>
+
+      <span class="token punctuation">-</span> <span class="token key atrule">name</span><span class="token punctuation">:</span> Upload blob report to GitHub Actions Artifacts
+        <span class="token key atrule">if</span><span class="token punctuation">:</span> $<span class="token punctuation">{</span><span class="token punctuation">{</span> <span class="token tag">!cancelled()</span> <span class="token punctuation">}</span><span class="token punctuation">}</span>
+        <span class="token key atrule">uses</span><span class="token punctuation">:</span> actions/upload<span class="token punctuation">-</span>artifact@v4
+        <span class="token key atrule">with</span><span class="token punctuation">:</span>
+          <span class="token key atrule">name</span><span class="token punctuation">:</span> blob<span class="token punctuation">-</span>report<span class="token punctuation">-</span>$<span class="token punctuation">{</span><span class="token punctuation">{</span> matrix.shardIndex <span class="token punctuation">}</span><span class="token punctuation">}</span>
+          <span class="token key atrule">path</span><span class="token punctuation">:</span> .vitest<span class="token punctuation">-</span>reports/*
+          <span class="token key atrule">include-hidden-files</span><span class="token punctuation">:</span> <span class="token boolean important">true</span>
+          <span class="token key atrule">retention-days</span><span class="token punctuation">:</span> <span class="token number">1</span>
+
+  <span class="token key atrule">merge-reports</span><span class="token punctuation">:</span>
+    <span class="token key atrule">if</span><span class="token punctuation">:</span> $<span class="token punctuation">{</span><span class="token punctuation">{</span> <span class="token tag">!cancelled()</span> <span class="token punctuation">}</span><span class="token punctuation">}</span>
+    <span class="token key atrule">needs</span><span class="token punctuation">:</span> <span class="token punctuation">[</span>tests<span class="token punctuation">]</span>
+
+    <span class="token key atrule">runs-on</span><span class="token punctuation">:</span> ubuntu<span class="token punctuation">-</span>latest
+    <span class="token key atrule">steps</span><span class="token punctuation">:</span>
+      <span class="token punctuation">-</span> <span class="token key atrule">uses</span><span class="token punctuation">:</span> actions/checkout@v4
+      <span class="token punctuation">-</span> <span class="token key atrule">uses</span><span class="token punctuation">:</span> actions/setup<span class="token punctuation">-</span>node@v4
+        <span class="token key atrule">with</span><span class="token punctuation">:</span>
+          <span class="token key atrule">node-version</span><span class="token punctuation">:</span> <span class="token number">20</span>
+
+      <span class="token punctuation">-</span> <span class="token key atrule">name</span><span class="token punctuation">:</span> Install pnpm
+        <span class="token key atrule">uses</span><span class="token punctuation">:</span> pnpm/action<span class="token punctuation">-</span>setup@v4
+
+      <span class="token punctuation">-</span> <span class="token key atrule">name</span><span class="token punctuation">:</span> Install dependencies
+        <span class="token key atrule">run</span><span class="token punctuation">:</span> pnpm i
+
+      <span class="token punctuation">-</span> <span class="token key atrule">name</span><span class="token punctuation">:</span> Download blob reports from GitHub Actions Artifacts
+        <span class="token key atrule">uses</span><span class="token punctuation">:</span> actions/download<span class="token punctuation">-</span>artifact@v4
+        <span class="token key atrule">with</span><span class="token punctuation">:</span>
+          <span class="token key atrule">path</span><span class="token punctuation">:</span> .vitest<span class="token punctuation">-</span>reports
+          <span class="token key atrule">pattern</span><span class="token punctuation">:</span> blob<span class="token punctuation">-</span>report<span class="token punctuation">-</span>*
+          <span class="token key atrule">merge-multiple</span><span class="token punctuation">:</span> <span class="token boolean important">true</span>
+
+      <span class="token punctuation">-</span> <span class="token key atrule">name</span><span class="token punctuation">:</span> Merge reports
+        <span class="token key atrule">run</span><span class="token punctuation">:</span> npx vitest <span class="token punctuation">-</span><span class="token punctuation">-</span>merge<span class="token punctuation">-</span>reports</code></pre></details><blockquote>测试分片在多 CPU 数量的机器上也很有用。<p>Vitest 将只在其主线程中运行一个 Vite 服务器。其余的线程用于运行测试文件。 在高 CPU 计数的机器中，主线程可能会成为瓶颈，因为它无法处理来自线程的所有请求。例如，在 32 CPU 机器中，主线程负责处理来自 31 个测试线程的负载。<p>为了减少主线程的 Vite 服务器的负载，可以使用测试分片。负载可以在多个 Vite 服务器上进行平衡。<pre class="language-sh"><code class="language-sh"># Example for splitting tests on 32 CPU to 4 shards.
+# As each process needs 1 main thread, there's 7 threads for test runners (1+7)*4 = 32
+# Use VITEST_MAX_THREADS or VITEST_MAX_FORKS depending on the pool:
+VITEST_MAX_THREADS=7 vitest run --reporter=blob --shard=1/4 &#x26; \
+VITEST_MAX_THREADS=7 vitest run --reporter=blob --shard=2/4 &#x26; \
+VITEST_MAX_THREADS=7 vitest run --reporter=blob --shard=3/4 &#x26; \
+VITEST_MAX_THREADS=7 vitest run --reporter=blob --shard=4/4 &#x26; \
+wait # https://man7.org/linux/man-pages/man2/waitpid.2.html
+
+vitest --merge-reports</code></pre></blockquote><span style="float:footnote"><a href="../index.html#toc">Go to TOC</a></span></section></section>

@@ -1,0 +1,54 @@
+<!doctype html><html lang="cn"><meta charset="utf-8"><title>全局上下文</title><meta name="viewport"content="width=device-width,initial-scale=1"><link rel="stylesheet"type="text/css"href="../../../../themes/packages/prism-coy-theme/theme_common.css"><section class="level1"aria-labelledby="全局上下文"><h1 id="全局上下文">全局上下文</h1><p>Slidev 注入了一些全局上下文。它们可用于高级导航控制。<section class="level2"aria-labelledby="direct-usage"><h2 id="direct-usage">直接使用</h2><p>你可以直接在你的幻灯片或组件中访问它们：<pre class="language-md"><code class="language-md"><span class="token comment">&#x3C;!-- slides.md --></span>
+
+<span class="token title important"><span class="token punctuation">#</span> Page 1</span>
+
+当前正在查看第 {{ $nav.currentPage }} 页</code></pre><pre class="language-vue"><code class="language-vue">&#x3C;!-- Foo.vue -->
+
+&#x3C;template>
+  &#x3C;div>Title: {{ $slidev.configs.title }}&#x3C;/div>
+  &#x3C;button @click="$nav.next">
+    下一步动画
+  &#x3C;/button>
+  &#x3C;button @click="$nav.nextSlide">
+    下一张幻灯片
+  &#x3C;/button>
+&#x3C;/template></code></pre></section><section class="level2"aria-labelledby="composable-usage"><h2 id="composable-usage">通过 Composable 使用</h2><blockquote><p>自 v0.48.0 起可用</blockquote><p>如果你想以编程方式获取上下文（也是类型安全的），你可以从 <code>@slidev/client</code> 导入 composable：<pre class="language-vue"><code class="language-vue">&#x3C;script setup>
+import { onSlideEnter, onSlideLeave, useDarkMode, useIsSlideActive, useNav, useSlideContext } from '@slidev/client'
+
+const { $slidev } = useSlideContext()
+const { currentPage, currentLayout, currentSlideRoute } = useNav()
+const { isDark } = useDarkMode()
+const isActive = useIsSlideActive()
+onSlideEnter(() => { /* ... */ })
+onSlideLeave(() => { /* ... */ })
+// ...
+&#x3C;/script></code></pre><blockquote><p>[!NOTE] 之前，你可能看到过导入嵌套模块的用法，例如 <code>import { isDark } from '@slidev/client/logic/dark.ts'</code>，这是<strong>不推荐</strong>的，因为它们是内部实现细节，可能会在未来更改。如果可能的话，请始终使用 <code>@slidev/client</code> 中的公共 API。</blockquote><p>::: warning<p>当使用 <code>useSlideContext</code> 时，将禁用自动注入 <code>$slidev</code>。你需要手动将 <code>$slidev</code> 对象传递给 <code>useSlideContext</code> 函数。<p>:::</p><seealso :links="[&#x27;features/slide-hook&#x27;]"></seealso></section><section class="level2"aria-labelledby="properties"><h2 id="properties">注入的属性</h2><section class="level3"aria-labelledby="slidev-slidev"><h3 id="slidev-slidev"><code>$slidev</code> {#slidev}</h3><p>全局上下文对象。</section><section class="level3"aria-labelledby="frontmatter-frontmatter"><h3 id="frontmatter-frontmatter"><code>$frontmatter</code> {#frontmatter}</h3><p>当前幻灯片的 frontmatter 对象。注意这对于幻灯片之外的组件（如<linkinline link="features/global-layers">）是空的。</linkinline></section><section class="level3"aria-labelledby="clicks-clicks"><h3 id="clicks-clicks"><code>$clicks</code> {#clicks}</h3><p>该属性表示当前幻灯片上的点击次数。可以用于根据点击次数显示不同的内容：<pre class="language-html"><code class="language-html"><span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;</span>div</span> <span class="token attr-name">v-if</span><span class="token attr-value"><span class="token punctuation attr-equals">=</span><span class="token punctuation">"</span>$clicks > 3<span class="token punctuation">"</span></span><span class="token punctuation">></span></span>Content<span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;/</span>div</span><span class="token punctuation">></span></span></code></pre><p>参阅<linkinline link="guide/animations">了解更多关于点击动画的信息。</linkinline></section><section class="level3"aria-labelledby="nav-nav"><h3 id="nav-nav"><code>$nav</code> {#nav}</h3><p>一个响应式对象，包含幻灯片导航的属性和控制：<pre class="language-js"><code class="language-js">$nav<span class="token punctuation">.</span><span class="token method function property-access">next</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token comment">// 下一步动画</span>
+$nav<span class="token punctuation">.</span><span class="token method function property-access">nextSlide</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token comment">// 下一张幻灯片，跳过动画</span>
+$nav<span class="token punctuation">.</span><span class="token method function property-access">go</span><span class="token punctuation">(</span><span class="token number">10</span><span class="token punctuation">)</span> <span class="token comment">// 跳转到第 10 页</span>
+
+$nav<span class="token punctuation">.</span><span class="token property-access">currentPage</span> <span class="token comment">// 当前页码</span>
+$nav<span class="token punctuation">.</span><span class="token property-access">currentLayout</span> <span class="token comment">// 当前幻灯片的布局</span></code></pre><p>请参阅 <a href="https://github.com/slidevjs/slidev/blob/main/packages/client/composables/useNav.ts"><code>SlidevContextNav</code> interface</a> 以了解更多细节。</section><section class="level3"aria-labelledby="page-page"><h3 id="page-page"><code>$page</code> {#page}</h3><p><code>$page</code> 保存当前页的页码，从 1 开始。<pre class="language-md"><code class="language-md">这是第 {{ $page }} 页
+
+正在查看该页吗? {{ $page === $nav.currentPage }}</code></pre><blockquote><p>[!Note] <code>$nav.clicks</code> 是全局导航状态，而 <code>$clicks</code> 是每张幻灯片的自己的点击次数。</blockquote></section><section class="level3"aria-labelledby="rendercontext-render-context"><h3 id="rendercontext-render-context"><code>$renderContext</code> {#render-context}</h3><p><code>$renderContext</code> 保存当前的渲染上下文，可以是 <code>slide</code>, <code>overview</code>, <code>presenter</code> 或 <code>previewNext</code>。<pre class="language-md"><code class="language-md"><span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;</span>div</span> <span class="token attr-name">v-if</span><span class="token attr-value"><span class="token punctuation attr-equals">=</span><span class="token punctuation">"</span>[<span class="token punctuation">'</span>slide<span class="token punctuation">'</span>, <span class="token punctuation">'</span>presenter<span class="token punctuation">'</span>].includes($renderContext)<span class="token punctuation">"</span></span><span class="token punctuation">></span></span>
+  该内容仅在主幻灯片视图中呈现
+<span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;/</span>div</span><span class="token punctuation">></span></span></code></pre><p>你还可以使用 <a href="../builtin/components#renderwhen"><code>&#x3C;RenderWhen></code> 组件</a>。</section><section class="level3"aria-labelledby="slidevconfigs-configs"><h3 id="slidevconfigs-configs"><code>$slidev.configs</code> {#configs}</h3><p>一个响应式对象，保存幻灯片项目的配置。例如：<pre class="language-md"><code class="language-md"><span class="token front-matter-block"><span class="token punctuation">---</span>
+<span class="token front-matter yaml language-yaml">title: My First Slidev!</span>
+<span class="token punctuation">---</span></span>
+
+<span class="token title important"><span class="token punctuation">#</span> 第一页</span>
+
+<span class="token hr punctuation">---</span>
+
+<span class="token title important"><span class="token punctuation">#</span> 其他任何页面</span>
+
+{{ $slidev.configs.title }} // 'My First Slidev!'</code></pre></section><section class="level3"aria-labelledby="slidevthemeconfigs-theme-configs"><h3 id="slidevthemeconfigs-theme-configs"><code>$slidev.themeConfigs</code> {#theme-configs}</h3><p>一个响应式对象，保存解析后的主题配置：<pre class="language-yaml"><code class="language-yaml"><span class="token punctuation">---</span>
+<span class="token key atrule">title</span><span class="token punctuation">:</span> My First Slidev<span class="token tag">!</span>
+<span class="token key atrule">themeConfig</span><span class="token punctuation">:</span>
+  <span class="token key atrule">primary</span><span class="token punctuation">:</span> <span class="token string">'#213435'</span>
+<span class="token punctuation">---</span></code></pre><p>然后，主题可以像这样访问主要颜色：<pre class="language-md"><code class="language-md">{{ $slidev.themeConfigs.primary }} // '#213435'</code></pre></section></section><section class="level2"aria-labelledby="types"><h2 id="types">类型支持</h2><p>可以从 <code>@slidev/types</code> 导入 <code>TocItem</code> 等类型信息：<pre class="language-vue"><code class="language-vue">&#x3C;script setup>
+import type { TocItem } from '@slidev/types'
+
+function tocFunc(tree: TocItem[]): TocItem[] {
+  // ...
+}
+&#x3C;/script></code></pre><p><span style="float:footnote"><a href="../index.html#toc">Go to TOC</a></span></section></section>

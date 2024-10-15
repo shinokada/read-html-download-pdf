@@ -1,0 +1,74 @@
+<!doctype html><html lang="fr"><meta charset="utf-8"><title>Les règles des Hooks</title><meta name="viewport"content="width=device-width,initial-scale=1"><link rel="stylesheet"type="text/css"href="../../../../../themes/packages/prism-coy-theme/theme_common.css"><section class="level1"aria-labelledby="les-règles-des-hooks"><h1 id="les-règles-des-hooks">Les règles des Hooks</h1><p>{/<em> TODO: L10N </em>/}</p><intro>Hooks are defined using JavaScript functions, but they represent a special type of reusable UI logic with restrictions on where they can be called.</intro><inlinetoc><section class="level2"aria-labelledby="only-call-hooks-at-the-top-level-only-call-hooks-at-the-top-level"><h2 id="only-call-hooks-at-the-top-level-only-call-hooks-at-the-top-level">Only call Hooks at the top level {/<em>only-call-hooks-at-the-top-level</em>/}</h2><p>Functions whose names start with <code>use</code> are called <a href="/reference/react"><em>Hooks</em></a> in React.<p><strong>Don’t call Hooks inside loops, conditions, nested functions, or <code>try</code>/<code>catch</code>/<code>finally</code> blocks.</strong> Instead, always use Hooks at the top level of your React function, before any early returns. You can only call Hooks while React is rendering a function component:<ul><li>✅ Call them at the top level in the body of a <a href="/learn/your-first-component">function component</a>.<li>✅ Call them at the top level in the body of a <a href="/learn/reusing-logic-with-custom-hooks">custom Hook</a>.</ul><pre class="language-js{2-3,8-9}"><code class="language-js{2-3,8-9}">function Counter() {
+  // ✅ Good: top-level in a function component
+  const [count, setCount] = useState(0);
+  // ...
+}
+
+function useWindowWidth() {
+  // ✅ Good: top-level in a custom Hook
+  const [width, setWidth] = useState(window.innerWidth);
+  // ...
+}</code></pre><p>It’s <strong>not</strong> supported to call Hooks (functions starting with <code>use</code>) in any other cases, for example:<ul><li>🔴 Do not call Hooks inside conditions or loops.<li>🔴 Do not call Hooks after a conditional <code>return</code> statement.<li>🔴 Do not call Hooks in event handlers.<li>🔴 Do not call Hooks in class components.<li>🔴 Do not call Hooks inside functions passed to <code>useMemo</code>, <code>useReducer</code>, or <code>useEffect</code>.<li>🔴 Do not call Hooks inside <code>try</code>/<code>catch</code>/<code>finally</code> blocks.</ul><p>If you break these rules, you might see this error.<pre class="language-js{3-4,11-12,20-21}"><code class="language-js{3-4,11-12,20-21}">function Bad({ cond }) {
+  if (cond) {
+    // 🔴 Bad: inside a condition (to fix, move it outside!)
+    const theme = useContext(ThemeContext);
+  }
+  // ...
+}
+
+function Bad() {
+  for (let i = 0; i &#x3C; 10; i++) {
+    // 🔴 Bad: inside a loop (to fix, move it outside!)
+    const theme = useContext(ThemeContext);
+  }
+  // ...
+}
+
+function Bad({ cond }) {
+  if (cond) {
+    return;
+  }
+  // 🔴 Bad: after a conditional return (to fix, move it before the return!)
+  const theme = useContext(ThemeContext);
+  // ...
+}
+
+function Bad() {
+  function handleClick() {
+    // 🔴 Bad: inside an event handler (to fix, move it outside!)
+    const theme = useContext(ThemeContext);
+  }
+  // ...
+}
+
+function Bad() {
+  const style = useMemo(() => {
+    // 🔴 Bad: inside useMemo (to fix, move it outside!)
+    const theme = useContext(ThemeContext);
+    return createStyle(theme);
+  });
+  // ...
+}
+
+class Bad extends React.Component {
+  render() {
+    // 🔴 Bad: inside a class component (to fix, write a function component instead of a class!)
+    useEffect(() => {})
+    // ...
+  }
+}
+
+function Bad() {
+  try {
+    // 🔴 Bad: inside try/catch/finally block (to fix, move it outside!)
+    const [x, setX] = useState(0);
+  } catch {
+    const [x, setX] = useState(1);
+  }
+}</code></pre><p>You can use the <a href="https://www.npmjs.com/package/eslint-plugin-react-hooks"><code>eslint-plugin-react-hooks</code> plugin</a> to catch these mistakes.</p><note><p><a href="/learn/reusing-logic-with-custom-hooks">Custom Hooks</a> <em>may</em> call other Hooks (that's their whole purpose). This works because custom Hooks are also supposed to only be called while a function component is rendering.</p></note></section><section class="level2"aria-labelledby="only-call-hooks-from-react-functions-only-call-hooks-from-react-functions"><h2 id="only-call-hooks-from-react-functions-only-call-hooks-from-react-functions">Only call Hooks from React functions {/<em>only-call-hooks-from-react-functions</em>/}</h2><p>Don’t call Hooks from regular JavaScript functions. Instead, you can:<p>✅ Call Hooks from React function components. ✅ Call Hooks from <a href="/learn/reusing-logic-with-custom-hooks#extracting-your-own-custom-hook-from-a-component">custom Hooks</a>.<p>By following this rule, you ensure that all stateful logic in a component is clearly visible from its source code.<pre class="language-js"><code class="language-js"><span class="token keyword">function</span> <span class="token function"><span class="token maybe-class-name">FriendList</span></span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  <span class="token keyword">const</span> <span class="token punctuation">[</span>onlineStatus<span class="token punctuation">,</span> setOnlineStatus<span class="token punctuation">]</span> <span class="token operator">=</span> <span class="token function">useOnlineStatus</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span> <span class="token comment">// ✅</span>
+<span class="token punctuation">}</span>
+
+<span class="token keyword">function</span> <span class="token function">setOnlineStatus</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span> <span class="token comment">// ❌ Not a component or custom Hook!</span>
+  <span class="token keyword">const</span> <span class="token punctuation">[</span>onlineStatus<span class="token punctuation">,</span> setOnlineStatus<span class="token punctuation">]</span> <span class="token operator">=</span> <span class="token function">useOnlineStatus</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span></code></pre><p><span style="float:footnote"><a href="../../index.html#toc">Go to TOC</a></span></section></inlinetoc></section>

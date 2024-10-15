@@ -1,0 +1,91 @@
+<!doctype html><html lang="en"><meta charset="utf-8"><title>Component fundamentals</title><meta name="viewport"content="width=device-width,initial-scale=1"><link rel="stylesheet"type="text/css"href="../../../../themes/packages/prism-coy-theme/theme_common.css"><section class="level1"aria-labelledby="component-fundamentals"><h1 id="component-fundamentals">Component fundamentals</h1><ul><li>script (module) / template / style (rough overview)<li><code>$props</code> / <code>$state</code> (in the context of components)</ul><p>Components are the building blocks of Svelte applications. They are written into <code>.svelte</code> files, using a superset of HTML.<p>All three sections — script, styles and markup — are optional.<pre class="language-svelte"><code class="language-svelte">&#x3C;script>
+	// logic goes here
+&#x3C;/script>
+
+&#x3C;!-- markup (zero or more items) goes here -->
+
+&#x3C;style>
+	/* styles go here */
+&#x3C;/style></code></pre><section class="level2"><h2 id=""><code>&#x3C;script></code></h2><p>A <code>&#x3C;script></code> block contains JavaScript (or TypeScript, when adding the <code>lang="ts"</code> attribute) that runs when a component instance is created. Variables declared (or imported) at the top level are 'visible' from the component's markup.</section><section class="level2"aria-labelledby="public-api-of-a-component"><h2 id="public-api-of-a-component">Public API of a component</h2><p>Svelte uses the <code>$props</code> rune to declare <em>properties</em> or <em>props</em>, which means describing the public interface of the component which becomes accessible to consumers of the component.<blockquote><p>[!NOTE] <code>$props</code> is one of several runes, which are special hints for Svelte's compiler to make things reactive.</blockquote><pre class="language-svelte"><code class="language-svelte">&#x3C;script>
+	let { foo, bar, baz } = $props();
+
+	// Values that are passed in as props
+	// are immediately available
+	console.log({ foo, bar, baz });
+&#x3C;/script></code></pre><p>You can specify a fallback value for a prop. It will be used if the component's consumer doesn't specify the prop on the component when instantiating the component, or if the passed value is <code>undefined</code> at some point.<pre class="language-svelte"><code class="language-svelte">&#x3C;script>
+	let { foo = 'optional default initial value' } = $props();
+&#x3C;/script></code></pre><p>To get all properties, use rest syntax:<pre class="language-svelte"><code class="language-svelte">&#x3C;script>
+	let { a, b, c, ...everythingElse } = $props();
+&#x3C;/script></code></pre><p>You can use reserved words as prop names.<pre class="language-svelte"><code class="language-svelte">&#x3C;script>
+	// creates a `class` property, even
+	// though it is a reserved word
+	let { class: className } = $props();
+&#x3C;/script></code></pre><p>If you're using TypeScript, you can declare the prop types:<pre class="language-svelte"><code class="language-svelte">&#x3C;script lang="ts">
+	interface Props {
+		required: string;
+		optional?: number;
+		[key: string]: unknown;
+	}
+
+	let { required, optional, ...everythingElse }: Props = $props();
+&#x3C;/script></code></pre><p>If you're using JavaScript, you can declare the prop types using JSDoc:<pre class="language-svelte"><code class="language-svelte">&#x3C;script>
+	/** @type {{ x: string }} */
+	let { x } = $props();
+
+	// or use @typedef if you want to document the properties:
+
+	/**
+	 * @typedef {Object} MyProps
+	 * @property {string} y Some documentation
+	 */
+
+	/** @type {MyProps} */
+	let { y } = $props();
+&#x3C;/script></code></pre><p>If you export a <code>const</code>, <code>class</code> or <code>function</code>, it is readonly from outside the component.<pre class="language-svelte"><code class="language-svelte">&#x3C;script>
+	export const thisIs = 'readonly';
+
+	export function greet(name) {
+		alert(`hello ${name}!`);
+	}
+&#x3C;/script></code></pre><p>Readonly props can be accessed as properties on the element, tied to the component using <a href="bindings#bind:this"><code>bind:this</code> syntax</a>.</section><section class="level2"aria-labelledby="reactive-variables"><h2 id="reactive-variables">Reactive variables</h2><p>To change component state and trigger a re-render, just assign to a locally declared variable that was declared using the <code>$state</code> rune.<p>Update expressions (<code>count += 1</code>) and property assignments (<code>obj.x = y</code>) have the same effect.<pre class="language-svelte"><code class="language-svelte">&#x3C;script>
+	let count = $state(0);
+
+	function handleClick() {
+		// calling this function will trigger an
+		// update if the markup references `count`
+		count = count + 1;
+	}
+&#x3C;/script></code></pre><p>Svelte's <code>&#x3C;script></code> blocks are run only when the component is created, so assignments within a <code>&#x3C;script></code> block are not automatically run again when a prop updates.<pre class="language-svelte"><code class="language-svelte">&#x3C;script>
+	let { person } = $props();
+	// this will only set `name` on component creation
+	// it will not update when `person` does
+	let { name } = person;
+&#x3C;/script></code></pre><p>If you'd like to react to changes to a prop, use the <code>$derived</code> or <code>$effect</code> runes instead.<pre class="language-svelte"><code class="language-svelte">&#x3C;script>
+	let count = $state(0);
+
+	let double = $derived(count * 2);
+
+	$effect(() => {
+		if (count > 10) {
+			alert('Too high!');
+		}
+	});
+&#x3C;/script></code></pre><p>For more information on reactivity, read the documentation around runes.</section><section class="level2"aria-labelledby="-1"><h2 id="-1"><code>&#x3C;script module></code></h2><p>A <code>&#x3C;script></code> tag with a <code>module</code> attribute runs once when the module first evaluates, rather than for each component instance. Values declared in this block are accessible from a regular <code>&#x3C;script></code> (and the component markup) but not vice versa.<p>You can <code>export</code> bindings from this block, and they will become exports of the compiled module.<p>You cannot <code>export default</code>, since the default export is the component itself.<pre class="language-svelte"><code class="language-svelte">&#x3C;script module>
+	let totalComponents = 0;
+
+	// the export keyword allows this function to imported with e.g.
+	// `import Example, { alertTotal } from './Example.svelte'`
+	export function alertTotal() {
+		alert(totalComponents);
+	}
+&#x3C;/script>
+
+&#x3C;script>
+	totalComponents += 1;
+	console.log(`total number of times this component has been created: ${totalComponents}`);
+&#x3C;/script></code></pre></section><section class="level2"aria-labelledby="-2"><h2 id="-2"><code>&#x3C;style></code></h2><p>CSS inside a <code>&#x3C;style></code> block will be scoped to that component.<pre class="language-svelte"><code class="language-svelte">&#x3C;style>
+	p {
+		/* this will only affect &#x3C;p> elements in this component */
+		color: burlywood;
+	}
+&#x3C;/style></code></pre><p>For more information regarding styling, read the documentation around <a href="styles-and-classes">styles and classes</a>. <span style="float:footnote"><a href="../index.html#toc">Go to TOC</a></span></section></section>

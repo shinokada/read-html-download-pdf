@@ -1,0 +1,49 @@
+<!doctype html><html lang="cn"><meta charset="utf-8"><title>管理 Vitest 配置文件</title><meta name="viewport"content="width=device-width,initial-scale=1"><meta name="outline"content="deep"><link rel="stylesheet"type="text/css"href="../../../../themes/packages/prism-coy-theme/theme_common.css"><section class="level1"aria-labelledby="管理-vitest-配置文件"><h1 id="管理-vitest-配置文件">管理 Vitest 配置文件</h1><p>如果你正在使用 Vite，并且有一个 <code>vite.config</code> 文件，Vitest 会读取它并以插件匹配，并将其设置为你的 Vite 应用程序。如果你想使用不同的配置进行测试，或者你的主应用程序不特别依赖 Vite，你可以：<ul><li>创建 <code>vitest.config.ts</code>，它将具有更高的优先级，并<strong>覆盖</strong> <code>vite.config.ts</code> 中的配置（Vitest 支持所有传统的 JS 和 TS 扩展，但不支持 <code>json</code>）-这意味着 <code>vite.config</code> 中的所有选项都将被<strong>忽略</strong><li>将 <code>--config</code> 选项传递给 CLI，例如 <code>vitest --config ./path/to/vitest.config.ts</code><li>使用<code>process.env.VITEST</code> 或者 <code>defineConfig</code> 上的 <code>mode</code> 属性（如果未被<code>mode</code>覆盖，则将设置为<code>test</code>/<code>benchmark</code>），以有条件地应用 <code>vite.config.ts</code> 中的不同配置</ul><p>要配置 <code>vitest</code> 本身，请在 Vite 配置中添加 <code>test</code> 属性。如果你要从 <code>vite</code> 本身导入<code>defineConfig</code>，你还需要使用<a href="https://www.typescriptlang.org/docs/handbook/triple-slash-directives.html#-reference-types-">三斜杠命令</a>添加对 Vitest 类型的引用。<p>使用 <code>vite</code> 中的 <code>defineConfig</code>，你应该如下配置：<pre class="language-ts"><code class="language-ts"><span class="token comment">/// &#x3C;reference types="vitest" /></span>
+<span class="token keyword module">import</span> <span class="token imports"><span class="token punctuation">{</span> defineConfig <span class="token punctuation">}</span></span> <span class="token keyword module">from</span> <span class="token string">'vite'</span>
+
+<span class="token keyword module">export</span> <span class="token keyword module">default</span> <span class="token function">defineConfig</span><span class="token punctuation">(</span><span class="token punctuation">{</span>
+  test<span class="token operator">:</span> <span class="token punctuation">{</span>
+    <span class="token comment">// ... Specify options here.</span>
+  <span class="token punctuation">}</span><span class="token punctuation">,</span>
+<span class="token punctuation">}</span><span class="token punctuation">)</span></code></pre><p><code>&#x3C;reference types="vitest" /></code> 将在 Vitest 3 中停止工作，但您可以在 Vitest 2.1 中开始迁移到 <code>vitest/config</code>：<pre class="language-ts"><code class="language-ts"><span class="token comment">/// &#x3C;reference types="vitest/config" /></span>
+<span class="token keyword module">import</span> <span class="token imports"><span class="token punctuation">{</span> defineConfig <span class="token punctuation">}</span></span> <span class="token keyword module">from</span> <span class="token string">'vite'</span>
+
+<span class="token keyword module">export</span> <span class="token keyword module">default</span> <span class="token function">defineConfig</span><span class="token punctuation">(</span><span class="token punctuation">{</span>
+  test<span class="token operator">:</span> <span class="token punctuation">{</span>
+    <span class="token comment">// ... Specify options here.</span>
+  <span class="token punctuation">}</span><span class="token punctuation">,</span>
+<span class="token punctuation">}</span><span class="token punctuation">)</span></code></pre><p>使用 <code>vitest/config</code> 中的 <code>defineConfig</code>，你应该如下配置：<pre class="language-ts"><code class="language-ts"><span class="token keyword module">import</span> <span class="token imports"><span class="token punctuation">{</span> defineConfig <span class="token punctuation">}</span></span> <span class="token keyword module">from</span> <span class="token string">'vitest/config'</span>
+
+<span class="token keyword module">export</span> <span class="token keyword module">default</span> <span class="token function">defineConfig</span><span class="token punctuation">(</span><span class="token punctuation">{</span>
+  test<span class="token operator">:</span> <span class="token punctuation">{</span>
+    <span class="token comment">// ... Specify options here.</span>
+  <span class="token punctuation">}</span><span class="token punctuation">,</span>
+<span class="token punctuation">}</span><span class="token punctuation">)</span></code></pre><p>如果需要，你可以检索 Vitest 的默认选项以展开它们：<pre class="language-ts"><code class="language-ts"><span class="token keyword module">import</span> <span class="token imports"><span class="token punctuation">{</span> configDefaults<span class="token punctuation">,</span> defineConfig <span class="token punctuation">}</span></span> <span class="token keyword module">from</span> <span class="token string">'vitest/config'</span>
+
+<span class="token keyword module">export</span> <span class="token keyword module">default</span> <span class="token function">defineConfig</span><span class="token punctuation">(</span><span class="token punctuation">{</span>
+  test<span class="token operator">:</span> <span class="token punctuation">{</span>
+    exclude<span class="token operator">:</span> <span class="token punctuation">[</span><span class="token spread operator">...</span>configDefaults<span class="token punctuation">.</span><span class="token property-access">exclude</span><span class="token punctuation">,</span> <span class="token string">'packages/template/*'</span><span class="token punctuation">]</span><span class="token punctuation">,</span>
+  <span class="token punctuation">}</span><span class="token punctuation">,</span>
+<span class="token punctuation">}</span><span class="token punctuation">)</span></code></pre><p>当使用单独的 <code>vitest.config.js</code> 时，如果需要，你还可以从另一个配置文件扩展 Vite 的选项：<pre class="language-ts"><code class="language-ts"><span class="token keyword module">import</span> <span class="token imports"><span class="token punctuation">{</span> defineConfig<span class="token punctuation">,</span> mergeConfig <span class="token punctuation">}</span></span> <span class="token keyword module">from</span> <span class="token string">'vitest/config'</span>
+<span class="token keyword module">import</span> <span class="token imports">viteConfig</span> <span class="token keyword module">from</span> <span class="token string">'./vite.config'</span>
+
+<span class="token keyword module">export</span> <span class="token keyword module">default</span> <span class="token function">mergeConfig</span><span class="token punctuation">(</span>
+  viteConfig<span class="token punctuation">,</span>
+  <span class="token function">defineConfig</span><span class="token punctuation">(</span><span class="token punctuation">{</span>
+    test<span class="token operator">:</span> <span class="token punctuation">{</span>
+      exclude<span class="token operator">:</span> <span class="token punctuation">[</span><span class="token string">'packages/template/*'</span><span class="token punctuation">]</span><span class="token punctuation">,</span>
+    <span class="token punctuation">}</span><span class="token punctuation">,</span>
+  <span class="token punctuation">}</span><span class="token punctuation">)</span>
+<span class="token punctuation">)</span></code></pre><p>如果你的 Vite 配置被定义为一个函数，可以这样定义配置：<pre class="language-ts"><code class="language-ts"><span class="token keyword module">import</span> <span class="token imports"><span class="token punctuation">{</span> defineConfig<span class="token punctuation">,</span> mergeConfig <span class="token punctuation">}</span></span> <span class="token keyword module">from</span> <span class="token string">'vitest/config'</span>
+<span class="token keyword module">import</span> <span class="token imports">viteConfig</span> <span class="token keyword module">from</span> <span class="token string">'./vite.config'</span>
+
+<span class="token keyword module">export</span> <span class="token keyword module">default</span> <span class="token function">defineConfig</span><span class="token punctuation">(</span>configEnv <span class="token arrow operator">=></span>
+  <span class="token function">mergeConfig</span><span class="token punctuation">(</span>
+    <span class="token function">viteConfig</span><span class="token punctuation">(</span>configEnv<span class="token punctuation">)</span><span class="token punctuation">,</span>
+    <span class="token function">defineConfig</span><span class="token punctuation">(</span><span class="token punctuation">{</span>
+      test<span class="token operator">:</span> <span class="token punctuation">{</span>
+        exclude<span class="token operator">:</span> <span class="token punctuation">[</span><span class="token string">'packages/template/*'</span><span class="token punctuation">]</span><span class="token punctuation">,</span>
+      <span class="token punctuation">}</span><span class="token punctuation">,</span>
+    <span class="token punctuation">}</span><span class="token punctuation">)</span>
+  <span class="token punctuation">)</span>
+<span class="token punctuation">)</span></code></pre><p><span style="float:footnote"><a href="../index.html#toc">Go to TOC</a></span></section>

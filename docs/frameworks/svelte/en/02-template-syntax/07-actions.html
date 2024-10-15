@@ -1,0 +1,62 @@
+<!doctype html><html lang="en"><meta charset="utf-8"><title>Actions</title><meta name="viewport"content="width=device-width,initial-scale=1"><link rel="stylesheet"type="text/css"href="../../../../themes/packages/prism-coy-theme/theme_common.css"><section class="level1"aria-labelledby="actions"><h1 id="actions">Actions</h1><ul><li>template syntax<li>how to write<li>typings<li>adjust so that <code>$effect</code> is used instead of update/destroy?</ul><pre class="language-svelte"><code class="language-svelte">&#x3C;! copy: false --->
+use:action</code></pre><pre class="language-svelte"><code class="language-svelte">&#x3C;! copy: false --->
+use:action={parameters}</code></pre><pre class="language-ts"><code class="language-ts"><span class="token comment">/// copy: false</span>
+<span class="token comment">// @noErrors</span>
+<span class="token function-variable function">action</span> <span class="token operator">=</span> <span class="token punctuation">(</span>node<span class="token operator">:</span> <span class="token maybe-class-name">HTMLElement</span><span class="token punctuation">,</span> parameters<span class="token operator">:</span> <span class="token builtin">any</span><span class="token punctuation">)</span> <span class="token arrow operator">=></span> <span class="token punctuation">{</span>
+	update<span class="token operator">?</span><span class="token operator">:</span> <span class="token punctuation">(</span>parameters<span class="token operator">:</span> <span class="token builtin">any</span><span class="token punctuation">)</span> <span class="token arrow operator">=></span> <span class="token keyword">void</span><span class="token punctuation">,</span>
+	destroy<span class="token operator">?</span><span class="token operator">:</span> <span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token arrow operator">=></span> <span class="token keyword">void</span>
+<span class="token punctuation">}</span></code></pre><p>Actions are functions that are called when an element is created. They can return an object with a <code>destroy</code> method that is called after the element is unmounted:<pre class="language-svelte"><code class="language-svelte">&#x3C;! file: App.svelte --->
+&#x3C;script>
+	/** @type {import('svelte/action').Action}  */
+	function foo(node) {
+		// the node has been mounted in the DOM
+
+		return {
+			destroy() {
+				// the node has been removed from the DOM
+			}
+		};
+	}
+&#x3C;/script>
+
+&#x3C;div use:foo /></code></pre><p>An action can have a parameter. If the returned value has an <code>update</code> method, it will be called immediately after Svelte has applied updates to the markup whenever that parameter changes.<blockquote><p>[!NOTE] Don't worry that we're redeclaring the <code>foo</code> function for every component instance — Svelte will hoist any functions that don't depend on local state out of the component definition.</blockquote><pre class="language-svelte"><code class="language-svelte">&#x3C;! file: App.svelte --->
+&#x3C;script>
+	/** @type {string} */
+	export let bar;
+
+	/** @type {import('svelte/action').Action&#x3C;HTMLElement, string>}  */
+	function foo(node, bar) {
+		// the node has been mounted in the DOM
+
+		return {
+			update(bar) {
+				// the value of `bar` has changed
+			},
+
+			destroy() {
+				// the node has been removed from the DOM
+			}
+		};
+	}
+&#x3C;/script>
+
+&#x3C;div use:foo={bar} /></code></pre><section class="level2"aria-labelledby="attributes"><h2 id="attributes">Attributes</h2><p>Sometimes actions emit custom events and apply custom attributes to the element they are applied to. To support this, actions typed with <code>Action</code> or <code>ActionReturn</code> type can have a last parameter, <code>Attributes</code>:<pre class="language-svelte"><code class="language-svelte">&#x3C;! file: App.svelte --->
+&#x3C;script>
+	/**
+	 * @type {import('svelte/action').Action&#x3C;HTMLDivElement, { prop: any }, { 'on:emit': (e: CustomEvent&#x3C;string>) => void }>}
+	 */
+	function foo(node, { prop }) {
+		// the node has been mounted in the DOM
+
+		//...LOGIC
+		node.dispatchEvent(new CustomEvent('emit', { detail: 'hello' }));
+
+		return {
+			destroy() {
+				// the node has been removed from the DOM
+			}
+		};
+	}
+&#x3C;/script>
+
+&#x3C;div use:foo={{ prop: 'someValue' }} onemit={handleEmit} /></code></pre><p><span style="float:footnote"><a href="../index.html#toc">Go to TOC</a></span></section></section>

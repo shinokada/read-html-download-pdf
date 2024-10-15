@@ -1,0 +1,261 @@
+<!doctype html><html lang="en"><meta charset="utf-8"><title>Side effects</title><meta name="viewport"content="width=device-width,initial-scale=1"><link rel="stylesheet"type="text/css"href="../../../../themes/packages/prism-coy-theme/theme_common.css"><section class="level1"aria-labelledby="side-effects"><h1 id="side-effects">Side effects</h1><ul><li><code>$effect</code> (.pre)<li>when not to use it, better patterns for what to do instead</ul><p>Side effects play a crucial role in applications. They are triggered by state changes and can then interact with external systems, like logging something, setting up a server connection or synchronize with a third-party library that has no knowledge of Svelte's reactivity model.<section class="level2"aria-labelledby="effect-fundamentals"><h2 id="effect-fundamentals"><code>$effect</code> fundamentals</h2><p>To run <em>side-effects</em> when the component is mounted to the DOM, and when values change, we can use the <code>$effect</code> rune (<a href="/#H4sIAAAAAAAAE31T24rbMBD9lUG7kAQ2sbdlX7xOYNk_aB_rQhRpbAsU2UiTW0P-vbrYubSlYGzmzMzROTPymdVKo2PFjzMzfIusYB99z14YnfoQuD1qQh-7bmdFQEonrOppVZmKNBI49QthCc-OOOH0LZ-9jxnR6c7eUpOnuv6KeT5JFdcqbvbcBcgDz1jXKGg6ncFyBedYR6IzLrAZwiN5vtSxaJA-EzadfJEjKw11C6GR22-BLH8B_wxdByWpvUYtqqal2XB6RVkG1CoHB6U1WJzbnYFDiwb3aGEdDa3Bm1oH12sQLTcNPp7r56m_00mHocSG97_zd7ICUXonA5fwKbPbkE2ZtMJGGVkEdctzQi4QzSwr9prnFYNk5hpmqVuqPQjNnfOJoMF22lUsrq_UfIN6lfSVyvQ7grB3X2mjMZYO3XO9w-U5iLx42qg29md3BP_ni5P4gy9ikTBlHxjLzAtPDlyYZmRdjAbGq7HprEQ7p64v4LU_guu0kvAkhBim3nMplWl8FreQD-CW20aZR0wq12t-KqDWeBywhvexKC3memmDwlHAv9q4Vo2ZK8KtK0CgX7u9J8wXbzdKv-nRnfF_2baTqlYoWUF2h5efl9-n0O6koAMAAA==">demo</a>):<pre class="language-svelte"><code class="language-svelte">&#x3C;script>
+	let size = $state(50);
+	let color = $state('#ff3e00');
+
+	let canvas;
+
+	$effect(() => {
+		const context = canvas.getContext('2d');
+		context.clearRect(0, 0, canvas.width, canvas.height);
+
+		// this will re-run whenever `color` or `size` change
+		context.fillStyle = color;
+		context.fillRect(0, 0, size, size);
+	});
+&#x3C;/script>
+
+&#x3C;canvas bind:this={canvas} width="100" height="100" /></code></pre><p>The function passed to <code>$effect</code> will run when the component mounts, and will re-run after any changes to the values it reads that were declared with <code>$state</code> or <code>$derived</code> (including those passed in with <code>$props</code>). Re-runs are batched (i.e. changing <code>color</code> and <code>size</code> in the same moment won't cause two separate runs), and happen after any DOM updates have been applied.<p>You can place <code>$effect</code> anywhere, not just at the top level of a component, as long as it is called during component initialization (or while a parent effect is active). It is then tied to the lifecycle of the component (or parent effect) and will therefore destroy itself when the component unmounts (or the parent effect is destroyed).<p>You can return a function from <code>$effect</code>, which will run immediately before the effect re-runs, and before it is destroyed (<a href="/#H4sIAAAAAAAAE42SzW6DMBCEX2Vl5RDaVCQ9JoDUY--9lUox9lKsGBvZC1GEePcaKPnpqSe86_m0M2t6ViqNnu0_e2Z4jWzP3pqGbRhdmrHwHWrCUHvbOjF2Ei-caijLTU4aCYRtDUEKK0-ccL2NDstNrbRWHoU10t8Eu-121gTVCssSBa3XEaQZ9GMrpziGj0p5OAccCgSHwmEgJZwrNNihg6MyhK7j-gii4uYb_YyGUZ5guQwzPdL7b_U4ZNSOvp9T2B3m1rB5cLx4zMkhtc7AHz7YVCVwEFzrgosTBMuNs52SKDegaPbvWnMH8AhUXaNUIY6-hHCldQhUIcyLCFlfAuHvkCKaYk8iYevGGgy2wyyJnpy9oLwG0sjdNe2yhGhJN32HsUzi2xOapNpl_bSLIYnDeeoVLZE1YI3QSpzSfo7-8J5PKbwOmdf2jC6JZyD7HxpPaMk93aHhF6utVKVCyfbkWhy-hh9Z3o_2nQIAAA==">demo</a>).<pre class="language-svelte"><code class="language-svelte">&#x3C;script>
+	let count = $state(0);
+	let milliseconds = $state(1000);
+
+	$effect(() => {
+		// This will be recreated whenever `milliseconds` changes
+		const interval = setInterval(() => {
+			count += 1;
+		}, milliseconds);
+
+		return () => {
+			// if a callback is provided, it will run
+			// a) immediately before the effect re-runs
+			// b) when the component is destroyed
+			clearInterval(interval);
+		};
+	});
+&#x3C;/script>
+
+&#x3C;h1>{count}&#x3C;/h1>
+
+&#x3C;button onclick={() => (milliseconds *= 2)}>slower&#x3C;/button>
+&#x3C;button onclick={() => (milliseconds /= 2)}>faster&#x3C;/button></code></pre></section><section class="level2"aria-labelledby="effect-dependencies"><h2 id="effect-dependencies"><code>$effect</code> dependencies</h2><p><code>$effect</code> automatically picks up any reactivy values (<code>$state</code>, <code>$derived</code>, <code>$props</code>) that are <em>synchronously</em> read inside its function body and registers them as dependencies. When those dependencies change, the <code>$effect</code> schedules a rerun.<p>Values that are read asynchronously — after an <code>await</code> or inside a <code>setTimeout</code>, for example — will <em>not</em> be tracked. Here, the canvas will be repainted when <code>color</code> changes, but not when <code>size</code> changes (<a href="/#H4sIAAAAAAAAE31T24rbMBD9lUG7kCxsbG_LvrhOoPQP2r7VhSjy2BbIspHGuTT436tLnMtSCiaOzpw5M2dGPrNaKrQs_3VmmnfIcvZ1GNgro9PgD3aPitCdbT8a4ZHCCiMH2pS6JIUEVv5BWMOzJU64fM9evswR0ave3EKLp7r-jFm2iIwri-s9tx5ywDPWNQpaLl9gvYFz4JHotfVqmvBITi9mJA3St4gtF5-qWZUuvEQo5Oa7F8tewT2XrIOsqL2eWpRNS7eGSkpToFZaOEilwODKjBoOLWrco4FtsLQF0XLdoE2S5LGmm6X6QSflBxKod8IW6afssB8_uAslndJuJNA9hWKw9VO91pmJ92XunHlu_J1nMDk8_p_8q0hvO9NFtA47qavcW12fIzJBmM26ZG9ZVjKIs7ke05hdyT0Ixa11Ad-P6ZUtWbgNheI7VJvYQiH14Bz5a-SYxvtwIqHonqsR12ff8ORkQ-chP70T-L9eGO4HvYAFwRh9UCxS13h0YP2CgmoyG5h3setNhWZF_ZDD23AE2ytZwZMQ4jLYgVeV1I2LYgfZBey4aaR-xCppB8VPOdQKjxes4UMgxcVcvwHf4dzAv9K4ko1eScLO5iDQXQFzL5gl7zdJt-nZnXYfbddXspZYsZzMiNPv6S8Bl41G7wMAAA==">demo</a>):<pre class="language-ts"><code class="language-ts"><span class="token comment">// @filename: index.ts</span>
+<span class="token keyword">declare</span> <span class="token keyword">let</span> canvas<span class="token operator">:</span> <span class="token punctuation">{</span>
+	width<span class="token operator">:</span> <span class="token builtin">number</span><span class="token punctuation">;</span>
+	height<span class="token operator">:</span> <span class="token builtin">number</span><span class="token punctuation">;</span>
+	<span class="token function">getContext</span><span class="token punctuation">(</span>type<span class="token operator">:</span> <span class="token string">'2d'</span><span class="token punctuation">,</span> options<span class="token operator">?</span><span class="token operator">:</span> <span class="token maybe-class-name">CanvasRenderingContext2DSettings</span><span class="token punctuation">)</span><span class="token operator">:</span> <span class="token maybe-class-name">CanvasRenderingContext2D</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span><span class="token punctuation">;</span>
+<span class="token keyword">declare</span> <span class="token keyword">let</span> color<span class="token operator">:</span> <span class="token builtin">string</span><span class="token punctuation">;</span>
+<span class="token keyword">declare</span> <span class="token keyword">let</span> size<span class="token operator">:</span> <span class="token builtin">number</span><span class="token punctuation">;</span>
+
+<span class="token comment">// cut---</span>
+<span class="token function">$effect</span><span class="token punctuation">(</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token arrow operator">=></span> <span class="token punctuation">{</span>
+	<span class="token keyword">const</span> context <span class="token operator">=</span> canvas<span class="token punctuation">.</span><span class="token method function property-access">getContext</span><span class="token punctuation">(</span><span class="token string">'2d'</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+	context<span class="token punctuation">.</span><span class="token method function property-access">clearRect</span><span class="token punctuation">(</span><span class="token number">0</span><span class="token punctuation">,</span> <span class="token number">0</span><span class="token punctuation">,</span> canvas<span class="token punctuation">.</span><span class="token property-access">width</span><span class="token punctuation">,</span> canvas<span class="token punctuation">.</span><span class="token property-access">height</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+	<span class="token comment">// this will re-run whenever `color` changes...</span>
+	context<span class="token punctuation">.</span><span class="token property-access">fillStyle</span> <span class="token operator">=</span> color<span class="token punctuation">;</span>
+
+	<span class="token function">setTimeout</span><span class="token punctuation">(</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token arrow operator">=></span> <span class="token punctuation">{</span>
+		<span class="token comment">// ...but not when `size` changes</span>
+		context<span class="token punctuation">.</span><span class="token method function property-access">fillRect</span><span class="token punctuation">(</span><span class="token number">0</span><span class="token punctuation">,</span> <span class="token number">0</span><span class="token punctuation">,</span> size<span class="token punctuation">,</span> size<span class="token punctuation">)</span><span class="token punctuation">;</span>
+	<span class="token punctuation">}</span><span class="token punctuation">,</span> <span class="token number">0</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">;</span></code></pre><p>An effect only reruns when the object it reads changes, not when a property inside it changes. (If you want to observe changes <em>inside</em> an object at dev time, you can use <a href="debugging#$inspect"><code>$inspect</code></a>.)<pre class="language-svelte"><code class="language-svelte">&#x3C;script>
+	let state = $state({ value: 0 });
+	let derived = $derived({ value: state.value * 2 });
+
+	// this will run once, because `state` is never reassigned (only mutated)
+	$effect(() => {
+		state;
+	});
+
+	// this will run whenever `state.value` changes...
+	$effect(() => {
+		state.value;
+	});
+
+	// ...and so will this, because `derived` is a new object each time
+	$effect(() => {
+		derived;
+	});
+&#x3C;/script>
+
+&#x3C;button onclick={() => (state.value += 1)}>
+	{state.value}
+&#x3C;/button>
+
+&#x3C;p>{state.value} doubled is {derived.value}&#x3C;/p></code></pre><p>An effect only depends on the values that it read the last time it ran. If <code>a</code> is true, changes to <code>b</code> will <a href="/#H4sIAAAAAAAAE3WQ0WrDMAxFf0U1hTow1vcsMfQ7lj3YjlxEXTvEymC4_vfFC6Ewtidxde8RkrJw5DGJ9j2LoO8oWnGZJvEi-GuqIn2iZ1x1istsa6dLdqaJ1RAG9sigoYdjYs0onfYJm7fdMX85q3dE59CylA30CnJtDWxjSNHjq49XeZqXEChcT9usLUAOpIbHA0yzM78oColGhDVofLS3neZSS6mqOz-XD51ZmGOAGKwne-vztk-956CL0kAJsi7decupf4l658EUZX4I8yTWt93jSI5wFC3PC5aP8g0Aje5DcQEAAA==">not cause this effect to rerun</a>:<pre class="language-ts"><code class="language-ts"><span class="token keyword">let</span> a <span class="token operator">=</span> <span class="token boolean">false</span><span class="token punctuation">;</span>
+<span class="token keyword">let</span> b <span class="token operator">=</span> <span class="token boolean">false</span><span class="token punctuation">;</span>
+<span class="token comment">// cut---</span>
+<span class="token function">$effect</span><span class="token punctuation">(</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token arrow operator">=></span> <span class="token punctuation">{</span>
+	<span class="token console class-name">console</span><span class="token punctuation">.</span><span class="token method function property-access">log</span><span class="token punctuation">(</span><span class="token string">'running'</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+	<span class="token keyword control-flow">if</span> <span class="token punctuation">(</span>a <span class="token operator">||</span> b<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+		<span class="token console class-name">console</span><span class="token punctuation">.</span><span class="token method function property-access">log</span><span class="token punctuation">(</span><span class="token string">'inside if block'</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+	<span class="token punctuation">}</span>
+<span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">;</span></code></pre></section><section class="level2"aria-labelledby="when-not-to-use-effect"><h2 id="when-not-to-use-effect">When not to use <code>$effect</code></h2><p>In general, <code>$effect</code> is best considered something of an escape hatch — useful for things like analytics and direct DOM manipulation — rather than a tool you should use frequently. In particular, avoid using it to synchronise state. Instead of this...<pre class="language-svelte"><code class="language-svelte">&#x3C;script>
+	let count = $state(0);
+	let doubled = $state();
+
+	// don't do this!
+	$effect(() => {
+		doubled = count * 2;
+	});
+&#x3C;/script></code></pre><p>...do this:<pre class="language-svelte"><code class="language-svelte">&#x3C;script>
+	let count = $state(0);
+	let doubled = $derived(count * 2);
+&#x3C;/script></code></pre><blockquote><p>[!NOTE] For things that are more complicated than a simple expression like <code>count * 2</code>, you can also use <code>$derived.by</code>.</blockquote><p>You might be tempted to do something convoluted with effects to link one value to another. The following example shows two inputs for "money spent" and "money left" that are connected to each other. If you update one, the other should update accordingly. Don't use effects for this (<a href="/#H4sIAAAAAAAACpVRy2rDMBD8lWXJwYE0dg-9KFYg31H3oNirIJBlYa1DjPG_F8l1XEop9LgzOzP7mFAbSwHF-4ROtYQCL97jAXn0sQh3skx4wNANfR2RMtS98XyuXMWWGLhjZUHCa1GcVix4cgwSdoEVU1bsn4wl_Y1I2kS6inekNdWcZXuQZ5giFDWpfwl5WYyT2fynbB1g1UWbTVbm2w6utOpKNq1TGucHhri6rLBX7kYVwtW4RtyVHUhOyXeGVj3klLxnyJP0i8lXNJUx6en-v6A48K85kTimpi0sYj-yAo-Wlh9FcL1LY4K3ahSgLT1OC3ZTXkBxfKN2uVC6T5LjAduuMdpQg4L7geaP-RNHPuClMQIAAA==">demo</a>):<pre class="language-svelte"><code class="language-svelte">&#x3C;script>
+	let total = 100;
+	let spent = $state(0);
+	let left = $state(total);
+
+	$effect(() => {
+		left = total - spent;
+	});
+
+	$effect(() => {
+		spent = total - left;
+	});
+&#x3C;/script>
+
+&#x3C;label>
+	&#x3C;input type="range" bind:value={spent} max={total} />
+	{spent}/{total} spent
+&#x3C;/label>
+
+&#x3C;label>
+	&#x3C;input type="range" bind:value={left} max={total} />
+	{left}/{total} left
+&#x3C;/label></code></pre><p>Instead, use callbacks where possible (<a href="/#H4sIAAAAAAAACo2SP2-DMBDFv8rp1CFR84cOXQhU6p6tY-ngwoEsGWPhI0pk8d0rG5yglqGj37v7veMJh7VUZDH9dKhFS5jiuzG4Q74Z_7AXUky4Q9sNfemVzJa9NPxW6IIVMXDHQkEOL0lyipo1pBlyeLIsmDbJ9u4oqhdG2A2mLrgedMmy0zCYSjB9eMaGtuC8WXBkPtOBRd8QHy5CDXSa3Jk7HbOfDgjWuAo_U71kz9vr6Bgc2X44orPjow2dKfFNKhSTSW0GBl9iXmAvdEMFQqDmLgBH6HQYyt3ie0doxTV3IWqEY2DN88eohqePvsf9O9mf_if4HMSVXD89NfEI99qvbMs3RdPv4MXYaSWtUeKWQq3oOlfZCJNCcnildlFgWMcdtl0la0kVptwPNH6NP_uzV0acAgAA">demo</a>):<pre class="language-svelte"><code class="language-svelte">&#x3C;script>
+	let total = 100;
+	let spent = $state(0);
+	let left = $state(total);
+
+	function updateSpent(e) {
+		spent = +e.target.value;
+		left = total - spent;
+	}
+
+	function updateLeft(e) {
+		left = +e.target.value;
+		spent = total - left;
+	}
+&#x3C;/script>
+
+&#x3C;label>
+	&#x3C;input type="range" value={spent} oninput={updateSpent} max={total} />
+	{spent}/{total} spent
+&#x3C;/label>
+
+&#x3C;label>
+	&#x3C;input type="range" value={left} oninput={updateLeft} max={total} />
+	{left}/{total} left
+&#x3C;/label></code></pre><p>If you need to use bindings, for whatever reason (for example when you want some kind of "writable <code>$derived</code>"), consider using getters and setters to synchronise state (<a href="/#H4sIAAAAAAAACo2SQW-DMAyF_4pl7dBqXcsOu1CYtHtvO44dsmKqSCFExFRFiP8-xRCGth52tJ_9PecpA1bakMf0Y0CrasIU35zDHXLvQuGvZJhwh77p2nPoZP7casevhS3YEAM3rAzk8Jwkx9jzjixDDg-eFdMm2S6KoWolyK6ItuCqs2fWjYXOlYrpPTA2tIUhiAVH5iPtWbUX4v1VmY6Okzpzp2OepgNEGu_CT1St2fP2fXQ0juwwHNHZ4ScNmxn1RUaCybR1HUMIMS-wVfZCBYJQ80GAIzRWhvJh9d4RanXLB7Ea4SCsef4Qu1IG68Xu387h9D_GJ2ne8ZXpxTZUv1w994amjxCaMc1Se2dUn0Jl6DaHeFEuhWT_QvUqOlnHHdZNqStNJabcdjR-jt8IbC-7lgIAAA==">demo</a>):<pre class="language-svelte"><code class="language-svelte">&#x3C;script>
+	let total = 100;
+	let spent = $state(0);
+
+	let left = {
+		get value() {
+			return total - spent;
+		},
+		set value(v) {
+			spent = total - v;
+		}
+	};
+&#x3C;/script>
+
+&#x3C;label>
+	&#x3C;input type="range" bind:value={spent} max={total} />
+	{spent}/{total} spent
+&#x3C;/label>
+
+&#x3C;label>
+	&#x3C;input type="range" bind:value={left.value} max={total} />
+	{left.value}/{total} left
+&#x3C;/label></code></pre><p>If you absolutely have to update <code>$state</code> within an effect and run into an infinite loop because you read and write to the same <code>$state</code>, use <a href="svelte#untrack">untrack</a>.</section><section class="level2"aria-labelledby="effectpre"><h2 id="effectpre"><code>$effect.pre</code></h2><p>In rare cases, you may need to run code <em>before</em> the DOM updates. For this we can use the <code>$effect.pre</code> rune:<pre class="language-svelte"><code class="language-svelte">&#x3C;script>
+	import { tick } from 'svelte';
+
+	let div = $state();
+	let messages = $state([]);
+
+	// ...
+
+	$effect.pre(() => {
+		if (!div) return; // not yet mounted
+
+		// reference `messages` array length so that this code re-runs whenever it changes
+		messages.length;
+
+		// autoscroll when new messages are added
+		if (div.offsetHeight + div.scrollTop > div.scrollHeight - 20) {
+			tick().then(() => {
+				div.scrollTo(0, div.scrollHeight);
+			});
+		}
+	});
+&#x3C;/script>
+
+&#x3C;div bind:this={div}>
+	{#each messages as message}
+		&#x3C;p>{message}&#x3C;/p>
+	{/each}
+&#x3C;/div></code></pre><p>Apart from the timing, <code>$effect.pre</code> works exactly like <code>$effect</code> — refer to its documentation for more info.</section><section class="level2"aria-labelledby="effecttracking"><h2 id="effecttracking"><code>$effect.tracking</code></h2><p>The <code>$effect.tracking</code> rune is an advanced feature that tells you whether or not the code is running inside a tracking context, such as an effect or inside your template (<a href="/#H4sIAAAAAAAAE3XP0QrCMAwF0F-JRXAD595rLfgdzodRUyl0bVgzQcb-3VYFQfExl5tDMgvrPCYhT7MI_YBCiiOR2Aq-UxnSDT1jnlOcRlMSlczoiHUXOjYxpOhx5-O12rgAJg4UAwaGhDyR3Gxhjdai4V1v2N2wqus9tC3Y3ifMQjbehaqq4aBhLtEv_Or893icCsdLve-Caj8nBkU67zMO5HtGCfM3sKiWNKhV0zwVaBqd3x3ixVmHFyFLuJyXB-moOe8pAQAA">demo</a>):<pre class="language-svelte"><code class="language-svelte">&#x3C;script>
+	console.log('in component setup:', $effect.tracking()); // false
+
+	$effect(() => {
+		console.log('in effect:', $effect.tracking()); // true
+	});
+&#x3C;/script>
+
+&#x3C;p>in template: {$effect.tracking()}&#x3C;/p> &#x3C;!-- true --></code></pre><p>This allows you to (for example) add things like subscriptions without causing memory leaks, by putting them in child effects. Here's a <code>readable</code> function that listens to changes from a callback function as long as it's inside a tracking context:<pre class="language-ts"><code class="language-ts"><span class="token keyword module">import</span> <span class="token imports"><span class="token punctuation">{</span> tick <span class="token punctuation">}</span></span> <span class="token keyword module">from</span> <span class="token string">'svelte'</span><span class="token punctuation">;</span>
+
+<span class="token keyword module">export</span> <span class="token keyword module">default</span> <span class="token keyword">function</span> <span class="token generic-function"><span class="token function">readable</span><span class="token generic class-name"><span class="token operator">&#x3C;</span><span class="token constant">T</span><span class="token operator">></span></span></span><span class="token punctuation">(</span>
+	initial_value<span class="token operator">:</span> <span class="token constant">T</span><span class="token punctuation">,</span>
+	start<span class="token operator">:</span> <span class="token punctuation">(</span><span class="token function-variable function">callback</span><span class="token operator">:</span> <span class="token punctuation">(</span><span class="token function-variable function">update</span><span class="token operator">:</span> <span class="token punctuation">(</span>v<span class="token operator">:</span> <span class="token constant">T</span><span class="token punctuation">)</span> <span class="token arrow operator">=></span> <span class="token constant">T</span><span class="token punctuation">)</span> <span class="token arrow operator">=></span> <span class="token constant">T</span><span class="token punctuation">)</span> <span class="token arrow operator">=></span> <span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token arrow operator">=></span> <span class="token keyword">void</span>
+<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+	<span class="token keyword">let</span> value <span class="token operator">=</span> <span class="token function">$state</span><span class="token punctuation">(</span>initial_value<span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+	<span class="token keyword">let</span> subscribers <span class="token operator">=</span> <span class="token number">0</span><span class="token punctuation">;</span>
+	<span class="token keyword">let</span> stop<span class="token operator">:</span> <span class="token keyword null nil">null</span> <span class="token operator">|</span> <span class="token punctuation">(</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token arrow operator">=></span> <span class="token keyword">void</span><span class="token punctuation">)</span> <span class="token operator">=</span> <span class="token keyword null nil">null</span><span class="token punctuation">;</span>
+
+	<span class="token keyword control-flow">return</span> <span class="token punctuation">{</span>
+		<span class="token keyword">get</span> <span class="token function">value</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+			<span class="token comment">// If in a tracking context ...</span>
+			<span class="token keyword control-flow">if</span> <span class="token punctuation">(</span>$effect<span class="token punctuation">.</span><span class="token method function property-access">tracking</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+				<span class="token function">$effect</span><span class="token punctuation">(</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token arrow operator">=></span> <span class="token punctuation">{</span>
+					<span class="token comment">// ...and there's no subscribers yet...</span>
+					<span class="token keyword control-flow">if</span> <span class="token punctuation">(</span>subscribers <span class="token operator">===</span> <span class="token number">0</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+						<span class="token comment">// ...invoke the function and listen to changes to update state</span>
+						stop <span class="token operator">=</span> <span class="token function">start</span><span class="token punctuation">(</span><span class="token punctuation">(</span>fn<span class="token punctuation">)</span> <span class="token arrow operator">=></span> <span class="token punctuation">(</span>value <span class="token operator">=</span> <span class="token function">fn</span><span class="token punctuation">(</span>value<span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+					<span class="token punctuation">}</span>
+
+					subscribers<span class="token operator">++</span><span class="token punctuation">;</span>
+
+					<span class="token comment">// The return callback is called once a listener unlistens</span>
+					<span class="token keyword control-flow">return</span> <span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token arrow operator">=></span> <span class="token punctuation">{</span>
+						<span class="token function">tick</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token method function property-access">then</span><span class="token punctuation">(</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token arrow operator">=></span> <span class="token punctuation">{</span>
+							subscribers<span class="token operator">--</span><span class="token punctuation">;</span>
+							<span class="token comment">// If it was the last subscriber...</span>
+							<span class="token keyword control-flow">if</span> <span class="token punctuation">(</span>subscribers <span class="token operator">===</span> <span class="token number">0</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+								<span class="token comment">// ...stop listening to changes</span>
+								stop<span class="token operator">?.</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+								stop <span class="token operator">=</span> <span class="token keyword null nil">null</span><span class="token punctuation">;</span>
+							<span class="token punctuation">}</span>
+						<span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+					<span class="token punctuation">}</span><span class="token punctuation">;</span>
+				<span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+			<span class="token punctuation">}</span>
+
+			<span class="token keyword control-flow">return</span> value<span class="token punctuation">;</span>
+		<span class="token punctuation">}</span>
+	<span class="token punctuation">}</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span></code></pre></section><section class="level2"aria-labelledby="effectroot"><h2 id="effectroot"><code>$effect.root</code></h2><p>The <code>$effect.root</code> rune is an advanced feature that creates a non-tracked scope that doesn't auto-cleanup. This is useful for nested effects that you want to manually control. This rune also allows for creation of effects outside of the component initialisation phase.<pre class="language-svelte"><code class="language-svelte">&#x3C;script>
+	let count = $state(0);
+
+	const cleanup = $effect.root(() => {
+		$effect(() => {
+			console.log(count);
+		});
+
+		return () => {
+			console.log('effect root cleanup');
+		};
+	});
+&#x3C;/script></code></pre><p><span style="float:footnote"><a href="../index.html#toc">Go to TOC</a></span></section></section>

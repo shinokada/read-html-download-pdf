@@ -1,0 +1,27 @@
+<!doctype html><html lang="en"><meta charset="utf-8"><title>Data fetching</title><meta name="viewport"content="width=device-width,initial-scale=1"><link rel="stylesheet"type="text/css"href="../../../../themes/packages/prism-coy-theme/theme_common.css"><section class="level1"aria-labelledby="data-fetching"><h1 id="data-fetching">Data fetching</h1><p>Fetching data is a fundamental part of apps interacting with the outside world. Svelte is unopinionated with how you fetch your data. The simplest way would be using the built-in <code>fetch</code> method:<pre class="language-svelte"><code class="language-svelte">&#x3C;script>
+	let response = $state();
+	fetch('/api/data').then(async (r) => (response = r.json()));
+&#x3C;/script></code></pre><p>While this works, it makes working with promises somewhat unergonomic. Svelte alleviates this problem using the <code>#await</code> block.<section class="level2"aria-labelledby="await-"><h2 id="await-">{#await ...}</h2><pre class="language-svelte"><code class="language-svelte">&#x3C;! copy: false  --->
+{#await expression}...{:then name}...{:catch name}...{/await}</code></pre><pre class="language-svelte"><code class="language-svelte">&#x3C;! copy: false  --->
+{#await expression}...{:then name}...{/await}</code></pre><pre class="language-svelte"><code class="language-svelte">&#x3C;! copy: false  --->
+{#await expression then name}...{/await}</code></pre><pre class="language-svelte"><code class="language-svelte">&#x3C;! copy: false  --->
+{#await expression catch name}...{/await}</code></pre><p>Await blocks allow you to branch on the three possible states of a Promise — pending, fulfilled or rejected. In SSR mode, only the pending branch will be rendered on the server. If the provided expression is not a Promise only the fulfilled branch will be rendered, including in SSR mode.<pre class="language-svelte"><code class="language-svelte">{#await promise}
+	&#x3C;!-- promise is pending -->
+	&#x3C;p>waiting for the promise to resolve...&#x3C;/p>
+{:then value}
+	&#x3C;!-- promise was fulfilled or not a Promise -->
+	&#x3C;p>The value is {value}&#x3C;/p>
+{:catch error}
+	&#x3C;!-- promise was rejected -->
+	&#x3C;p>Something went wrong: {error.message}&#x3C;/p>
+{/await}</code></pre><p>The <code>catch</code> block can be omitted if you don't need to render anything when the promise rejects (or no error is possible).<pre class="language-svelte"><code class="language-svelte">{#await promise}
+	&#x3C;!-- promise is pending -->
+	&#x3C;p>waiting for the promise to resolve...&#x3C;/p>
+{:then value}
+	&#x3C;!-- promise was fulfilled -->
+	&#x3C;p>The value is {value}&#x3C;/p>
+{/await}</code></pre><p>If you don't care about the pending state, you can also omit the initial block.<pre class="language-svelte"><code class="language-svelte">{#await promise then value}
+	&#x3C;p>The value is {value}&#x3C;/p>
+{/await}</code></pre><p>Similarly, if you only want to show the error state, you can omit the <code>then</code> block.<pre class="language-svelte"><code class="language-svelte">{#await promise catch error}
+	&#x3C;p>The error is {error}&#x3C;/p>
+{/await}</code></pre></section><section class="level2"aria-labelledby="sveltekit-loaders"><h2 id="sveltekit-loaders">SvelteKit loaders</h2><p>Fetching inside your components is great for simple use cases, but it's prone to data loading waterfalls and makes code harder to work with because of the promise handling. SvelteKit solves this problem by providing a opinionated data loading story that is coupled to its router. Learn more about it <a href="../kit">in the docs</a>. <span style="float:footnote"><a href="../index.html#toc">Go to TOC</a></span></section></section>

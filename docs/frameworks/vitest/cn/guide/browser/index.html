@@ -1,0 +1,187 @@
+<!doctype html><html lang="cn"><meta charset="utf-8"><title>Browser Mode | Guide</title><meta name="viewport"content="width=device-width,initial-scale=1"><meta name="outline"content="deep"><link rel="stylesheet"type="text/css"href="../../../../../themes/packages/prism-coy-theme/theme_common.css"><section class="level1"aria-labelledby="浏览器模式-实验性-browser-mode"><h1 id="浏览器模式-实验性-browser-mode">浏览器模式<badge type="warning">实验性</badge>{#browser-mode}</h1><p>此页面提供有关 Vitest API 中实验性浏览器模式功能的信息，该功能允许你在浏览器中本地运行测试，提供对窗口和文档等浏览器全局变量的访问。此功能目前正在开发中，API 未来可能会更改。</p><img alt="Vitest UI"img-light=""src="/ui-browser-1-light.png"> <img alt="Vitest UI"img-dark=""src="/ui-browser-1-dark.png"><section class="level2"aria-labelledby="安装"><h2 id="安装">安装</h2><p>为方便设置，可使用 <code>vitest init browser</code> 命令安装所需的依赖项并创建浏览器配置。</p>code-group ```bash [npm] npx vitest init browser ``` ```bash [yarn] yarn exec vitest init browser ``` ```bash [pnpm] pnpx vitest init browser ``` ```bash [bun] bunx vitest init browser ```<section class="level3"aria-labelledby="手动安装"><h3 id="手动安装">手动安装</h3><p>您也可以手动安装软件包。默认情况下，浏览器模式不需要任何额外的 E2E provider 就能在本地运行测试，因为它会复用你现有的浏览器。</p>code-group ```bash [npm] npm install -D vitest @vitest/browser ``` ```bash [yarn] yarn add -D vitest @vitest/browser ``` ```bash [pnpm] pnpm add -D vitest @vitest/browser ``` ```bash [bun] bun add -D vitest @vitest/browser ```<blockquote>不过，要在 CI 中运行测试，您需要安装 [`playwright`](https://npmjs.com/package/playwright) 或 [`webdriverio`](https://www.npmjs.com/package/webdriverio) 。我们还建议在本地测试时切换到这两个选项中的一个，而不是使用默认的 `preview` 提供程序，因为它依赖于模拟事件而不是使用 Chrome DevTools 协议。<p>如果你还没有使用这些工具中的一种，我们建议您从 Playwright 开始，因为它支持并行执行，这将使您的测试运行得更快。此外，Playwright 使用的 Chrome DevTools 协议通常比 WebDriver 更快。</blockquote>tabs key:provider == Playwright [Playwright](https://npmjs.com/package/playwright) 是一个用于网络测试和自动化的框架。是一个用于网络测试和自动化的框架。 code-group ```bash [npm] npm install -D vitest @vitest/browser playwright ``` ```bash [yarn] yarn add -D vitest @vitest/browser playwright ``` ```bash [pnpm] pnpm add -D vitest @vitest/browser playwright ``` ```bash [bun] bun add -D vitest @vitest/browser playwright ``` == WebdriverIO<p><a href="https://www.npmjs.com/package/webdriverio">WebdriverIO</a> 允许您使用 WebDriver 协议在本地运行测试。</p>code-group ```bash [npm] npm install -D vitest @vitest/browser webdriverio ``` ```bash [yarn] yarn add -D vitest @vitest/browser webdriverio ``` ```bash [pnpm] pnpm add -D vitest @vitest/browser webdriverio ``` ```bash [bun] bun add -D vitest @vitest/browser webdriverio ```</section></section><section class="level2"aria-labelledby="配置"><h2 id="配置">配置</h2><p>要在 Vitest 配置中激活浏览器模式，可以使用 <code>--browser</code> 标志，或在 Vitest 配置文件中将 <code>browser.enabled</code> 字段设为 <code>true</code>。下面是一个使用浏览器字段的配置示例：<pre class="language-ts"><code class="language-ts"><span class="token keyword module">export</span> <span class="token keyword module">default</span> <span class="token function">defineConfig</span><span class="token punctuation">(</span><span class="token punctuation">{</span>
+  test<span class="token operator">:</span> <span class="token punctuation">{</span>
+    browser<span class="token operator">:</span> <span class="token punctuation">{</span>
+      provider<span class="token operator">:</span> <span class="token string">'playwright'</span><span class="token punctuation">,</span> <span class="token comment">// or 'webdriverio'</span>
+      enabled<span class="token operator">:</span> <span class="token boolean">true</span><span class="token punctuation">,</span>
+      name<span class="token operator">:</span> <span class="token string">'chromium'</span><span class="token punctuation">,</span> <span class="token comment">// browser name is required</span>
+    <span class="token punctuation">}</span><span class="token punctuation">,</span>
+  <span class="token punctuation">}</span>
+<span class="token punctuation">}</span><span class="token punctuation">)</span></code></pre>info Vitest 分配的端口为 `63315`，以避免与开发服务器冲突，从而允许同时运行两个服务器。你可以使用 [`browser.api`](../config.html#browser-api) 选项来更改。<p>如果之前未使用过 Vite，请确保已安装框架插件并在配置中指定。有些框架可能需要额外配置才能运行，请查看其 Vite 相关文档以确定。</p>code-group ```ts [vue] import { defineConfig } from 'vitest/config' import vue from '@vitejs/plugin-vue'<p>export default defineConfig({ plugins: [vue()], test: { browser: { enabled: true, provider: 'playwright', name: 'chromium', } } })<pre class="language-text"><code class="language-text">```ts [svelte]
+import { defineConfig } from 'vitest/config'
+import { svelte } from '@sveltejs/vite-plugin-svelte'
+
+export default defineConfig({
+  plugins: [svelte()],
+  test: {
+    browser: {
+      enabled: true,
+      provider: 'playwright',
+      name: 'chromium',
+    }
+  }
+})</code></pre><pre class="language-ts"><code class="language-ts"><span class="token keyword module">import</span> <span class="token imports"><span class="token punctuation">{</span> defineConfig <span class="token punctuation">}</span></span> <span class="token keyword module">from</span> <span class="token string">'vitest/config'</span>
+<span class="token keyword module">import</span> <span class="token imports">solidPlugin</span> <span class="token keyword module">from</span> <span class="token string">'vite-plugin-solid'</span>
+
+<span class="token keyword module">export</span> <span class="token keyword module">default</span> <span class="token function">defineConfig</span><span class="token punctuation">(</span><span class="token punctuation">{</span>
+  plugins<span class="token operator">:</span> <span class="token punctuation">[</span><span class="token function">solidPlugin</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">]</span><span class="token punctuation">,</span>
+  test<span class="token operator">:</span> <span class="token punctuation">{</span>
+    browser<span class="token operator">:</span> <span class="token punctuation">{</span>
+      enabled<span class="token operator">:</span> <span class="token boolean">true</span><span class="token punctuation">,</span>
+      provider<span class="token operator">:</span> <span class="token string">'playwright'</span><span class="token punctuation">,</span>
+      name<span class="token operator">:</span> <span class="token string">'chromium'</span><span class="token punctuation">,</span>
+    <span class="token punctuation">}</span>
+  <span class="token punctuation">}</span>
+<span class="token punctuation">}</span><span class="token punctuation">)</span></code></pre><pre class="language-ts"><code class="language-ts"><span class="token keyword module">import</span> <span class="token imports"><span class="token punctuation">{</span> defineConfig <span class="token punctuation">}</span></span> <span class="token keyword module">from</span> <span class="token string">'vitest/config'</span>
+<span class="token keyword module">import</span> <span class="token imports">marko</span> <span class="token keyword module">from</span> <span class="token string">'@marko/vite'</span>
+
+<span class="token keyword module">export</span> <span class="token keyword module">default</span> <span class="token function">defineConfig</span><span class="token punctuation">(</span><span class="token punctuation">{</span>
+  plugins<span class="token operator">:</span> <span class="token punctuation">[</span><span class="token function">marko</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">]</span><span class="token punctuation">,</span>
+  test<span class="token operator">:</span> <span class="token punctuation">{</span>
+    browser<span class="token operator">:</span> <span class="token punctuation">{</span>
+      enabled<span class="token operator">:</span> <span class="token boolean">true</span><span class="token punctuation">,</span>
+      provider<span class="token operator">:</span> <span class="token string">'playwright'</span><span class="token punctuation">,</span>
+      name<span class="token operator">:</span> <span class="token string">'chromium'</span><span class="token punctuation">,</span>
+    <span class="token punctuation">}</span>
+  <span class="token punctuation">}</span>
+<span class="token punctuation">}</span><span class="token punctuation">)</span></code></pre><blockquote>`react` 不需要插件就能工作，但 `preact` 需要 [extra configuration](https://preactjs.com/guide/v10/getting-started/#create-a-vite-powered-preact-app) 才能使用别名</blockquote><p>如果需要使用基于 Node 的运行程序运行某些测试，可以定义一个 <a href="/guide/workspace">workspace</a> 文件，为不同的测试策略分别配置：<p>{#workspace-config}<pre class="language-ts"><code class="language-ts"><span class="token comment">// vitest.workspace.ts</span>
+<span class="token keyword module">import</span> <span class="token imports"><span class="token punctuation">{</span> defineWorkspace <span class="token punctuation">}</span></span> <span class="token keyword module">from</span> <span class="token string">'vitest/config'</span>
+
+<span class="token keyword module">export</span> <span class="token keyword module">default</span> <span class="token function">defineWorkspace</span><span class="token punctuation">(</span><span class="token punctuation">[</span>
+  <span class="token punctuation">{</span>
+    test<span class="token operator">:</span> <span class="token punctuation">{</span>
+      <span class="token comment">// an example of file based convention,</span>
+      <span class="token comment">// you don't have to follow it</span>
+      include<span class="token operator">:</span> <span class="token punctuation">[</span>
+        <span class="token string">'tests/unit/**/*.{test,spec}.ts'</span><span class="token punctuation">,</span>
+        <span class="token string">'tests/**/*.unit.{test,spec}.ts'</span><span class="token punctuation">,</span>
+      <span class="token punctuation">]</span><span class="token punctuation">,</span>
+      name<span class="token operator">:</span> <span class="token string">'unit'</span><span class="token punctuation">,</span>
+      environment<span class="token operator">:</span> <span class="token string">'node'</span><span class="token punctuation">,</span>
+    <span class="token punctuation">}</span><span class="token punctuation">,</span>
+  <span class="token punctuation">}</span><span class="token punctuation">,</span>
+  <span class="token punctuation">{</span>
+    test<span class="token operator">:</span> <span class="token punctuation">{</span>
+      <span class="token comment">// an example of file based convention,</span>
+      <span class="token comment">// you don't have to follow it</span>
+      include<span class="token operator">:</span> <span class="token punctuation">[</span>
+        <span class="token string">'tests/browser/**/*.{test,spec}.ts'</span><span class="token punctuation">,</span>
+        <span class="token string">'tests/**/*.browser.{test,spec}.ts'</span><span class="token punctuation">,</span>
+      <span class="token punctuation">]</span><span class="token punctuation">,</span>
+      name<span class="token operator">:</span> <span class="token string">'browser'</span><span class="token punctuation">,</span>
+      browser<span class="token operator">:</span> <span class="token punctuation">{</span>
+        enabled<span class="token operator">:</span> <span class="token boolean">true</span><span class="token punctuation">,</span>
+        name<span class="token operator">:</span> <span class="token string">'chrome'</span><span class="token punctuation">,</span>
+      <span class="token punctuation">}</span><span class="token punctuation">,</span>
+    <span class="token punctuation">}</span><span class="token punctuation">,</span>
+  <span class="token punctuation">}</span><span class="token punctuation">,</span>
+<span class="token punctuation">]</span><span class="token punctuation">)</span></code></pre><section class="level3"aria-labelledby="provider-配置"><h3 id="provider-配置">Provider 配置</h3></section>tabs key:provider == Playwright 你可以通过 [`providerOptions`](../config.html#browser-provideroptions)字段配置 Vitest 如何 [启动浏览器](https://playwright.dev/docs/api/class-browsertype#browser-type-launch) 和创建 [页面上下文](https://playwright.dev/docs/api/class-browsercontext)：<pre class="language-ts"><code class="language-ts"><span class="token keyword module">export</span> <span class="token keyword module">default</span> <span class="token function">defineConfig</span><span class="token punctuation">(</span><span class="token punctuation">{</span>
+  test<span class="token operator">:</span> <span class="token punctuation">{</span>
+    browser<span class="token operator">:</span> <span class="token punctuation">{</span>
+      providerOptions<span class="token operator">:</span> <span class="token punctuation">{</span>
+        launch<span class="token operator">:</span> <span class="token punctuation">{</span>
+          devtools<span class="token operator">:</span> <span class="token boolean">true</span><span class="token punctuation">,</span>
+        <span class="token punctuation">}</span><span class="token punctuation">,</span>
+        context<span class="token operator">:</span> <span class="token punctuation">{</span>
+          geolocation<span class="token operator">:</span> <span class="token punctuation">{</span>
+            latitude<span class="token operator">:</span> <span class="token number">45</span><span class="token punctuation">,</span>
+            longitude<span class="token operator">:</span> <span class="token operator">-</span><span class="token number">30</span><span class="token punctuation">,</span>
+          <span class="token punctuation">}</span><span class="token punctuation">,</span>
+          reducedMotion<span class="token operator">:</span> <span class="token string">'reduce'</span><span class="token punctuation">,</span>
+        <span class="token punctuation">}</span><span class="token punctuation">,</span>
+      <span class="token punctuation">}</span><span class="token punctuation">,</span>
+    <span class="token punctuation">}</span><span class="token punctuation">,</span>
+  <span class="token punctuation">}</span><span class="token punctuation">,</span>
+<span class="token punctuation">}</span><span class="token punctuation">)</span></code></pre><p>要获得类型提示，请在 <code>tsconfig.json</code> 文件的 <code>compilerOptions.types</code> 中添加 <code>@vitest/browser/providers/playwright</code>。 == WebdriverIO<p>你可以通过 <a href="../config.html#browser-provideroptions"><code>providerOptions</code></a>字段配置 Vitest 在启动浏览器时应使用哪些 <a href="https://webdriver.io/docs/configuration#webdriverio">options</a>：<pre class="language-ts"><code class="language-ts"><span class="token keyword module">export</span> <span class="token keyword module">default</span> <span class="token function">defineConfig</span><span class="token punctuation">(</span><span class="token punctuation">{</span>
+  test<span class="token operator">:</span> <span class="token punctuation">{</span>
+    browser<span class="token operator">:</span> <span class="token punctuation">{</span>
+      browser<span class="token operator">:</span> <span class="token string">'chrome'</span><span class="token punctuation">,</span>
+      providerOptions<span class="token operator">:</span> <span class="token punctuation">{</span>
+        region<span class="token operator">:</span> <span class="token string">'eu'</span><span class="token punctuation">,</span>
+        capabilities<span class="token operator">:</span> <span class="token punctuation">{</span>
+          browserVersion<span class="token operator">:</span> <span class="token string">'27.0'</span><span class="token punctuation">,</span>
+          platformName<span class="token operator">:</span> <span class="token string">'Windows 10'</span><span class="token punctuation">,</span>
+        <span class="token punctuation">}</span><span class="token punctuation">,</span>
+      <span class="token punctuation">}</span><span class="token punctuation">,</span>
+    <span class="token punctuation">}</span><span class="token punctuation">,</span>
+  <span class="token punctuation">}</span><span class="token punctuation">,</span>
+<span class="token punctuation">}</span><span class="token punctuation">)</span></code></pre><p>要获得类型提示，请在 <code>tsconfig.json</code> 文件的 <code>compilerOptions.types</code> 中添加 <code>@vitest/browser/providers/webdriverio</code>。</section><section class="level2"aria-labelledby="浏览器选项类型"><h2 id="浏览器选项类型">浏览器选项类型</h2><p>Vitest 中的浏览器选项取决于provider。如果在配置文件中传递 <code>--browser</code> 且未指定其名称，则 Vitest 将失败。可用选项：<ul><li><code>webdriverio</code> 支持这些浏览器:<ul><li><code>firefox</code><li><code>chrome</code><li><code>edge</code><li><code>safari</code></ul><li><code>playwright</code> 支持这些浏览器:<ul><li><code>firefox</code><li><code>webkit</code><li><code>chromium</code></ul></ul></section><section class="level2"aria-labelledby="浏览器兼容性"><h2 id="浏览器兼容性">浏览器兼容性</h2><p>Vitest 使用 <a href="https://cn.vitejs.dev/guide/#browser-support">Vite dev server</a> 来运行您的测试，因此我们只支持 <a href="https://cn.vitejs.dev/config/shared-options#esbuild"><code>esbuild.target</code></a>选项（默认为 <code>esnext</code>）中指定的功能。<p>默认情况下，Vite 的目标浏览器支持本地 <a href="https://caniuse.com/es6-module">ES Modules</a>、本地 <a href="https://caniuse.com/es6-module-dynamic-import">ESM dynamic import</a> 和 <a href="https://caniuse.com/mdn-javascript_operators_import_meta"><code>import.meta</code></a>。此外，我们还利用 <a href="https://caniuse.com/?search=BroadcastChannel"><code>BroadcastChannel</code></a>在 iframe 之间进行通信：<ul><li>Chrome >=87<li>Firefox >=78<li>Safari >=15.4<li>Edge >=88</ul></section><section class="level2"aria-labelledby="running-tests"><h2 id="running-tests">Running Tests</h2><p>要使用 CLI 指定浏览器，请使用 <code>--browser</code> 标志后跟浏览器名称，如下所示：<pre class="language-sh"><code class="language-sh">npx vitest --browser=chrome</code></pre><p>或者你可以使用点符号向 CLI 提供浏览器选项：<pre class="language-sh"><code class="language-sh">npx vitest --browser.name=chrome --browser.headless</code></pre><p>默认情况下，Vitest 会自动打开浏览器用户界面进行开发。您的测试将在中间的 iframe 中运行。您可以通过选择首选尺寸、在测试中调用 <code>page.viewport</code> 或在 <a href="../config.html#browser-viewport">the config</a> 中设置默认值来配置视口。</section><section class="level2"aria-labelledby="headless"><h2 id="headless">Headless</h2><p>headless 模式是浏览器模式下可用的另一个选项。在 headless 模式下，浏览器在没有用户界面的情况下在后台运行，这对于运行自动化测试非常有用。Vitest 中的 headless 选项可以设置为布尔值以启用或禁用 headless 模式。<p>使用 headless 模式时，Vitest 不会自动打开用户界面。如果想继续使用用户界面，但又想 headless 运行测试，可以安装 <a href="/guide/ui"><code>@vitest/ui</code></a> 包，并在运行 Vitest 时传递 --ui 标志。<p>这是启用 headless 模式的示例配置：<pre class="language-ts"><code class="language-ts"><span class="token keyword module">export</span> <span class="token keyword module">default</span> <span class="token function">defineConfig</span><span class="token punctuation">(</span><span class="token punctuation">{</span>
+  test<span class="token operator">:</span> <span class="token punctuation">{</span>
+    browser<span class="token operator">:</span> <span class="token punctuation">{</span>
+      provider<span class="token operator">:</span> <span class="token string">'playwright'</span><span class="token punctuation">,</span>
+      enabled<span class="token operator">:</span> <span class="token boolean">true</span><span class="token punctuation">,</span>
+      headless<span class="token operator">:</span> <span class="token boolean">true</span><span class="token punctuation">,</span>
+    <span class="token punctuation">}</span><span class="token punctuation">,</span>
+  <span class="token punctuation">}</span>
+<span class="token punctuation">}</span><span class="token punctuation">)</span></code></pre><p>你还可以在 CLI 中使用 <code>--browser.headless</code> 标志设置 headless 模式，如下所示：<pre class="language-sh"><code class="language-sh">npx vitest --browser.name=chrome --browser.headless</code></pre><p>在这种情况下，Vitest 将使用 Chrome 浏览器以 headless 模式运行。<blockquote>默认情况下Headless模式不可用。您需要使用 [`playwright`](https://npmjs.com/package/playwright) 或 [`webdriverio`](https://www.npmjs.com/package/webdriverio) 提供程序来启用此功能。</blockquote></section><section class="level2"aria-labelledby="examples"><h2 id="examples">Examples</h2><p>Vitest 提供的软件包可为多个流行框架呈现开箱即用的组件：<ul><li><a href="https://github.com/vitest-dev/vitest-browser-vue"><code>vitest-browser-vue</code></a> 渲染 <a href="https://vuejs.org">vue</a> 组件<li><a href="https://github.com/vitest-dev/vitest-browser-svelte"><code>vitest-browser-svelte</code></a> 渲染 <a href="https://svelte.dev">svelte</a> 组件<li><a href="https://github.com/vitest-dev/vitest-browser-react"><code>vitest-browser-react</code></a> 渲染 <a href="https://react.dev">react</a> 组件</ul><p>如果您的框架没有包含此功能，请随意创建自己的软件包--它是框架渲染器和 <code>page.elementLocator</code> API 的简单封装。我们将在本页添加指向它的链接。请确保它的名称以 <code>vitest-browser-</code> 开头。<p>除了使用 <code>@testing-library/your-framework</code> 渲染组件和查询元素外，你还需要进行断言。Vitest 捆绑了 <a href="https://github.com/testing-library/jest-dom"><code>@testing-library/jest-dom</code></a>库，可提供各种开箱即用的 DOM 断言。更多信息请参阅 <a href="/guide/browser/assertion-api">Assertions API</a>。<pre class="language-ts"><code class="language-ts"><span class="token keyword module">import</span> <span class="token imports"><span class="token punctuation">{</span> expect <span class="token punctuation">}</span></span> <span class="token keyword module">from</span> <span class="token string">'vitest'</span>
+<span class="token keyword module">import</span> <span class="token imports"><span class="token punctuation">{</span> page <span class="token punctuation">}</span></span> <span class="token keyword module">from</span> <span class="token string">'@vitest/browser/context'</span>
+<span class="token comment">// element is rendered correctly</span>
+<span class="token keyword control-flow">await</span> expect<span class="token punctuation">.</span><span class="token method function property-access">element</span><span class="token punctuation">(</span>page<span class="token punctuation">.</span><span class="token method function property-access">getByText</span><span class="token punctuation">(</span><span class="token string">'Hello World'</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token method function property-access">toBeInTheDocument</span><span class="token punctuation">(</span><span class="token punctuation">)</span></code></pre><p>Vitest 公开了一个<a href="/guide/browser/context">Context API</a>，其中包含一小套在测试中可能有用的实用程序。例如，如果您需要进行交互，如点击元素或在输入框中输入文本，您可以使用 <code>@vitest/browser/context</code> 中的 <code>userEvent</code>。更多信息请参阅 <a href="/guide/browser/interactivity-api">Interactivity API</a>。<pre class="language-ts"><code class="language-ts"><span class="token keyword module">import</span> <span class="token imports"><span class="token punctuation">{</span> page<span class="token punctuation">,</span> userEvent <span class="token punctuation">}</span></span> <span class="token keyword module">from</span> <span class="token string">'@vitest/browser/context'</span>
+<span class="token keyword control-flow">await</span> userEvent<span class="token punctuation">.</span><span class="token method function property-access">fill</span><span class="token punctuation">(</span>page<span class="token punctuation">.</span><span class="token method function property-access">getByLabelText</span><span class="token punctuation">(</span><span class="token regex"><span class="token regex-delimiter">/</span><span class="token regex-source language-regex">username</span><span class="token regex-delimiter">/</span><span class="token regex-flags">i</span></span><span class="token punctuation">)</span><span class="token punctuation">,</span> <span class="token string">'Alice'</span><span class="token punctuation">)</span>
+<span class="token comment">// or just locator.fill</span>
+<span class="token keyword control-flow">await</span> page<span class="token punctuation">.</span><span class="token method function property-access">getByLabelText</span><span class="token punctuation">(</span><span class="token regex"><span class="token regex-delimiter">/</span><span class="token regex-source language-regex">username</span><span class="token regex-delimiter">/</span><span class="token regex-flags">i</span></span><span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token method function property-access">fill</span><span class="token punctuation">(</span><span class="token string">'Alice'</span><span class="token punctuation">)</span></code></pre>code-group ```ts [vue] import { render } from 'vitest-browser-vue' import Component from './Component.vue'<p>test('properly handles v-model', async () => { const screen = render(Component)<p>// Asserts initial state. await expect.element(screen.getByText('Hi, my name is Alice')).toBeInTheDocument()<p>// Get the input DOM node by querying the associated label. const usernameInput = screen.getByLabelText(/username/i)<p>// Type the name into the input. This already validates that the input // is filled correctly, no need to check the value manually. await usernameInput.fill('Bob')<p>await expect.element(screen.getByText('Hi, my name is Bob')).toBeInTheDocument() })<pre class="language-text"><code class="language-text">```ts [svelte]
+import { render } from 'vitest-browser-svelte'
+import { expect, test } from 'vitest'
+
+import Greeter from './greeter.svelte'
+
+test('greeting appears on click', async () => {
+  const screen = render(Greeter, { name: 'World' })
+
+  const button = screen.getByRole('button')
+  await button.click()
+  const greeting = screen.getByText(/hello world/iu)
+
+  await expect.element(greeting).toBeInTheDocument()
+})</code></pre><pre class="language-tsx"><code class="language-tsx"><span class="token keyword module">import</span> <span class="token imports"><span class="token punctuation">{</span> render <span class="token punctuation">}</span></span> <span class="token keyword module">from</span> <span class="token string">'vitest-browser-react'</span>
+<span class="token keyword module">import</span> <span class="token imports"><span class="token maybe-class-name">Fetch</span></span> <span class="token keyword module">from</span> <span class="token string">'./fetch'</span>
+
+<span class="token function">test</span><span class="token punctuation">(</span><span class="token string">'loads and displays greeting'</span><span class="token punctuation">,</span> <span class="token keyword">async</span> <span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token arrow operator">=></span> <span class="token punctuation">{</span>
+  <span class="token comment">// Render a React element into the DOM</span>
+  <span class="token keyword">const</span> screen <span class="token operator">=</span> <span class="token function">render</span><span class="token punctuation">(</span><span class="token tag"><span class="token tag"><span class="token punctuation">&#x3C;</span><span class="token class-name">Fetch</span></span> <span class="token attr-name">url</span><span class="token attr-value"><span class="token punctuation attr-equals">=</span><span class="token punctuation">"</span>/greeting<span class="token punctuation">"</span></span> <span class="token punctuation">/></span></span><span class="token punctuation">)</span>
+
+  <span class="token keyword control-flow">await</span> screen<span class="token punctuation">.</span><span class="token method function property-access">getByText</span><span class="token punctuation">(</span><span class="token string">'Load Greeting'</span><span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token method function property-access">click</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+  <span class="token comment">// wait before throwing an error if it cannot find an element</span>
+  <span class="token keyword">const</span> heading <span class="token operator">=</span> screen<span class="token punctuation">.</span><span class="token method function property-access">getByRole</span><span class="token punctuation">(</span><span class="token string">'heading'</span><span class="token punctuation">)</span>
+
+  <span class="token comment">// assert that the alert message is correct</span>
+  <span class="token keyword control-flow">await</span> expect<span class="token punctuation">.</span><span class="token method function property-access">element</span><span class="token punctuation">(</span>heading<span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token method function property-access">toHaveTextContent</span><span class="token punctuation">(</span><span class="token string">'hello there'</span><span class="token punctuation">)</span>
+  <span class="token keyword control-flow">await</span> expect<span class="token punctuation">.</span><span class="token method function property-access">element</span><span class="token punctuation">(</span>screen<span class="token punctuation">.</span><span class="token method function property-access">getByRole</span><span class="token punctuation">(</span><span class="token string">'button'</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token method function property-access">toBeDisabled</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+<span class="token punctuation">}</span><span class="token punctuation">)</span></code></pre><p>Vitest 并不支持所有开箱即用的框架，但您可以使用外部工具来运行这些框架的测试。我们还鼓励社区创建他们自己的 <code>vitest-browser</code> 封装程序，如果您有这样的封装程序，请随时将其添加到上述示例中。<p>对于不支持的框架，我们建议使用 <code>testing-library</code> 软件包：<ul><li><a href="https://testing-library.com/docs/preact-testing-library/intro"><code>@testing-library/preact</code></a> 渲染 <a href="https://preactjs.com">preact</a> 组件<li><a href="https://testing-library.com/docs/solid-testing-library/intro"><code>@solidjs/testing-library</code></a> 渲染 <a href="https://www.solidjs.com">solid</a> 组件<li><a href="https://testing-library.com/docs/marko-testing-library/intro"><code>@marko/testing-library</code></a> 渲染 <a href="https://markojs.com">marko</a> 组件</ul><blockquote>`testing-library` 提供了一个软件包 `@testing-library/user-event`。我们不建议直接使用它，因为它会模拟事件而非实际触发事件--相反，请使用从 `@vitest/browser/context`导入的 [`userEvent`](/guide/browser/interactivity-api)，它在引擎盖下使用 Chrome DevTools 协议或 Webdriver（取决于provider）。</blockquote>code-group ```tsx [preact] // based on @testing-library/preact example // https://testing-library.com/docs/preact-testing-library/example<p>import { h } from 'preact' import { page } from '@vitest/browser/context' import { render } from '@testing-library/preact'<p>import HiddenMessage from '../hidden-message'<p>test('shows the children when the checkbox is checked', async () => { const testMessage = 'Test Message'<p>const { baseElement } = render(<hiddenmessage>{testMessage}</hiddenmessage>, )<p>const screen = page.elementLocator(baseElement)<p>// .query() will return the element or null if it cannot be found. // .element() will return the element or throw an error if it cannot be found. expect(screen.getByText(testMessage).query()).not.toBeInTheDocument()<p>// The queries can accept a regex to make your selectors more // resilient to content tweaks and changes. await screen.getByLabelText(/show/i).click()<p>await expect.element(screen.getByText(testMessage)).toBeInTheDocument() })<pre class="language-text"><code class="language-text">```tsx [solid]
+// baed on @testing-library/solid API
+// https://testing-library.com/docs/solid-testing-library/api
+
+import { render } from '@testing-library/solid'
+
+it('uses params', async () => {
+  const App = () => (
+    &#x3C;>
+      &#x3C;Route
+        path="/ids/:id"
+        component={() => (
+          &#x3C;p>
+            Id:
+            {useParams()?.id}
+          &#x3C;/p>
+        )}
+      />
+      &#x3C;Route path="/" component={() => &#x3C;p>Start&#x3C;/p>} />
+    &#x3C;/>
+  )
+  const { baseElement } = render(() => &#x3C;App />, { location: 'ids/1234' })
+  const screen = page.elementLocator(baseElement)
+
+  await expect.screen(screen.getByText('Id: 1234')).toBeInTheDocument()
+})</code></pre><pre class="language-ts"><code class="language-ts"><span class="token comment">// baed on @testing-library/marko API</span>
+<span class="token comment">// https://testing-library.com/docs/marko-testing-library/api</span>
+
+<span class="token keyword module">import</span> <span class="token imports"><span class="token punctuation">{</span> render<span class="token punctuation">,</span> screen <span class="token punctuation">}</span></span> <span class="token keyword module">from</span> <span class="token string">'@marko/testing-library'</span>
+<span class="token keyword module">import</span> <span class="token imports"><span class="token maybe-class-name">Greeting</span></span> <span class="token keyword module">from</span> <span class="token string">'./greeting.marko'</span>
+
+<span class="token function">test</span><span class="token punctuation">(</span><span class="token string">'renders a message'</span><span class="token punctuation">,</span> <span class="token keyword">async</span> <span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token arrow operator">=></span> <span class="token punctuation">{</span>
+  <span class="token keyword">const</span> <span class="token punctuation">{</span> baseElement <span class="token punctuation">}</span> <span class="token operator">=</span> <span class="token keyword control-flow">await</span> <span class="token function">render</span><span class="token punctuation">(</span><span class="token maybe-class-name">Greeting</span><span class="token punctuation">,</span> <span class="token punctuation">{</span> name<span class="token operator">:</span> <span class="token string">'Marko'</span> <span class="token punctuation">}</span><span class="token punctuation">)</span>
+  <span class="token keyword">const</span> screen <span class="token operator">=</span> page<span class="token punctuation">.</span><span class="token method function property-access">elementLocator</span><span class="token punctuation">(</span>baseElement<span class="token punctuation">)</span>
+  <span class="token keyword control-flow">await</span> expect<span class="token punctuation">.</span><span class="token method function property-access">element</span><span class="token punctuation">(</span>screen<span class="token punctuation">.</span><span class="token method function property-access">getByText</span><span class="token punctuation">(</span><span class="token regex"><span class="token regex-delimiter">/</span><span class="token regex-source language-regex">Marko</span><span class="token regex-delimiter">/</span></span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token method function property-access">toBeInTheDocument</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+  <span class="token keyword control-flow">await</span> expect<span class="token punctuation">.</span><span class="token method function property-access">element</span><span class="token punctuation">(</span>container<span class="token punctuation">.</span><span class="token property-access">firstChild</span><span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token method function property-access">toMatchInlineSnapshot</span><span class="token punctuation">(</span><span class="token template-string"><span class="token template-punctuation string">`</span><span class="token string">
+    &#x3C;h1>Hello, Marko!&#x3C;/h1>
+  </span><span class="token template-punctuation string">`</span></span><span class="token punctuation">)</span>
+<span class="token punctuation">}</span><span class="token punctuation">)</span></code></pre></section><section class="level2"aria-labelledby="限制"><h2 id="限制">限制</h2><section class="level3"aria-labelledby="线程阻塞对话框"><h3 id="线程阻塞对话框">线程阻塞对话框</h3><p>使用 Vitest 浏览器时，需要注意的是像 <code>alert</code> 或 <code>confirm</code> 这样的线程阻塞对话框不能在本地使用。这是因为它们阻塞了网页，这意味着 Vitest 无法继续与该页面通信，导致执行挂起。<p>在这种情况下，Vitest 为这些 API 提供默认模拟和默认返回值。这确保如果用户不小心使用了同步弹出式 Web API，执行不会挂起。但是，仍然建议用户模拟这些 Web API 以获得更好的体验。在 <a href="/guide/mocking">Mocking</a> 中阅读更多内容。 <span style="float:footnote"><a href="../../index.html#toc">Go to TOC</a></span></section></section></section>

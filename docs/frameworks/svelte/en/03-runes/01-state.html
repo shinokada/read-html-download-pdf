@@ -1,0 +1,100 @@
+<!doctype html><html lang="en"><meta charset="utf-8"><title>State</title><meta name="viewport"content="width=device-width,initial-scale=1"><link rel="stylesheet"type="text/css"href="../../../../themes/packages/prism-coy-theme/theme_common.css"><section class="level1"aria-labelledby="state"><h1 id="state">State</h1><p>Svelte 5 uses <em>runes</em>, a powerful set of primitives for controlling reactivity inside your Svelte components and inside <code>.svelte.js</code> and <code>.svelte.ts</code> modules.<p>Runes are function-like symbols that provide instructions to the Svelte compiler. You don't need to import them from anywhere — when you use Svelte, they're part of the language. This page describes the runes that are concerned with managing state in your application.<section class="level2"aria-labelledby="state-1"><h2 id="state-1"><code>$state</code></h2><p>The <code>$state</code> rune is the at the heart of the runes API. It is used to declare reactive state:<pre class="language-svelte"><code class="language-svelte">&#x3C;script>
+	let count = $state(0);
+&#x3C;/script>
+
+&#x3C;button onclick={() => count++}>
+	clicks: {count}
+&#x3C;/button></code></pre><p>Variables declared with <code>$state</code> are the variable <em>itself</em>, in other words there's no wrapper around the value that it contains. This is possible thanks to the compiler-nature of Svelte. As such, updating state is done through simple reassignment.<p>You can also use <code>$state</code> in class fields (whether public or private):<pre class="language-js"><code class="language-js"><span class="token comment">// @errors: 7006 2554</span>
+<span class="token keyword">class</span> <span class="token class-name">Todo</span> <span class="token punctuation">{</span>
+	done <span class="token operator">=</span> <span class="token function">$state</span><span class="token punctuation">(</span><span class="token boolean">false</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+	text <span class="token operator">=</span> <span class="token function">$state</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+	<span class="token function">constructor</span><span class="token punctuation">(</span><span class="token parameter">text</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+		<span class="token keyword">this</span><span class="token punctuation">.</span><span class="token property-access">text</span> <span class="token operator">=</span> text<span class="token punctuation">;</span>
+	<span class="token punctuation">}</span>
+
+	<span class="token function">reset</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+		<span class="token keyword">this</span><span class="token punctuation">.</span><span class="token property-access">text</span> <span class="token operator">=</span> <span class="token string">''</span><span class="token punctuation">;</span>
+		<span class="token keyword">this</span><span class="token punctuation">.</span><span class="token property-access">done</span> <span class="token operator">=</span> <span class="token boolean">false</span><span class="token punctuation">;</span>
+	<span class="token punctuation">}</span>
+<span class="token punctuation">}</span></code></pre><blockquote><p>[!NOTE] In this example, the compiler transforms <code>done</code> and <code>text</code> into <code>get</code>/<code>set</code> methods on the class prototype referencing private fields</blockquote><p>Objects and arrays are made deeply reactive by wrapping them with <a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Proxy"><code>Proxies</code></a>. What that means is that in the following example, we can mutate the <code>entries</code> object and the UI will still update - but only the list item that is actually changed will rerender:<pre class="language-svelte"><code class="language-svelte">&#x3C;script>
+	let entries = $state([
+		{ id: 1, text: 'foo' },
+		{ id: 2, text: 'bar' }
+	]);
+&#x3C;/script>
+
+{#each entries as entry (entry.id)}
+	{entry.text}
+{/each}
+
+&#x3C;button onclick={() => (entries[1].text = 'baz')}>change second entry text&#x3C;/button></code></pre><blockquote><p>[!NOTE] Only POJOs (plain old JavaScript objects) are made deeply reactive. Reactivity will stop at class boundaries and leave those alone</blockquote></section><section class="level2"aria-labelledby="stateraw"><h2 id="stateraw"><code>$state.raw</code></h2><p>State declared with <code>$state.raw</code> cannot be mutated; it can only be <em>reassigned</em>. In other words, rather than assigning to a property of an object, or using an array method like <code>push</code>, replace the object or array altogether if you'd like to update it:<pre class="language-js"><code class="language-js"><span class="token keyword">let</span> person <span class="token operator">=</span> $state<span class="token punctuation">.</span><span class="token method function property-access">raw</span><span class="token punctuation">(</span><span class="token punctuation">{</span>
+	<span class="token literal-property property">name</span><span class="token operator">:</span> <span class="token string">'Heraclitus'</span><span class="token punctuation">,</span>
+	<span class="token literal-property property">age</span><span class="token operator">:</span> <span class="token number">49</span>
+<span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+<span class="token comment">// this will have no effect (and will throw an error in dev)</span>
+person<span class="token punctuation">.</span><span class="token property-access">age</span> <span class="token operator">+=</span> <span class="token number">1</span><span class="token punctuation">;</span>
+
+<span class="token comment">// this will work, because we're creating a new person</span>
+person <span class="token operator">=</span> <span class="token punctuation">{</span>
+	<span class="token literal-property property">name</span><span class="token operator">:</span> <span class="token string">'Heraclitus'</span><span class="token punctuation">,</span>
+	<span class="token literal-property property">age</span><span class="token operator">:</span> <span class="token number">50</span>
+<span class="token punctuation">}</span><span class="token punctuation">;</span></code></pre><p>This can improve performance with large arrays and objects that you weren't planning to mutate anyway, since it avoids the cost of making them reactive. Note that raw state can <em>contain</em> reactive state (for example, a raw array of reactive objects).</section><section class="level2"aria-labelledby="statesnapshot"><h2 id="statesnapshot"><code>$state.snapshot</code></h2><p>To take a static snapshot of a deeply reactive <code>$state</code> proxy, use <code>$state.snapshot</code>:<pre class="language-svelte"><code class="language-svelte">&#x3C;script>
+	let counter = $state({ count: 0 });
+
+	function onclick() {
+		// Will log `{ count: ... }` rather than `Proxy { ... }`
+		console.log($state.snapshot(counter));
+	}
+&#x3C;/script></code></pre><p>This is handy when you want to pass some state to an external library or API that doesn't expect a proxy, such as <code>structuredClone</code>.</section><section class="level2"aria-labelledby="derived"><h2 id="derived"><code>$derived</code></h2><p>Derived state is declared with the <code>$derived</code> rune:<pre class="language-svelte"><code class="language-svelte">&#x3C;script>
+	let count = $state(0);
+	let doubled = $derived(count * 2);
+&#x3C;/script>
+
+&#x3C;button onclick={() => count++}>
+	{doubled}
+&#x3C;/button>
+
+&#x3C;p>{count} doubled is {doubled}&#x3C;/p></code></pre><p>The expression inside <code>$derived(...)</code> should be free of side-effects. Svelte will disallow state changes (e.g. <code>count++</code>) inside derived expressions.<p>As with <code>$state</code>, you can mark class fields as <code>$derived</code>.</section><section class="level2"aria-labelledby="derivedby"><h2 id="derivedby"><code>$derived.by</code></h2><p>Sometimes you need to create complex derivations that don't fit inside a short expression. In these cases, you can use <code>$derived.by</code> which accepts a function as its argument.<pre class="language-svelte"><code class="language-svelte">&#x3C;script>
+	let numbers = $state([1, 2, 3]);
+	let total = $derived.by(() => {
+		let total = 0;
+		for (const n of numbers) {
+			total += n;
+		}
+		return total;
+	});
+&#x3C;/script>
+
+&#x3C;button onclick={() => numbers.push(numbers.length + 1)}>
+	{numbers.join(' + ')} = {total}
+&#x3C;/button></code></pre><p>In essence, <code>$derived(expression)</code> is equivalent to <code>$derived.by(() => expression)</code>.</section><section class="level2"aria-labelledby="universal-reactivity"><h2 id="universal-reactivity">Universal reactivity</h2><p>In the examples above, <code>$state</code> and <code>$derived</code> only appear at the top level of components. You can also use them within functions or even outside Svelte components inside <code>.svelte.js</code> or <code>.svelte.ts</code> modules.<pre class="language-ts"><code class="language-ts"><span class="token comment">/// file: counter.svelte.ts</span>
+<span class="token keyword module">export</span> <span class="token keyword">function</span> <span class="token function">createCounter</span><span class="token punctuation">(</span>initial<span class="token operator">:</span> <span class="token builtin">number</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+	<span class="token keyword">let</span> count <span class="token operator">=</span> <span class="token function">$state</span><span class="token punctuation">(</span>initial<span class="token punctuation">)</span><span class="token punctuation">;</span>
+	<span class="token keyword">let</span> double <span class="token operator">=</span> <span class="token function">$derived</span><span class="token punctuation">(</span>count <span class="token operator">*</span> <span class="token number">2</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+	<span class="token keyword control-flow">return</span> <span class="token punctuation">{</span>
+		<span class="token keyword">get</span> <span class="token function">count</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+			<span class="token keyword control-flow">return</span> count<span class="token punctuation">;</span>
+		<span class="token punctuation">}</span><span class="token punctuation">,</span>
+		<span class="token keyword">get</span> <span class="token function">double</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+			<span class="token keyword control-flow">return</span> double<span class="token punctuation">;</span>
+		<span class="token punctuation">}</span><span class="token punctuation">,</span>
+		<span class="token function-variable function">increment</span><span class="token operator">:</span> <span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token arrow operator">=></span> count<span class="token operator">++</span>
+	<span class="token punctuation">}</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span></code></pre><pre class="language-svelte"><code class="language-svelte">&#x3C;! file: App.svelte --->
+&#x3C;script>
+	import { createCounter } from './counter.svelte';
+
+	const counter = createCounter();
+&#x3C;/script>
+
+&#x3C;button onclick={counter.increment}>{counter.count} / {counter.double}&#x3C;/button></code></pre><p>There are a few things to note in the above example:<ul><li>We're using getters to transport reactivity across the function boundary. This way we keep reactivity "alive". If we were to return the value itself, it would be fixed to the value at that point in time. This is no different to how regular JavaScript variables behave.<li>We're not destructuring the counter at the usage site. Because we're using getters, destructuring would fix <code>count</code> and <code>double</code> to the value at that point in time. To keep the getters "alive", we're not using destructuring. Again, this is how regular JavaScript works.</ul><p>If you have shared state you want to manipulate from various places, you don't need to resort to getters. Instead, you can take advantage of <code>$state</code> being deeply reactive and only update its properties, not the value itself:<pre class="language-ts"><code class="language-ts"><span class="token comment">/// file: app-state.svelte.ts</span>
+<span class="token keyword module">export</span> <span class="token keyword">const</span> appState <span class="token operator">=</span> <span class="token function">$state</span><span class="token punctuation">(</span><span class="token punctuation">{</span>
+	loggedIn<span class="token operator">:</span> <span class="token boolean">true</span>
+<span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">;</span></code></pre><pre class="language-svelte"><code class="language-svelte">&#x3C;! file: App.svelte --->
+&#x3C;script>
+	import { appState } from './app-state.svelte';
+&#x3C;/script>
+
+&#x3C;button onclick={() => (appState.loggedIn = false)}>Log out&#x3C;/button></code></pre><p><span style="float:footnote"><a href="../index.html#toc">Go to TOC</a></span></section></section>

@@ -1,0 +1,42 @@
+<!doctype html><html lang="cn"><meta charset="utf-8"><title>配置语法高亮</title><meta name="viewport"content="width=device-width,initial-scale=1"><link rel="stylesheet"type="text/css"href="../../../../themes/packages/prism-coy-theme/theme_common.css"><section class="level1"aria-labelledby="配置语法高亮"><h1 id="配置语法高亮">配置语法高亮</h1><p>Slidev 使用 <a href="https://github.com/shikijs/shiki">Shiki</a> ，一个基于 TextMate 语法，与 VS Code 一样准确的代码高亮器。它直接生成带样式的 HTML 元素，所以不需要引入额外的 CSS 文件。Shiki 自带了一系列 <a href="https://shiki.style/themes">内置主题</a>。而在 Slidev 中，我们还提供内置的 <a href="#twoslash-integration">TwoSlash</a> 功能。<section class="level2"aria-labelledby="configure-shiki"><h2 id="configure-shiki">配置 Shiki</h2><environment type="both"><p>创建包含以下内容的 <code>./setup/shiki.ts</code> 文件：<pre class="language-ts"><code class="language-ts"><span class="token comment">/* ./setup/shiki.ts */</span>
+<span class="token keyword module">import</span> <span class="token imports"><span class="token punctuation">{</span> defineShikiSetup <span class="token punctuation">}</span></span> <span class="token keyword module">from</span> <span class="token string">'@slidev/types'</span>
+
+<span class="token keyword module">export</span> <span class="token keyword module">default</span> <span class="token function">defineShikiSetup</span><span class="token punctuation">(</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token arrow operator">=></span> <span class="token punctuation">{</span>
+  <span class="token keyword control-flow">return</span> <span class="token punctuation">{</span>
+    themes<span class="token operator">:</span> <span class="token punctuation">{</span>
+      dark<span class="token operator">:</span> <span class="token string">'min-dark'</span><span class="token punctuation">,</span>
+      light<span class="token operator">:</span> <span class="token string">'min-light'</span><span class="token punctuation">,</span>
+    <span class="token punctuation">}</span><span class="token punctuation">,</span>
+    transformers<span class="token operator">:</span> <span class="token punctuation">[</span>
+      <span class="token comment">// ...</span>
+    <span class="token punctuation">]</span><span class="token punctuation">,</span>
+  <span class="token punctuation">}</span>
+<span class="token punctuation">}</span><span class="token punctuation">)</span></code></pre><p>如果你想添加自定义主题或语言（ JSON 中的 TextMate 语法/主题），你可以在上述文件中导入它们：<pre class="language-ts"><code class="language-ts"><span class="token comment">/* ./setup/shiki.ts */</span>
+<span class="token keyword module">import</span> <span class="token imports"><span class="token punctuation">{</span> defineShikiSetup <span class="token punctuation">}</span></span> <span class="token keyword module">from</span> <span class="token string">'@slidev/types'</span>
+<span class="token comment">// ---cut-start---</span>
+<span class="token comment">// @ts-expect-error missing types</span>
+<span class="token comment">// ---cut-end---</span>
+<span class="token keyword module">import</span> <span class="token imports">customTheme</span> <span class="token keyword module">from</span> <span class="token string">'./customTheme.tmTheme.json'</span>
+<span class="token comment">// ---cut-start---</span>
+<span class="token comment">// @ts-expect-error missing types</span>
+<span class="token comment">// ---cut-end---</span>
+<span class="token keyword module">import</span> <span class="token imports">customLanguage</span> <span class="token keyword module">from</span> <span class="token string">'./customLanguage.tmLanguage.json'</span>
+
+<span class="token keyword module">export</span> <span class="token keyword module">default</span> <span class="token function">defineShikiSetup</span><span class="token punctuation">(</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token arrow operator">=></span> <span class="token punctuation">{</span>
+  <span class="token keyword control-flow">return</span> <span class="token punctuation">{</span>
+    themes<span class="token operator">:</span> <span class="token punctuation">{</span>
+      dark<span class="token operator">:</span> customTheme<span class="token punctuation">,</span>
+      light<span class="token operator">:</span> <span class="token string">'min-light'</span><span class="token punctuation">,</span>
+    <span class="token punctuation">}</span><span class="token punctuation">,</span>
+    langs<span class="token operator">:</span> <span class="token punctuation">[</span>
+      <span class="token string">'js'</span><span class="token punctuation">,</span>
+      <span class="token string">'typescript'</span><span class="token punctuation">,</span>
+      <span class="token string">'cpp'</span><span class="token punctuation">,</span>
+      customLanguage<span class="token punctuation">,</span>
+      <span class="token comment">// ...</span>
+    <span class="token punctuation">]</span><span class="token punctuation">,</span>
+    transformers<span class="token operator">:</span> <span class="token punctuation">[</span>
+      <span class="token comment">// ...</span>
+    <span class="token punctuation">]</span><span class="token punctuation">,</span>
+  <span class="token punctuation">}</span>
+<span class="token punctuation">}</span><span class="token punctuation">)</span></code></pre><p>更多详情请参考 <a href="https://shiki.style/languages">Built-in languages</a> 及 <a href="https://shiki.style/themes">Built-in themes</a> 以及 Shiki 的 <a href="https://shiki.style">官方文档</a> 。<p>:::info 目前，Shiki 中的 Magic Move 还不支持页面切换效果。 :::</p></environment></section><section class="level2"aria-labelledby="配置-prism"><h2 id="配置-prism">配置 Prism</h2><p>:::warning Prism 已被 Slidev 停止支持，并且将在未来版本中被移除。请考虑更换到 Shiki :::<p>如果要配置 Prism，你可以引入相应的主题 CSS，或者使用 <a href="https://github.com/antfu/prism-theme-vars"><code>prism-theme-vars</code></a> 来进行亮/暗模式下的主题配置。请参考相应文档以了解更多细节。 <span style="float:footnote"><a href="../index.html#toc">Go to TOC</a></span></section></section>
